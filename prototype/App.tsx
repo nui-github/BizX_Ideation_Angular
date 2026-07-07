@@ -1261,18 +1261,16 @@ function App() {
         )}
 
         {currentView === 'SETTINGS_JOB_PRESET' && (
-          <div className="flex-1 overflow-y-auto">
-            <JobPresetSettings 
-              language={language}
-              workflows={workflows}
-              comparisonWorkflows={comparisonWorkflows}
-              presets={jobPresets}
-              onAddPreset={(preset) => setJobPresets([...jobPresets, preset])}
-              onUpdatePreset={(preset) => setJobPresets(jobPresets.map(p => p.id === preset.id ? preset : p))}
-              onDeletePreset={(id) => setJobPresets(jobPresets.filter(p => p.id !== id))}
-              onBack={() => setCurrentView('TRACKING')}
-            />
-          </div>
+          <JobPresetSettings
+            language={language}
+            workflows={workflows}
+            comparisonWorkflows={comparisonWorkflows}
+            presets={jobPresets}
+            onAddPreset={(preset) => setJobPresets([...jobPresets, preset])}
+            onUpdatePreset={(preset) => setJobPresets(jobPresets.map(p => p.id === preset.id ? preset : p))}
+            onDeletePreset={(id) => setJobPresets(jobPresets.filter(p => p.id !== id))}
+            onBack={() => setCurrentView('TRACKING')}
+          />
         )}
 
         {currentView === 'SETTINGS_MASTER_DATA' && (

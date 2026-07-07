@@ -130,53 +130,67 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
   const canSave = name.trim() !== '' && assignedTeams.length > 0 && presetWorkflows.length > 0;
 
   return (
-    <div className="flex flex-col h-full bg-slate-50">
-      {/* Header */}
-      <div className="bg-white border-b border-slate-200 px-6 py-4 shrink-0 flex items-center justify-between sticky top-0 z-20">
-        <div className="flex items-center gap-4">
-          {onBack && (
-            <button 
-              onClick={onBack}
-              className="w-10 h-10 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-500 transition-colors"
-            >
-              <ArrowLeft size={20} />
-            </button>
-          )}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-              <Settings size={20} />
-            </div>
-            <div>
-              <h1 className="text-xl font-black text-[#010136] tracking-tight">{t.title}</h1>
-              <p className="text-xs font-semibold text-slate-500">{t.subtitle}</p>
-            </div>
+    <div className="bg-white border border-slate-200/80 rounded-3xl p-4 shadow-sm space-y-6" id="job-preset-settings-wrapper">
+      {/* Header Bar */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            {onBack && (
+              <button
+                onClick={onBack}
+                className="p-1.5 hover:bg-slate-100 rounded-[4px] text-slate-500 hover:text-slate-700 transition"
+                title={language === 'TH' ? 'กลับ' : 'Back'}
+              >
+                <ArrowLeft size={16} />
+              </button>
+            )}
+            <h1 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
+              <Settings className="text-blue-600" size={22} />
+              {t.title}
+            </h1>
           </div>
+          <p className="text-xs md:text-sm text-slate-500 font-medium leading-relaxed">
+            {t.subtitle}
+          </p>
         </div>
 
-        <button 
+        <button
+          type="button"
           onClick={() => handleOpenModal()}
-          className="px-4 py-2 bg-[#1f5df9] text-white rounded-lg font-bold text-sm flex items-center gap-2 hover:bg-blue-600 transition-all shadow-sm shadow-blue-500/20 active:scale-95"
+          className="h-[38px] px-4 bg-[#1f5df9] hover:bg-blue-700 active:scale-95 text-white font-bold text-xs uppercase tracking-wider shadow-md shadow-blue-500/10 flex items-center gap-2 transition cursor-pointer shrink-0"
+          style={{ borderRadius: '4px' }}
         >
-          <Plus size={16} />
-          {t.create}
+          <Plus size={15} strokeWidth={2.5} />
+          <span>{t.create}</span>
         </button>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 overflow-y-auto p-4">
-        <div className="max-w-6xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-6">
-          <div className="relative">
-            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input 
-              type="text" 
-              placeholder={t.search}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 shadow-sm"
-            />
-          </div>
+      {/* Control Filter row */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+          <input
+            type="text"
+            className="w-full text-xs font-semibold px-10 border border-slate-200/80 shadow-xs focus:ring-1 focus:ring-blue-500/25 transition-all font-sans focus:outline-none"
+            style={{ height: '38px', borderRadius: '4px' }}
+            placeholder={t.search}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 p-0.5 hover:bg-slate-100 rounded-[4px] text-slate-400 hover:text-slate-600 cursor-pointer"
+            >
+              <X size={12} />
+            </button>
+          )}
+        </div>
+      </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Main Area */}
+      <div className="!mt-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredPresets.map(preset => (
               <div key={preset.id} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
                 {!preset.isActive && (
@@ -227,7 +241,6 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
                 </div>
               </div>
             ))}
-          </div>
         </div>
       </div>
 
