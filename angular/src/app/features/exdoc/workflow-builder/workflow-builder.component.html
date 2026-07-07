@@ -1,0 +1,310 @@
+<div class="workflow-container">
+  <div class="max-width-limiter">
+    
+    <!-- Top Bar Controls -->
+    <div class="top-header-row">
+      <div class="branding-group">
+        <span class="vertical-brand-indicator"></span>
+        <div>
+          <h1 class="title-header-main">
+            {{ language === 'TH' ? 'ตัวออกแบบเวิร์กโฟลว์จัดเก็บและเปรียบเทียบข้อมูล' : 'Data Sync & Match Designer' }}
+          </h1>
+          <p class="sub-header-caption">
+            {{ language === 'TH' ? 'ตั้งค่าโฟลว์การสแกน การแบ่งสิทธิ์ และปลายทางสำหรับเซฟข้อมูล' : 'Orchestrate document pipelines, rulesets, and direct storage outputs' }}
+          </p>
+        </div>
+      </div>
+
+      <button 
+        nz-button
+        (click)="language = language === 'TH' ? 'EN' : 'TH'"
+        class="lang-toggle-btn"
+      >
+        {{ language === 'TH' ? 'EN' : 'TH' }}
+      </button>
+    </div>
+
+    <!-- Active Pipeline Stage Canvas Grid -->
+    <div class="designer-grid-scheme">
+      
+      <!-- LHS: Flow Canvas Preview Map - Border radius 16px -->
+      <div class="graph-canvas-container">
+        <div class="canvas-header-bar">
+          <span class="canvas-label-title">PIPELINE GRAPH CANVAS</span>
+          <span class="active-pipeline-chip">
+            {{ activeWorkflow?.name }}
+          </span>
+        </div>
+
+        <!-- Node Mock Placement in flow scheme -->
+        <div class="nodes-flow-flexbox">
+          <div *ngFor="let node of activeWorkflow?.nodes" class="flow-node-card-wrapper">
+            <div 
+              (click)="openNodeConfig(node.id)"
+              [ngClass]="{'node-incomplete': isNodeIncomplete(node)}"
+              class="node-panel-box"
+            >
+              <!-- Alert badge index indicator if incomplete -->
+              <div 
+                *ngIf="isNodeIncomplete(node)" 
+                class="warning-alert-indicator"
+              >
+                !
+              </div>
+
+              <div class="node-icon-holder">
+                <lucide-icon name="hard-drive" style="width: 20px; height: 20px;"></lucide-icon>
+              </div>
+
+              <span class="node-title-main">
+                {{ node.data.nodeName || node.type }}
+              </span>
+              <span class="node-type-mono-lbl">
+                {{ node.type }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Flow Canvas Hint info footer -->
+        <div class="canvas-footer-legend">
+          <span>Click a node to configure parameters in the sidebar</span>
+          <div class="legend-items">
+            <div class="legend-indicator-pair">
+              <span class="dot-marker dot-valid"></span>
+              <span>Valid Node</span>
+            </div>
+            <div class="legend-indicator-pair">
+              <span class="dot-marker dot-invalid"></span>
+              <span>Attention Needed</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RHS: Node Configuration Dock Sidebar - Border radius 16px -->
+      <div class="parameters-sidebar-dock">
+        
+        <!-- Configuration Header label -->
+        <div class="sidebar-header-row">
+          <div class="sidebar-header-title">
+            <lucide-icon name="settings" style="color: #1f5df9; width: 18px; height: 18px;"></lucide-icon>
+            <span>
+              {{ language === 'TH' ? 'ตั้งค่าพารามิเตอร์โหนด (CONFIGURATION)' : 'NODE PARAMETERS' }}
+            </span>
+          </div>
+          <span 
+            *ngIf="selectedNode"
+            class="sidebar-meta-badge"
+          >
+            {{ selectedNode.type }}
+          </span>
+        </div>
+
+        <!-- Node Settings Scrollable area -->
+        <div class="sidebar-scroll-viewport">
+          <div *ngIf="!selectedNode" class="no-node-selected-placeholder">
+            <lucide-icon name="info" style="color: #cbd5e1; width: 32px; height: 32px;"></lucide-icon>
+            <p>{{ language === 'TH' ? 'คลิกที่โหนดบนแผนผังด้านซ้ายเพื่อตั้งค่าพารามิเตอร์' : 'Click a node in the graph layout to customize its variables' }}</p>
+          </div>
+
+          <!-- Specific layout config fields for STORAGE nodes -->
+          <div *ngIf="selectedNode && selectedNode.type === 'storage'" style="display: flex; flex-direction: column; gap: 24px;">
+            
+            <!-- Custom Node Node title field -->
+            <div class="config-input-block">
+              <label>Custom Name</label>
+              <input 
+                nz-input
+                type="text"
+                [(ngModel)]="selectedNode.data.nodeName"
+                placeholder="Storage Node Name"
+                class="config-text-field"
+              />
+            </div>
+
+            <!-- SECTION 1: DIRECTORY PATH (Border radius sub-section 8px) -->
+            <div class="sidebar-config-subsection">
+              <div class="section-subtitle-row">
+                <lucide-icon name="folder-input" style="color: #1f5df9; width: 16px; height: 16px;"></lucide-icon>
+                <h4>
+                  SECTION 1: DIRECTORY PATH <span class="star-required">*</span>
+                </h4>
+              </div>
+
+              <div class="subsection-fields-stack">
+                <input 
+                  nz-input
+                  type="text"
+                  [(ngModel)]="selectedNode.data.directoryPath"
+                  placeholder="/imports/{year}/{month}"
+                  class="monspaced-code-field"
+                />
+
+                <!-- Interactive tag appending grid buttons -->
+                <div class="interactive-tags-injector">
+                  <p class="tags-label-caps">
+                    {{ language === 'TH' ? 'คลิกเพื่อแทรกแท็ก (CLICK TO INSERT):' : 'CLICK TO INSERT TAG:' }}
+                  </p>
+                  <div class="appendable-tags-grid">
+                    <button 
+                      *ngFor="let tag of ['{year}', '{month}', '{date}', '{job#}']"
+                      (click)="selectedNode.data.directoryPath = (selectedNode.data.directoryPath || '') + tag"
+                      class="tag-pill-append-btn"
+                    >
+                      {{ tag }}
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Live Evaluation preview block -->
+                <div class="live-eval-preview-block">
+                  <p class="preview-caption-lbl">Real Path Preview:</p>
+                  <p class="evaluated-path-mono">
+                    {{ parseStorageTemplate(selectedNode.data.directoryPath || '/imports/{year}/{month}') }}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- SECTION 2: DIRECTORY NAMING (Border radius sub-section 8px) -->
+            <div class="sidebar-config-subsection">
+              <div class="section-subtitle-row">
+                <lucide-icon name="folder" style="color: #1f5df9; width: 16px; height: 16px;"></lucide-icon>
+                <h4>
+                  SECTION 2: DIRECTORY NAMING <span class="star-required">*</span>
+                </h4>
+              </div>
+
+              <div class="subsection-fields-stack">
+                <input 
+                  nz-input
+                  type="text"
+                  [(ngModel)]="selectedNode.data.directoryNaming"
+                  placeholder="{job#}-{job_type}"
+                  class="monspaced-code-field"
+                />
+
+                <div class="interactive-tags-injector">
+                  <p class="tags-label-caps">
+                    {{ language === 'TH' ? 'คลิกเพื่อแทรกแท็ก (CLICK TO INSERT):' : 'CLICK TO INSERT TAG:' }}
+                  </p>
+                  <div class="appendable-tags-grid">
+                    <button 
+                      *ngFor="let tag of ['{job#}', '{job_type}', '{date}']"
+                      (click)="selectedNode.data.directoryNaming = (selectedNode.data.directoryNaming || '') + tag"
+                      class="tag-pill-append-btn"
+                    >
+                      {{ tag }}
+                    </button>
+                  </div>
+                </div>
+
+                <div class="live-eval-preview-block">
+                  <p class="preview-caption-lbl">Folder Name Preview:</p>
+                  <p class="evaluated-path-mono">
+                    {{ parseStorageTemplate(selectedNode.data.directoryNaming || '{job#}-{job_type}') }}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- SECTION 3: FILE NAMING (Border radius sub-section 8px) -->
+            <div class="sidebar-config-subsection">
+              <div class="section-subtitle-row">
+                <lucide-icon name="file-text" style="color: #1f5df9; width: 16px; height: 16px;"></lucide-icon>
+                <h4>
+                  SECTION 3: FILE NAMING <span class="star-required">*</span>
+                </h4>
+              </div>
+
+              <!-- Layout Choice Select buttons (Border radius cards 8px) -->
+              <div class="naming-mode-select-grid">
+                <button 
+                  (click)="selectedNode.data.fileNamingMode = 'original'"
+                  [ngClass]="{'choice-active': selectedNode.data.fileNamingMode === 'original'}"
+                  class="naming-choice-button"
+                >
+                  <span class="choice-headline">ORIGINAL NAME</span>
+                  <span class="choice-desc-small">Keep default title</span>
+                </button>
+
+                <button 
+                  (click)="selectedNode.data.fileNamingMode = 'custom'"
+                  [ngClass]="{'choice-active': selectedNode.data.fileNamingMode === 'custom'}"
+                  class="naming-choice-button"
+                >
+                  <span class="choice-headline">CUSTOM TEMPLATE</span>
+                  <span class="choice-desc-small">Write custom rules</span>
+                </button>
+              </div>
+
+              <!-- Custom template parsing input if mode is custom template -->
+              <div class="subsection-fields-stack">
+                <div *ngIf="selectedNode.data.fileNamingMode === 'custom'" style="display: flex; flex-direction: column; gap: 12px; padding-top: 10px; border-top: 1px solid #f1f5f9;">
+                  <div class="config-input-block">
+                    <label>Naming Pattern Template</label>
+                    <input 
+                      nz-input
+                      type="text"
+                      [(ngModel)]="selectedNode.data.fileNamingTemplate"
+                      placeholder="{job#}_{doc_type}_{date}"
+                      class="monspaced-code-field"
+                    />
+                  </div>
+
+                  <div class="interactive-tags-injector">
+                    <p class="tags-label-caps">Insert tag:</p>
+                    <div class="appendable-tags-grid">
+                      <button 
+                        *ngFor="let tag of ['{job#}', '{doc_type}', '{date}']"
+                        (click)="selectedNode.data.fileNamingTemplate = (selectedNode.data.fileNamingTemplate || '') + tag"
+                        class="tag-pill-append-btn"
+                      >
+                        {{ tag }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Final calculated preview output -->
+                <div class="live-eval-preview-block">
+                  <p class="preview-caption-lbl">File Name Preview:</p>
+                  <p class="evaluated-path-mono">
+                    <span *ngIf="selectedNode.data.fileNamingMode === 'custom'; else defaultShow">
+                      {{ parseStorageTemplate(selectedNode.data.fileNamingTemplate || '{job#}_{doc_type}_{date}') }}.pdf
+                    </span>
+                    <ng-template #defaultShow>commercial_invoice_v3.pdf</ng-template>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Block Actions bar footer (Radius 4px buttons) -->
+        <div class="sidebar-actions-footer">
+          <button 
+            nz-button
+            *ngIf="selectedNode"
+            (click)="closeNodeConfig()"
+            class="sidebar-cancel-btn"
+          >
+            {{ language === 'TH' ? 'ยกเลิก' : 'Cancel' }}
+          </button>
+          
+          <button 
+            nz-button
+            nzType="primary"
+            *ngIf="selectedNode"
+            (click)="saveWorkflowConfig()"
+            [disabled]="isNodeIncomplete(selectedNode)"
+            class="sidebar-save-btn"
+          >
+            {{ language === 'TH' ? 'บันทึกการตั้งค่า' : 'Save Configuration' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,46 @@
+<nz-layout class="shell">
+  <nz-sider nzCollapsible [(nzCollapsed)]="isCollapsed" [nzWidth]="240" class="shell__sider">
+    <div class="shell__logo">Biz<span class="shell__logo-accent">X</span></div>
+
+    <ul nz-menu nzMode="inline" nzTheme="light">
+      <li nz-submenu nzTitle="ExDoc" nzIcon="folder">
+        <ul>
+          <li nz-menu-item routerLink="/exdoc/upload" routerLinkActive="ant-menu-item-selected">
+            อัปโหลดไฟล์เอกสาร
+          </li>
+          <li nz-menu-item routerLink="/exdoc/tracking" routerLinkActive="ant-menu-item-selected">
+            รายการการติดตามเอกสาร
+          </li>
+          <li nz-menu-item routerLink="/exdoc/workflow-builder" routerLinkActive="ant-menu-item-selected">
+            จัดการเวิร์กโฟลว์ (ExDoc)
+          </li>
+        </ul>
+      </li>
+
+      <li nz-menu-item nzIcon="hdd">Supply Chain Drive</li>
+      <li nz-menu-item nzIcon="database">Dataset Builder</li>
+
+      <li nz-submenu nzTitle="Data Comparison" nzIcon="swap" nzOpen="true">
+        <ul>
+          <li nz-menu-item routerLink="/data-comparison/jobs" routerLinkActive="ant-menu-item-selected">
+            รายการงาน (Job)
+          </li>
+          <!-- TODO(dev): not routed yet — needs DataComparisonWorkflowBuilder.tsx ported, see /docs/HANDOFF.md -->
+          <li nz-menu-item nzDisabled>จัดการเวิร์กโฟลว์ (ยังไม่พร้อม)</li>
+          <li nz-menu-item nzDisabled>Compare rules (ยังไม่พร้อม)</li>
+        </ul>
+      </li>
+    </ul>
+  </nz-sider>
+
+  <nz-layout>
+    <nz-header class="shell__header">
+      <div class="shell__breadcrumb"></div>
+      <div class="shell__user">Kunawut W.</div>
+    </nz-header>
+
+    <nz-content class="shell__content">
+      <router-outlet />
+    </nz-content>
+  </nz-layout>
+</nz-layout>

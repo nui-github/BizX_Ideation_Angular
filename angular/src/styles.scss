@@ -1,0 +1,12 @@
+/* Global styles — component-level overrides belong in each component's own .scss (see /docs/PROJECT_RULES.md) */
+
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: 'IBM Plex Sans Thai', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #010136;
+}
+
+* {
+  box-sizing: border-box;
+}

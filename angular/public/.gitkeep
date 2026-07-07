@@ -1,0 +1,2 @@
+Static assets (favicon.ico, images, fonts) go here — copied as-is to the build output root.
+Add the real favicon.ico here (see index.html reference); it is intentionally omitted from this scaffold.

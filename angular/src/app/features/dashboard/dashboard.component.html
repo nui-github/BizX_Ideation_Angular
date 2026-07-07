@@ -1,0 +1,335 @@
+<div class="dashboard-container">
+  
+  <!-- Outer Wrapper Section - Border radius 16px -->
+  <div class="dashboard-wrapper">
+    
+    <!-- Top Bar Control Panel -->
+    <div class="top-bar-row">
+      <div class="branding-header">
+        <span class="branding-stripe"></span>
+        <div class="title-text-group">
+          <h1 class="title-text-heading">
+            {{ language === 'TH' ? 'รายการงานเปรียบเทียบข้อมูล (Data Comparison Jobs)' : 'Data Comparison Jobs' }}
+          </h1>
+          <p class="sub-paragraph">
+            {{ language === 'TH' ? 'ระบบตรวจรับและตรวจสอบความถูกต้องของชุดเอกสาร (OCR Cross-Check Dashboard)' : 'Verify document accuracy and matching indices across OCR sets' }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Action Area - Border radius 4px -->
+      <div class="top-actions">
+        <button 
+          nz-button 
+          nzType="default" 
+          (click)="openStatusGuide()"
+          class="guide-btn"
+        >
+          <lucide-icon name="help-circle" class="lucide-icon-blue"></lucide-icon>
+          <span>{{ language === 'TH' ? 'คู่มือสถานะ (Status Guide)' : 'Status Guide' }}</span>
+        </button>
+
+        <button 
+          nz-button 
+          nzType="default" 
+          (click)="toggleLanguage()" 
+          class="lang-btn"
+        >
+          {{ language === 'TH' ? 'EN' : 'TH' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Search / Filtering Sub-section - Border radius 8px -->
+    <div class="filter-subsection">
+      <div class="search-input-box">
+        <lucide-icon name="search" class="search-icon-decor"></lucide-icon>
+        <input 
+          nz-input
+          type="text" 
+          [(ngModel)]="searchQuery"
+          [placeholder]="language === 'TH' ? 'ค้นหาตาม Job Reference หรือ ชื่อเวิร์กโฟลว์...' : 'Search Job Reference or workflow...'"
+          class="search-text-field"
+        />
+      </div>
+
+      <div class="status-dropdown-group">
+        <span class="status-label">{{ language === 'TH' ? 'สถานะ:' : 'Status:' }}</span>
+        <select 
+          [(ngModel)]="statusFilter"
+          class="status-select-native"
+        >
+          <option value="ALL">{{ language === 'TH' ? 'ทั้งหมด (All Status)' : 'All Status' }}</option>
+          <option value="NEW">NEW</option>
+          <option value="PENDING">PENDING</option>
+          <option value="REVIEW">REVIEW</option>
+          <option value="READY">READY</option>
+          <option value="DONE">DONE</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Main Data Table utilizing clean nz-table layout with Border radius 8px styling -->
+    <nz-table 
+      #basicTable 
+      [nzData]="filteredJobs" 
+      [nzPageSize]="10" 
+      [nzShowCustomColumn]="false"
+      class="jobs-table-container"
+    >
+      <thead>
+        <tr>
+          <th>{{ language === 'TH' ? 'คิว / วันที่นำเข้า' : 'Queue / Date Imported' }}</th>
+          <th>Reference ID</th>
+          <th>Workflow Name</th>
+          <th>{{ language === 'TH' ? 'เอกสารในชุดตรวจ' : 'Documents Status' }}</th>
+          <th style="text-align: center;">{{ language === 'TH' ? 'ความแม่นยำ' : 'Accuracy Score' }}</th>
+          <th style="text-align: center;">{{ language === 'TH' ? 'ความคืบหน้า' : 'Progress' }}</th>
+          <th style="text-align: center;">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr 
+          *ngFor="let job of basicTable.data" 
+          (click)="openDetails(job)"
+          class="clickable-row"
+        >
+          <!-- Queue Id -->
+          <td>
+            <div class="id-cell-wrap">
+              <span class="job-id-text">{{ job.id }}</span>
+              <span class="imported-date-text">{{ job.createdAt | date:'yyyy-MM-dd HH:mm' }}</span>
+            </div>
+          </td>
+
+          <!-- Reference -->
+          <td>
+            <div class="ref-cell-wrap">
+              <span class="ref-id-text">{{ job.reference }}</span>
+              <span *ngFor="let tag of job.tags" class="meta-job-tag">
+                {{ tag }}
+              </span>
+            </div>
+          </td>
+
+          <!-- Workflow -->
+          <td class="workflow-name-text">
+            {{ job.workflowName }}
+          </td>
+
+          <!-- Documents in set Grid -->
+          <td>
+            <div class="docs-badge-wrapper">
+              <div 
+                *ngFor="let doc of job.docs | keyvalue" 
+                [ngClass]="'state-' + (doc.value | lowercase)"
+                class="doc-status-badge"
+              >
+                <span class="badge-dot"></span>
+                <span>{{ doc.key }}</span>
+              </div>
+            </div>
+          </td>
+
+          <!-- Accuracy score index percentage -->
+          <td>
+            <span *ngIf="job.accuracyScore !== undefined; else emptyScore" class="score-badge">
+              {{ job.accuracyScore }}%
+            </span>
+            <ng-template #emptyScore>
+              <span class="score-badge no-score">-</span>
+            </ng-template>
+          </td>
+
+          <!-- Progress status indicators -->
+          <td>
+            <div class="custom-progress-block">
+              <div class="progress-bar-rail">
+                <div 
+                  class="progress-bar-fill" 
+                  [style.width.%]="job.progress"
+                ></div>
+              </div>
+              <span class="progress-stat-label">
+                {{ job.foundDocs }}/{{ job.totalDocs }} ({{ job.progress }}%)
+              </span>
+            </div>
+          </td>
+
+          <!-- Global Job Status -->
+          <td style="text-align: center;">
+            <span [ngClass]="'status-' + job.status" class="global-status-badge">
+              {{ job.status }}
+            </span>
+          </td>
+        </tr>
+      </tbody>
+    </nz-table>
+  </div>
+
+  <!-- Detail Drawer slide over via ng-zorro-antd (nz-drawer) - Border radius 16px Left Side -->
+  <nz-drawer 
+    [nzClosable]="false" 
+    [nzVisible]="isDrawerVisible" 
+    nzPlacement="right" 
+    [nzWidth]="640"
+    (nzOnClose)="closeDetails()"
+  >
+    <ng-container *nzDrawerContent>
+      <div *ngIf="selectedJob" class="drawer-content-container">
+        
+        <div class="drawer-body-main">
+          <!-- Drawer Top Action Column -->
+          <div class="drawer-header-row">
+            <div class="drawer-title-block">
+              <lucide-icon name="file-text" style="color: #1f5df9; width: 20px; height: 20px;"></lucide-icon>
+              <h2>Job Verification Dossier</h2>
+            </div>
+            <button (click)="closeDetails()" class="close-drawer-icon-btn">
+              <lucide-icon name="x" style="width: 20px; height: 20px;"></lucide-icon>
+            </button>
+          </div>
+
+          <!-- Selected Metadata Cards - Border radius 8px -->
+          <div class="metadata-card">
+            <div class="metadata-card-top-row">
+              <div>
+                <span class="label-mini-caption">{{ language === 'TH' ? 'งานอ้างอิงเลขที่' : 'JOB REFERENCE NUMBER' }}</span>
+                <h3 class="value-ref-highlight">{{ selectedJob.reference }}</h3>
+              </div>
+              <span [ngClass]="'status-' + selectedJob.status" class="global-status-badge">
+                {{ selectedJob.status }}
+              </span>
+            </div>
+
+            <div class="meta-split-grid">
+              <div class="meta-split-item">
+                <span class="label-mini-caption">{{ language === 'TH' ? 'พนักงาน/ผู้ตรวจสอบ' : 'Assignee Operation' }}</span>
+                <p>{{ selectedJob.assignee || 'Operation Pool' }}</p>
+              </div>
+              <div class="meta-split-item">
+                <span class="label-mini-caption">{{ language === 'TH' ? 'เดดไลน์ตรวจสอบ' : 'Verification Expiry' }}</span>
+                <p style="font-family: 'JetBrains Mono', monospace;">{{ selectedJob.expiryDate }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Document List Detail Card list layout -->
+          <div class="dossier-items-section">
+            <h4>
+              {{ language === 'TH' ? 'สถานะชุดเอกสาร OCR' : 'OCR DOCUMENT DOSSIERS' }}
+            </h4>
+            <div class="dossier-tiles-grid">
+              <div 
+                *ngFor="let doc of selectedJob.docs | keyvalue"
+                class="dossier-panel-tile"
+              >
+                <div class="tile-info-block">
+                  <lucide-icon name="file" style="color: #94a3b8; width: 16px; height: 16px; flex-shrink: 0;"></lucide-icon>
+                  <span>{{ doc.key }}</span>
+                </div>
+                <span [ngClass]="'state-' + (doc.value | lowercase)" class="doc-status-badge">
+                  <span class="badge-dot"></span>
+                  <span>{{ doc.value }}</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Drawer Footer layout -->
+        <div class="actions-footer-bar">
+          <button 
+            nz-button 
+            (click)="closeDetails()"
+            class="drawer-cancel-btn"
+          >
+            {{ language === 'TH' ? 'ย้อนกลับ' : 'Back' }}
+          </button>
+          
+          <button 
+            nz-button 
+            nzType="primary"
+            class="drawer-submit-btn"
+            [disabled]="selectedJob.status === 'DONE'"
+            (click)="markAsDone(selectedJob)"
+          >
+            {{ language === 'TH' ? 'ทำเครื่องหมายสำเร็จ' : 'Mark Verification Done' }}
+          </button>
+        </div>
+      </div>
+    </ng-container>
+  </nz-drawer>
+
+  <!-- Status Guide Modal Panel using custom ng-zorro-antd dialog layout with Radius 16px -->
+  <nz-modal 
+    [(nzVisible)]="isStatusGuideVisible" 
+    [nzFooter]="null"
+    [nzTitle]="modalTitle"
+    [nzClosable]="false"
+    (nzOnCancel)="closeStatusGuide()"
+    nzWidth="520px"
+  >
+    <ng-template #modalTitle>
+      <div class="modal-title-row">
+        <div class="modal-header-text-group">
+          <lucide-icon name="info" style="color: #1f5df9; width: 20px; height: 20px;"></lucide-icon>
+          <span>
+            {{ language === 'TH' ? 'คู่มือสถานะเปรียบเทียบข้อมูล' : 'Data Comparison Status Guide' }}
+          </span>
+        </div>
+        <button (click)="closeStatusGuide()" class="close-modal-icon-btn">
+          <lucide-icon name="x" style="width: 18px; height: 18px;"></lucide-icon>
+        </button>
+      </div>
+    </ng-template>
+
+    <div class="modal-instruction-body">
+      <div class="guide-status-card matched-panel">
+        <div class="inline-badge-title" style="color: #059669;">
+          <span class="pulse-indicator" style="background-color: #10b981; animation: none;"></span>
+          <span>MATCHED</span>
+        </div>
+        <p>
+          {{ language === 'TH' 
+            ? 'ระบบประมวลผลดึงข้อมูลดัชนี (เช่น PO#, Net Price, VAT) ตรงกันครบถ้วนในทุกประเภทเอกสารที่ตรวจสอบ' 
+            : 'All target cross-check parameters matched with completely verified index criteria.' }}
+        </p>
+      </div>
+
+      <div class="guide-status-card mismatched-panel">
+        <div class="inline-badge-title" style="color: #e11d48;">
+          <span class="pulse-indicator"></span>
+          <span>MISMATCHED</span>
+        </div>
+        <p>
+          {{ language === 'TH' 
+            ? 'ข้อมูลดัชนีไม่ตรงกัน (เช่น ยอดรวมภาษีหรือชื่อบริษัทคลาดเคลื่อน) ต้องการการตรวจทานและแก้ไขแบบแมนนวล' 
+            : 'Index parameter deviation detected. Immediate compliance evaluation required.' }}
+        </p>
+      </div>
+
+      <div class="guide-status-card received-panel">
+        <div class="inline-badge-title" style="color: #d97706;">
+          <span class="pulse-indicator" style="background-color: #f59e0b; animation: none;"></span>
+          <span>RECEIVED</span>
+        </div>
+        <p>
+          {{ language === 'TH' 
+            ? 'ได้รับไฟล์ข้อมูลเข้ามาในกลุ่มจัดเก็บเรียบร้อยแล้ว แต่อยู่ระหว่างรอเข้าคิวเพื่อทำการดึงค่าดัชนี OCR/AI' 
+            : 'Document structure saved. Index parsing queuing initiates shortly.' }}
+        </p>
+      </div>
+
+      <div class="modal-footer">
+        <button 
+          nz-button 
+          nzType="primary"
+          (click)="closeStatusGuide()"
+        >
+          {{ language === 'TH' ? 'เข้าใจแล้ว' : 'Got it' }}
+        </button>
+      </div>
+    </div>
+  </nz-modal>
+</div>

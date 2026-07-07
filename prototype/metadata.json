@@ -1,0 +1,6 @@
+{
+  "name": "BizX - Design Ideation",
+  "description": "A comprehensive system for document tracking, processing, and comparison, featuring AI-powered extraction, workflow management, and real-time audit logs.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
