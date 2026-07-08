@@ -290,13 +290,12 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
                       {t.teams} <span className="text-rose-500">*</span>
                     </label>
                     <Select
-                      mode="multiple"
                       allowClear
                       className="w-full custom-select"
                       popupClassName="!z-[2100]"
-                      placeholder={language === 'TH' ? 'เลือกทีม' : 'Select teams'}
-                      value={assignedTeams}
-                      onChange={setAssignedTeams}
+                      placeholder={language === 'TH' ? 'เลือกทีม' : 'Select team'}
+                      value={assignedTeams[0]}
+                      onChange={(value) => setAssignedTeams(value ? [value] : [])}
                       options={MOCK_TEAMS}
                       style={{ width: '100%' }}
                     />

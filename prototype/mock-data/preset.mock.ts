@@ -4,7 +4,7 @@ export const MOCK_PRESETS: JobPreset[] = [
   {
     id: 'preset-1',
     name: 'Standard Import Process',
-    assignedTeams: ['logistics', 'operation'],
+    assignedTeams: ['logistics'],
     workflows: [
       { id: 'pwf-1', workflowId: 'wf-1', assignedTeams: ['logistics'] },
       { id: 'pwf-2', workflowId: 'wf-2', assignedTeams: ['operation'] }
