@@ -344,50 +344,52 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
                     </button>
                   </div>
 
-                  <div className="space-y-2">
+                  <div>
                     {presetWorkflows.length === 0 ? (
                       <div className="text-center py-6 bg-slate-50 rounded-xl border border-dashed border-slate-200">
                         <AlertCircle size={24} className="text-amber-500 mx-auto mb-2" />
                         <p className="text-xs font-bold text-slate-500">{t.noWorkflows}</p>
                       </div>
                     ) : (
-                      presetWorkflows.map((pwf, index) => {
-                        const wf = allWorkflows.find(w => w.id === pwf.workflowId);
-                        const isLast = index === presetWorkflows.length - 1;
-                        return (
-                          <div key={pwf.id} className="flex items-stretch gap-3 p-3 bg-white border border-slate-200 rounded-xl hover:border-blue-300 transition-colors">
-                            <div className="relative flex flex-col items-center w-6 shrink-0">
-                              <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-500 shrink-0 z-10">
-                                {index + 1}
-                              </div>
-                              {!isLast && (
-                                <div className="absolute top-0 -bottom-8 left-1/2 -translate-x-1/2 w-px bg-slate-200" />
-                              )}
-                            </div>
-                            <div className="flex-1 flex items-center justify-between">
-                              <div>
-                                <h4 className="text-sm font-bold text-[#010136]">{wf?.name || 'Unknown Workflow'}</h4>
-                                <div className="flex flex-wrap gap-1 mt-1">
-                                  {pwf.assignedTeams.map(team => {
-                                    const teamLabel = MOCK_TEAMS.find(t => t.value === team)?.label || team;
-                                    return (
-                                      <span key={team} className="px-1.5 py-0.5 bg-slate-100 text-slate-600 text-[9px] font-bold rounded">
-                                        {teamLabel}
-                                      </span>
-                                    );
-                                  })}
+                      <div className="bg-white border border-slate-200 rounded-xl divide-y divide-slate-100 overflow-hidden">
+                        {presetWorkflows.map((pwf, index) => {
+                          const wf = allWorkflows.find(w => w.id === pwf.workflowId);
+                          const isLast = index === presetWorkflows.length - 1;
+                          return (
+                            <div key={pwf.id} className="flex items-stretch gap-3 p-3 hover:bg-slate-50 transition-colors">
+                              <div className="relative flex flex-col items-center w-6 shrink-0">
+                                <div className="w-6 h-6 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-[10px] font-black text-blue-600 shrink-0 z-10">
+                                  {index + 1}
                                 </div>
+                                {!isLast && (
+                                  <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-px bg-blue-100" />
+                                )}
                               </div>
-                              <button
-                                onClick={() => handleRemoveWorkflow(pwf.id)}
-                                className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
-                              >
-                                <Trash2 size={16} />
-                              </button>
+                              <div className="flex-1 flex items-center justify-between">
+                                <div>
+                                  <h4 className="text-sm font-bold text-[#010136]">{wf?.name || 'Unknown Workflow'}</h4>
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    {pwf.assignedTeams.map(team => {
+                                      const teamLabel = MOCK_TEAMS.find(t => t.value === team)?.label || team;
+                                      return (
+                                        <span key={team} className="px-1.5 py-0.5 bg-slate-100 text-slate-600 text-[9px] font-bold rounded">
+                                          {teamLabel}
+                                        </span>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                                <button
+                                  onClick={() => handleRemoveWorkflow(pwf.id)}
+                                  className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })
+                          );
+                        })}
+                      </div>
                     )}
                   </div>
                 </div>
