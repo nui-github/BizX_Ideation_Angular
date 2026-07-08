@@ -71,9 +71,16 @@
       }
 
       /* 2. Button use 4px */
-      button:not(.rounded-full):not([class*="-circle"]):not([class*="p-"]),
+      button:not(.rounded-full):not([class*="-circle"]):not([class*="p-"]):not(.ant-switch),
       .ant-btn:not(.ant-btn-circle):not(.ant-btn-icon-only):not(.rounded-full) {
         border-radius: 4px !important;
+      }
+
+      /* 3. Toggle / Switch always fully rounded (pill shape) */
+      .ant-switch,
+      .ant-switch .ant-switch-handle,
+      .ant-switch .ant-switch-handle::before {
+        border-radius: 100px !important;
       }
 
       /* Custom scrollbar */
