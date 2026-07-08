@@ -293,6 +293,7 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
                       mode="multiple"
                       allowClear
                       className="w-full custom-select"
+                      popupClassName="!z-[2100]"
                       placeholder={language === 'TH' ? 'เลือกทีม' : 'Select teams'}
                       value={assignedTeams}
                       onChange={setAssignedTeams}
@@ -315,6 +316,7 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
                         <Select
                           showSearch
                           className="w-full"
+                          popupClassName="!z-[2100]"
                           placeholder={language === 'TH' ? 'เลือกเวิร์กโฟลว์' : 'Select workflow'}
                           value={selectedWorkflowId}
                           onChange={setSelectedWorkflowId}
@@ -327,6 +329,7 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
                           mode="multiple"
                           allowClear
                           className="w-full"
+                          popupClassName="!z-[2100]"
                           placeholder={language === 'TH' ? 'เลือกทีม' : 'Select teams'}
                           value={selectedWorkflowTeams}
                           onChange={setSelectedWorkflowTeams}
