@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Switch } from 'antd';
 import { Plus, Search, Edit2, Trash2, Eye, Play, MoreVertical, Activity, CheckCircle, PlayCircle, Layers, LayoutGrid, List as ListIcon, Calendar, Box, Workflow as WorkflowIcon, Filter, Copy, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Workflow, Language } from '../types';
@@ -255,21 +256,14 @@ export const WorkflowList: React.FC<WorkflowListProps> = ({ workflows, language,
                           {workflow.status === 'ACTIVE' ? 'Active' : 'Inactive'}
                         </span>
                         <div className="relative group/tip">
-                          <button 
-                            onClick={(e) => {
+                          <Switch
+                            size="small"
+                            checked={workflow.status === 'ACTIVE'}
+                            onClick={(_checked, e) => {
                               e.stopPropagation();
                               onToggleStatus(workflow);
                             }}
-                            className={`relative inline-flex h-5 w-9 items-center rounded-[4px] transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                              workflow.status === 'ACTIVE' ? 'bg-green-500' : 'bg-slate-300'
-                            }`}
-                          >
-                            <span 
-                              className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
-                                workflow.status === 'ACTIVE' ? 'translate-x-5' : 'translate-x-1'
-                              }`}
-                            />
-                          </button>
+                          />
                           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover/tip:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-[100] font-bold">
                             {language === 'TH' ? 'เปิด/ปิด' : 'Toggle Status'}
                             <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800" />
@@ -398,21 +392,14 @@ export const WorkflowList: React.FC<WorkflowListProps> = ({ workflows, language,
                           {workflow.status === 'ACTIVE' ? 'Active' : 'Inactive'}
                         </span>
                         <div className="relative group/tip">
-                          <button 
-                            onClick={(e) => {
+                          <Switch
+                            size="small"
+                            checked={workflow.status === 'ACTIVE'}
+                            onClick={(_checked, e) => {
                               e.stopPropagation();
                               onToggleStatus(workflow);
                             }}
-                            className={`relative inline-flex h-5 w-9 items-center rounded-[4px] transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                              workflow.status === 'ACTIVE' ? 'bg-green-500' : 'bg-slate-300'
-                            }`}
-                          >
-                            <span 
-                              className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
-                                workflow.status === 'ACTIVE' ? 'translate-x-5' : 'translate-x-1'
-                              }`}
-                            />
-                          </button>
+                          />
                           <div className="absolute bottom-full right-0 mb-2 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover/tip:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-[100] font-bold">
                             {language === 'TH' ? 'เปิด/ปิด' : 'Toggle Status'}
                             <div className="absolute top-full right-3 border-4 border-transparent border-t-slate-800" />

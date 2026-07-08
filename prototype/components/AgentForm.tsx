@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { 
-  ArrowLeft, Save, Power, Check, Settings, FileCode, FolderOpen, 
+import { Switch } from 'antd';
+import {
+  ArrowLeft, Save, Power, Check, Settings, FileCode, FolderOpen,
   FlaskConical, History, Mail, Bot, Settings2, MessageSquare, 
   Play, Info, CheckCircle, X, ChevronDown, Filter, PanelLeft, PanelTop,
   Loader2, Circle, CheckCircle2, RotateCcw
@@ -582,13 +583,11 @@ export const AgentForm: React.FC<AgentFormProps> = ({ initialData, role, languag
                                     <div className="text-xs text-slate-500">{t.helpAdvancedFilter}</div>
                                  </div>
                               </div>
-                              <button 
-                                onClick={() => !isFormReadOnly && handleNestedChange('mailConfig', 'enableFilter', !formData.mailConfig?.enableFilter)}
-                                className={`w-11 h-6 flex items-center rounded-[4px] px-1 transition-colors ${formData.mailConfig?.enableFilter ? 'bg-sky-500' : 'bg-slate-300'}`}
+                              <Switch
+                                checked={formData.mailConfig?.enableFilter}
+                                onChange={(checked) => handleNestedChange('mailConfig', 'enableFilter', checked)}
                                 disabled={isFormReadOnly}
-                              >
-                                <div className={`w-4 h-4 bg-white rounded-full transition-transform ${formData.mailConfig?.enableFilter ? 'translate-x-5' : 'translate-x-0'}`} />
-                              </button>
+                              />
                            </div>
 
                            {formData.mailConfig?.enableFilter && (
@@ -736,13 +735,11 @@ export const AgentForm: React.FC<AgentFormProps> = ({ initialData, role, languag
                             <div className="text-xs text-slate-500">{t.descAutoSave}</div>
                          </div>
                       </div>
-                      <button 
-                        onClick={() => !isFormReadOnly && handleNestedChange('driveConfig', 'autoSave', !formData.driveConfig?.autoSave)}
-                        className={`w-11 h-6 flex items-center rounded-[4px] px-1 transition-colors ${formData.driveConfig?.autoSave ? 'bg-sky-500' : 'bg-slate-300'}`}
+                      <Switch
+                        checked={formData.driveConfig?.autoSave}
+                        onChange={(checked) => handleNestedChange('driveConfig', 'autoSave', checked)}
                         disabled={isFormReadOnly}
-                      >
-                        <div className={`w-4 h-4 bg-white rounded-full transition-transform ${formData.driveConfig?.autoSave ? 'translate-x-5' : 'translate-x-0'}`} />
-                      </button>
+                      />
                    </div>
                    
                    {formData.driveConfig?.autoSave && (
@@ -774,13 +771,11 @@ export const AgentForm: React.FC<AgentFormProps> = ({ initialData, role, languag
                             <div className="text-xs text-slate-500">{t.descAutoRename}</div>
                          </div>
                       </div>
-                      <button 
-                        onClick={() => !isFormReadOnly && handleNestedChange('driveConfig', 'autoRename', !formData.driveConfig?.autoRename)}
-                        className={`w-11 h-6 flex items-center rounded-[4px] px-1 transition-colors ${formData.driveConfig?.autoRename ? 'bg-sky-500' : 'bg-slate-300'}`}
+                      <Switch
+                        checked={formData.driveConfig?.autoRename}
+                        onChange={(checked) => handleNestedChange('driveConfig', 'autoRename', checked)}
                         disabled={isFormReadOnly}
-                      >
-                        <div className={`w-4 h-4 bg-white rounded-full transition-transform ${formData.driveConfig?.autoRename ? 'translate-x-5' : 'translate-x-0'}`} />
-                      </button>
+                      />
                    </div>
                    
                    {formData.driveConfig?.autoRename && (
@@ -827,13 +822,11 @@ export const AgentForm: React.FC<AgentFormProps> = ({ initialData, role, languag
                             <div className="text-xs text-slate-500">{t.descAutoFolder}</div>
                          </div>
                       </div>
-                      <button 
-                        onClick={() => !isFormReadOnly && handleNestedChange('driveConfig', 'autoCreateFolder', !formData.driveConfig?.autoCreateFolder)}
-                        className={`w-11 h-6 flex items-center rounded-[4px] px-1 transition-colors ${formData.driveConfig?.autoCreateFolder ? 'bg-sky-500' : 'bg-slate-300'}`}
+                      <Switch
+                        checked={formData.driveConfig?.autoCreateFolder}
+                        onChange={(checked) => handleNestedChange('driveConfig', 'autoCreateFolder', checked)}
                         disabled={isFormReadOnly}
-                      >
-                        <div className={`w-4 h-4 bg-white rounded-full transition-transform ${formData.driveConfig?.autoCreateFolder ? 'translate-x-5' : 'translate-x-0'}`} />
-                      </button>
+                      />
                    </div>
                    
                    {formData.driveConfig?.autoCreateFolder && (

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { 
-  ArrowLeft, Save, Play, Plus, Trash2, Settings, FileText, 
+import { Switch } from 'antd';
+import {
+  ArrowLeft, Save, Play, Plus, Trash2, Settings, FileText,
   Database, FileOutput, X, Mail, Folder, Paperclip,
   FolderInput, Briefcase, Send, ChevronRight, Hash, Layers,
   ZoomIn, ZoomOut, Upload, Minus, ChevronDown, UserPlus, HardDrive, Share2, FileSearch, ScanSearch, Maximize, UserCheck,
@@ -3487,24 +3488,12 @@ export const DataComparisonWorkflowBuilder: React.FC<DataComparisonWorkflowBuild
                                : 'Enable dynamic paused queues for physical operator verification.'}
                            </p>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const currentVal = node.data?.allowReview !== false; // default = true
-                            updateNodeData(node.id, { allowReview: !currentVal });
+                        <Switch
+                          checked={node.data?.allowReview !== false}
+                          onChange={(checked) => {
+                            updateNodeData(node.id, { allowReview: checked });
                           }}
-                          className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-[20px] border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                            (node.data?.allowReview !== false) ? 'bg-[#16EA9E]' : 'bg-slate-200'
-                          }`}
-                          style={{ borderRadius: '20px' }}
-                        >
-                          <span
-                            className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                              (node.data?.allowReview !== false) ? 'translate-x-5' : 'translate-x-0'
-                            }`}
-                            style={{ borderRadius: '50%' }}
-                          />
-                        </button>
+                        />
                       </div>
 
                       {/* Informational description box based on Toggle Status */}
@@ -3912,22 +3901,12 @@ export const DataComparisonWorkflowBuilder: React.FC<DataComparisonWorkflowBuild
                             </h4>
                           </div>
                           
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const newVal = node.data.allowReview === false ? true : false;
-                              updateNodeData(node.id, { allowReview: newVal });
+                          <Switch
+                            checked={node.data.allowReview !== false}
+                            onChange={(checked) => {
+                              updateNodeData(node.id, { allowReview: checked });
                             }}
-                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-[20px] border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                              node.data.allowReview !== false ? 'bg-[#1f5df9]' : 'bg-slate-200'
-                            }`}
-                          >
-                            <span
-                              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                                node.data.allowReview !== false ? 'translate-x-5' : 'translate-x-0'
-                              }`}
-                            />
-                          </button>
+                          />
                         </div>
                         
                         <div className="p-3 bg-slate-50/80 rounded-[8px] border border-slate-100/50">
