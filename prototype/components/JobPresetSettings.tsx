@@ -3,6 +3,7 @@ import { Select, Switch } from 'antd';
 import { motion, AnimatePresence } from 'motion/react';
 import { Plus, Trash2, Edit3, CheckCircle2, AlertCircle, ArrowLeft, Settings, Search, X, Check } from 'lucide-react';
 import { Language, Workflow, JobPreset, JobPresetWorkflow } from '../types';
+import { MOCK_TEAMS } from '../mock-data/teams.mock';
 
 interface JobPresetSettingsProps {
   language: Language;
@@ -14,13 +15,6 @@ interface JobPresetSettingsProps {
   onDeletePreset: (id: string) => void;
   onBack?: () => void;
 }
-
-const MOCK_TEAMS = [
-  { value: 'logistics', label: 'Logistics' },
-  { value: 'accounting', label: 'Accounting' },
-  { value: 'operation', label: 'Operation' },
-  { value: 'customer_service', label: 'Customer Service' }
-];
 
 export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
   language,
