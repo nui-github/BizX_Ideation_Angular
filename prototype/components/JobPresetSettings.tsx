@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Plus, Trash2, Edit3, CheckCircle2, AlertCircle, ArrowLeft, Settings, Search, X, Check } from 'lucide-react';
 import { Language, Workflow, JobPreset, JobPresetWorkflow } from '../types';
 import { MOCK_TEAMS } from '../mock-data/teams.mock';
+import { Tooltip } from './Tooltip';
 
 interface JobPresetSettingsProps {
   language: Language;
@@ -208,18 +209,22 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
                     </div>
                   </div>
                   <div className="flex gap-1">
-                    <button 
-                      onClick={() => handleOpenModal(preset)}
-                      className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                    >
-                      <Edit3 size={16} />
-                    </button>
-                    <button
-                      onClick={() => setDeleteConfirm({ isOpen: true, preset })}
-                      className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    <Tooltip content={language === 'TH' ? 'แก้ไขพรีเซ็ต' : 'Edit preset'}>
+                      <button
+                        onClick={() => handleOpenModal(preset)}
+                        className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      >
+                        <Edit3 size={16} />
+                      </button>
+                    </Tooltip>
+                    <Tooltip content={language === 'TH' ? 'ลบพรีเซ็ต' : 'Delete preset'}>
+                      <button
+                        onClick={() => setDeleteConfirm({ isOpen: true, preset })}
+                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </Tooltip>
                   </div>
                 </div>
 
