@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Select, Switch } from 'antd';
 import { motion, AnimatePresence } from 'motion/react';
 import { Plus, Trash2, Edit3, CheckCircle2, AlertCircle, ArrowLeft, Settings, Search, X, Check } from 'lucide-react';
@@ -29,6 +30,10 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingPreset, setEditingPreset] = useState<JobPreset | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; preset: JobPreset | null }>({
+    isOpen: false,
+    preset: null
+  });
   
   // Form State
   const [name, setName] = useState('');
@@ -186,7 +191,7 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
       <div className="!mt-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredPresets.map(preset => (
-              <div key={preset.id} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+              <div key={preset.id} className="bg-white rounded-lg border border-slate-200 p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
                 {!preset.isActive && (
                   <div className="absolute inset-0 bg-slate-50/50 z-10 pointer-events-none"></div>
                 )}
@@ -209,8 +214,8 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
                     >
                       <Edit3 size={16} />
                     </button>
-                    <button 
-                      onClick={() => onDeletePreset(preset.id)}
+                    <button
+                      onClick={() => setDeleteConfirm({ isOpen: true, preset })}
                       className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
                     >
                       <Trash2 size={16} />
@@ -415,6 +420,81 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
           </div>
         )}
       </AnimatePresence>
+
+      {/* Delete Confirmation Dialog */}
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {deleteConfirm.isOpen && deleteConfirm.preset && (
+            <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setDeleteConfirm({ isOpen: false, preset: null })}
+                className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm cursor-pointer"
+              />
+
+              <motion.div
+                initial={{ scale: 0.95, y: 20, opacity: 0 }}
+                animate={{ scale: 1, y: 0, opacity: 1 }}
+                exit={{ scale: 0.95, y: 20, opacity: 0 }}
+                transition={{ type: 'spring', damping: 25, stiffness: 250 }}
+                className="relative bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-md w-full overflow-hidden z-10 p-6 text-center"
+              >
+                <div className="flex items-center justify-center mx-auto mb-4 text-amber-500">
+                  <AlertCircle size={48} />
+                </div>
+
+                <div className="space-y-1.5 mb-4">
+                  <h3 className="text-xl font-black text-[#010136] tracking-tight leading-tight">
+                    {language === 'TH'
+                      ? `ลบพรีเซ็ต "${deleteConfirm.preset.name}" ใช่หรือไม่`
+                      : `Delete "${deleteConfirm.preset.name}"?`}
+                  </h3>
+                </div>
+
+                <div className="space-y-3 text-left mb-6">
+                  {deleteConfirm.preset.isActive && (
+                    <p className="text-xs font-bold text-rose-500 leading-relaxed bg-rose-50 border border-rose-100 rounded-xl p-3">
+                      {language === 'TH'
+                        ? 'พรีเซ็ตนี้กำลังเปิดใช้งานอยู่ (Active) — การลบจะส่งผลต่อการสร้าง Shipment ใหม่ที่อ้างอิงพรีเซ็ตนี้ทันที'
+                        : 'This preset is currently Active — deleting it will immediately affect new Shipments that reference this preset.'}
+                    </p>
+                  )}
+                  <p className="text-xs font-semibold text-slate-600 leading-relaxed text-center">
+                    {language === 'TH'
+                      ? 'คุณยืนยันที่จะลบพรีเซ็ตนี้ใช่หรือไม่? การลบนี้ไม่สามารถกู้คืนได้เมื่อดำเนินการสำเร็จ'
+                      : 'Are you sure you want to permanently delete this preset? This action cannot be undone.'}
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setDeleteConfirm({ isOpen: false, preset: null })}
+                    className="flex-1 py-2.5 rounded-[4px] border border-slate-200 bg-white text-slate-600 font-bold hover:bg-slate-50 text-xs transition active:scale-95 cursor-pointer h-[40px]"
+                  >
+                    {t.cancel}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (deleteConfirm.preset) {
+                        onDeletePreset(deleteConfirm.preset.id);
+                      }
+                      setDeleteConfirm({ isOpen: false, preset: null });
+                    }}
+                    className="flex-1 py-2.5 rounded-[4px] bg-[#1F5DF9] hover:bg-[#104BE3] text-white font-bold text-xs transition active:scale-95 cursor-pointer shadow-md shadow-blue-500/10 h-[40px]"
+                  >
+                    {language === 'TH' ? 'ลบพรีเซ็ต' : 'Confirm Delete'}
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       <style>{`
         .custom-select .ant-select-selector {
