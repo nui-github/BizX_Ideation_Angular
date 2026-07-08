@@ -280,7 +280,7 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
                       type="text" 
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-[#010136] focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+                      className="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-[#010136] placeholder:text-slate-400 placeholder:font-medium focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
                       placeholder="e.g. Standard Import Process"
                     />
                   </div>
