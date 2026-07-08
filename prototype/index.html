@@ -76,11 +76,13 @@
         border-radius: 4px !important;
       }
 
-      /* 3. Toggle / Switch always fully rounded (pill shape) */
-      .ant-switch,
-      .ant-switch .ant-switch-handle,
-      .ant-switch .ant-switch-handle::before {
-        border-radius: 100px !important;
+      /* 3. Toggle / Switch: keep antd's own default border-radius (pill shape),
+         just excluded from the button 4px rule above. Only override color. */
+      .ant-switch.ant-switch-checked {
+        background: #1f5df9 !important;
+      }
+      .ant-switch.ant-switch-checked:hover:not(.ant-switch-disabled) {
+        background: #104be3 !important;
       }
 
       /* Custom scrollbar */

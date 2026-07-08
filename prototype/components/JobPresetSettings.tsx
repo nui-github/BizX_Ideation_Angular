@@ -266,15 +266,9 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
                 <h2 className="text-lg font-black text-[#010136] tracking-tight">
                   {editingPreset ? t.edit : t.create}
                 </h2>
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-slate-500">{t.active}</span>
-                    <Switch checked={isActive} onChange={setIsActive} />
-                  </div>
-                  <button onClick={handleCloseModal} className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-lg transition-colors">
-                    <X size={18} />
-                  </button>
-                </div>
+                <button onClick={handleCloseModal} className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-lg transition-colors">
+                  <X size={18} />
+                </button>
               </div>
 
               <div className="p-6 overflow-y-auto flex-1 space-y-6 bg-white">
@@ -306,6 +300,11 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
                       options={MOCK_TEAMS}
                       style={{ width: '100%', height: '46px' }}
                     />
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Switch checked={isActive} onChange={setIsActive} />
+                    <span className="text-xs font-bold text-slate-500">{t.active}</span>
                   </div>
                 </div>
 
