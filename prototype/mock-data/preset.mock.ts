@@ -23,5 +23,39 @@ export const MOCK_PRESETS: JobPreset[] = [
     isActive: false,
     createdAt: '2026-02-01T00:00:00Z',
     updatedAt: '2026-06-01T00:00:00Z'
+  },
+  {
+    id: 'preset-3',
+    name: 'Vendor Onboarding Sync',
+    assignedTeams: ['operation'],
+    workflows: [
+      { id: 'pwf-4', workflowId: 'wf-4', assignedTeams: ['operation'] }
+    ],
+    isActive: true,
+    createdAt: '2026-03-05T00:00:00Z',
+    updatedAt: '2026-06-15T00:00:00Z'
+  },
+  {
+    id: 'preset-4',
+    name: 'LEO Billing Reconciliation',
+    assignedTeams: ['logistics'],
+    workflows: [
+      { id: 'pwf-5', workflowId: 'cwf-leo', assignedTeams: ['logistics'] },
+      { id: 'pwf-6', workflowId: 'wf-1', assignedTeams: ['accounting'] }
+    ],
+    isActive: true,
+    createdAt: '2026-04-10T00:00:00Z',
+    updatedAt: '2026-06-28T00:00:00Z'
+  },
+  {
+    id: 'preset-5',
+    name: 'Legacy Archive Cleanup',
+    assignedTeams: ['customer_service'],
+    workflows: [
+      { id: 'pwf-7', workflowId: 'wf-5', assignedTeams: ['customer_service'] }
+    ],
+    isActive: false,
+    createdAt: '2026-05-01T00:00:00Z',
+    updatedAt: '2026-05-20T00:00:00Z'
   }
 ];

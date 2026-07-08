@@ -193,12 +193,9 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredPresets.map(preset => (
               <div key={preset.id} className="bg-white rounded-lg border border-slate-200 p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-                {!preset.isActive && (
-                  <div className="absolute inset-0 bg-slate-50/50 z-10 pointer-events-none"></div>
-                )}
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h3 className={`text-lg font-black tracking-tight ${preset.isActive ? 'text-[#010136]' : 'text-slate-400'}`}>{preset.name}</h3>
+                    <h3 className="text-lg font-black tracking-tight text-[#010136]">{preset.name}</h3>
                     <div className="flex gap-2 mt-1">
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${preset.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500'}`}>
                         {preset.isActive ? 'Active' : 'Inactive'}
