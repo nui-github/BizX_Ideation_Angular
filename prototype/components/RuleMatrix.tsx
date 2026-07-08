@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { Switch } from 'antd';
 import { ArrowLeft, Plus, ShieldCheck, Tag, X, FilePlus, Pencil, Trash2, Check, Copy, ClipboardPaste, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react';
 import { TRANSLATIONS } from '../translations';
 import { Language } from '../types';
@@ -462,23 +463,13 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
              <span className="font-bold text-xs tracking-tight text-slate-700">
                {language === 'TH' ? 'เปิด/ปิดการใช้งาน' : 'Enable/Disable'}
              </span>
-             <button 
-               type="button"
-               onClick={() => {
-                 const newStatus = activeRule.status === 'Active' ? 'Inactive' : 'Active';
-                 setActiveRule({...activeRule, status: newStatus});
+             <Switch
+               size="small"
+               checked={activeRule.status === 'Active'}
+               onChange={(checked) => {
+                 setActiveRule({...activeRule, status: checked ? 'Active' : 'Inactive'});
                }}
-               className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                 activeRule.status === 'Active' ? 'bg-emerald-500' : 'bg-slate-300'
-               }`}
-             >
-               <span
-                 aria-hidden="true"
-                 className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                   activeRule.status === 'Active' ? 'translate-x-4' : 'translate-x-0'
-                 }`}
-               />
-             </button>
+             />
            </div>
            <button onClick={handleAddDocType} className="flex items-center gap-2 px-3 py-1.5 bg-white border border-blue-600 hover:bg-blue-50 text-blue-600 rounded-[4px] transition-colors font-bold text-xs md:text-sm tracking-tight w-full sm:w-auto h-9 shadow-sm whitespace-nowrap">
              <FilePlus size={14} />
