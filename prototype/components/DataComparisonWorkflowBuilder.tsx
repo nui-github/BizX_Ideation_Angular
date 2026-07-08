@@ -1184,28 +1184,19 @@ export const DataComparisonWorkflowBuilder: React.FC<DataComparisonWorkflowBuild
               <span className="text-[10px] font-black text-slate-500 uppercase tracking-tight">
                 {status === 'ACTIVE' ? t.statusActive : t.statusInactive}
               </span>
-              <button 
-                onClick={() => {
-                  if (status === 'ACTIVE') {
+              <Switch
+                size="small"
+                checked={status === 'ACTIVE'}
+                onChange={(checked) => {
+                  if (!checked) {
                     setStatus('INACTIVE');
+                  } else if (nodes.some(isNodeIncomplete)) {
+                    setConfirmToggleDialog(true);
                   } else {
-                    if (nodes.some(isNodeIncomplete)) {
-                      setConfirmToggleDialog(true);
-                    } else {
-                      setStatus('ACTIVE');
-                    }
+                    setStatus('ACTIVE');
                   }
                 }}
-                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full px-0 border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                  status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-slate-300'
-                }`}
-              >
-                <span
-                  className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                    status === 'ACTIVE' ? 'translate-x-4' : 'translate-x-0'
-                  }`}
-                />
-              </button>
+              />
             </div>
 
             <button 
@@ -2355,12 +2346,10 @@ export const DataComparisonWorkflowBuilder: React.FC<DataComparisonWorkflowBuild
                             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">DEFAULT: ON</p>
                           </div>
                         </div>
-                        <button 
-                          onClick={() => updateNodeData(node.id, { markAsRead: !node.data.markAsRead })}
-                          className={`w-12 h-6 rounded-[4px] transition-all relative ${node.data.markAsRead ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]' : 'bg-slate-300'}`}
-                        >
-                          <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${node.data.markAsRead ? 'left-7' : 'left-1'}`}></div>
-                        </button>
+                        <Switch
+                          checked={!!node.data.markAsRead}
+                          onChange={(checked) => updateNodeData(node.id, { markAsRead: checked })}
+                        />
                       </div>
 
                     </div>
@@ -2464,12 +2453,10 @@ export const DataComparisonWorkflowBuilder: React.FC<DataComparisonWorkflowBuild
                               <p className="text-[10px] font-black text-slate-800 uppercase tracking-widest leading-none mb-1">Must have attachment</p>
                               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Discard email if no files</p>
                             </div>
-                            <button 
-                              onClick={() => updateNodeData(node.id, { mustHaveAttachment: !node.data.mustHaveAttachment })}
-                              className={`w-10 h-5 rounded-[4px] transition-all relative ${node.data.mustHaveAttachment ? 'bg-orange-500' : 'bg-slate-300'}`}
-                            >
-                              <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${node.data.mustHaveAttachment ? 'left-5' : 'left-0.5'}`}></div>
-                            </button>
+                            <Switch
+                              checked={!!node.data.mustHaveAttachment}
+                              onChange={(checked) => updateNodeData(node.id, { mustHaveAttachment: checked })}
+                            />
                           </div>
                         </div>
                       </div>
