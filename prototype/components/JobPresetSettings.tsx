@@ -338,7 +338,7 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
                     <button
                       onClick={handleAddWorkflow}
                       disabled={!selectedWorkflowId || selectedWorkflowTeams.length === 0}
-                      className="w-full py-2 bg-white border border-slate-200 text-slate-700 rounded-lg font-bold text-xs hover:bg-slate-100 hover:border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                      className="w-full py-2 bg-white border border-[#1f5df9] text-[#1f5df9] rounded-lg font-bold text-xs hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
                     >
                       <Plus size={14} /> {t.addWorkflow}
                     </button>
