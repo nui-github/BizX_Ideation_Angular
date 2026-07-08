@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
+import { Switch } from 'antd';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Plus, Search, Filter, MoreHorizontal, Play, Settings, 
+import {
+  Plus, Search, Filter, MoreHorizontal, Play, Settings,
   Trash2, Copy, ToggleLeft, ToggleRight, ArrowLeftRight,
   ChevronRight, Clock, Box, Layers
 } from 'lucide-react';
@@ -211,28 +212,13 @@ export const ComparisonWorkflow: React.FC<ComparisonWorkflowProps> = ({
                     <div className="flex items-center gap-2 self-end md:self-auto mt-2 md:mt-0">
                     <div className="flex items-center gap-3">
                       <div className="relative group/tip">
-                        <button 
-                          type="button"
-                          onClick={(e) => {
+                        <Switch
+                          checked={workflow.status === 'ACTIVE'}
+                          onClick={(_checked, e) => {
                             e.stopPropagation();
                             onToggleStatus(workflow);
                           }}
-                          className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full rounded-[16px] px-0 border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${
-                            workflow.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-slate-300'
-                          }`}
-                          style={{ borderRadius: '16px', paddingLeft: '0px', paddingRight: '0px' }}
-                        >
-                          <span
-                            aria-hidden="true"
-                            className={`pointer-events-none relative inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                              workflow.status === 'ACTIVE' ? 'translate-x-5' : 'translate-x-0'
-                            } flex items-center justify-center`}
-                          >
-                            <span className={`w-1.5 h-1.5 rounded-full border-2 ${
-                              workflow.status === 'ACTIVE' ? 'border-emerald-500' : 'border-slate-300'
-                            }`} />
-                          </span>
-                        </button>
+                        />
                         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover/tip:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-[100] font-bold">
                            {language === 'TH' ? 'เปิด/ปิด' : 'Toggle Status'}
                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800" />
