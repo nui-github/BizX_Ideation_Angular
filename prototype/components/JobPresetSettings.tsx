@@ -297,7 +297,7 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
                       value={assignedTeams[0]}
                       onChange={(value) => setAssignedTeams(value ? [value] : [])}
                       options={MOCK_TEAMS}
-                      style={{ width: '100%' }}
+                      style={{ width: '100%', height: '46px' }}
                     />
                   </div>
                 </div>
