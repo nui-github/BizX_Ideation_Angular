@@ -353,12 +353,18 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
                     ) : (
                       presetWorkflows.map((pwf, index) => {
                         const wf = allWorkflows.find(w => w.id === pwf.workflowId);
+                        const isLast = index === presetWorkflows.length - 1;
                         return (
-                          <div key={pwf.id} className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl hover:border-blue-300 transition-colors">
-                            <div className="flex items-center gap-3">
-                              <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-500">
+                          <div key={pwf.id} className="flex items-stretch gap-3 p-3 bg-white border border-slate-200 rounded-xl hover:border-blue-300 transition-colors">
+                            <div className="relative flex flex-col items-center w-6 shrink-0">
+                              <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-500 shrink-0 z-10">
                                 {index + 1}
                               </div>
+                              {!isLast && (
+                                <div className="absolute top-0 -bottom-8 left-1/2 -translate-x-1/2 w-px bg-slate-200" />
+                              )}
+                            </div>
+                            <div className="flex-1 flex items-center justify-between">
                               <div>
                                 <h4 className="text-sm font-bold text-[#010136]">{wf?.name || 'Unknown Workflow'}</h4>
                                 <div className="flex flex-wrap gap-1 mt-1">
@@ -372,13 +378,13 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
                                   })}
                                 </div>
                               </div>
+                              <button
+                                onClick={() => handleRemoveWorkflow(pwf.id)}
+                                className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                              >
+                                <Trash2 size={16} />
+                              </button>
                             </div>
-                            <button 
-                              onClick={() => handleRemoveWorkflow(pwf.id)}
-                              className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
-                            >
-                              <Trash2 size={16} />
-                            </button>
                           </div>
                         );
                       })
