@@ -445,7 +445,16 @@ export const DataComparison: React.FC<DataComparisonProps> = ({ language, tracki
     { id: 'log-3', jobId: 'job-012a', docName: 'INVOICE', timestamp: new Date().toISOString(), action: 'EDIT_DATA', details: 'แก้ไขข้อมูลฟิลด์: Port of Discharge', version: 1, user: 'Kunawut W.' },
     { id: 'log-4', jobId: 'job-012a', docName: 'PACKING LIST', timestamp: new Date(Date.now() - 86400000).toISOString(), action: 'UPLOAD_NEW', details: 'อัปโหลดเอกสารเวอร์ชันเริ่มต้น', version: 1, user: 'System' },
     { id: 'log-5', jobId: 'job-012a', docName: 'PACKING LIST', timestamp: new Date(Date.now() - 3600000).toISOString(), action: 'EDIT_DATA', details: 'แก้ไขข้อมูลฟิลด์: Invoice No., Date', version: 1, user: 'Kunawut W.' },
-    { id: 'log-6', jobId: 'job-012a', docName: 'PACKING LIST', timestamp: new Date().toISOString(), action: 'UPLOAD_NEW', details: 'อัปโหลดเวอร์ชันใหม่: rev2', version: 2, user: 'Kunawut W.' }
+    { id: 'log-6', jobId: 'job-012a', docName: 'PACKING LIST', timestamp: new Date().toISOString(), action: 'UPLOAD_NEW', details: 'อัปโหลดเวอร์ชันใหม่: rev2', version: 2, user: 'Kunawut W.' },
+    // job-004a (KR-TH-2026-00567 / JOB-001) is a DONE + LOCKED job — seeded with a full
+    // upload -> OCR -> confirm -> export history so its activity log isn't empty.
+    { id: 'log-7', jobId: 'job-004a', docName: 'Invoice', timestamp: new Date(Date.now() - 8 * 86400000).toISOString(), action: 'UPLOAD_NEW', details: 'อัปโหลดเอกสารเวอร์ชันเริ่มต้น', version: 1, user: 'Nui P.' },
+    { id: 'log-8', jobId: 'job-004a', docName: 'Invoice', timestamp: new Date(Date.now() - 8 * 86400000 + 300000).toISOString(), action: 'OCR_DONE', details: 'อ่านไฟล์และดึงข้อมูลสำเร็จ', version: 1, user: 'Nui P.' },
+    { id: 'log-9', jobId: 'job-004a', docName: 'Packing List', timestamp: new Date(Date.now() - 8 * 86400000).toISOString(), action: 'UPLOAD_NEW', details: 'อัปโหลดเอกสารเวอร์ชันเริ่มต้น', version: 1, user: 'Nui P.' },
+    { id: 'log-10', jobId: 'job-004a', docName: 'Packing List', timestamp: new Date(Date.now() - 8 * 86400000 + 300000).toISOString(), action: 'OCR_DONE', details: 'อ่านไฟล์และดึงข้อมูลสำเร็จ', version: 1, user: 'Nui P.' },
+    { id: 'log-11', jobId: 'job-004a', docName: 'CO', timestamp: new Date(Date.now() - 8 * 86400000).toISOString(), action: 'UPLOAD_NEW', details: 'อัปโหลดเอกสารเวอร์ชันเริ่มต้น', version: 1, user: 'Nui P.' },
+    { id: 'log-12', jobId: 'job-004a', docName: 'CO', timestamp: new Date(Date.now() - 8 * 86400000 + 300000).toISOString(), action: 'OCR_DONE', details: 'อ่านไฟล์และดึงข้อมูลสำเร็จ', version: 1, user: 'Nui P.' },
+    { id: 'log-13', jobId: 'job-004a', docName: 'CO', timestamp: new Date(Date.now() - 7 * 86400000).toISOString(), action: 'EDIT_DATA', details: 'แก้ไขข้อมูลฟิลด์: Certificate No.', version: 1, user: 'Nui P.' }
   ]);
   const [showPdfLogsModal, setShowPdfLogsModal] = useState(false);
   const [showJobLogsModal, setShowJobLogsModal] = useState(false);
@@ -866,6 +875,14 @@ const mockWorkflows: Workflow[] = [
       user: 'AI Agent (Compare)',
       timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1d ago
       details: 'Found 3 mismatches in Job LEO-2025-0041'
+    },
+    {
+      id: 'log-7',
+      action: 'APPROVE',
+      user: 'Nui P.',
+      timestamp: new Date(Date.now() - 7 * 86400000 + 600000).toISOString(),
+      details: 'ส่งออกข้อมูลและล็อครายการสำเร็จ',
+      originalItem: { id: 'job-004a' }
     }
   ]);
 
