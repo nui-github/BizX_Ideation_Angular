@@ -252,6 +252,7 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
       </div>
 
       {/* Modal */}
+      {typeof document !== 'undefined' && createPortal(
       <AnimatePresence>
         {showModal && (
           <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4">
@@ -355,7 +356,7 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
                     <button
                       onClick={handleAddWorkflow}
                       disabled={!selectedWorkflowId || selectedWorkflowTeams.length === 0}
-                      className="w-full py-2 bg-white border border-[#1f5df9] text-[#1f5df9] rounded-lg font-bold text-xs hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                      className="w-full py-2 bg-white border border-[#1f5df9] text-[#1f5df9] rounded-[4px] font-bold text-xs hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
                     >
                       <Plus size={14} /> {t.addWorkflow}
                     </button>
@@ -413,16 +414,16 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
               </div>
 
               <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex items-center justify-end gap-3 shrink-0">
-                <button 
+                <button
                   onClick={handleCloseModal}
-                  className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg font-bold text-sm hover:bg-slate-100 transition-all"
+                  className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-[4px] font-bold text-sm hover:bg-slate-100 transition-all"
                 >
                   {t.cancel}
                 </button>
-                <button 
+                <button
                   onClick={handleSave}
                   disabled={!canSave}
-                  className="px-6 py-2 bg-[#1f5df9] text-white rounded-lg font-bold text-sm flex items-center gap-2 hover:bg-blue-600 disabled:opacity-50 disabled:hover:bg-[#1f5df9] disabled:cursor-not-allowed transition-all shadow-sm"
+                  className="px-6 py-2 bg-[#1f5df9] text-white rounded-[4px] font-bold text-sm flex items-center gap-2 hover:bg-blue-600 disabled:opacity-50 disabled:hover:bg-[#1f5df9] disabled:cursor-not-allowed transition-all shadow-sm"
                 >
                   <Check size={16} />
                   {t.save}
@@ -431,7 +432,9 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
             </motion.div>
           </div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>,
+      document.body
+      )}
 
       {/* Delete Confirmation Dialog */}
       {typeof document !== 'undefined' && createPortal(
