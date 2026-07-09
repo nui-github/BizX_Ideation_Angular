@@ -386,9 +386,14 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
                               </div>
                               <div className="flex-1 flex items-center justify-between">
                                 <div>
-                                  <h4 className="text-sm font-bold text-[#010136]">
-                                    {wf?.name || 'Unknown Workflow'}
-                                  </h4>
+                                  <div className="flex items-center gap-2">
+                                    <h4 className="text-sm font-bold text-[#010136]">
+                                      {wf?.name || 'Unknown Workflow'}
+                                    </h4>
+                                    <span className="px-1.5 py-0.5 bg-blue-50 text-blue-600 text-[9px] font-black rounded tracking-wide">
+                                      JOB-{String(index + 1).padStart(4, '0')}
+                                    </span>
+                                  </div>
                                   <div className="flex flex-wrap gap-1 mt-1">
                                     {pwf.assignedTeams.map(team => {
                                       const teamLabel = MOCK_TEAMS.find(t => t.value === team)?.label || team;
