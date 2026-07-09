@@ -35,56 +35,11 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentUserRole, onTog
         <div className={`h-16 flex items-center px-4 ${collapsed ? 'justify-center' : ''}`}>
            {collapsed ? (
              <div className="cursor-pointer flex items-center justify-center">
-               <svg width="32" height="32" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="select-none">
-                 <defs>
-                   <linearGradient id="bizx-collapsed-grad" x1="0%" y1="100%" x2="100%" y2="0%">
-                     <stop offset="0%" stopColor="#0066ff" />
-                     <stop offset="60%" stopColor="#00cbd5" />
-                     <stop offset="100%" stopColor="#02ebd0" />
-                   </linearGradient>
-                   <mask id="bizx-collapsed-mask">
-                     <rect width="100%" height="100%" fill="black" />
-                     <rect x="0" y="12" width="100" height="76" fill="white" />
-                     <line x1="5" y1="95" x2="95" y2="5" stroke="black" strokeWidth="12" strokeLinecap="butt" />
-                   </mask>
-                 </defs>
-
-                 <g mask="url(#bizx-collapsed-mask)">
-                   <line x1="20" y1="0" x2="80" y2="100" stroke="url(#bizx-collapsed-grad)" strokeWidth="24" strokeLinecap="butt" />
-                   <line x1="20" y1="100" x2="80" y2="0" stroke="url(#bizx-collapsed-grad)" strokeWidth="24" strokeLinecap="butt" />
-                 </g>
-
-                 <line x1="5" y1="95" x2="95" y2="5" stroke="url(#bizx-collapsed-grad)" strokeWidth="4.5" strokeLinecap="butt" />
-               </svg>
+               <img src="/logo-bizx-mark.svg" alt="BizX" width={28} height={28} className="select-none" />
              </div>
            ) : (
-             <div className="cursor-pointer w-full flex items-center pl-2">
-               <svg width="100%" height="44" viewBox="0 0 240 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="select-none">
-                 <defs>
-                   <linearGradient id="bizx-grad" x1="0%" y1="100%" x2="100%" y2="0%">
-                     <stop offset="0%" stopColor="#0066ff" />
-                     <stop offset="60%" stopColor="#00cbd5" />
-                     <stop offset="100%" stopColor="#02ebd0" />
-                   </linearGradient>
-                   
-                   <mask id="bizx-x-mask">
-                     <rect width="100%" height="100%" fill="black" />
-                     <rect x="0" y="12" width="100" height="76" fill="white" />
-                     <line x1="5" y1="95" x2="95" y2="5" stroke="black" strokeWidth="12" strokeLinecap="butt" />
-                   </mask>
-                 </defs>
-
-                 <text x="5" y="60" fontFamily="system-ui, -apple-system, sans-serif" fontWeight="900" fontSize="54" fill="#040430" letterSpacing="-0.03em">Biz</text>
-                 <text x="7" y="82" fontFamily="system-ui, -apple-system, sans-serif" fontWeight="700" fontSize="9" fill="#040430" letterSpacing="0.14em">BUSINESS EXCHANGE</text>
-
-                 <g transform="translate(135, 0)">
-                   <g mask="url(#bizx-x-mask)">
-                     <line x1="20" y1="0" x2="80" y2="100" stroke="url(#bizx-grad)" strokeWidth="24" strokeLinecap="butt" />
-                     <line x1="20" y1="100" x2="80" y2="0" stroke="url(#bizx-grad)" strokeWidth="24" strokeLinecap="butt" />
-                   </g>
-                   <line x1="5" y1="95" x2="95" y2="5" stroke="url(#bizx-grad)" strokeWidth="4.5" strokeLinecap="butt" />
-                 </g>
-               </svg>
+             <div className="cursor-pointer w-full flex items-center justify-center">
+               <img src="/logo-bizx.svg" alt="BizX — Business Exchange" className="select-none h-11 w-auto" />
              </div>
            )}
         </div>
