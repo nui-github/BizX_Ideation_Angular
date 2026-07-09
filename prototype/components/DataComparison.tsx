@@ -7107,8 +7107,57 @@ const mockWorkflows: Workflow[] = [
                       version: 1,
                       user: log.user
                     }));
-                  const jobLogs = [...docLogs, ...jobWideLogs]
+                  let jobLogs = [...docLogs, ...jobWideLogs]
                     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+                  // Demo jobs created directly from mock data (rather than through the
+                  // upload/OCR/export flow in this session) never got real log entries.
+                  // For any job that has actually processed documents, synthesize a
+                  // plausible upload -> OCR -> export history instead of showing empty.
+                  if (jobLogs.length === 0) {
+                    const processedDocs = Object.entries(selectedJob.docs || {})
+                      .filter(([, status]) => status !== ComparisonDocStatus.MISSING);
+                    if (processedDocs.length > 0) {
+                      const baseTime = selectedJob.createdAt ? new Date(selectedJob.createdAt).getTime() : Date.now() - 86400000;
+                      const actor = selectedJob.assignee || (language === 'TH' ? 'ระบบ' : 'System');
+                      const synthetic: typeof docLogs = [];
+                      processedDocs.forEach(([docName], i) => {
+                        synthetic.push({
+                          id: `synthetic-${selectedJob.id}-${docName}-upload`,
+                          jobId: selectedJob.id,
+                          docName,
+                          timestamp: new Date(baseTime + i * 60000).toISOString(),
+                          action: 'UPLOAD_NEW',
+                          details: language === 'TH' ? 'อัปโหลดเอกสารเวอร์ชันเริ่มต้น' : 'Uploaded initial document version',
+                          version: 1,
+                          user: actor
+                        });
+                        synthetic.push({
+                          id: `synthetic-${selectedJob.id}-${docName}-ocr`,
+                          jobId: selectedJob.id,
+                          docName,
+                          timestamp: new Date(baseTime + i * 60000 + 30000).toISOString(),
+                          action: 'OCR_DONE',
+                          details: language === 'TH' ? 'อ่านไฟล์และดึงข้อมูลสำเร็จ' : 'Read file and extracted data successfully',
+                          version: 1,
+                          user: actor
+                        });
+                      });
+                      if (selectedJob.status === JobStatus.DONE || selectedJob.status === JobStatus.READY || selectedJob.isLocked) {
+                        synthetic.push({
+                          id: `synthetic-${selectedJob.id}-export`,
+                          jobId: selectedJob.id,
+                          docName: language === 'TH' ? 'ทั้งหมด' : 'ALL',
+                          timestamp: new Date(baseTime + processedDocs.length * 60000 + 60000).toISOString(),
+                          action: 'APPROVE',
+                          details: language === 'TH' ? 'ส่งออกข้อมูลและล็อครายการสำเร็จ' : 'Exported data and locked the job',
+                          version: 1,
+                          user: actor
+                        });
+                      }
+                      jobLogs = synthetic.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+                    }
+                  }
 
                   if (jobLogs.length === 0) {
                     return (
