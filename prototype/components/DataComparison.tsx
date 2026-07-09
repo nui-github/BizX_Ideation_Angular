@@ -3810,7 +3810,7 @@ const mockWorkflows: Workflow[] = [
                       <td className="px-8 py-5">
                         <div className="flex items-center gap-4">
                           <div>
-                            <p className={`font-black text-[13px] tracking-tight mb-0.5 ${isBlocked ? 'text-slate-400' : 'text-[#010136]'}`}>{job.id.toUpperCase()}</p>
+                            <p className={`font-black text-[13px] tracking-tight mb-0.5 ${isBlocked ? 'text-slate-400' : 'text-[#010136]'}`}>{`JOB-${String(seqIndex + 1).padStart(4, '0')}`}</p>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                               {language === 'TH' ? 'สร้างเมื่อ: ' : 'CREATED: '} <span className="text-slate-500">{job.createdAt ? formatDisplayDate(job.createdAt) : 'N/A'}</span>
                             </p>
