@@ -456,7 +456,6 @@ export const DataComparison: React.FC<DataComparisonProps> = ({ language, tracki
     { id: 'log-12', jobId: 'job-004a', docName: 'CO', timestamp: new Date(Date.now() - 8 * 86400000 + 300000).toISOString(), action: 'OCR_DONE', details: 'อ่านไฟล์และดึงข้อมูลสำเร็จ', version: 1, user: 'Nui P.' },
     { id: 'log-13', jobId: 'job-004a', docName: 'CO', timestamp: new Date(Date.now() - 7 * 86400000).toISOString(), action: 'EDIT_DATA', details: 'แก้ไขข้อมูลฟิลด์: Certificate No.', version: 1, user: 'Nui P.' }
   ]);
-  const [showPdfLogsModal, setShowPdfLogsModal] = useState(false);
   const [showJobLogsModal, setShowJobLogsModal] = useState(false);
   const [showSaveToast, setShowSaveToast] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -4877,16 +4876,7 @@ const mockWorkflows: Workflow[] = [
               </div>
               
               <div className="flex items-center gap-3">
-                {activeBoardTab !== 'pending' && (
-                  <button
-                    onClick={() => setShowPdfLogsModal(true)}
-                    className="px-4 h-10 rounded-[4px] font-bold text-xs uppercase tracking-widest bg-slate-100 text-slate-500 hover:bg-indigo-600 hover:text-white transition-all flex items-center gap-2 cursor-pointer"
-                  >
-                    <History size={16} />
-                     {language === 'TH' ? 'ประวัติ (Log)' : 'Activity Log'}
-                  </button>
-                )}
-                <button 
+                <button
                   onClick={() => setPdfPreviewUrl(null)}
                   className="w-10 h-10 rounded-[4px] bg-slate-100 text-slate-400 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center cursor-pointer"
                 >
@@ -5692,121 +5682,6 @@ const mockWorkflows: Workflow[] = [
                 <span className="text-xs font-black uppercase tracking-widest">
                   {language === 'TH' ? 'บันทึกข้อมูลเรียบร้อยแล้ว' : 'OCR DATA SAVED SUCCESSFULLY'}
                 </span>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Activity Logs Modal */}
-          <AnimatePresence>
-            {showPdfLogsModal && (
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md"
-              >
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                  className="bg-white w-full max-w-5xl max-h-[85vh] rounded-2xl overflow-hidden shadow-2xl flex flex-col border border-slate-200"
-                >
-                  <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-10">
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
-                        <History size={20} />
-                      </div>
-                      <div>
-                        <h3 className="font-black text-slate-800 tracking-tight text-lg leading-tight uppercase">
-                          {language === 'TH' ? 'ประวัติการแก้ไขข้อมูล' : 'Activity Logs'}
-                        </h3>
-                        <p className="text-[11px] font-bold text-slate-400 tracking-tight leading-none mt-0.5 uppercase">{pdfPreviewUrl}</p>
-                      </div>
-                    </div>
-                    <button 
-                      onClick={() => setShowPdfLogsModal(false)}
-                      className="w-10 h-10 rounded-[4px] bg-slate-100 text-slate-400 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center"
-                    >
-                      <X size={20} />
-                    </button>
-                  </div>
-                  
-                  <div className="flex-1 overflow-auto p-6 bg-slate-50/50">
-                    {ocrLogs.filter(log => log.jobId === selectedJob?.id && log.docName.toUpperCase() === pdfPreviewUrl?.toUpperCase()).length === 0 ? (
-                      <div className="flex flex-col items-center justify-center h-48 text-center space-y-3 opacity-60 bg-white border border-slate-200 border-dashed rounded-xl m-6">
-                        <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center">
-                          <History size={24} className="text-slate-400" />
-                        </div>
-                        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">{language === 'TH' ? 'ยังไม่มีประวัติ' : 'No logs found'}</p>
-                      </div>
-                    ) : (
-                      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-                        <table className="w-full text-left border-collapse">
-                          <thead>
-                            <tr className="bg-slate-50 border-b border-slate-200">
-                              <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{language === 'TH' ? 'วัน/เวลา' : 'Date/Time'}</th>
-                              <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{language === 'TH' ? 'การกระทำ' : 'Action'}</th>
-                              <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{language === 'TH' ? 'เวอร์ชันเอกสาร' : 'Doc Version'}</th>
-                              <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{language === 'TH' ? 'ผู้ใช้งาน' : 'User'}</th>
-                              <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-1/3">{language === 'TH' ? 'รายละเอียด' : 'Details'}</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-100">
-                            {[...ocrLogs]
-                              .filter(log => log.jobId === selectedJob?.id && log.docName.toUpperCase() === pdfPreviewUrl?.toUpperCase())
-                              .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-                              .map(log => (
-                              <tr key={log.id} className="hover:bg-slate-50/50 transition-colors">
-                                <td className="p-4 whitespace-nowrap">
-                                  <span className="text-xs font-bold text-slate-600 block">
-                                    {new Date(log.timestamp).toLocaleDateString(language === 'TH' ? 'th-TH' : 'en-US', { day: '2-digit', month: 'short', year: 'numeric' })}
-                                  </span>
-                                  <span className="text-[10px] font-semibold text-slate-400 block mt-0.5">
-                                    {new Date(log.timestamp).toLocaleTimeString(language === 'TH' ? 'th-TH' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
-                                  </span>
-                                </td>
-                                <td className="p-4 whitespace-nowrap">
-                                  <div className="flex items-center gap-2">
-                                    {log.action === 'EDIT_DATA' ? <Edit3 size={14} className="text-blue-500" />
-                                      : log.action === 'CONFIRM_DATA' ? <CheckCircle2 size={14} className="text-rose-500" />
-                                      : log.action === 'UNCONFIRM_DATA' ? <XCircle size={14} className="text-slate-400" />
-                                      : <UploadCloud size={14} className="text-emerald-500" />}
-                                    <span className="text-xs font-bold text-slate-700">
-                                      {log.action === 'EDIT_DATA' ? (language === 'TH' ? 'แก้ไขข้อมูล OCR' : 'Edited OCR Data')
-                                        : log.action === 'CONFIRM_DATA' ? (language === 'TH' ? 'กดยืนยันใช้ค่านี้' : 'Confirmed Value')
-                                        : log.action === 'UNCONFIRM_DATA' ? (language === 'TH' ? 'กดยกเลิกการยืนยัน' : 'Unconfirmed Value')
-                                        : (language === 'TH' ? 'อัปโหลดเวอร์ชันใหม่' : 'Uploaded New Version')}
-                                    </span>
-                                  </div>
-                                </td>
-                                <td className="p-4 whitespace-nowrap">
-                                  <span className={`text-[10px] font-black px-2.5 py-1 rounded-full border ${log.version > 1 ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 'bg-slate-100 text-slate-500 border-slate-200'}`}>
-                                    v{log.version}
-                                  </span>
-                                </td>
-                                <td className="p-4 whitespace-nowrap">
-                                  <div className="flex items-center gap-2">
-                                    <div className="w-6 h-6 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[10px] font-black text-slate-600 uppercase">
-                                      {log.user.slice(0, 2)}
-                                    </div>
-                                    <span className="text-sm font-semibold text-slate-600">{log.user}</span>
-                                  </div>
-                                </td>
-                                <td className="p-4">
-                                  <div className="text-xs text-slate-500 font-medium leading-relaxed max-w-sm">
-                                    {log.action === 'EDIT_DATA' && language === 'TH' ? <span className="font-semibold text-slate-700">มีการแก้ไขข้อมูลในฟิลด์: </span> : ''}
-                                    {log.action === 'EDIT_DATA' && language === 'EN' ? <span className="font-semibold text-slate-700">Fields updated: </span> : ''}
-                                    {log.details.replace('แก้ไขฟิลด์: ', '').replace('Edited fields: ', '')}
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
               </motion.div>
             )}
           </AnimatePresence>
