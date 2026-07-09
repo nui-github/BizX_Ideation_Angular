@@ -6,6 +6,7 @@ import {
   GripVertical, Link2, Link2Off, X, Lock, Sparkles
 } from 'lucide-react';
 import { ComparisonJob, JobStatus, Workflow, ComparisonDocStatus, JobPreset } from '../types';
+import { MOCK_TEAMS } from '../mock-data/teams.mock';
 
 interface CreateJobModalProps {
   visible: boolean;
@@ -87,16 +88,11 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({
 
         if (preset && preset.workflows.length > 0) {
           // Auto-fill the sequence from the team's preset (locked, not user-editable).
-          // Running-number steps get a fresh 4-digit code each time; fixed-suffix steps
-          // reuse the exact code configured on the preset.
+          // Naming is fully automatic: JOB-0001, JOB-0002, ... in preset order.
           setChildJobs(preset.workflows.map((pwf, idx) => {
             const wf = workflows.find(w => w.id === pwf.workflowId);
             const hasCreateJobNode = wf?.nodes.some(n => n.type === 'create_job');
-            const suffixValue = !hasCreateJobNode
-              ? ''
-              : pwf.useRunningNumber
-              ? String(Math.floor(1000 + Math.random() * 9000))
-              : (pwf.jobSuffix || String(Math.floor(1000 + Math.random() * 9000)));
+            const suffixValue = hasCreateJobNode ? String(idx + 1).padStart(4, '0') : '';
             return {
               id: `cj-preset-${idx}-${Date.now()}`,
               workflowId: pwf.workflowId,
@@ -410,8 +406,8 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({
       placement="right"
       className="font-sans"
       footer={
-        <div className="flex justify-end gap-3 font-sans py-3 px-4 border-t border-slate-100 bg-white">
-          <button 
+        <div className="flex justify-end gap-3 font-sans bg-white">
+          <button
             type="button"
             onClick={onClose}
             className="font-sans font-bold h-10 px-5 text-xs text-slate-500 rounded-[4px] border border-slate-200 hover:border-slate-300 hover:text-slate-700 transition-all cursor-pointer bg-white"
@@ -734,17 +730,26 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({
                             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
                               {isTh ? `รายการย่อยที่ ${idx + 1}: เวิร์กโฟลว์` : `Job ${idx + 1}: Workflow`} <span className="text-red-500">*</span>
                             </label>
-                            <select
-                              value={job.workflowId || ''}
-                              onChange={(e) => handleChildJobChange(job.id, 'workflowId', e.target.value || null)}
-                              disabled={isPresetLocked}
-                              className="w-full h-[38px] bg-white border border-slate-200 rounded-[4px] px-2.5 text-xs font-black text-[#010136] outline-none focus:ring-2 focus:ring-[#1f5df9]/10 focus:border-[#1f5df9] transition-all py-0 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
-                            >
-                              <option value="">{isTh ? '-- เลือกเวิร์กโฟลว์ --' : '-- Select Workflow --'}</option>
-                              {workflows.filter(w => w.id !== 'wf-2' && w.name !== 'Empty Workflow').map(w => (
-                                <option key={w.id} value={w.id}>{w.name}</option>
-                              ))}
-                            </select>
+                            {isPresetLocked ? (
+                              <input
+                                type="text"
+                                disabled
+                                readOnly
+                                value={wf?.name || ''}
+                                className="w-full h-[38px] bg-slate-100 border border-slate-200 rounded-[4px] px-2.5 text-xs font-black text-slate-500 disabled:cursor-not-allowed"
+                              />
+                            ) : (
+                              <select
+                                value={job.workflowId || ''}
+                                onChange={(e) => handleChildJobChange(job.id, 'workflowId', e.target.value || null)}
+                                className="w-full h-[38px] bg-white border border-slate-200 rounded-[4px] px-2.5 text-xs font-black text-[#010136] outline-none focus:ring-2 focus:ring-[#1f5df9]/10 focus:border-[#1f5df9] transition-all py-0"
+                              >
+                                <option value="">{isTh ? '-- เลือกเวิร์กโฟลว์ --' : '-- Select Workflow --'}</option>
+                                {workflows.filter(w => w.id !== 'wf-2' && w.name !== 'Empty Workflow').map(w => (
+                                  <option key={w.id} value={w.id}>{w.name}</option>
+                                ))}
+                              </select>
+                            )}
                           </div>
 
                           {/* Suffix format field */}
@@ -767,22 +772,36 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({
                             </div>
                           </div>
 
-                          {/* Assignee dropdown */}
+                          {/* Assignee: individual user, or the preset's assigned team when locked */}
                           <div className="md:col-span-3">
                             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                              {isTh ? 'Assignee (ผู้รับผิดชอบ)' : 'Assignee'}
+                              {isPresetLocked
+                                ? (isTh ? 'ทีมที่รับผิดชอบ' : 'Assigned Team')
+                                : (isTh ? 'Assignee (ผู้รับผิดชอบ)' : 'Assignee')}
                             </label>
-                            <select
-                              value={job.assignee || 'unassigned'}
-                              onChange={(e) => handleChildJobChange(job.id, 'assignee', e.target.value)}
-                              className="w-full h-[38px] bg-white border border-slate-200 rounded-[4px] px-2.5 text-xs font-black text-[#010136] outline-none focus:ring-2 focus:ring-[#1f5df9]/10 focus:border-[#1f5df9] transition-all py-0 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
-                              disabled={!job.workflowId || isPresetLocked}
-                            >
-                              <option value="unassigned">{isTh ? 'ยังไม่กำหนด' : 'Unassigned'}</option>
-                              <option value="Kunawut W.">Kunawut W.</option>
-                              <option value="Somchai T.">Somchai T.</option>
-                              <option value="System">System</option>
-                            </select>
+                            {isPresetLocked ? (
+                              <input
+                                type="text"
+                                disabled
+                                readOnly
+                                value={(preset?.workflows[idx]?.assignedTeams || [])
+                                  .map(teamValue => MOCK_TEAMS.find(t => t.value === teamValue)?.label || teamValue)
+                                  .join(', ')}
+                                className="w-full h-[38px] bg-slate-100 border border-slate-200 rounded-[4px] px-2.5 text-xs font-black text-slate-500 disabled:cursor-not-allowed"
+                              />
+                            ) : (
+                              <select
+                                value={job.assignee || 'unassigned'}
+                                onChange={(e) => handleChildJobChange(job.id, 'assignee', e.target.value)}
+                                className="w-full h-[38px] bg-white border border-slate-200 rounded-[4px] px-2.5 text-xs font-black text-[#010136] outline-none focus:ring-2 focus:ring-[#1f5df9]/10 focus:border-[#1f5df9] transition-all py-0 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
+                                disabled={!job.workflowId}
+                              >
+                                <option value="unassigned">{isTh ? 'ยังไม่กำหนด' : 'Unassigned'}</option>
+                                <option value="Kunawut W.">Kunawut W.</option>
+                                <option value="Somchai T.">Somchai T.</option>
+                                <option value="System">System</option>
+                              </select>
+                            )}
                           </div>
 
                           {/* Delete row button */}

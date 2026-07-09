@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Select, Switch } from 'antd';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Trash2, Edit3, CheckCircle2, AlertCircle, ArrowLeft, Settings, Search, X, Check, RefreshCw } from 'lucide-react';
+import { Plus, Trash2, Edit3, CheckCircle2, AlertCircle, ArrowLeft, Settings, Search, X, Check } from 'lucide-react';
 import { Language, Workflow, JobPreset, JobPresetWorkflow } from '../types';
 import { MOCK_TEAMS } from '../mock-data/teams.mock';
 import { Tooltip } from './Tooltip';
@@ -45,8 +45,6 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
   // Workflow Selection State for adding new workflow in modal
   const [selectedWorkflowId, setSelectedWorkflowId] = useState<string>('');
   const [selectedWorkflowTeams, setSelectedWorkflowTeams] = useState<string[]>([]);
-  const [selectedWorkflowSuffix, setSelectedWorkflowSuffix] = useState<string>('');
-  const [selectedWorkflowUseRunningNumber, setSelectedWorkflowUseRunningNumber] = useState<boolean>(true);
 
   const t = {
     title: language === 'TH' ? 'ตั้งค่าพรีเซ็ตงานเริ่มต้น' : 'Default Job Preset Settings',
@@ -59,8 +57,6 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
     workflows: language === 'TH' ? 'รายการเวิร์กโฟลว์' : 'Workflows List',
     addWorkflow: language === 'TH' ? 'เพิ่มเวิร์กโฟลว์' : 'Add Workflow',
     workflowTeam: language === 'TH' ? 'ทีมที่ทำงานในเวิร์กโฟลว์' : 'Teams working on workflow',
-    jobName: language === 'TH' ? 'ชื่อรายการย่อย (รหัสต่อท้าย)' : 'Job Name (Suffix)',
-    useRunningNumber: language === 'TH' ? 'ใช้ running number อัตโนมัติ (4 หลัก)' : 'Auto running number (4 digits)',
     save: language === 'TH' ? 'บันทึก' : 'Save',
     cancel: language === 'TH' ? 'ยกเลิก' : 'Cancel',
     active: language === 'TH' ? 'เปิดใช้งาน' : 'Active',
@@ -68,23 +64,6 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
   };
 
   const allWorkflows = [...workflows, ...comparisonWorkflows];
-
-  const getPrefix = (format: string) => {
-    if (!format) return 'JOB-';
-    const bracketIdx = format.indexOf('{');
-    if (bracketIdx !== -1) {
-      return format.substring(0, bracketIdx);
-    }
-    return format;
-  };
-
-  const generateRunningNumber = () => String(Math.floor(1000 + Math.random() * 9000));
-
-  const selectedWorkflowPrefix = (() => {
-    const wf = allWorkflows.find(w => w.id === selectedWorkflowId);
-    const createJobNode = wf?.nodes.find(n => n.type === 'create_job');
-    return getPrefix(createJobNode?.data?.namingFormat || '');
-  })();
 
   // Each team may only be assigned to a single preset — otherwise the system
   // wouldn't know which preset to apply when a member creates a new job.
@@ -117,8 +96,6 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
     }
     setSelectedWorkflowId('');
     setSelectedWorkflowTeams([]);
-    setSelectedWorkflowSuffix('');
-    setSelectedWorkflowUseRunningNumber(true);
     setShowModal(true);
   };
 
@@ -131,14 +108,10 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
       setPresetWorkflows([...presetWorkflows, {
         id: `pwf-${Date.now()}`,
         workflowId: selectedWorkflowId,
-        assignedTeams: selectedWorkflowTeams,
-        useRunningNumber: selectedWorkflowUseRunningNumber,
-        jobSuffix: selectedWorkflowUseRunningNumber ? generateRunningNumber() : selectedWorkflowSuffix.trim()
+        assignedTeams: selectedWorkflowTeams
       }]);
       setSelectedWorkflowId('');
       setSelectedWorkflowTeams([]);
-      setSelectedWorkflowSuffix('');
-      setSelectedWorkflowUseRunningNumber(true);
     }
   };
 
@@ -381,35 +354,9 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
                       </div>
                     </div>
 
-                    <div>
-                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">{t.jobName}</label>
-                      <div className="flex h-[38px] rounded-[4px] border border-slate-200 overflow-hidden bg-white focus-within:ring-2 focus-within:ring-[#1f5df9]/10 focus-within:border-[#1f5df9] transition-all">
-                        <span className="inline-flex items-center px-2 bg-slate-50 border-r border-slate-100 text-slate-400 text-[10px] font-mono font-black select-none h-full shrink-0">
-                          {selectedWorkflowPrefix}
-                        </span>
-                        <input
-                          type="text"
-                          value={selectedWorkflowUseRunningNumber ? '' : selectedWorkflowSuffix}
-                          onChange={(e) => setSelectedWorkflowSuffix(e.target.value)}
-                          disabled={selectedWorkflowUseRunningNumber}
-                          placeholder={selectedWorkflowUseRunningNumber ? (language === 'TH' ? 'ระบบจะสร้างเลขอัตโนมัติ' : 'Auto-generated') : (language === 'TH' ? 'เลขต่อท้าย เช่น 4091...' : 'suffix...')}
-                          className="flex-1 min-w-0 block w-full px-2 text-xs font-bold font-mono text-[#010136] focus:outline-none placeholder-slate-300 h-full py-0 border-none disabled:bg-slate-100 disabled:text-slate-400"
-                        />
-                      </div>
-                      <label className="flex items-center gap-1.5 mt-1.5 cursor-pointer select-none">
-                        <input
-                          type="checkbox"
-                          checked={selectedWorkflowUseRunningNumber}
-                          onChange={(e) => setSelectedWorkflowUseRunningNumber(e.target.checked)}
-                          className="w-3.5 h-3.5 accent-[#1f5df9] cursor-pointer"
-                        />
-                        <span className="text-[10px] font-bold text-slate-500">{t.useRunningNumber}</span>
-                      </label>
-                    </div>
-
                     <button
                       onClick={handleAddWorkflow}
-                      disabled={!selectedWorkflowId || selectedWorkflowTeams.length === 0 || (!selectedWorkflowUseRunningNumber && !selectedWorkflowSuffix.trim())}
+                      disabled={!selectedWorkflowId || selectedWorkflowTeams.length === 0}
                       className="w-full py-2 bg-white border border-[#1f5df9] text-[#1f5df9] rounded-[4px] font-bold text-xs hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
                     >
                       <Plus size={14} /> {t.addWorkflow}
@@ -439,18 +386,8 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
                               </div>
                               <div className="flex-1 flex items-center justify-between">
                                 <div>
-                                  <h4 className="text-sm font-bold text-[#010136] flex items-center gap-1.5">
+                                  <h4 className="text-sm font-bold text-[#010136]">
                                     {wf?.name || 'Unknown Workflow'}
-                                    {pwf.jobSuffix && (
-                                      <span className="px-1.5 py-0.5 bg-blue-50 text-[#1f5df9] text-[9px] font-mono font-black rounded flex items-center gap-1">
-                                        JOB-{pwf.jobSuffix}
-                                        {pwf.useRunningNumber && (
-                                          <span title={t.useRunningNumber}>
-                                            <RefreshCw size={9} />
-                                          </span>
-                                        )}
-                                      </span>
-                                    )}
                                   </h4>
                                   <div className="flex flex-wrap gap-1 mt-1">
                                     {pwf.assignedTeams.map(team => {

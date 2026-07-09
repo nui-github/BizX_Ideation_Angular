@@ -24,7 +24,7 @@ import { MOCK_PRESETS } from '../mock-data/preset.mock';
 // there's no real auth/session concept yet, so the current user's team is fixed here.
 const CURRENT_USER_TEAM = 'logistics';
 import { 
-  Inbox, FileWarning, Clock, User, Calendar, Mail, UserPlus, UserMinus
+  Inbox, FileWarning, Clock, User, Calendar, Mail
 } from 'lucide-react';
 
 const LOCAL_T = {
@@ -394,8 +394,6 @@ export const DataComparison: React.FC<DataComparisonProps> = ({ language, tracki
     }
   }, [pdfPreviewUrl]);
   const [showLockPrompt, setShowLockPrompt] = useState(false);
-  const [showClaimPrompt, setShowClaimPrompt] = useState(false);
-  const [showUnclaimPrompt, setShowUnclaimPrompt] = useState(false);
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(true);
   const [overriddenValues, setOverriddenValues] = useState<Record<string, string>>({}); // field-tIdx -> value
   const [confirmedMismatches, setConfirmedMismatches] = useState<Record<string, boolean>>({}); // job_doc_field -> boolean
@@ -445,6 +443,7 @@ export const DataComparison: React.FC<DataComparisonProps> = ({ language, tracki
     { id: 'log-6', docName: 'PACKING LIST', timestamp: new Date().toISOString(), action: 'UPLOAD_NEW', details: 'อัปโหลดเวอร์ชันใหม่: rev2', version: 2, user: 'Kunawut W.' }
   ]);
   const [showPdfLogsModal, setShowPdfLogsModal] = useState(false);
+  const [showJobLogsModal, setShowJobLogsModal] = useState(false);
   const [showSaveToast, setShowSaveToast] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [activeBoardTab, setActiveBoardTab] = useState('jobs');
@@ -2231,10 +2230,9 @@ const mockWorkflows: Workflow[] = [
     return docStatuses.length > 0 && docStatuses.every(status => status === ComparisonDocStatus.LOCKED);
   }, [selectedJob]);
 
-  const isUnassigned = React.useMemo(() => {
-    if (!selectedJob) return true;
-    return !selectedJob.assignee || selectedJob.assignee === 'Unassigned' || selectedJob.assignee === '';
-  }, [selectedJob]);
+  // Job actions are no longer gated by an individual "claim" — anyone on the job's
+  // assigned team can manage it, so this always evaluates to false now.
+  const isUnassigned = false;
 
   const handleStartComparison = (jobId: string) => {
     // Set to PROCESSING status first
@@ -2379,80 +2377,6 @@ const mockWorkflows: Workflow[] = [
         return nextJobs;
       });
     }, 5000); // 5 seconds
-  };
-
-  const handleClaimJob = () => {
-    if (!selectedJob) return;
-    const userEmail = 'nuifolio@gmail.com';
-    
-    setJobs(prevJobs => prevJobs.map(job => {
-      if (job.id === selectedJob.id) {
-        const finalJob = {
-          ...job,
-          assignee: userEmail
-        };
-        setSelectedJob(finalJob);
-        return finalJob;
-      }
-      return job;
-    }));
-
-    setActivityLogs(prev => [
-      {
-        id: `log-${Date.now()}`,
-        action: 'CLAIM_JOB',
-        user: userEmail,
-        timestamp: new Date().toISOString(),
-        details: language === 'TH'
-          ? `รับงานสำหรับรายการ: ${selectedJob.reference}`
-          : `Claimed job: ${selectedJob.reference}`
-      },
-      ...prev
-    ]);
-
-    setShowClaimPrompt(false);
-    message.success(
-      language === 'TH'
-        ? `รับงาน "${selectedJob.reference}" เรียบร้อยแล้ว!`
-        : `Claimed job "${selectedJob.reference}" successfully!`
-    );
-  };
-
-  const handleUnclaimJob = () => {
-    if (!selectedJob) return;
-    const userEmail = 'nuifolio@gmail.com';
-
-    setJobs(prevJobs => prevJobs.map(job => {
-      if (job.id === selectedJob.id) {
-        const finalJob = {
-          ...job,
-          assignee: ''
-        };
-        setSelectedJob(finalJob);
-        return finalJob;
-      }
-      return job;
-    }));
-
-    setActivityLogs(prev => [
-      {
-        id: `log-${Date.now()}`,
-        action: 'UNCLAIM_JOB',
-        user: userEmail,
-        timestamp: new Date().toISOString(),
-        details: language === 'TH'
-          ? `ยกเลิกรับงานสำหรับรายการ: ${selectedJob.reference}`
-          : `Unclaimed job: ${selectedJob.reference}`
-      },
-      ...prev
-    ]);
-
-    setShowUnclaimPrompt(false);
-    message.success(
-      language === 'TH'
-        ? `ยกเลิกรับงาน "${selectedJob.reference}" เรียบร้อยแล้ว!`
-        : `Unclaimed job "${selectedJob.reference}" successfully!`
-    );
   };
 
   const renderStatusGuide = () => {
@@ -6065,42 +5989,6 @@ const mockWorkflows: Workflow[] = [
         );
       })()}
 
-      {/* Claim Job confirmation modal */}
-      {showClaimPrompt && selectedJob && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
-           <div className="bg-white p-10 rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 text-center flex flex-col items-center gap-6 animate-in zoom-in-95 duration-300 animate-out fade-out duration-200">
-              <div className="w-24 h-24 rounded-full bg-blue-50 text-[#1f5df9] flex items-center justify-center border-4 border-blue-100/50">
-                 <UserPlus size={44} strokeWidth={2.5} />
-              </div>
-              <div>
-                <h3 className="text-2xl font-black text-[#010136] tracking-tighter mb-2 leading-tight">
-                  {language === 'TH' ? 'ยืนยันการรับงาน' : 'Confirm job claim'}
-                </h3>
-                <p className="text-slate-500 font-bold text-sm leading-relaxed px-2">
-                  {language === 'TH' 
-                    ? `คุณต้องการรับผิดชอบตรวจสอบข้อมูลรายการ ${selectedJob.reference} ใช่หรือไม่?` 
-                    : `Are you sure you want to claim responsibility for job ${selectedJob.reference}?`}
-                </p>
-              </div>
-              <div className="flex flex-col w-full gap-2.5 mt-2">
-                  <button 
-                    onClick={handleClaimJob}
-                    className="w-full py-3.5 bg-[#1f5df9] hover:bg-[#104BE3] text-white rounded-[4px] font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-blue-500/10 hover:shadow-blue-500/25 border-none"
-                  >
-                    <Check size={16} strokeWidth={3} />
-                    <span>{language === 'TH' ? 'ใช่, ยืนยันรับงาน' : 'YES, CLAIM JOB'}</span>
-                  </button>
-                  <button 
-                    onClick={() => setShowClaimPrompt(false)}
-                    className="w-full py-2 bg-transparent hover:bg-transparent text-slate-400 hover:text-slate-500 font-bold text-sm transition-all cursor-pointer border-none"
-                  >
-                    {language === 'TH' ? 'ยกเลิก' : 'CANCEL'}
-                  </button>
-              </div>
-           </div>
-        </div>
-      )}
-
       {/* Reject Data confirmation modal */}
         {showCreateJobModal && (
         <CreateJobModal
@@ -6157,42 +6045,6 @@ const mockWorkflows: Workflow[] = [
             </div>
          </div>
        )}
-
-      {/* Unclaim Job confirmation modal */}
-      {showUnclaimPrompt && selectedJob && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
-           <div className="bg-white p-10 rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 text-center flex flex-col items-center gap-6 animate-in zoom-in-95 duration-300 animate-out fade-out duration-200">
-              <div className="w-24 h-24 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center border-4 border-rose-100/50">
-                 <UserMinus size={44} strokeWidth={2.5} />
-              </div>
-              <div>
-                <h3 className="text-2xl font-black text-[#010136] tracking-tighter mb-2 leading-tight">
-                  {language === 'TH' ? 'ยืนยันการยกเลิกรับงาน' : 'Confirm unclaim'}
-                </h3>
-                <p className="text-slate-500 font-bold text-sm leading-relaxed px-2">
-                  {language === 'TH' 
-                    ? `คุณต้องการยกเลิกการรับผิดชอบ และคืนรายการ ${selectedJob.reference} กลับสู่ระบบใช่หรือไม่?` 
-                    : `Are you sure you want to unclaim and return job ${selectedJob.reference} to unassigned state?`}
-                </p>
-              </div>
-              <div className="flex flex-col w-full gap-2.5 mt-2">
-                  <button 
-                    onClick={handleUnclaimJob}
-                    className="w-full py-3.5 bg-rose-600 hover:bg-rose-700 text-white rounded-[4px] font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-rose-500/10 hover:shadow-rose-500/25 border-none"
-                  >
-                    <Check size={16} strokeWidth={3} />
-                    <span>{language === 'TH' ? 'ใช่, ยกเลิกรับงาน' : 'YES, UNCLAIM JOB'}</span>
-                  </button>
-                  <button 
-                    onClick={() => setShowUnclaimPrompt(false)}
-                    className="w-full py-2 bg-transparent hover:bg-transparent text-slate-400 hover:text-slate-500 font-bold text-sm transition-all cursor-pointer border-none"
-                  >
-                    {language === 'TH' ? 'ยกเลิก' : 'CANCEL'}
-                  </button>
-              </div>
-           </div>
-        </div>
-      )}
 
       {step === 0 && (
         <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm space-y-3 animate-in fade-in duration-500" id="job-board-wrapper">
@@ -6367,37 +6219,6 @@ const mockWorkflows: Workflow[] = [
               </div>
 
               <div className="flex items-center gap-2 bg-slate-50 border border-slate-200/80 p-1.5 rounded-xl shadow-sm">
-                  {/* Claim / Unclaim Action Controls */}
-                  {selectedJob.status !== JobStatus.READY && selectedJob.status !== JobStatus.DONE && (
-                    <>
-                      {(!selectedJob.assignee || selectedJob.assignee === 'Unassigned' || selectedJob.assignee === '') ? (
-                        <Tooltip content={language === 'TH' ? 'รับงานนี้เพื่อเป็นผู้รับผิดชอบงาน' : 'Claim responsibility for this task'}>
-                          <button 
-                            type="button"
-                            onClick={() => setShowClaimPrompt(true)}
-                            className="px-3.5 py-2.5 bg-[#1f5df9] hover:bg-[#1f5df9]/90 text-white font-black text-[11px] uppercase tracking-wider rounded-[4px] transition-all shadow-md shadow-blue-500/10 hover:shadow-blue-500/25 flex items-center gap-1.5 cursor-pointer h-10 select-none border-none shrink-0"
-                            id="claim-job-btn"
-                          >
-                            <UserPlus size={13} strokeWidth={3} />
-                            <span>{language === 'TH' ? 'รับงาน' : 'CLAIM JOB'}</span>
-                          </button>
-                        </Tooltip>
-                      ) : (
-                        <Tooltip content={language === 'TH' ? 'ยกเลิกรับงานนี้เพื่อคืนงานกลับเข้าระบบ' : 'Unclaim responsibility and return job to unassigned'}>
-                          <button 
-                            type="button"
-                            onClick={() => setShowUnclaimPrompt(true)}
-                            className="px-3.5 py-2.5 bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-100 font-black text-[11px] uppercase tracking-wider rounded-[4px] transition-all shadow-sm flex items-center gap-1.5 cursor-pointer h-10 select-none shrink-0"
-                            id="unclaim-job-btn"
-                          >
-                            <UserMinus size={13} strokeWidth={3} />
-                            <span>{language === 'TH' ? 'ยกเลิกรับงาน' : 'UNCLAIM JOB'}</span>
-                          </button>
-                        </Tooltip>
-                      )}
-                      <div className="w-px h-6 bg-slate-200 mx-1 shrink-0"></div>
-                    </>
-                  )}
 
                   {/* 1. Show only differences Filter */}
                   <Tooltip content={showOnlyDiff ? (language === 'TH' ? 'แสดงทั้งหมด' : 'Show All') : (language === 'TH' ? 'ดูเฉพาะที่ต่าง' : 'Show Only Differences')}>
@@ -6411,6 +6232,16 @@ const mockWorkflows: Workflow[] = [
                       }`}
                     >
                       <ListFilter size={15} strokeWidth={2.5} className={showOnlyDiff ? 'text-rose-500' : 'text-slate-400'} />
+                    </button>
+                  </Tooltip>
+
+                  {/* Activity Logs for this job — who on the team did what, on which document/field */}
+                  <Tooltip content={language === 'TH' ? 'ดูประวัติกิจกรรมของรายการนี้' : 'View activity logs for this job'}>
+                    <button
+                      onClick={() => setShowJobLogsModal(true)}
+                      className="p-2.5 rounded-[4px] transition-all border flex items-center justify-center cursor-pointer shadow-sm bg-white text-slate-500 border-slate-200/60 hover:bg-slate-50"
+                    >
+                      <History size={15} strokeWidth={2.5} className="text-slate-400" />
                     </button>
                   </Tooltip>
 
@@ -7176,6 +7007,122 @@ const mockWorkflows: Workflow[] = [
             </div>
           </div>
         )}
+
+      {/* Job-level Activity Logs Modal — combines logs across all documents in this job:
+          who on the team did what, on which document, on which field. */}
+      <AnimatePresence>
+        {showJobLogsModal && selectedJob && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-white w-full max-w-5xl max-h-[85vh] rounded-2xl overflow-hidden shadow-2xl flex flex-col border border-slate-200"
+            >
+              <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-10">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
+                    <History size={20} />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-slate-800 tracking-tight text-lg leading-tight uppercase">
+                      {language === 'TH' ? 'ประวัติกิจกรรมของรายการ' : 'Job Activity Logs'}
+                    </h3>
+                    <p className="text-[11px] font-bold text-slate-400 tracking-tight leading-none mt-0.5 uppercase">{selectedJob.reference}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowJobLogsModal(false)}
+                  className="w-10 h-10 rounded-[4px] bg-slate-100 text-slate-400 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-auto p-6 bg-slate-50/50">
+                {(() => {
+                  const jobDocNames = Object.keys(selectedJob.docs).map(d => d.toUpperCase());
+                  const jobLogs = [...ocrLogs]
+                    .filter(log => jobDocNames.includes(log.docName.toUpperCase()))
+                    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+                  if (jobLogs.length === 0) {
+                    return (
+                      <div className="flex flex-col items-center justify-center h-48 text-center space-y-3 opacity-60 bg-white border border-slate-200 border-dashed rounded-xl m-6">
+                        <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center">
+                          <History size={24} className="text-slate-400" />
+                        </div>
+                        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">{language === 'TH' ? 'ยังไม่มีประวัติ' : 'No logs found'}</p>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="bg-slate-50 border-b border-slate-200">
+                            <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{language === 'TH' ? 'วัน/เวลา' : 'Date/Time'}</th>
+                            <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{language === 'TH' ? 'ผู้ใช้งาน' : 'User'}</th>
+                            <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{language === 'TH' ? 'การกระทำ' : 'Action'}</th>
+                            <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{language === 'TH' ? 'เอกสาร' : 'Document'}</th>
+                            <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-1/3">{language === 'TH' ? 'รายละเอียด (ฟิลด์)' : 'Details (Fields)'}</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {jobLogs.map(log => (
+                            <tr key={log.id} className="hover:bg-slate-50/50 transition-colors">
+                              <td className="p-4 whitespace-nowrap">
+                                <span className="text-xs font-bold text-slate-600 block">
+                                  {new Date(log.timestamp).toLocaleDateString(language === 'TH' ? 'th-TH' : 'en-US', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                </span>
+                                <span className="text-[10px] font-semibold text-slate-400 block mt-0.5">
+                                  {new Date(log.timestamp).toLocaleTimeString(language === 'TH' ? 'th-TH' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                              </td>
+                              <td className="p-4 whitespace-nowrap">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-6 h-6 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[10px] font-black text-slate-600 uppercase shrink-0">
+                                    {log.user.slice(0, 2)}
+                                  </div>
+                                  <span className="text-sm font-semibold text-slate-600">{log.user}</span>
+                                </div>
+                              </td>
+                              <td className="p-4 whitespace-nowrap">
+                                <div className="flex items-center gap-2">
+                                  {log.action === 'EDIT_DATA' ? <Edit3 size={14} className="text-blue-500" /> : <UploadCloud size={14} className="text-emerald-500" />}
+                                  <span className="text-xs font-bold text-slate-700">
+                                    {log.action === 'EDIT_DATA' ? (language === 'TH' ? 'แก้ไขข้อมูล OCR' : 'Edited OCR Data') : (language === 'TH' ? 'อัปโหลดเวอร์ชันใหม่' : 'Uploaded New Version')}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="p-4 whitespace-nowrap">
+                                <span className="text-[10px] font-black px-2.5 py-1 rounded-full border bg-slate-100 text-slate-600 border-slate-200 uppercase">
+                                  {log.docName}
+                                </span>
+                              </td>
+                              <td className="p-4">
+                                <div className="text-xs text-slate-500 font-medium leading-relaxed max-w-sm">
+                                  {log.details.replace('แก้ไขฟิลด์: ', '').replace('Edited fields: ', '')}
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  );
+                })()}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       </div>
     );
   };
