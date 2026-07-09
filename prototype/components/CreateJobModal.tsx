@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Drawer, message } from 'antd';
-import { 
-  AlertCircle, Plus, Trash2, ArrowRight, CheckCircle, 
+import {
+  AlertCircle, Plus, Trash2, ArrowRight, CheckCircle,
   User, Layers, HelpCircle, Briefcase, FileText,
-  GripVertical, Link2, Link2Off, X
+  GripVertical, Link2, Link2Off, X, Lock, Sparkles
 } from 'lucide-react';
-import { ComparisonJob, JobStatus, Workflow, ComparisonDocStatus } from '../types';
+import { ComparisonJob, JobStatus, Workflow, ComparisonDocStatus, JobPreset } from '../types';
 
 interface CreateJobModalProps {
   visible: boolean;
@@ -15,6 +15,10 @@ interface CreateJobModalProps {
   language?: string;
   prefilledReference?: string;
   previousWorkflowId?: string;
+  /** Job preset assigned to the current user's team. When present (and creating a new
+   * shipment, not a child job), the child job sequence is auto-filled from it and locked —
+   * the user may only name the shipment and submit. */
+  preset?: JobPreset;
 }
 
 interface ChildJobConfig {
@@ -24,10 +28,14 @@ interface ChildJobConfig {
   assignee: string | null;
 }
 
-export const CreateJobModal: React.FC<CreateJobModalProps> = ({ 
-  visible, onClose, onCreate, workflows, language, prefilledReference, previousWorkflowId
+export const CreateJobModal: React.FC<CreateJobModalProps> = ({
+  visible, onClose, onCreate, workflows, language, prefilledReference, previousWorkflowId, preset
 }) => {
   const isTh = language === 'TH';
+
+  // Shipment creation is locked to the team's preset when one applies — the user can only
+  // name the shipment; the child job sequence comes pre-filled and read-only.
+  const isPresetLocked = !prefilledReference && !!preset && preset.workflows.length > 0;
 
   // State for single job mode (used when prefilledReference is present)
   const [singleWorkflowId, setSingleWorkflowId] = useState<string | null>(null);
@@ -76,12 +84,27 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({
       } else {
         setShipmentPlaceholder(isTh ? 'โปรดระบุชื่อรายการ Shipment' : 'Please specify shipment reference name');
         setShipmentName('');
-        setChildJobs([
-          { id: `cj-${Date.now()}`, workflowId: null, suffixValue: '', assignee: 'unassigned' }
-        ]);
+
+        if (preset && preset.workflows.length > 0) {
+          // Auto-fill the sequence from the team's preset (locked, not user-editable).
+          setChildJobs(preset.workflows.map((pwf, idx) => {
+            const wf = workflows.find(w => w.id === pwf.workflowId);
+            const hasCreateJobNode = wf?.nodes.some(n => n.type === 'create_job');
+            return {
+              id: `cj-preset-${idx}-${Date.now()}`,
+              workflowId: pwf.workflowId,
+              suffixValue: hasCreateJobNode ? String(Math.floor(1000 + Math.random() * 9000)) : '',
+              assignee: 'unassigned'
+            };
+          }));
+        } else {
+          setChildJobs([
+            { id: `cj-${Date.now()}`, workflowId: null, suffixValue: '', assignee: 'unassigned' }
+          ]);
+        }
       }
     }
-  }, [visible, prefilledReference, isTh]);
+  }, [visible, prefilledReference, isTh, preset, workflows]);
 
   const modalTitle = prefilledReference 
     ? (isTh ? 'สร้างรายการย่อย (Child Job)' : 'Create Child Job')
@@ -186,17 +209,21 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({
   const validationResult = checkWorkflowRelations();
 
   useEffect(() => {
-    if (!validationResult.isValid && validationResult.errorMsg) {
+    if (!isPresetLocked && !validationResult.isValid && validationResult.errorMsg) {
       message.error({
         content: validationResult.errorMsg,
         key: 'workflow-routing-error',
         duration: 4,
       });
     }
-  }, [validationResult.isValid, validationResult.errorMsg]);
+  }, [isPresetLocked, validationResult.isValid, validationResult.errorMsg]);
 
-  const isFormInvalid = prefilledReference 
+  // Preset-locked sequences are pre-approved by the team's admin — only the shipment name
+  // needs to be valid; the chain-routing check doesn't gate submission.
+  const isFormInvalid = prefilledReference
     ? (!singleWorkflowId || !validationResult.isValid)
+    : isPresetLocked
+    ? !shipmentName.trim()
     : (!validationResult.isValid || !shipmentName.trim() || childJobs.some(j => !j.workflowId));
 
   const handleAddChildJobRow = () => {
@@ -514,7 +541,25 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({
               </p>
             </div>
 
+            {/* Preset-locked notice */}
+            {isPresetLocked && (
+              <div className="flex items-start gap-2.5 p-3.5 bg-blue-50 border border-blue-100 rounded-[8px]">
+                <Sparkles className="text-[#1f5df9] shrink-0" size={16} />
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-black text-[#1f5df9] uppercase tracking-wider mb-0.5">
+                    {isTh ? `ใช้พรีเซ็ตของทีมคุณโดยอัตโนมัติ: ${preset!.name}` : `Auto-applied from your team's preset: ${preset!.name}`}
+                  </span>
+                  <span className="text-xs text-blue-800/80 font-bold leading-relaxed">
+                    {isTh
+                      ? 'รายการย่อยด้านล่างถูกกำหนดไว้ล่วงหน้าและแก้ไขไม่ได้ ระบุเพียงชื่อ Shipment แล้วกดสร้างรายการ'
+                      : 'The child jobs below are pre-configured and locked. Just name the shipment and submit.'}
+                  </span>
+                </div>
+              </div>
+            )}
+
             {/* Child Jobs Sequence Visualization (Visual Flowchart) */}
+            {!isPresetLocked && (
             <div className="border border-slate-100 rounded-[8px] p-4 bg-slate-50/30">
               <div className="flex items-center gap-1.5 mb-3">
                 <Layers size={14} className="text-[#1f5df9]" />
@@ -579,7 +624,7 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({
               </div>
 
               {/* Inline Alert / Warning Banner */}
-              {!validationResult.isValid && (
+              {!isPresetLocked && !validationResult.isValid && (
                 <div className="mt-4 flex items-start gap-2.5 p-3.5 bg-rose-50 border border-rose-100 rounded-[4px] animate-in fade-in slide-in-from-top-1 duration-200">
                   <AlertCircle className="text-rose-500 shrink-0" size={16} />
                   <div className="flex flex-col">
@@ -590,7 +635,7 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({
                       {validationResult.errorMsg}
                     </span>
                     <span className="text-[10px] text-rose-600 mt-1 font-semibold">
-                      {isTh 
+                      {isTh
                         ? 'คำแนะนำ: ตรวจสอบให้มั่นใจว่าเวิร์กโฟลว์ก่อนหน้ามีโหนด "ส่งต่องาน (Send to other app)" ที่ถูกกำหนดให้ส่งไปยังเวิร์กโฟลว์ถัดไป'
                         : 'Tip: Make sure the previous workflow contains a "Send to other app" node configured to route to the next workflow.'}
                     </span>
@@ -598,6 +643,7 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({
                 </div>
               )}
             </div>
+            )}
 
             {/* Child Jobs Rows Setup */}
             <div className="space-y-4">
@@ -606,44 +652,68 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({
                   <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">
                     {isTh ? 'การตั้งค่ารายการย่อย' : 'CHILD JOBS CONFIGURATION'}
                   </span>
-                  <span className="text-[10px] text-amber-600 font-bold mt-0.5">
-                    {isTh ? '★ สามารถลาก (Drag & Drop) เพื่อจัดลำดับรายการย่อยได้' : '★ Drag & drop rows to reorder child jobs'}
-                  </span>
+                  {isPresetLocked ? (
+                    <span className="text-[10px] text-slate-400 font-bold mt-0.5 flex items-center gap-1">
+                      <Lock size={10} /> {isTh ? 'ล็อกตามพรีเซ็ตของทีม แก้ไขไม่ได้' : 'Locked by your team preset — not editable'}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-amber-600 font-bold mt-0.5">
+                      {isTh ? '★ สามารถลาก (Drag & Drop) เพื่อจัดลำดับรายการย่อยได้' : '★ Drag & drop rows to reorder child jobs'}
+                    </span>
+                  )}
                 </div>
-                <button
-                  type="button"
-                  onClick={handleAddChildJobRow}
-                  className="px-3.5 py-1.5 bg-white hover:bg-slate-50 text-[#1f5df9] border border-[#1f5df9] rounded-[4px] text-xs font-black uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
-                >
-                  <Plus size={14} strokeWidth={2.5} />
-                  <span>{isTh ? 'เพิ่มรายการย่อย' : 'Add Child Job'}</span>
-                </button>
+                {!isPresetLocked && (
+                  <button
+                    type="button"
+                    onClick={handleAddChildJobRow}
+                    className="px-3.5 py-1.5 bg-white hover:bg-slate-50 text-[#1f5df9] border border-[#1f5df9] rounded-[4px] text-xs font-black uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                  >
+                    <Plus size={14} strokeWidth={2.5} />
+                    <span>{isTh ? 'เพิ่มรายการย่อย' : 'Add Child Job'}</span>
+                  </button>
+                )}
               </div>
 
-              <div className="space-y-3.5">
+              <div className={isPresetLocked ? 'bg-white border border-slate-200 rounded-[8px] divide-y divide-slate-100 overflow-hidden shadow-sm' : 'space-y-3.5'}>
                 {childJobs.map((job, idx) => {
                   const wf = workflows.find(w => w.id === job.workflowId);
                   const hasCreateNode = wf?.nodes.some(n => n.type === 'create_job');
-                  const currentPrefix = hasCreateNode 
-                    ? getPrefix(wf?.nodes.find(n => n.type === 'create_job')?.data?.namingFormat || '') 
+                  const currentPrefix = hasCreateNode
+                    ? getPrefix(wf?.nodes.find(n => n.type === 'create_job')?.data?.namingFormat || '')
                     : 'JOB-';
 
                   return (
                     <React.Fragment key={job.id}>
-                      <div 
-                        draggable={childJobs.length > 1}
+                      <div
+                        draggable={!isPresetLocked && childJobs.length > 1}
                         onDragStart={(e) => handleDragStart(e, idx)}
                         onDragOver={(e) => handleDragOver(e, idx)}
                         onDragEnd={handleDragEnd}
-                        className={`p-4 bg-white border rounded-[8px] relative transition-all duration-150 shadow-sm flex items-center gap-3.5 ${
-                          draggedIndex === idx 
-                            ? 'border-[#1f5df9] bg-blue-50/20 opacity-40 scale-[0.98]' 
-                            : 'border-slate-200 hover:border-[#1f5df9]/40'
-                        }`}
+                        className={
+                          isPresetLocked
+                            ? 'p-4 bg-slate-50/60 relative flex items-center gap-3.5'
+                            : `p-4 bg-white border rounded-[8px] relative transition-all duration-150 shadow-sm flex items-center gap-3.5 ${
+                                draggedIndex === idx
+                                  ? 'border-[#1f5df9] bg-blue-50/20 opacity-40 scale-[0.98]'
+                                  : 'border-slate-200 hover:border-[#1f5df9]/40'
+                              }`
+                        }
                       >
+                        {/* Step indicator for locked preset sequences */}
+                        {isPresetLocked && (
+                          <div className="relative flex flex-col items-center self-stretch shrink-0">
+                            <div className="w-6 h-6 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-[10px] font-black text-[#1f5df9] shrink-0 z-10">
+                              {idx + 1}
+                            </div>
+                            {idx < childJobs.length - 1 && (
+                              <div className="absolute top-6 bottom-[-16px] w-px bg-blue-100"></div>
+                            )}
+                          </div>
+                        )}
+
                         {/* Drag Handle on the far left */}
-                        {childJobs.length > 1 && (
-                          <div 
+                        {!isPresetLocked && childJobs.length > 1 && (
+                          <div
                             className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-[#1f5df9] transition-colors p-1 rounded hover:bg-slate-100 flex items-center justify-center shrink-0 self-center"
                             title={isTh ? 'ลากเพื่อสลับลำดับ' : 'Drag to reorder'}
                           >
@@ -660,7 +730,8 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({
                             <select
                               value={job.workflowId || ''}
                               onChange={(e) => handleChildJobChange(job.id, 'workflowId', e.target.value || null)}
-                              className="w-full h-[38px] bg-white border border-slate-200 rounded-[4px] px-2.5 text-xs font-black text-[#010136] outline-none focus:ring-2 focus:ring-[#1f5df9]/10 focus:border-[#1f5df9] transition-all py-0"
+                              disabled={isPresetLocked}
+                              className="w-full h-[38px] bg-white border border-slate-200 rounded-[4px] px-2.5 text-xs font-black text-[#010136] outline-none focus:ring-2 focus:ring-[#1f5df9]/10 focus:border-[#1f5df9] transition-all py-0 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
                             >
                               <option value="">{isTh ? '-- เลือกเวิร์กโฟลว์ --' : '-- Select Workflow --'}</option>
                               {workflows.filter(w => w.id !== 'wf-2' && w.name !== 'Empty Workflow').map(w => (
@@ -682,9 +753,9 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({
                                 type="text"
                                 value={job.suffixValue}
                                 onChange={(e) => handleChildJobChange(job.id, 'suffixValue', e.target.value)}
-                                className="flex-1 min-w-0 block w-full px-2 text-xs font-bold font-mono text-[#010136] focus:outline-none placeholder-slate-300 h-full py-0 border-none"
+                                className="flex-1 min-w-0 block w-full px-2 text-xs font-bold font-mono text-[#010136] focus:outline-none placeholder-slate-300 h-full py-0 border-none disabled:bg-slate-100 disabled:text-slate-500"
                                 placeholder={isTh ? 'เลขต่อท้าย เช่น 4091...' : 'suffix...'}
-                                disabled={!job.workflowId}
+                                disabled={!job.workflowId || isPresetLocked}
                               />
                             </div>
                           </div>
@@ -697,8 +768,8 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({
                             <select
                               value={job.assignee || 'unassigned'}
                               onChange={(e) => handleChildJobChange(job.id, 'assignee', e.target.value)}
-                              className="w-full h-[38px] bg-white border border-slate-200 rounded-[4px] px-2.5 text-xs font-black text-[#010136] outline-none focus:ring-2 focus:ring-[#1f5df9]/10 focus:border-[#1f5df9] transition-all py-0"
-                              disabled={!job.workflowId}
+                              className="w-full h-[38px] bg-white border border-slate-200 rounded-[4px] px-2.5 text-xs font-black text-[#010136] outline-none focus:ring-2 focus:ring-[#1f5df9]/10 focus:border-[#1f5df9] transition-all py-0 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
+                              disabled={!job.workflowId || isPresetLocked}
                             >
                               <option value="unassigned">{isTh ? 'ยังไม่กำหนด' : 'Unassigned'}</option>
                               <option value="Kunawut W.">Kunawut W.</option>
@@ -708,26 +779,28 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({
                           </div>
 
                           {/* Delete row button */}
-                          <div className="md:col-span-1 flex justify-center md:justify-end pb-0.5">
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveChildJobRow(job.id)}
-                              disabled={childJobs.length <= 1}
-                              className={`h-[38px] w-[38px] rounded-[4px] border border-none transition-all cursor-pointer flex items-center justify-center ${
-                                childJobs.length <= 1 
-                                  ? 'bg-slate-50 text-slate-300 cursor-not-allowed' 
-                                  : 'bg-rose-50 text-rose-500 hover:bg-rose-100 hover:text-rose-600'
-                              }`}
-                              title={isTh ? 'ลบ' : 'Delete'}
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
+                          {!isPresetLocked && (
+                            <div className="md:col-span-1 flex justify-center md:justify-end pb-0.5">
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveChildJobRow(job.id)}
+                                disabled={childJobs.length <= 1}
+                                className={`h-[38px] w-[38px] rounded-[4px] border border-none transition-all cursor-pointer flex items-center justify-center ${
+                                  childJobs.length <= 1
+                                    ? 'bg-slate-50 text-slate-300 cursor-not-allowed'
+                                    : 'bg-rose-50 text-rose-500 hover:bg-rose-100 hover:text-rose-600'
+                                }`}
+                                title={isTh ? 'ลบ' : 'Delete'}
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
 
                       {/* Connection relation badge between rows */}
-                      {idx < childJobs.length - 1 && (() => {
+                      {!isPresetLocked && idx < childJobs.length - 1 && (() => {
                         const rel = getRelationInfo(job, childJobs[idx + 1]);
                         return (
                           <div className="flex items-center justify-center my-1 relative py-0.5">

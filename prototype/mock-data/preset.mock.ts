@@ -7,7 +7,7 @@ export const MOCK_PRESETS: JobPreset[] = [
     assignedTeams: ['logistics'],
     workflows: [
       { id: 'pwf-1', workflowId: 'wf-1', assignedTeams: ['logistics'] },
-      { id: 'pwf-2', workflowId: 'wf-2', assignedTeams: ['operation'] }
+      { id: 'pwf-2', workflowId: 'wf-4', assignedTeams: ['operation'] }
     ],
     isActive: true,
     createdAt: '2026-01-01T00:00:00Z',

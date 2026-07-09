@@ -12,12 +12,17 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Tabs, Tag, Badge, Empty, Button, message } from 'antd';
 import { CreateJobModal } from './CreateJobModal';
 import { Tooltip } from './Tooltip';
-import { 
+import {
   Language, ComparisonFile, FieldMapping, TrackingItem, ReviewStatus,
   UserRole, ComparisonJob, JobStatus, ComparisonDocStatus, TrackingSource, SendStatus,
   AuditLog, Workflow
 } from '../types';
 import { TRANSLATIONS } from '../translations';
+import { MOCK_PRESETS } from '../mock-data/preset.mock';
+
+// Mirrors the "ทีม LOGISTICS" badge shown in the sidebar profile menu (Layout.tsx) —
+// there's no real auth/session concept yet, so the current user's team is fixed here.
+const CURRENT_USER_TEAM = 'logistics';
 import { 
   Inbox, FileWarning, Clock, User, Calendar, Mail, UserPlus, UserMinus
 } from 'lucide-react';
@@ -509,6 +514,9 @@ export const DataComparison: React.FC<DataComparisonProps> = ({ language, tracki
   const [rejectPendingId, setRejectPendingId] = useState<string | null>(null);
   const [showRejectFileModal, setShowRejectFileModal] = useState(false);
   const [showCreateJobModal, setShowCreateJobModal] = useState(false);
+  // The job preset assigned to the current user's team (Job Preset Settings) — when present,
+  // new shipments auto-fill their child job sequence from it instead of a blank, editable row.
+  const activeTeamPreset = MOCK_PRESETS.find(p => p.isActive && p.assignedTeams.includes(CURRENT_USER_TEAM));
   const [rejectFileTargetDocName, setRejectFileTargetDocName] = useState<string | null>(null);
   const [pendingFilter, setPendingFilter] = useState('All');
   const [collapsedParts, setCollapsedParts] = useState<Record<string, boolean>>({
@@ -3592,7 +3600,7 @@ const mockWorkflows: Workflow[] = [
 
           {/* Shipment Grid Table */}
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse table-auto font-sans">
+            <table className="w-full text-left border-collapse table-auto font-sans text-sm">
               <thead>
                 <tr className="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
                   <th className="px-8 py-4">{language === 'TH' ? 'เลขที่ Shipment' : 'SHIPMENT NO.'}</th>
@@ -3766,29 +3774,20 @@ const mockWorkflows: Workflow[] = [
     return (
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
         {/* Back Button and Shipment Context Banner */}
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-6 font-sans">
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={() => setSelectedShipment(null)}
-              className="p-2 hover:bg-slate-50 rounded-[4px] transition-all text-slate-600 flex items-center justify-center cursor-pointer"
-            >
-              <ArrowLeft size={20} />
-            </button>
-            <h3 className="text-xl md:text-2xl font-black text-[#010136] tracking-tight">{selectedShipment}</h3>
-          </div>
-          <button 
-            onClick={() => setShowCreateJobModal(true)}
-            className="px-4 py-2 bg-[#1f5df9] text-white rounded-[4px] flex items-center gap-2 text-xs font-black uppercase tracking-widest hover:bg-[#104BE3] transition-all shadow-sm cursor-pointer"
+        <div className="flex items-center gap-3 pb-3 border-b border-slate-100 mb-6 font-sans">
+          <button
+            onClick={() => setSelectedShipment(null)}
+            className="p-2 hover:bg-slate-50 rounded-[4px] transition-all text-slate-600 flex items-center justify-center cursor-pointer"
           >
-            <Plus size={16} />
-            {language === 'TH' ? 'สร้างรายการย่อย' : 'CREATE CHILD JOB'}
+            <ArrowLeft size={20} />
           </button>
+          <h3 className="text-xl md:text-2xl font-black text-[#010136] tracking-tight">{selectedShipment}</h3>
         </div>
 
         {/* Child Jobs Table */}
         <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden font-sans">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse table-auto font-sans">
+            <table className="w-full text-left border-collapse table-auto font-sans text-sm">
               <thead>
                 <tr className="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
                   <th className="px-8 py-4 w-[110px]">{language === 'TH' ? 'ลำดับงาน' : 'STEP'}</th>
@@ -4151,7 +4150,7 @@ const mockWorkflows: Workflow[] = [
 
           {/* Business Grid Table */}
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse table-auto font-sans">
+            <table className="w-full text-left border-collapse table-auto font-sans text-sm">
               <thead>
                 <tr className="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
                   <th className="px-8 py-4">{t.jobNo}</th>
@@ -6112,6 +6111,7 @@ const mockWorkflows: Workflow[] = [
           language={language}
           prefilledReference={selectedShipment || undefined}
           previousWorkflowId={selectedShipment ? getLastJobWorkflowId(selectedShipment) : undefined}
+          preset={activeTeamPreset}
         />
       )}
 
