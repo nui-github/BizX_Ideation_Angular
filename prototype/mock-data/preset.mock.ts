@@ -38,7 +38,7 @@ export const MOCK_PRESETS: JobPreset[] = [
   {
     id: 'preset-4',
     name: 'LEO Billing Reconciliation',
-    assignedTeams: ['logistics'],
+    assignedTeams: ['finance'],
     workflows: [
       { id: 'pwf-5', workflowId: 'cwf-leo', assignedTeams: ['logistics'] },
       { id: 'pwf-6', workflowId: 'wf-1', assignedTeams: ['accounting'] }

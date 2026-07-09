@@ -65,6 +65,21 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
 
   const allWorkflows = [...workflows, ...comparisonWorkflows];
 
+  // Each team may only be assigned to a single preset — otherwise the system
+  // wouldn't know which preset to apply when a member creates a new job.
+  const teamToPresetName = new Map<string, string>();
+  presets.forEach(p => {
+    if (editingPreset && p.id === editingPreset.id) return;
+    p.assignedTeams.forEach(teamValue => teamToPresetName.set(teamValue, p.name));
+  });
+  const teamOptions = MOCK_TEAMS.map(team => ({
+    ...team,
+    disabled: teamToPresetName.has(team.value),
+    label: teamToPresetName.has(team.value)
+      ? `${team.label} (${teamToPresetName.get(team.value)})`
+      : team.label
+  }));
+
   const handleOpenModal = (preset?: JobPreset) => {
     if (preset) {
       setEditingPreset(preset);
@@ -288,9 +303,14 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
                       placeholder={language === 'TH' ? 'เลือกทีม' : 'Select team'}
                       value={assignedTeams[0]}
                       onChange={(value) => setAssignedTeams(value ? [value] : [])}
-                      options={MOCK_TEAMS}
+                      options={teamOptions}
                       style={{ width: '100%', height: '46px' }}
                     />
+                    <p className="text-[11px] text-slate-400 font-medium mt-1.5">
+                      {language === 'TH'
+                        ? 'ทุกบัญชีในทีมนี้จะใช้พรีเซ็ตนี้โดยอัตโนมัติเมื่อสร้างรายการใหม่ • 1 ทีมใช้ได้เพียง 1 พรีเซ็ตเท่านั้น'
+                        : 'All accounts in this team will automatically use this preset when creating a new shipment. Each team can only be assigned to one preset.'}
+                    </p>
                   </div>
 
                   <div className="flex items-center gap-2">

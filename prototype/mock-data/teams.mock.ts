@@ -9,5 +9,6 @@ export const MOCK_TEAMS: TeamOption[] = [
   { value: 'logistics', label: 'Logistics' },
   { value: 'accounting', label: 'Accounting' },
   { value: 'operation', label: 'Operation' },
-  { value: 'customer_service', label: 'Customer Service' }
+  { value: 'customer_service', label: 'Customer Service' },
+  { value: 'finance', label: 'Finance' }
 ];
