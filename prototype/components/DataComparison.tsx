@@ -413,8 +413,12 @@ export const DataComparison: React.FC<DataComparisonProps> = ({ language, tracki
         timestamp: new Date().toISOString(),
         action: isConfirmed ? 'CONFIRM_DATA' : 'UNCONFIRM_DATA',
         details: language === 'TH'
-          ? `ยืนยันความถูกต้องฟิลด์ "${fieldName}" ใน "${docName}"`
-          : `Manually confirmed field "${fieldName}" in "${docName}"`,
+          ? (isConfirmed
+              ? `กดยืนยันใช้ค่านี้สำหรับฟิลด์ "${fieldName}" ใน "${docName}"`
+              : `กดยกเลิกการยืนยันฟิลด์ "${fieldName}" ใน "${docName}"`)
+          : (isConfirmed
+              ? `Confirmed value for field "${fieldName}" in "${docName}"`
+              : `Unconfirmed field "${fieldName}" in "${docName}"`),
         version: selectedJob.updatedDocs?.includes(docName) ? 2 : 1,
         user: 'Kunawut W.'
       };
@@ -5746,9 +5750,15 @@ const mockWorkflows: Workflow[] = [
                                 </td>
                                 <td className="p-4 whitespace-nowrap">
                                   <div className="flex items-center gap-2">
-                                    {log.action === 'EDIT_DATA' ? <Edit3 size={14} className="text-blue-500" /> : <UploadCloud size={14} className="text-emerald-500" />}
+                                    {log.action === 'EDIT_DATA' ? <Edit3 size={14} className="text-blue-500" />
+                                      : log.action === 'CONFIRM_DATA' ? <CheckCircle2 size={14} className="text-rose-500" />
+                                      : log.action === 'UNCONFIRM_DATA' ? <XCircle size={14} className="text-slate-400" />
+                                      : <UploadCloud size={14} className="text-emerald-500" />}
                                     <span className="text-xs font-bold text-slate-700">
-                                      {log.action === 'EDIT_DATA' ? (language === 'TH' ? 'แก้ไขข้อมูล OCR' : 'Edited OCR Data') : (language === 'TH' ? 'อัปโหลดเวอร์ชันใหม่' : 'Uploaded New Version')}
+                                      {log.action === 'EDIT_DATA' ? (language === 'TH' ? 'แก้ไขข้อมูล OCR' : 'Edited OCR Data')
+                                        : log.action === 'CONFIRM_DATA' ? (language === 'TH' ? 'กดยืนยันใช้ค่านี้' : 'Confirmed Value')
+                                        : log.action === 'UNCONFIRM_DATA' ? (language === 'TH' ? 'กดยกเลิกการยืนยัน' : 'Unconfirmed Value')
+                                        : (language === 'TH' ? 'อัปโหลดเวอร์ชันใหม่' : 'Uploaded New Version')}
                                     </span>
                                   </div>
                                 </td>
@@ -7130,11 +7140,15 @@ const mockWorkflows: Workflow[] = [
                                   {log.action === 'EDIT_DATA' ? <Edit3 size={14} className="text-blue-500" />
                                     : log.action === 'OCR_DONE' ? <ScanSearch size={14} className="text-indigo-500" />
                                     : log.action === 'APPROVE' ? <Send size={14} className="text-teal-500" />
+                                    : log.action === 'CONFIRM_DATA' ? <CheckCircle2 size={14} className="text-rose-500" />
+                                    : log.action === 'UNCONFIRM_DATA' ? <XCircle size={14} className="text-slate-400" />
                                     : <UploadCloud size={14} className="text-emerald-500" />}
                                   <span className="text-xs font-bold text-slate-700">
                                     {log.action === 'EDIT_DATA' ? (language === 'TH' ? 'แก้ไขข้อมูล OCR' : 'Edited OCR Data')
                                       : log.action === 'OCR_DONE' ? (language === 'TH' ? 'อ่านไฟล์ (OCR)' : 'Read File (OCR)')
                                       : log.action === 'APPROVE' ? (language === 'TH' ? 'ส่งออกข้อมูล' : 'Exported Data')
+                                      : log.action === 'CONFIRM_DATA' ? (language === 'TH' ? 'กดยืนยันใช้ค่านี้' : 'Confirmed Value')
+                                      : log.action === 'UNCONFIRM_DATA' ? (language === 'TH' ? 'กดยกเลิกการยืนยัน' : 'Unconfirmed Value')
                                       : (language === 'TH' ? 'อัปโหลดเวอร์ชันใหม่' : 'Uploaded New Version')}
                                   </span>
                                 </div>
