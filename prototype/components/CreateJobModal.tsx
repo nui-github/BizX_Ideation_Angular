@@ -704,7 +704,7 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({
                       >
                         {/* Step indicator for locked preset sequences */}
                         {isPresetLocked && (
-                          <div className="relative flex flex-col items-center self-stretch shrink-0">
+                          <div className="relative flex flex-col items-center justify-center self-stretch shrink-0">
                             <div className="w-6 h-6 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-[10px] font-black text-[#1f5df9] shrink-0 z-10">
                               {idx + 1}
                             </div>
