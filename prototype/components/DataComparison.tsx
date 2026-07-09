@@ -408,11 +408,12 @@ export const DataComparison: React.FC<DataComparisonProps> = ({ language, tracki
       // Add an audit log entry for this action
       const newLog = {
         id: Math.random().toString(36).substr(2, 9),
+        jobId: selectedJob.id,
         docName: docName,
         timestamp: new Date().toISOString(),
         action: isConfirmed ? 'CONFIRM_DATA' : 'UNCONFIRM_DATA',
-        details: language === 'TH' 
-          ? `ยืนยันความถูกต้องฟิลด์ "${fieldName}" ใน "${docName}"` 
+        details: language === 'TH'
+          ? `ยืนยันความถูกต้องฟิลด์ "${fieldName}" ใน "${docName}"`
           : `Manually confirmed field "${fieldName}" in "${docName}"`,
         version: selectedJob.updatedDocs?.includes(docName) ? 2 : 1,
         user: 'Kunawut W.'
@@ -434,13 +435,13 @@ export const DataComparison: React.FC<DataComparisonProps> = ({ language, tracki
   const [pdfCurrentPage, setPdfCurrentPage] = useState<number>(1);
   const [activeRightTab, setActiveRightTab] = useState<'excel' | 'json'>('excel');
   const [copiedJson, setCopiedJson] = useState<boolean>(false);
-  const [ocrLogs, setOcrLogs] = useState<{id: string, docName: string, timestamp: string, action: string, details: string, version: number, user: string}[]>([
-    { id: 'log-1', docName: 'INVOICE', timestamp: new Date(Date.now() - 86400000).toISOString(), action: 'UPLOAD_NEW', details: 'อัปโหลดเอกสารเวอร์ชันเริ่มต้น', version: 1, user: 'System' },
-    { id: 'log-2', docName: 'INVOICE', timestamp: new Date(Date.now() - 3600000).toISOString(), action: 'EDIT_DATA', details: 'แก้ไขข้อมูลฟิลด์: Consignee Name, Consignee Tax ID', version: 1, user: 'Kunawut W.' },
-    { id: 'log-3', docName: 'INVOICE', timestamp: new Date().toISOString(), action: 'EDIT_DATA', details: 'แก้ไขข้อมูลฟิลด์: Port of Discharge', version: 1, user: 'Kunawut W.' },
-    { id: 'log-4', docName: 'PACKING LIST', timestamp: new Date(Date.now() - 86400000).toISOString(), action: 'UPLOAD_NEW', details: 'อัปโหลดเอกสารเวอร์ชันเริ่มต้น', version: 1, user: 'System' },
-    { id: 'log-5', docName: 'PACKING LIST', timestamp: new Date(Date.now() - 3600000).toISOString(), action: 'EDIT_DATA', details: 'แก้ไขข้อมูลฟิลด์: Invoice No., Date', version: 1, user: 'Kunawut W.' },
-    { id: 'log-6', docName: 'PACKING LIST', timestamp: new Date().toISOString(), action: 'UPLOAD_NEW', details: 'อัปโหลดเวอร์ชันใหม่: rev2', version: 2, user: 'Kunawut W.' }
+  const [ocrLogs, setOcrLogs] = useState<{id: string, jobId: string, docName: string, timestamp: string, action: string, details: string, version: number, user: string}[]>([
+    { id: 'log-1', jobId: 'job-012a', docName: 'INVOICE', timestamp: new Date(Date.now() - 86400000).toISOString(), action: 'UPLOAD_NEW', details: 'อัปโหลดเอกสารเวอร์ชันเริ่มต้น', version: 1, user: 'System' },
+    { id: 'log-2', jobId: 'job-012a', docName: 'INVOICE', timestamp: new Date(Date.now() - 3600000).toISOString(), action: 'EDIT_DATA', details: 'แก้ไขข้อมูลฟิลด์: Consignee Name, Consignee Tax ID', version: 1, user: 'Kunawut W.' },
+    { id: 'log-3', jobId: 'job-012a', docName: 'INVOICE', timestamp: new Date().toISOString(), action: 'EDIT_DATA', details: 'แก้ไขข้อมูลฟิลด์: Port of Discharge', version: 1, user: 'Kunawut W.' },
+    { id: 'log-4', jobId: 'job-012a', docName: 'PACKING LIST', timestamp: new Date(Date.now() - 86400000).toISOString(), action: 'UPLOAD_NEW', details: 'อัปโหลดเอกสารเวอร์ชันเริ่มต้น', version: 1, user: 'System' },
+    { id: 'log-5', jobId: 'job-012a', docName: 'PACKING LIST', timestamp: new Date(Date.now() - 3600000).toISOString(), action: 'EDIT_DATA', details: 'แก้ไขข้อมูลฟิลด์: Invoice No., Date', version: 1, user: 'Kunawut W.' },
+    { id: 'log-6', jobId: 'job-012a', docName: 'PACKING LIST', timestamp: new Date().toISOString(), action: 'UPLOAD_NEW', details: 'อัปโหลดเวอร์ชันใหม่: rev2', version: 2, user: 'Kunawut W.' }
   ]);
   const [showPdfLogsModal, setShowPdfLogsModal] = useState(false);
   const [showJobLogsModal, setShowJobLogsModal] = useState(false);
@@ -1222,6 +1223,7 @@ const mockWorkflows: Workflow[] = [
     // Add activity log for new version
     const newLog = {
       id: Math.random().toString(36).substr(2, 9),
+      jobId: selectedJob.id,
       docName: replaceTargetColumn,
       timestamp: new Date().toISOString(),
       action: 'UPLOAD_NEW_VERSION',
@@ -1410,11 +1412,12 @@ const mockWorkflows: Workflow[] = [
       const subLabel = activeSubObj ? activeSubObj.label : activeSubFileId;
       const newLog = {
         id: Math.random().toString(36).substr(2, 9),
+        jobId: selectedJob?.id || '',
         docName: pdfPreviewUrl,
         timestamp: new Date().toISOString(),
         action: 'EDIT_DATA',
-        details: language === 'TH' 
-          ? `แก้ไขฟิลด์ในใบย่อย (${subLabel}): ${changedFields.join(', ')}` 
+        details: language === 'TH'
+          ? `แก้ไขฟิลด์ในใบย่อย (${subLabel}): ${changedFields.join(', ')}`
           : `Edited fields in sub-file (${subLabel}): ${changedFields.join(', ')}`,
         version: selectedJob?.updatedDocs?.includes(pdfPreviewUrl) ? 2 : 1,
         user: 'Kunawut W.'
@@ -2339,6 +2342,21 @@ const mockWorkflows: Workflow[] = [
 
     // 2. Wait 5 seconds
     setTimeout(() => {
+      // Log OCR read completion for each document — who read it, and when.
+      setOcrLogs(prev => [
+        ...docNames.map(name => ({
+          id: `log-ocr-${Date.now()}-${name}`,
+          jobId,
+          docName: name,
+          timestamp: new Date().toISOString(),
+          action: 'OCR_DONE',
+          details: language === 'TH' ? 'อ่านไฟล์และดึงข้อมูลสำเร็จ' : 'Read file and extracted data successfully',
+          version: 1,
+          user: 'Kunawut W.'
+        })),
+        ...prev
+      ]);
+
       setJobs(prev => {
         let triggerCompare = false;
         const nextJobs = prev.map(job => {
@@ -5693,7 +5711,7 @@ const mockWorkflows: Workflow[] = [
                   </div>
                   
                   <div className="flex-1 overflow-auto p-6 bg-slate-50/50">
-                    {ocrLogs.filter(log => log.docName.toUpperCase() === pdfPreviewUrl?.toUpperCase()).length === 0 ? (
+                    {ocrLogs.filter(log => log.jobId === selectedJob?.id && log.docName.toUpperCase() === pdfPreviewUrl?.toUpperCase()).length === 0 ? (
                       <div className="flex flex-col items-center justify-center h-48 text-center space-y-3 opacity-60 bg-white border border-slate-200 border-dashed rounded-xl m-6">
                         <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center">
                           <History size={24} className="text-slate-400" />
@@ -5714,7 +5732,7 @@ const mockWorkflows: Workflow[] = [
                           </thead>
                           <tbody className="divide-y divide-slate-100">
                             {[...ocrLogs]
-                              .filter(log => log.docName.toUpperCase() === pdfPreviewUrl?.toUpperCase())
+                              .filter(log => log.jobId === selectedJob?.id && log.docName.toUpperCase() === pdfPreviewUrl?.toUpperCase())
                               .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
                               .map(log => (
                               <tr key={log.id} className="hover:bg-slate-50/50 transition-colors">
@@ -7046,9 +7064,23 @@ const mockWorkflows: Workflow[] = [
 
               <div className="flex-1 overflow-auto p-6 bg-slate-50/50">
                 {(() => {
-                  const jobDocNames = Object.keys(selectedJob.docs).map(d => d.toUpperCase());
-                  const jobLogs = [...ocrLogs]
-                    .filter(log => jobDocNames.includes(log.docName.toUpperCase()))
+                  // Scoped strictly to this job's id — document names (e.g. "INVOICE") repeat
+                  // across jobs, so matching by name alone would leak other jobs' history in.
+                  const docLogs = ocrLogs.filter(log => log.jobId === selectedJob.id);
+                  // Job-wide events (e.g. export) aren't tied to a single document — pull them
+                  // in from the general activity log by matching the job they were logged for.
+                  const jobWideLogs = activityLogs
+                    .filter(log => log.originalItem?.id === selectedJob.id)
+                    .map(log => ({
+                      id: log.id,
+                      docName: language === 'TH' ? 'ทั้งหมด' : 'ALL',
+                      timestamp: log.timestamp,
+                      action: log.action,
+                      details: log.details,
+                      version: 1,
+                      user: log.user
+                    }));
+                  const jobLogs = [...docLogs, ...jobWideLogs]
                     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
                   if (jobLogs.length === 0) {
@@ -7095,9 +7127,15 @@ const mockWorkflows: Workflow[] = [
                               </td>
                               <td className="p-4 whitespace-nowrap">
                                 <div className="flex items-center gap-2">
-                                  {log.action === 'EDIT_DATA' ? <Edit3 size={14} className="text-blue-500" /> : <UploadCloud size={14} className="text-emerald-500" />}
+                                  {log.action === 'EDIT_DATA' ? <Edit3 size={14} className="text-blue-500" />
+                                    : log.action === 'OCR_DONE' ? <ScanSearch size={14} className="text-indigo-500" />
+                                    : log.action === 'APPROVE' ? <Send size={14} className="text-teal-500" />
+                                    : <UploadCloud size={14} className="text-emerald-500" />}
                                   <span className="text-xs font-bold text-slate-700">
-                                    {log.action === 'EDIT_DATA' ? (language === 'TH' ? 'แก้ไขข้อมูล OCR' : 'Edited OCR Data') : (language === 'TH' ? 'อัปโหลดเวอร์ชันใหม่' : 'Uploaded New Version')}
+                                    {log.action === 'EDIT_DATA' ? (language === 'TH' ? 'แก้ไขข้อมูล OCR' : 'Edited OCR Data')
+                                      : log.action === 'OCR_DONE' ? (language === 'TH' ? 'อ่านไฟล์ (OCR)' : 'Read File (OCR)')
+                                      : log.action === 'APPROVE' ? (language === 'TH' ? 'ส่งออกข้อมูล' : 'Exported Data')
+                                      : (language === 'TH' ? 'อัปโหลดเวอร์ชันใหม่' : 'Uploaded New Version')}
                                   </span>
                                 </div>
                               </td>
