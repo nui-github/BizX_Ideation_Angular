@@ -232,6 +232,10 @@ export interface JobPresetWorkflow {
   id: string;
   workflowId: string;
   assignedTeams: string[];
+  /** Suffix appended after the workflow's naming-format prefix (e.g. "JOB-"). Ignored when useRunningNumber is true. */
+  jobSuffix?: string;
+  /** When true, the suffix is a system-generated 4-digit running number instead of the manual jobSuffix value. */
+  useRunningNumber?: boolean;
 }
 
 export interface JobPreset {

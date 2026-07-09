@@ -87,13 +87,20 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({
 
         if (preset && preset.workflows.length > 0) {
           // Auto-fill the sequence from the team's preset (locked, not user-editable).
+          // Running-number steps get a fresh 4-digit code each time; fixed-suffix steps
+          // reuse the exact code configured on the preset.
           setChildJobs(preset.workflows.map((pwf, idx) => {
             const wf = workflows.find(w => w.id === pwf.workflowId);
             const hasCreateJobNode = wf?.nodes.some(n => n.type === 'create_job');
+            const suffixValue = !hasCreateJobNode
+              ? ''
+              : pwf.useRunningNumber
+              ? String(Math.floor(1000 + Math.random() * 9000))
+              : (pwf.jobSuffix || String(Math.floor(1000 + Math.random() * 9000)));
             return {
               id: `cj-preset-${idx}-${Date.now()}`,
               workflowId: pwf.workflowId,
-              suffixValue: hasCreateJobNode ? String(Math.floor(1000 + Math.random() * 9000)) : '',
+              suffixValue,
               assignee: 'unassigned'
             };
           }));
