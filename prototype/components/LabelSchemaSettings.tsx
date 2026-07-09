@@ -893,7 +893,7 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.95 }}
                       transition={{ duration: 0.2, delay: idx * 0.04 }}
-                      className="bg-white border border-slate-200/70 hover:border-blue-300 rounded-[8px] p-5 shadow-sm hover:shadow-md transition-all duration-300 group flex flex-col justify-between gap-4 relative overflow-hidden h-full"
+                      className="bg-white border border-slate-200/70 rounded-[8px] p-5 shadow-sm hover:shadow-md transition-all duration-300 group flex flex-col justify-between gap-4 relative overflow-hidden h-full"
                     >
                       <div className="space-y-4 flex-1 flex flex-col justify-between">
                         <div className="space-y-3">

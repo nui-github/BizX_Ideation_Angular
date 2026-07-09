@@ -711,13 +711,15 @@ export const MasterDataSettings: React.FC<MasterDataSettingsProps> = ({ language
         {/* Header Container - No background/border to blend with parent wrapper cleanly */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-100">
           <div className="flex items-start gap-4">
-            <button 
-              onClick={selectedTableId ? () => { setSelectedTableId(null); setSearchRecordQuery(''); } : onBack}
-              className="p-2 hover:bg-slate-100 rounded-[4px] text-slate-600 transition-colors flex items-center justify-center cursor-pointer"
-              title={selectedTableId ? t.backToTablesBtn : t.backBtn}
-            >
-              <ArrowLeft size={18} />
-            </button>
+            {selectedTableId && (
+              <button
+                onClick={() => { setSelectedTableId(null); setSearchRecordQuery(''); }}
+                className="p-2 hover:bg-slate-100 rounded-[4px] text-slate-600 transition-colors flex items-center justify-center cursor-pointer"
+                title={t.backToTablesBtn}
+              >
+                <ArrowLeft size={18} />
+              </button>
+            )}
             <div>
               <div className="flex items-center gap-2 mb-2 select-none flex-wrap">
                 <h1 className="text-2xl font-black tracking-tight leading-none">
@@ -824,7 +826,7 @@ export const MasterDataSettings: React.FC<MasterDataSettingsProps> = ({ language
                         key={tbl.id}
                         onClick={() => { setSelectedTableId(tbl.id); setSearchRecordQuery(''); }}
                         whileHover={{ y: -3, transition: { duration: 0.1 } }}
-                        className="bg-slate-50/40 hover:bg-white border border-slate-100 hover:border-[#1f5df9]/20 rounded-[8px] p-6 shadow-sm hover:shadow-md cursor-pointer transition-all flex flex-col justify-between group"
+                        className="bg-slate-50/40 hover:bg-white border border-slate-100 rounded-[8px] p-6 shadow-sm hover:shadow-md cursor-pointer transition-all flex flex-col justify-between group"
                       >
                         <div className="space-y-4">
                           {/* Top bar with icon & record quantity count badge */}

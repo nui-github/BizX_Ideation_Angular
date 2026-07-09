@@ -395,15 +395,6 @@ export const DocTypeMaster: React.FC<DocTypeMasterProps> = ({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            {onBack && (
-              <button 
-                onClick={onBack}
-                className="p-1.5 hover:bg-slate-100 rounded-[4px] text-slate-500 hover:text-slate-700 transition"
-                title={text.backBtn}
-              >
-                <ArrowLeft size={16} />
-              </button>
-            )}
             <h1 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
               <Settings className="text-blue-600 animate-spin-slow" size={22} />
               {text.title}
@@ -542,7 +533,7 @@ export const DocTypeMaster: React.FC<DocTypeMasterProps> = ({
           {filteredDocTypes.map((dt) => (
             <div 
               key={dt.id} 
-              className="bg-white border border-slate-200/70 hover:border-blue-300 rounded-[8px] p-5 shadow-sm hover:shadow-md transition-all duration-300 group flex flex-col justify-between gap-4 relative overflow-hidden"
+              className="bg-white border border-slate-200/70 rounded-[8px] p-5 shadow-sm hover:shadow-md transition-all duration-300 group flex flex-col justify-between gap-4 relative overflow-hidden"
             >
 
               <div className="space-y-3">

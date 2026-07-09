@@ -135,15 +135,6 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            {onBack && (
-              <button
-                onClick={onBack}
-                className="p-1.5 hover:bg-slate-100 rounded-[4px] text-slate-500 hover:text-slate-700 transition"
-                title={language === 'TH' ? 'กลับ' : 'Back'}
-              >
-                <ArrowLeft size={16} />
-              </button>
-            )}
             <h1 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
               <Settings className="text-blue-600" size={22} />
               {t.title}
