@@ -255,19 +255,20 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
       {typeof document !== 'undefined' && createPortal(
       <AnimatePresence>
         {showModal && (
-          <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4">
-            <motion.div 
+          <div className="fixed inset-0 z-[2000] flex justify-end">
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
               onClick={handleCloseModal}
             />
-            <motion.div 
-              initial={{ scale: 0.95, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'tween', duration: 0.25, ease: 'easeOut' }}
+              className="relative bg-white shadow-2xl w-full max-w-2xl h-full overflow-hidden flex flex-col"
             >
               <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50 shrink-0">
                 <h2 className="text-lg font-black text-[#010136] tracking-tight">
