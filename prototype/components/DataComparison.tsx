@@ -465,6 +465,23 @@ export const DataComparison: React.FC<DataComparisonProps> = ({ language, tracki
   const [pdfCurrentPage, setPdfCurrentPage] = useState<number>(1);
   const [activeRightTab, setActiveRightTab] = useState<'excel' | 'json'>('excel');
   const [copiedJson, setCopiedJson] = useState<boolean>(false);
+  // Cross-highlighting between the field list (right pane) and the rendered document (left pane):
+  // key = `${group}::${fieldName}` so same-named fields in different item groups don't collide.
+  const [hoveredFieldKey, setHoveredFieldKey] = useState<string | null>(null);
+  const [selectedFieldKey, setSelectedFieldKey] = useState<string | null>(null);
+  const [showOnlyMismatchedFields, setShowOnlyMismatchedFields] = useState(false);
+  const isFieldHighlighted = (fieldName: string, group?: string) => {
+    if (!hoveredFieldKey && !selectedFieldKey) return false;
+    const key = `${group || 'no-group'}::${fieldName}`;
+    return hoveredFieldKey === key || selectedFieldKey === key;
+  };
+  // For document renders that don't track a group (static header text, or the generic
+  // key/value fallback layout), match on field name alone regardless of which item group it's in.
+  const isFieldHighlightedByName = (fieldName: string) => {
+    const active = hoveredFieldKey || selectedFieldKey;
+    if (!active) return false;
+    return active.endsWith(`::${fieldName}`);
+  };
   const [ocrLogs, setOcrLogs] = useState<{id: string, jobId: string, docName: string, timestamp: string, action: string, details: string, version: number, user: string}[]>([
     { id: 'log-1', jobId: 'job-012a', docName: 'INVOICE', timestamp: new Date(Date.now() - 86400000).toISOString(), action: 'UPLOAD_NEW', details: 'อัปโหลดเอกสารเวอร์ชันเริ่มต้น', version: 1, user: 'System' },
     { id: 'log-2', jobId: 'job-012a', docName: 'INVOICE', timestamp: new Date(Date.now() - 3600000).toISOString(), action: 'EDIT_DATA', details: 'แก้ไขข้อมูลฟิลด์: Consignee Name, Consignee Tax ID', version: 1, user: 'Kunawut W.' },
@@ -5334,11 +5351,11 @@ const mockWorkflows: Workflow[] = [
                                       <span className="block font-black text-[8px] text-slate-400 uppercase">Place of Receipt</span>
                                       <p className="font-bold text-slate-700 font-sans">SHANGHAI</p>
                                     </div>
-                                    <div className="border-r p-2">
+                                    <div className={`border-r p-2 transition-colors ${isFieldHighlightedByName('Port of Loading') ? 'bg-amber-100/70' : ''}`}>
                                       <span className="block font-black text-[8px] text-slate-400 uppercase">Port of Loading</span>
                                       <p className="font-bold text-slate-700 font-sans">SHANGHAI, CHINA</p>
                                     </div>
-                                    <div className="p-2">
+                                    <div className={`p-2 transition-colors ${isFieldHighlightedByName('Port of Discharge') ? 'bg-amber-100/70' : ''}`}>
                                       <span className="block font-black text-[8px] text-slate-400 uppercase">Port of Discharge</span>
                                       <p className="font-bold text-slate-700 font-sans">BANGKOK, THAILAND</p>
                                     </div>
@@ -5436,11 +5453,11 @@ const mockWorkflows: Workflow[] = [
                                       <span className="block text-[8px] font-black text-slate-400 uppercase">Incoterms</span>
                                       <p className="font-bold text-slate-700">FOB SHANGHAI, CHINA</p>
                                     </div>
-                                    <div>
+                                    <div className={`transition-colors rounded ${isFieldHighlightedByName('Port of Loading') ? 'bg-amber-100/70 -m-1 p-1' : ''}`}>
                                       <span className="block text-[8px] font-black text-slate-400 uppercase">Port of Loading</span>
                                       <p className="font-bold text-slate-700">SHANGHAI, CHINA</p>
                                     </div>
-                                    <div>
+                                    <div className={`transition-colors rounded ${isFieldHighlightedByName('Port of Discharge') ? 'bg-amber-100/70 -m-1 p-1' : ''}`}>
                                       <span className="block text-[8px] font-black text-slate-400 uppercase font-sans">Port of Discharge</span>
                                       <p className="font-bold text-slate-700 font-sans font-black">BANGKOK, THAILAND</p>
                                     </div>
@@ -5460,31 +5477,35 @@ const mockWorkflows: Workflow[] = [
                                       </thead>
                                       <tbody className="divide-y divide-slate-100 text-[11px] font-sans">
                                         {pageNum === 1 ? (
-                                          Array.from({ length: 4 }).map((_, i) => (
-                                            <tr key={i} className="hover:bg-slate-50/50">
-                                              <td className="p-3 max-w-[240px]">
-                                                <p className="font-bold text-slate-800 font-sans">INDUSTRIAL AUTOMATION SENSOR V{i+1}</p>
-                                                <p className="text-[9px] text-slate-400 font-sans">Item No: SKU-{10001 + i}</p>
-                                              </td>
-                                              <td className="p-3 font-mono text-center text-slate-500">8471.30.{15 * i + 10}</td>
-                                              <td className="p-3 text-center font-bold text-slate-700 font-mono">{(i + 1) * 12} PCS</td>
-                                              <td className="p-3 text-right font-mono text-slate-600">${15 * i + 120}.00</td>
-                                              <td className="p-3 text-right font-mono font-bold text-slate-800">${((i + 1) * 12) * (15 * i + 120)}.00</td>
-                                            </tr>
-                                          ))
+                                          Array.from({ length: 4 }).map((_, i) => {
+                                            const itemGroup = `Item ${i + 1}`;
+                                            return (
+                                              <tr key={i} className="hover:bg-slate-50/50">
+                                                <td className={`p-3 max-w-[240px] transition-colors ${isFieldHighlighted('Product Description', itemGroup) || isFieldHighlighted('Item No. / Model No. (SKU)', itemGroup) ? 'bg-amber-100/70' : ''}`}>
+                                                  <p className={`font-bold font-sans ${isFieldHighlighted('Product Description', itemGroup) ? 'bg-amber-200/80 rounded px-1 -mx-1' : 'text-slate-800'}`}>INDUSTRIAL AUTOMATION SENSOR V{i+1}</p>
+                                                  <p className={`text-[9px] font-sans ${isFieldHighlighted('Item No. / Model No. (SKU)', itemGroup) ? 'bg-amber-200/80 rounded px-1 -mx-1 text-slate-700' : 'text-slate-400'}`}>Item No: SKU-{10001 + i}</p>
+                                                </td>
+                                                <td className={`p-3 font-mono text-center text-slate-500 transition-colors ${isFieldHighlighted('HS Code', itemGroup) ? 'bg-amber-100/70' : ''}`}>8471.30.{15 * i + 10}</td>
+                                                <td className={`p-3 text-center font-bold text-slate-700 font-mono transition-colors ${isFieldHighlighted('Q\'ty by line', itemGroup) || isFieldHighlighted('UOM', itemGroup) ? 'bg-amber-100/70' : ''}`}>{(i + 1) * 12} PCS</td>
+                                                <td className={`p-3 text-right font-mono text-slate-600 transition-colors ${isFieldHighlighted('Price / Unit', itemGroup) ? 'bg-amber-100/70' : ''}`}>${15 * i + 120}.00</td>
+                                                <td className={`p-3 text-right font-mono font-bold text-slate-800 transition-colors ${isFieldHighlighted('Invoice Amount', itemGroup) ? 'bg-amber-100/70' : ''}`}>${((i + 1) * 12) * (15 * i + 120)}.00</td>
+                                              </tr>
+                                            );
+                                          })
                                         ) : pageNum === 2 ? (
                                           Array.from({ length: 4 }).map((_, i) => {
                                             const idx = i + 4;
+                                            const itemGroup = `Item ${idx + 1}`;
                                             return (
                                               <tr key={idx} className="hover:bg-slate-50/50 font-sans">
-                                                <td className="p-3 max-w-[240px]">
-                                                  <p className="font-bold text-slate-800 font-sans">INDUSTRIAL AUTOMATION ACCESSORY MOD{idx+1}</p>
-                                                  <p className="text-[9px] text-slate-400 font-sans">Item No: SKU-{10001 + idx}</p>
+                                                <td className={`p-3 max-w-[240px] transition-colors ${isFieldHighlighted('Product Description', itemGroup) || isFieldHighlighted('Item No. / Model No. (SKU)', itemGroup) ? 'bg-amber-100/70' : ''}`}>
+                                                  <p className={`font-bold font-sans ${isFieldHighlighted('Product Description', itemGroup) ? 'bg-amber-200/80 rounded px-1 -mx-1' : 'text-slate-800'}`}>INDUSTRIAL AUTOMATION ACCESSORY MOD{idx+1}</p>
+                                                  <p className={`text-[9px] font-sans ${isFieldHighlighted('Item No. / Model No. (SKU)', itemGroup) ? 'bg-amber-200/80 rounded px-1 -mx-1 text-slate-700' : 'text-slate-400'}`}>Item No: SKU-{10001 + idx}</p>
                                                 </td>
-                                                <td className="p-3 font-mono text-center text-slate-500">8471.30.{10 * idx + 10}</td>
-                                                <td className="p-3 text-center font-bold text-slate-700 font-mono">{(idx + 1) * 5} PCS</td>
-                                                <td className="p-3 text-right font-mono text-slate-600">${10 * idx + 8}.00</td>
-                                                <td className="p-3 text-right font-mono font-bold text-slate-800">${((idx + 1) * 5) * (10 * idx + 8)}.00</td>
+                                                <td className={`p-3 font-mono text-center text-slate-500 transition-colors ${isFieldHighlighted('HS Code', itemGroup) ? 'bg-amber-100/70' : ''}`}>8471.30.{10 * idx + 10}</td>
+                                                <td className={`p-3 text-center font-bold text-slate-700 font-mono transition-colors ${isFieldHighlighted('Q\'ty by line', itemGroup) || isFieldHighlighted('UOM', itemGroup) ? 'bg-amber-100/70' : ''}`}>{(idx + 1) * 5} PCS</td>
+                                                <td className={`p-3 text-right font-mono text-slate-600 transition-colors ${isFieldHighlighted('Price / Unit', itemGroup) ? 'bg-amber-100/70' : ''}`}>${10 * idx + 8}.00</td>
+                                                <td className={`p-3 text-right font-mono font-bold text-slate-800 transition-colors ${isFieldHighlighted('Invoice Amount', itemGroup) ? 'bg-amber-100/70' : ''}`}>${((idx + 1) * 5) * (10 * idx + 8)}.00</td>
                                               </tr>
                                             );
                                           })
@@ -5550,7 +5571,7 @@ const mockWorkflows: Workflow[] = [
                                       <p className="font-extrabold text-slate-800 text-xs">GLOBAL TRADING INC.</p>
                                       <p className="text-slate-500">Contact: Packing & Logistics</p>
                                     </div>
-                                    <div className="bg-slate-50 p-4 rounded-xl space-y-1 font-sans">
+                                    <div className={`bg-slate-50 p-4 rounded-xl space-y-1 font-sans transition-colors ${isFieldHighlightedByName('Consignee Name') || isFieldHighlightedByName('Consignee TAX ID') ? 'bg-amber-100/70' : ''}`}>
                                       <span className="font-black text-[9px] uppercase tracking-wider text-slate-400">Consignee</span>
                                       <p className="font-extrabold text-[#010136] text-xs font-black">BIZ-TRANS LOGISTICS CO., LTD.</p>
                                       <p className="text-slate-500">Bangkok, Thailand | Contact: Kunawut W.</p>
@@ -5571,29 +5592,33 @@ const mockWorkflows: Workflow[] = [
                                       </thead>
                                       <tbody className="divide-y divide-slate-100 text-[11px] font-sans">
                                         {pageNum === 1 ? (
-                                          Array.from({ length: 4 }).map((_, i) => (
-                                            <tr key={i} className="hover:bg-slate-50/50">
-                                              <td className="p-3 font-mono font-bold text-slate-600">BOX {i+1}/4</td>
-                                              <td className="p-3 font-sans">
-                                                <p className="font-bold text-slate-800 font-sans">INDUSTRIAL AUTOMATION SENSOR V{i+1}</p>
-                                                <p className="text-[9px] text-slate-400 font-sans">MODEL# SKU-{10001 + i}</p>
-                                              </td>
-                                              <td className="p-3 text-center font-bold text-slate-700 font-mono">{(i + 1) * 12} PCS</td>
-                                              <td className="p-3 text-right font-mono text-slate-500">{(i + 1) * 4.5} KG</td>
-                                              <td className="p-3 text-right font-mono text-slate-500">{(i + 1) * 5.2} KG</td>
-                                            </tr>
-                                          ))
+                                          Array.from({ length: 4 }).map((_, i) => {
+                                            const itemGroup = `Item ${i + 1}`;
+                                            return (
+                                              <tr key={i} className="hover:bg-slate-50/50">
+                                                <td className="p-3 font-mono font-bold text-slate-600">BOX {i+1}/4</td>
+                                                <td className={`p-3 font-sans transition-colors ${isFieldHighlighted('Product Description', itemGroup) || isFieldHighlighted('Item No. / Model No. (SKU)', itemGroup) ? 'bg-amber-100/70' : ''}`}>
+                                                  <p className={`font-bold font-sans ${isFieldHighlighted('Product Description', itemGroup) ? 'bg-amber-200/80 rounded px-1 -mx-1' : 'text-slate-800'}`}>INDUSTRIAL AUTOMATION SENSOR V{i+1}</p>
+                                                  <p className={`text-[9px] font-sans ${isFieldHighlighted('Item No. / Model No. (SKU)', itemGroup) ? 'bg-amber-200/80 rounded px-1 -mx-1 text-slate-700' : 'text-slate-400'}`}>MODEL# SKU-{10001 + i}</p>
+                                                </td>
+                                                <td className={`p-3 text-center font-bold text-slate-700 font-mono transition-colors ${isFieldHighlighted('Q\'ty by line', itemGroup) ? 'bg-amber-100/70' : ''}`}>{(i + 1) * 12} PCS</td>
+                                                <td className="p-3 text-right font-mono text-slate-500">{(i + 1) * 4.5} KG</td>
+                                                <td className="p-3 text-right font-mono text-slate-500">{(i + 1) * 5.2} KG</td>
+                                              </tr>
+                                            );
+                                          })
                                         ) : pageNum === 2 ? (
                                           Array.from({ length: 3 }).map((_, i) => {
                                             const idx = i + 4;
+                                            const itemGroup = `Item ${idx + 1}`;
                                             return (
                                               <tr key={idx} className="hover:bg-slate-50/50 font-sans">
                                                 <td className="p-3 font-mono font-bold text-slate-600 font-mono">BOX {idx+1}/7</td>
-                                                <td className="p-3 font-sans">
-                                                  <p className="font-bold text-slate-800 font-sans">AUTOMATION SENSOR BRACKET TYPE {idx+1}</p>
-                                                  <p className="text-[9px] text-slate-400 font-sans">MODEL# SKU-{10001 + idx}</p>
+                                                <td className={`p-3 font-sans transition-colors ${isFieldHighlighted('Product Description', itemGroup) || isFieldHighlighted('Item No. / Model No. (SKU)', itemGroup) ? 'bg-amber-100/70' : ''}`}>
+                                                  <p className={`font-bold font-sans ${isFieldHighlighted('Product Description', itemGroup) ? 'bg-amber-200/80 rounded px-1 -mx-1' : 'text-slate-800'}`}>AUTOMATION SENSOR BRACKET TYPE {idx+1}</p>
+                                                  <p className={`text-[9px] font-sans ${isFieldHighlighted('Item No. / Model No. (SKU)', itemGroup) ? 'bg-amber-200/80 rounded px-1 -mx-1 text-slate-700' : 'text-slate-400'}`}>MODEL# SKU-{10001 + idx}</p>
                                                 </td>
-                                                <td className="p-3 text-center font-bold text-slate-700 font-mono">{(idx + 1) * 2} PCS</td>
+                                                <td className={`p-3 text-center font-bold text-slate-700 font-mono transition-colors ${isFieldHighlighted('Q\'ty by line', itemGroup) ? 'bg-amber-100/70' : ''}`}>{(idx + 1) * 2} PCS</td>
                                                 <td className="p-3 text-right font-mono text-slate-500">{(idx + 1) * 1.5} KG</td>
                                                 <td className="p-3 text-right font-mono text-slate-500">{(idx + 1) * 1.8} KG</td>
                                               </tr>
@@ -5664,7 +5689,7 @@ const mockWorkflows: Workflow[] = [
                                       <h3 className="font-black text-[10px] uppercase text-slate-400 tracking-wider font-sans">DOC CONTENT SUMMARY (PAGE 1)</h3>
                                       <div className="border border-slate-200 rounded-xl p-4 flex-1 font-mono text-slate-500 font-bold text-[11px] space-y-2 whitespace-pre leading-relaxed bg-slate-50/50">
                                         {Object.entries(tempOCRData).slice(0, 10).map(([field, value]) => (
-                                          <div key={field} className="flex justify-between border-b border-slate-100 py-1.5 font-sans text-xs font-sans">
+                                          <div key={field} className={`flex justify-between border-b border-slate-100 py-1.5 font-sans text-xs font-sans transition-colors ${isFieldHighlightedByName(field) ? 'bg-amber-100/70 -mx-2 px-2 rounded' : ''}`}>
                                             <span className="text-[#1f5df9] font-bold font-sans">{field}:</span>
                                             <span className="text-[#010136] font-semibold font-sans">{value}</span>
                                           </div>
@@ -5676,7 +5701,7 @@ const mockWorkflows: Workflow[] = [
                                       <h3 className="font-black text-[10px] uppercase text-slate-400 tracking-wider font-sans">DOC CONTENT SUMMARY (PAGE 2)</h3>
                                       <div className="border border-slate-200 rounded-xl p-4 flex-1 font-mono text-slate-500 font-bold text-[11px] space-y-2 whitespace-pre leading-relaxed bg-slate-50/50 font-sans">
                                         {Object.entries(tempOCRData).slice(10, 20).map(([field, value]) => (
-                                          <div key={field} className="flex justify-between border-b border-slate-100 py-1.5 font-sans text-xs">
+                                          <div key={field} className={`flex justify-between border-b border-slate-100 py-1.5 font-sans text-xs transition-colors ${isFieldHighlightedByName(field) ? 'bg-amber-100/70 -mx-2 px-2 rounded' : ''}`}>
                                             <span className="text-[#1f5df9] font-bold font-sans">{field}:</span>
                                             <span className="text-[#010136] font-semibold font-sans">{value}</span>
                                           </div>
@@ -5737,23 +5762,57 @@ const mockWorkflows: Workflow[] = [
                     <div className="flex-1 overflow-hidden flex flex-col bg-white min-h-0">
                       
                       {/* Excel Header row indicators */}
-                      <div className="grid grid-cols-12 px-6 py-3 border-b border-slate-200 bg-slate-50 text-[10px] font-black tracking-wider uppercase text-[#1f5df9] shrink-0 font-sans">
+                      <div className="grid grid-cols-12 px-6 py-3 border-b border-slate-200 bg-slate-50 text-[10px] font-black tracking-wider uppercase text-[#1f5df9] shrink-0 font-sans items-center">
                         <div className="col-span-5 font-sans">{language === 'TH' ? 'ชื่อฟิลด์' : 'FIELD'}</div>
-                        <div className="col-span-7 pl-4 font-sans">{language === 'TH' ? 'ข้อมูลที่สกัด' : 'VALUE'}</div>
+                        <div className="col-span-7 pl-4 font-sans flex items-center justify-between gap-2">
+                          <span>{language === 'TH' ? 'ข้อมูลที่สกัด' : 'VALUE'}</span>
+                          {(() => {
+                            const hasMismatch = allComparisonResults.some(res => {
+                              const target = res.targets.find((t: any) => t.fileName === pdfPreviewUrl);
+                              return target && target.status === 'MISMATCH';
+                            });
+                            if (!hasMismatch) return null;
+                            return (
+                              <button
+                                type="button"
+                                onClick={() => setShowOnlyMismatchedFields(prev => !prev)}
+                                className={`flex items-center gap-1 px-2 py-1 rounded border text-[9px] font-black normal-case tracking-normal transition-all shrink-0 ${
+                                  showOnlyMismatchedFields
+                                    ? 'bg-rose-600 text-white border-rose-600'
+                                    : 'bg-white text-rose-600 border-rose-200 hover:bg-rose-50'
+                                }`}
+                              >
+                                <AlertCircle size={10} />
+                                {showOnlyMismatchedFields
+                                  ? (language === 'TH' ? 'แสดงทั้งหมด' : 'Show all')
+                                  : (language === 'TH' ? 'เฉพาะที่ไม่ตรงกัน' : 'Mismatched only')}
+                              </button>
+                            );
+                          })()}
+                        </div>
                       </div>
 
                       {/* Excel rows with clean editing cell styling */}
                       <div className="flex-1 overflow-auto divide-y divide-slate-100 px-4 custom-scrollbar">
                         {(() => {
-                          const filteredResults = allComparisonResults.filter(res => {
+                          let filteredResults = allComparisonResults.filter(res => {
                             const target = res.targets.find(t => t.fileName === pdfPreviewUrl);
                             return target && target.status !== 'NA';
                           });
 
+                          if (showOnlyMismatchedFields) {
+                            filteredResults = filteredResults.filter(res => {
+                              const target = res.targets.find((t: any) => t.fileName === pdfPreviewUrl);
+                              return target && target.status === 'MISMATCH';
+                            });
+                          }
+
                           if (filteredResults.length === 0) {
                             return (
                                <div className="p-8 text-center text-slate-400 font-sans text-xs">
-                                  {language === 'TH' ? 'ไม่มีฟิลด์ข้อมูลเสริมที่เกี่ยวข้อง' : 'No relevant comparison fields found for this document.'}
+                                  {showOnlyMismatchedFields
+                                    ? (language === 'TH' ? 'ไม่มีฟิลด์ที่ไม่ตรงกันแล้ว' : 'No mismatched fields left.')
+                                    : (language === 'TH' ? 'ไม่มีฟิลด์ข้อมูลเสริมที่เกี่ยวข้อง' : 'No relevant comparison fields found for this document.')}
                                </div>
                             );
                           }
@@ -5786,22 +5845,39 @@ const mockWorkflows: Workflow[] = [
                                   {items.map((res: any, i: number) => {
                                     const fieldId = `input-field-${groupName.replace(/\s/g, '-')}-${i}`;
                                     const isDisabled = isUnassigned || selectedJob?.status === JobStatus.DONE;
+                                    const target = res.targets.find((t: any) => t.fileName === pdfPreviewUrl);
+                                    const isMismatch = target && target.status === 'MISMATCH';
+                                    const fieldKey = `${res.group || 'no-group'}::${res.fieldName}`;
+                                    const isHighlighted = hoveredFieldKey === fieldKey || selectedFieldKey === fieldKey;
                                     return (
-                                      <div key={i} className="grid grid-cols-12 hover:bg-slate-50/60 py-1.5 items-center transition-all bg-white relative group/row">
-                                        <div className="col-span-5 text-[#1f5df9] font-bold text-[12px] capitalize font-sans leading-relaxed tracking-tight px-3 break-words">
+                                      <div
+                                        key={i}
+                                        className={`grid grid-cols-12 py-1.5 items-center transition-all relative group/row ${
+                                          isHighlighted ? 'bg-amber-50' : isMismatch ? 'bg-rose-50/50 hover:bg-rose-50' : 'bg-white hover:bg-slate-50/60'
+                                        }`}
+                                        onMouseEnter={() => setHoveredFieldKey(fieldKey)}
+                                        onMouseLeave={() => setHoveredFieldKey(null)}
+                                      >
+                                        {isMismatch && <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-rose-400"></div>}
+                                        <div className={`col-span-5 font-bold text-[12px] capitalize font-sans leading-relaxed tracking-tight px-3 break-words flex items-center gap-1.5 ${isMismatch ? 'text-rose-600' : 'text-[#1f5df9]'}`}>
+                                          {isMismatch && <AlertCircle size={11} className="shrink-0" />}
                                           {res.fieldName}
                                         </div>
                                         <div className="col-span-7 pl-2 pr-4 relative">
                                           <div className="relative flex items-center w-full">
-                                            <input 
+                                            <input
                                               id={fieldId}
                                               type="text"
                                               value={tempOCRData[res.fieldName] || ''}
                                               disabled={isDisabled}
                                               onChange={(e) => setTempOCRData(prev => ({ ...prev, [res.fieldName]: e.target.value }))}
-                                              className={`w-full p-2 pr-8 rounded-md text-[#010136] text-[13px] font-bold font-sans transition-all outline-none border border-transparent hover:border-slate-200 hover:bg-slate-50 focus:bg-white focus:border-[#1f5df9] focus:ring-2 focus:ring-[#1f5df9]/20 ${
-                                                selectedJob?.status === JobStatus.DONE 
-                                                  ? 'bg-transparent text-slate-500 cursor-not-allowed shadow-none font-semibold hover:border-transparent hover:bg-transparent' 
+                                              onFocus={() => setSelectedFieldKey(fieldKey)}
+                                              onBlur={() => setSelectedFieldKey(prev => prev === fieldKey ? null : prev)}
+                                              className={`w-full p-2 pr-8 rounded-md text-[#010136] text-[13px] font-bold font-sans transition-all outline-none border ${
+                                                isMismatch ? 'border-rose-200' : 'border-transparent'
+                                              } hover:border-slate-200 hover:bg-slate-50 focus:bg-white focus:border-[#1f5df9] focus:ring-2 focus:ring-[#1f5df9]/20 ${
+                                                selectedJob?.status === JobStatus.DONE
+                                                  ? 'bg-transparent text-slate-500 cursor-not-allowed shadow-none font-semibold hover:border-transparent hover:bg-transparent'
                                                   : 'bg-transparent'
                                               }`}
                                               placeholder="Enter extracted value"
