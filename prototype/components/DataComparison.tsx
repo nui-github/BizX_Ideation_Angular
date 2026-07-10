@@ -6004,56 +6004,62 @@ const mockWorkflows: Workflow[] = [
                 </button>
               </div>
               
-              <Tabs 
-                activeKey={activeBoardTab} 
-                onChange={setActiveBoardTab}
-                className="custom-job-tabs mb-6"
-                style={{ borderRadius: '8px' }}
-                items={[
-                  {
-                    key: 'jobs',
-                    label: (
-                      <div className="flex items-center gap-2 px-1 py-2 group">
-                        <List size={18} className="text-slate-400 group-hover:text-blue-500 transition-colors" />
-                        <span className="font-black uppercase tracking-[0.05em] text-[13px] text-slate-500 font-sans group-hover:text-slate-800 transition-colors">
-                          {t.tabJobList}
-                        </span>
-                      </div>
-                    ),
-                    children: renderShipmentGrid()
-                  },
-                  ...(SHOW_PENDING_AND_LOGS_TABS ? [{
-                    key: 'pending',
-                    label: (
-                      <div className="flex items-center gap-2 px-1 py-2 group">
-                        <Inbox size={18} className="text-slate-400 group-hover:text-blue-500 transition-colors" />
-                        <span className="font-black uppercase tracking-[0.05em] text-[13px] text-slate-500 font-sans group-hover:text-slate-800 transition-colors">
-                          {t.tabPendingInbox}
-                        </span>
-                        <Badge
-                          count={pendingInboxItems.filter(item => !readPendingIds.has(item.id)).length}
-                          size="small"
-                          className="ml-1"
-                          styles={{ count: { fontSize: '10px', fontWeight: 900, backgroundColor: '#DC2626', color: '#ffffff', minWidth: '18px', height: '18px', lineHeight: '18px', border: 'none', boxShadow: 'none', opacity: 1 } }}
-                        />
-                      </div>
-                    ),
-                    children: renderPendingInbox()
-                  },
-                  {
-                    key: 'logs',
-                    label: (
-                      <div className="flex items-center gap-2 px-1 py-2 group">
-                        <Clock size={18} className="text-slate-400 group-hover:text-blue-500 transition-colors" />
-                        <span className="font-black uppercase tracking-[0.05em] text-[13px] text-slate-500 font-sans group-hover:text-slate-800 transition-colors">
-                          {t.tabActivityLogs}
-                        </span>
-                      </div>
-                    ),
-                    children: renderActivityLogs()
-                  }] : [])
-                ]}
-              />
+              {SHOW_PENDING_AND_LOGS_TABS ? (
+                <Tabs
+                  activeKey={activeBoardTab}
+                  onChange={setActiveBoardTab}
+                  className="custom-job-tabs mb-6"
+                  style={{ borderRadius: '8px' }}
+                  items={[
+                    {
+                      key: 'jobs',
+                      label: (
+                        <div className="flex items-center gap-2 px-1 py-2 group">
+                          <List size={18} className="text-slate-400 group-hover:text-blue-500 transition-colors" />
+                          <span className="font-black uppercase tracking-[0.05em] text-[13px] text-slate-500 font-sans group-hover:text-slate-800 transition-colors">
+                            {t.tabJobList}
+                          </span>
+                        </div>
+                      ),
+                      children: renderShipmentGrid()
+                    },
+                    {
+                      key: 'pending',
+                      label: (
+                        <div className="flex items-center gap-2 px-1 py-2 group">
+                          <Inbox size={18} className="text-slate-400 group-hover:text-blue-500 transition-colors" />
+                          <span className="font-black uppercase tracking-[0.05em] text-[13px] text-slate-500 font-sans group-hover:text-slate-800 transition-colors">
+                            {t.tabPendingInbox}
+                          </span>
+                          <Badge
+                            count={pendingInboxItems.filter(item => !readPendingIds.has(item.id)).length}
+                            size="small"
+                            className="ml-1"
+                            styles={{ count: { fontSize: '10px', fontWeight: 900, backgroundColor: '#DC2626', color: '#ffffff', minWidth: '18px', height: '18px', lineHeight: '18px', border: 'none', boxShadow: 'none', opacity: 1 } }}
+                          />
+                        </div>
+                      ),
+                      children: renderPendingInbox()
+                    },
+                    {
+                      key: 'logs',
+                      label: (
+                        <div className="flex items-center gap-2 px-1 py-2 group">
+                          <Clock size={18} className="text-slate-400 group-hover:text-blue-500 transition-colors" />
+                          <span className="font-black uppercase tracking-[0.05em] text-[13px] text-slate-500 font-sans group-hover:text-slate-800 transition-colors">
+                            {t.tabActivityLogs}
+                          </span>
+                        </div>
+                      ),
+                      children: renderActivityLogs()
+                    }
+                  ]}
+                />
+              ) : (
+                // Demo mode: no other tabs to switch between, so skip the tab bar
+                // entirely and give the job list content the extra vertical space.
+                renderShipmentGrid()
+              )}
             </>
           )}
           
