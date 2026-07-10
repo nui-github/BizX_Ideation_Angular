@@ -176,34 +176,23 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentUserRole, onTog
         {/* Sidebar Footer */}
         <div className="p-4 border-t border-slate-100">
            {!collapsed ? (
-             <div className="flex flex-col gap-3">
-               <div className="flex items-center justify-between px-3 py-2 bg-slate-50 rounded-lg border border-slate-100">
-                  <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
-                     <Globe size={14} />
-                     <span>{t.language}</span>
-                  </div>
-                  <div className="flex gap-1 text-xs">
-                      <button 
-                        onClick={() => onLanguageChange('EN')}
-                        className={`px-1.5 py-0.5 rounded-[4px] ${language === 'EN' ? 'bg-white shadow-sm text-sky-600 font-bold' : 'text-slate-400 hover:text-slate-600'}`}
-                      >EN</button>
-                      <button 
-                        onClick={() => onLanguageChange('TH')}
-                        className={`px-1.5 py-0.5 rounded-[4px] ${language === 'TH' ? 'bg-white shadow-sm text-sky-600 font-bold' : 'text-slate-400 hover:text-slate-600'}`}
-                      >TH</button>
-                  </div>
-               </div>
-               
-               <button className="flex items-center justify-center gap-2 text-red-500 hover:bg-red-50 py-2 rounded-[4px] text-sm font-medium transition-colors">
-                 <LogOut size={16} />
-                 <span>{t.signOut}</span>
-               </button>
+             <div className="flex items-center justify-between px-3 py-2 bg-slate-50 rounded-lg border border-slate-100">
+                <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
+                   <Globe size={14} />
+                   <span>{t.language}</span>
+                </div>
+                <div className="flex gap-1 text-xs">
+                    <button
+                      onClick={() => onLanguageChange('EN')}
+                      className={`px-1.5 py-0.5 rounded-[4px] ${language === 'EN' ? 'bg-white shadow-sm text-sky-600 font-bold' : 'text-slate-400 hover:text-slate-600'}`}
+                    >EN</button>
+                    <button
+                      onClick={() => onLanguageChange('TH')}
+                      className={`px-1.5 py-0.5 rounded-[4px] ${language === 'TH' ? 'bg-white shadow-sm text-sky-600 font-bold' : 'text-slate-400 hover:text-slate-600'}`}
+                    >TH</button>
+                </div>
              </div>
-           ) : (
-             <button className="flex justify-center w-full text-red-500 hover:bg-red-50 p-2 rounded-[4px] transition-colors">
-               <LogOut size={20} />
-             </button>
-           )}
+           ) : null}
         </div>
       </aside>
 
