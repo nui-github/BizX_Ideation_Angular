@@ -29,7 +29,9 @@ export const MOCK_PRESETS: JobPreset[] = [
     name: 'Vendor Onboarding Sync',
     assignedTeams: ['operation'],
     workflows: [
-      { id: 'pwf-4', workflowId: 'wf-4', assignedTeams: ['operation'] }
+      { id: 'pwf-4', workflowId: 'wf-op-1', assignedTeams: ['operation'] },
+      { id: 'pwf-8', workflowId: 'wf-op-2', assignedTeams: ['operation'] },
+      { id: 'pwf-9', workflowId: 'wf-op-3', assignedTeams: ['operation'] }
     ],
     isActive: true,
     createdAt: '2026-03-05T00:00:00Z',

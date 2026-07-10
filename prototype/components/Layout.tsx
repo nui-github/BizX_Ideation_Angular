@@ -246,7 +246,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentUserRole, onTog
                  <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">
                    <span>{currentUserRole}</span>
                    <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
-                   <span className="text-[#1f5df9] font-black">{language === 'TH' ? 'ทีม LOGISTICS' : 'LOGISTICS TEAM'}</span>
+                   <span className="text-[#1f5df9] font-black">{language === 'TH' ? 'ทีม OPERATION' : 'OPERATION TEAM'}</span>
                  </div>
               </div>
               <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-bold">
@@ -262,7 +262,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentUserRole, onTog
                   <div className="font-bold text-[#010136]">Kunawut Wachirapunyawut</div>
                   <div className="text-xs text-slate-500 flex flex-col gap-0.5 mt-1">
                     <span>Administrator</span>
-                    <span className="text-[#1f5df9] font-bold">{language === 'TH' ? 'ทีม: Logistics' : 'Team: Import Logistics'}</span>
+                    <span className="text-[#1f5df9] font-bold">{language === 'TH' ? 'ทีม: Operation' : 'Team: Operation'}</span>
                   </div>
                 </div>
                 <div className="py-1">

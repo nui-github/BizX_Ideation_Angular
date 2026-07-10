@@ -452,6 +452,36 @@ const MOCK_WORKFLOWS: Workflow[] = [
       { id: 'e1', source: 'n1', target: 'n2' },
       { id: 'e2', source: 'n2', target: 'n3' }
     ]
+  },
+  {
+    id: 'wf-op-1',
+    name: 'PO/PI & Invoice Matching',
+    description: 'Operation team: matches PO/PI against Invoice',
+    status: 'ACTIVE',
+    createdAt: '2026-05-01T09:00:00Z',
+    updatedAt: '2026-05-01T09:00:00Z',
+    nodes: [],
+    edges: []
+  },
+  {
+    id: 'wf-op-2',
+    name: 'Freight & Customs Reference Check',
+    description: 'Operation team: verifies invoice through FTA draft documents',
+    status: 'ACTIVE',
+    createdAt: '2026-05-01T09:00:00Z',
+    updatedAt: '2026-05-01T09:00:00Z',
+    nodes: [],
+    edges: []
+  },
+  {
+    id: 'wf-op-3',
+    name: 'Full Export Declaration Set',
+    description: 'Operation team: full document set through export declaration',
+    status: 'ACTIVE',
+    createdAt: '2026-05-01T09:00:00Z',
+    updatedAt: '2026-05-01T09:00:00Z',
+    nodes: [],
+    edges: []
   }
 ];
 

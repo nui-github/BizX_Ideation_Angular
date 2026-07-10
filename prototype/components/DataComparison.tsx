@@ -23,9 +23,9 @@ import {
 import { TRANSLATIONS } from '../translations';
 import { MOCK_PRESETS } from '../mock-data/preset.mock';
 
-// Mirrors the "ทีม LOGISTICS" badge shown in the sidebar profile menu (Layout.tsx) —
+// Mirrors the "ทีม OPERATION" badge shown in the sidebar profile menu (Layout.tsx) —
 // there's no real auth/session concept yet, so the current user's team is fixed here.
-const CURRENT_USER_TEAM = 'logistics';
+const CURRENT_USER_TEAM = 'operation';
 const CURRENT_USER_NAME = 'Kunawut W.';
 
 interface DocComment {
@@ -776,6 +776,90 @@ const mockWorkflows: Workflow[] = [
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     nodes: [],
+    edges: []
+  },
+  {
+    id: 'wf-op-1',
+    name: 'PO/PI & Invoice Matching',
+    description: 'Operation team: matches PO/PI against Invoice',
+    status: 'ACTIVE',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    nodes: [
+      {
+        id: 'node-create-job-op-1',
+        type: 'create_job',
+        position: { x: 0, y: 0 },
+        data: {
+          jobName: 'PO/PI & Invoice Matching',
+          docTypes: ['PO/PI', 'Invoice']
+        }
+      },
+      {
+        id: 'node-send-to-op-1',
+        type: 'send_to',
+        position: { x: 400, y: 0 },
+        data: {
+          nodeName: 'ส่งต่องาน ไปยัง Freight & Customs Reference Check',
+          nextWorkflowId: 'wf-op-2',
+          nextWorkflowName: 'Freight & Customs Reference Check'
+        }
+      }
+    ],
+    edges: [
+      { id: 'e-op-1-send', source: 'node-create-job-op-1', target: 'node-send-to-op-1' }
+    ]
+  },
+  {
+    id: 'wf-op-2',
+    name: 'Freight & Customs Reference Check',
+    description: 'Operation team: verifies invoice through FTA draft documents',
+    status: 'ACTIVE',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    nodes: [
+      {
+        id: 'node-create-job-op-2',
+        type: 'create_job',
+        position: { x: 0, y: 0 },
+        data: {
+          jobName: 'Freight & Customs Reference Check',
+          docTypes: ['Invoice', 'Packing List', 'Bill of Lading', 'FREIGHT INVOICE', 'HS Code Master File', 'Form FTA (Draft version)']
+        }
+      },
+      {
+        id: 'node-send-to-op-2',
+        type: 'send_to',
+        position: { x: 400, y: 0 },
+        data: {
+          nodeName: 'ส่งต่องาน ไปยัง Full Export Declaration Set',
+          nextWorkflowId: 'wf-op-3',
+          nextWorkflowName: 'Full Export Declaration Set'
+        }
+      }
+    ],
+    edges: [
+      { id: 'e-op-2-send', source: 'node-create-job-op-2', target: 'node-send-to-op-2' }
+    ]
+  },
+  {
+    id: 'wf-op-3',
+    name: 'Full Export Declaration Set',
+    description: 'Operation team: full document set through export declaration',
+    status: 'ACTIVE',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    nodes: [
+      {
+        id: 'node-create-job-op-3',
+        type: 'create_job',
+        position: { x: 0, y: 0 },
+        data: {
+          jobName: 'Full Export Declaration Set',
+          docTypes: ['PO/PI', 'Invoice', 'Packing List', 'Bill of Lading', 'FREIGHT INVOICE', 'HS Code Master File', 'Form FTA (Draft version)', 'Form FTA (Original version)', 'ใบขนสินค้า']
+        }
+      }
+    ],
     edges: []
   }
 ];
