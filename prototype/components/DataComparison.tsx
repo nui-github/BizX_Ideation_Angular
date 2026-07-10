@@ -6,7 +6,7 @@ import {
   Plus, Trash2, ArrowLeftRight, FileSpreadsheet, File as FileIcon,
   CheckCircle2, XCircle, Info, Eye, EyeOff, Send, Filter, ListFilter, ArrowLeft, Save, RotateCcw,
   LayoutGrid, List, ScanEye, Bot, ChevronDown, Lock, Unlock, HelpCircle, X, Loader2, ShieldCheck, ArrowUpRight, ScanSearch, History, Edit3, UploadCloud, AlertTriangle,
-  Printer, RotateCw, ZoomIn, ZoomOut, Menu, Copy, Star
+  Printer, RotateCw, ZoomIn, ZoomOut, Menu, Copy, Star, CheckCheck, StickyNote
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Tabs, Tag, Badge, Empty, Button, message } from 'antd';
@@ -402,6 +402,11 @@ export const DataComparison: React.FC<DataComparisonProps> = ({ language, tracki
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(true);
   const [overriddenValues, setOverriddenValues] = useState<Record<string, string>>({}); // field-tIdx -> value
   const [confirmedMismatches, setConfirmedMismatches] = useState<Record<string, boolean>>({}); // job_doc_field -> boolean
+  // Notes attached to a specific document within a job — key is `${jobId}_${docName}`.
+  // Carried forward to the next job in the shipment sequence on export (see handleConfirmExport).
+  const [docNotes, setDocNotes] = useState<Record<string, string>>({});
+  const [noteEditorDocName, setNoteEditorDocName] = useState<string | null>(null);
+  const [noteDraft, setNoteDraft] = useState('');
 
   const toggleConfirmMismatch = (docName: string, fieldName: string) => {
     if (!selectedJob) return;
@@ -791,6 +796,21 @@ const mockWorkflows: Workflow[] = [
     const shipmentJobs = jobs.filter(j => j.reference === jobToExport.reference);
     const seqIndex = shipmentJobs.findIndex(j => j.id === jobToExport.id);
     const nextJob = seqIndex !== -1 && seqIndex < shipmentJobs.length - 1 ? shipmentJobs[seqIndex + 1] : null;
+
+    // Carry document notes forward to the next job in the sequence so reviewers there
+    // still see context left on the same document earlier in the shipment.
+    if (nextJob) {
+      setDocNotes(prev => {
+        const next = { ...prev };
+        Object.keys(jobToExport.docs).forEach(docName => {
+          const note = prev[`${jobToExport.id}_${docName}`];
+          if (note) {
+            next[`${nextJob.id}_${docName}`] = note;
+          }
+        });
+        return next;
+      });
+    }
 
     // 3. If the exported job is currently selected (in details view), update selected job
     if (selectedJob && selectedJob.id === jobToExport.id) {
@@ -4363,6 +4383,38 @@ const mockWorkflows: Workflow[] = [
     return set;
   }, [allComparisonResults]);
 
+  // Confirm every currently-mismatched field in a single document at once, regardless
+  // of how many fields are mismatched, instead of requiring one click per field.
+  const confirmAllMismatchesInDoc = (docName: string) => {
+    if (!selectedJob) return;
+    const fieldNames = allComparisonResults
+      .filter(res => res.targets.some(t => t.fileName === docName && t.status === 'MISMATCH'))
+      .map(res => res.fieldName);
+    if (fieldNames.length === 0) return;
+
+    setConfirmedMismatches(prev => {
+      const next = { ...prev };
+      fieldNames.forEach(fieldName => {
+        next[`${selectedJob.id}_${docName}_${fieldName}`] = true;
+      });
+      return next;
+    });
+
+    const newLog = {
+      id: Math.random().toString(36).substr(2, 9),
+      jobId: selectedJob.id,
+      docName,
+      timestamp: new Date().toISOString(),
+      action: 'CONFIRM_DATA',
+      details: language === 'TH'
+        ? `กดยืนยันใช้ค่านี้ทั้งเอกสาร "${docName}" (${fieldNames.length} ฟิลด์)`
+        : `Confirmed all mismatched values in "${docName}" (${fieldNames.length} fields)`,
+      version: selectedJob.updatedDocs?.includes(docName) ? 2 : 1,
+      user: 'Kunawut W.'
+    };
+    setOcrLogs(prevLogs => [newLog, ...prevLogs]);
+  };
+
   const getLastJobWorkflowId = (shipmentRef: string) => {
     const shipmentJobs = jobs.filter(j => j.reference === shipmentRef);
     if (shipmentJobs.length === 0) return undefined;
@@ -6460,6 +6512,44 @@ const mockWorkflows: Workflow[] = [
                                             
                                              <div className="flex items-center gap-1 scale-100 origin-right">
                                                {displayStatus === ComparisonDocStatus.MISMATCHED && (
+                                                    <Tooltip content={language === 'TH' ? 'ยืนยันใช้ค่านี้ทั้งเอกสาร' : 'Confirm all mismatches in this document'}>
+                                                      <button
+                                                        disabled={isUnassigned || selectedJob.status === JobStatus.DONE}
+                                                        onClick={(e) => {
+                                                          e.stopPropagation();
+                                                          confirmAllMismatchesInDoc(docName);
+                                                        }}
+                                                        className={`h-[18px] w-[18px] flex items-center justify-center rounded-[4px] bg-white border border-slate-200 transition-all ${
+                                                          (isUnassigned || selectedJob.status === JobStatus.DONE)
+                                                          ? 'text-slate-200 cursor-not-allowed opacity-50'
+                                                          : 'text-rose-400 hover:bg-rose-500 hover:text-white hover:border-rose-500 hover:shadow-lg shadow-sm cursor-pointer'
+                                                        }`}
+                                                      >
+                                                        <CheckCheck size={10} strokeWidth={2.5} />
+                                                      </button>
+                                                    </Tooltip>
+                                               )}
+                                               <Tooltip content={
+                                                 docNotes[`${selectedJob.id}_${docName}`]
+                                                   ? (language === 'TH' ? 'ดู/แก้ไขโน้ต' : 'View/edit note')
+                                                   : (language === 'TH' ? 'เพิ่มโน้ต' : 'Add note')
+                                               }>
+                                                 <button
+                                                   onClick={(e) => {
+                                                     e.stopPropagation();
+                                                     setNoteDraft(docNotes[`${selectedJob.id}_${docName}`] || '');
+                                                     setNoteEditorDocName(docName);
+                                                   }}
+                                                   className={`h-[18px] w-[18px] flex items-center justify-center rounded-[4px] border transition-all cursor-pointer ${
+                                                     docNotes[`${selectedJob.id}_${docName}`]
+                                                       ? 'bg-amber-400 border-amber-400 text-white hover:bg-amber-500 hover:border-amber-500 shadow-sm'
+                                                       : 'bg-white border-slate-200 text-slate-400 hover:bg-slate-500 hover:text-white hover:border-slate-500 hover:shadow-lg shadow-sm'
+                                                   }`}
+                                                 >
+                                                   <StickyNote size={10} strokeWidth={2.5} />
+                                                 </button>
+                                               </Tooltip>
+                                               {displayStatus === ComparisonDocStatus.MISMATCHED && (
                                                     <Tooltip content={language === 'TH' ? 'อัปโหลดไฟล์ใหม่ (Replace)' : 'Replace File'}>
                                                       <button
                                                         disabled={isUnassigned || selectedJob.status === JobStatus.DONE}
@@ -7122,6 +7212,109 @@ const mockWorkflows: Workflow[] = [
                     </div>
                   );
                 })()}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Document Note Editor — a note attached to a specific document within this job.
+          Carried forward to the next job in the shipment sequence on export (see handleConfirmExport). */}
+      <AnimatePresence>
+        {noteEditorDocName && selectedJob && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-white w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl flex flex-col border border-slate-200"
+            >
+              <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-white">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-amber-50 text-amber-600 rounded-xl">
+                    <StickyNote size={18} />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-slate-800 tracking-tight text-base leading-tight">
+                      {language === 'TH' ? 'โน้ตเอกสาร' : 'Document Note'}
+                    </h3>
+                    <p className="text-[11px] font-bold text-slate-400 tracking-tight leading-none mt-0.5 uppercase">{noteEditorDocName}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setNoteEditorDocName(null)}
+                  className="w-9 h-9 rounded-[4px] bg-slate-100 text-slate-400 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="p-5 bg-slate-50/50">
+                <textarea
+                  value={noteDraft}
+                  onChange={(e) => setNoteDraft(e.target.value)}
+                  rows={5}
+                  placeholder={language === 'TH' ? 'พิมพ์โน้ตสำหรับเอกสารนี้...' : 'Type a note for this document...'}
+                  className="w-full bg-white border border-slate-200 rounded-[4px] p-3 text-sm font-medium text-[#010136] outline-none focus:ring-2 focus:ring-[#1f5df9]/10 focus:border-[#1f5df9] transition-all resize-none"
+                  autoFocus
+                />
+                <p className="text-[11px] text-slate-400 font-medium mt-2">
+                  {language === 'TH'
+                    ? 'โน้ตนี้จะติดไปกับเอกสารนี้เมื่อถูกส่งต่อไปยังรายการย่อยถัดไปในชิปเมนต์เดียวกัน'
+                    : 'This note follows the document forward when it moves to the next job in this shipment.'}
+                </p>
+              </div>
+
+              <div className="px-5 py-4 border-t border-slate-100 bg-white flex items-center justify-between gap-3">
+                {docNotes[`${selectedJob.id}_${noteEditorDocName}`] ? (
+                  <button
+                    onClick={() => {
+                      const docName = noteEditorDocName;
+                      setDocNotes(prev => {
+                        const next = { ...prev };
+                        delete next[`${selectedJob.id}_${docName}`];
+                        return next;
+                      });
+                      setNoteEditorDocName(null);
+                    }}
+                    className="px-4 py-2 bg-white border border-rose-200 text-rose-500 rounded-[4px] font-bold text-sm hover:bg-rose-50 transition-all"
+                  >
+                    {language === 'TH' ? 'ลบโน้ต' : 'Delete Note'}
+                  </button>
+                ) : <div />}
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setNoteEditorDocName(null)}
+                    className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-[4px] font-bold text-sm hover:bg-slate-100 transition-all"
+                  >
+                    {language === 'TH' ? 'ยกเลิก' : 'Cancel'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      const docName = noteEditorDocName;
+                      const trimmed = noteDraft.trim();
+                      setDocNotes(prev => {
+                        const next = { ...prev };
+                        if (trimmed) {
+                          next[`${selectedJob.id}_${docName}`] = trimmed;
+                        } else {
+                          delete next[`${selectedJob.id}_${docName}`];
+                        }
+                        return next;
+                      });
+                      setNoteEditorDocName(null);
+                    }}
+                    className="px-6 py-2 bg-[#1f5df9] text-white rounded-[4px] font-bold text-sm flex items-center gap-2 hover:bg-blue-600 transition-all shadow-sm"
+                  >
+                    <Check size={16} />
+                    {language === 'TH' ? 'บันทึก' : 'Save'}
+                  </button>
+                </div>
               </div>
             </motion.div>
           </motion.div>
