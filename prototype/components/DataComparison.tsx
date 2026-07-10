@@ -3643,7 +3643,7 @@ const mockWorkflows: Workflow[] = [
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse table-auto font-sans text-sm">
               <thead>
-                <tr className="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                <tr className="bg-slate-50/50 text-[12px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
                   <th className="px-8 py-4">{language === 'TH' ? 'เลขที่ Shipment' : 'SHIPMENT NO.'}</th>
                   <th className="px-8 py-4">{language === 'TH' ? 'ความคืบหน้างานย่อย' : 'PROGRESS'}</th>
                   <th className="px-8 py-4">{language === 'TH' ? 'สถานะเวิร์กโฟลว์ปัจจุบัน' : 'CURRENT WORKFLOW'}</th>
@@ -3673,8 +3673,8 @@ const mockWorkflows: Workflow[] = [
                               <FileSpreadsheet size={18} />
                             </div>
                             <div>
-                              <p className="font-black text-[#010136] text-[12px] tracking-tight mb-0.5">{shipment.reference}</p>
-                              <p className="text-[12px] font-bold text-slate-400 uppercase tracking-wider">
+                              <p className="font-black text-[#010136] text-[13px] tracking-tight mb-0.5">{shipment.reference}</p>
+                              <p className="text-[12px] font-normal text-slate-400 uppercase tracking-wider">
                                 {language === 'TH' ? 'วันที่เริ่ม: ' : 'STARTED: '} <span className="text-slate-500">{formatDisplayDate(shipment.createdAt)}</span>
                               </p>
                             </div>
