@@ -807,14 +807,20 @@ const mockWorkflows: Workflow[] = [
     const nextJob = seqIndex !== -1 && seqIndex < shipmentJobs.length - 1 ? shipmentJobs[seqIndex + 1] : null;
 
     // Carry document comments forward to the next job in the sequence so reviewers there
-    // still see context left on the same document earlier in the shipment.
+    // still see context left on the same document earlier in the shipment. Doc names aren't
+    // always cased the same across workflows (e.g. "INVOICE" vs "Invoice"), so match by
+    // lowercased name rather than requiring an exact key match.
     if (nextJob) {
       setDocComments(prev => {
         const next = { ...prev };
+        const nextJobDocNames = Object.keys(nextJob.docs);
         Object.keys(jobToExport.docs).forEach(docName => {
           const comments = prev[`${jobToExport.id}_${docName}`];
-          if (comments && comments.length > 0) {
-            next[`${nextJob.id}_${docName}`] = comments;
+          if (!comments || comments.length === 0) return;
+          const matchingNextDocName = nextJobDocNames.find(n => n.toLowerCase() === docName.toLowerCase());
+          if (matchingNextDocName) {
+            const key = `${nextJob.id}_${matchingNextDocName}`;
+            next[key] = [...(next[key] || []), ...comments];
           }
         });
         return next;
