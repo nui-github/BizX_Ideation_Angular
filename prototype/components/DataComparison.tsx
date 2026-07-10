@@ -3806,7 +3806,10 @@ const mockWorkflows: Workflow[] = [
                 {filteredJobs.map((job) => {
                   const isProcessing = job.status === JobStatus.PROCESSING;
                   const seqIndex = shipmentJobs.findIndex(j => j.id === job.id);
-                  const isWorkflowCompleted = (j: ComparisonJob) => j.status === JobStatus.DONE || j.status === JobStatus.READY;
+                  // READY only means "all data matched, ready to export" — the job hasn't actually
+                  // moved forward until it's exported (DONE), so the next sub-item must stay blocked
+                  // until then rather than opening up as soon as data matches.
+                  const isWorkflowCompleted = (j: ComparisonJob) => j.status === JobStatus.DONE;
                   const isBlocked = seqIndex > 0 && shipmentJobs.slice(0, seqIndex).some(prevJob => !isWorkflowCompleted(prevJob));
                   
                   return (
