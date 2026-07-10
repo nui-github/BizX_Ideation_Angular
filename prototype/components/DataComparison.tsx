@@ -3596,11 +3596,11 @@ const mockWorkflows: Workflow[] = [
                   setSearchTerm(e.target.value);
                   setShipmentPage(1);
                 }}
-                className="w-full bg-white border border-slate-200 rounded-xl py-2 pl-11 pr-4 focus:ring-4 focus:ring-blue-500/10 focus:border-[#1f5df9] text-sm font-bold outline-none shadow-sm font-sans transition-all"
+                className="w-full bg-white border border-slate-200 rounded-xl py-2 pl-11 pr-4 focus:ring-4 focus:ring-blue-500/10 focus:border-[#1f5df9] text-[12px] font-bold outline-none shadow-sm font-sans transition-all"
               />
             </div>
 
-            <div className="flex items-center gap-2 text-[11px] font-black text-slate-400 uppercase tracking-widest font-sans shrink-0">
+            <div className="flex items-center gap-2 text-[12px] font-black text-slate-400 uppercase tracking-widest font-sans shrink-0">
               <span>{language === 'TH' ? 'วันที่เริ่ม:' : 'Date range:'}</span>
               <DatePicker.RangePicker
                 value={[
@@ -3615,11 +3615,11 @@ const mockWorkflows: Workflow[] = [
                 allowClear
                 locale={language === 'TH' ? thTH.DatePicker : undefined}
                 placeholder={language === 'TH' ? ['วันที่เริ่มต้น', 'วันที่สิ้นสุด'] : ['Start date', 'End date']}
-                className="!bg-white !border-slate-200 !rounded-[4px] !py-2 !px-3 !shadow-sm font-sans"
+                className="!bg-white !border-slate-200 !rounded-[4px] !py-2 !px-3 !shadow-sm !text-[12px] [&_input]:!text-[12px] font-sans"
               />
             </div>
 
-            <div className="flex items-center gap-2 text-[11px] font-black text-slate-400 uppercase tracking-widest pl-2 font-sans shrink-0">
+            <div className="flex items-center gap-2 text-[12px] font-black text-slate-400 uppercase tracking-widest pl-2 font-sans shrink-0">
               <span>สถานะ Shipment:</span>
               <div className="relative">
                 <select
@@ -3628,7 +3628,7 @@ const mockWorkflows: Workflow[] = [
                     setStatusFilter(e.target.value);
                     setShipmentPage(1);
                   }}
-                  className="bg-white border border-slate-200 rounded-xl py-2 px-4 pr-10 focus:ring-4 focus:ring-blue-500/10 focus:border-[#1f5df9] text-[11px] font-black uppercase tracking-tight appearance-none cursor-pointer outline-none shadow-sm font-sans transition-all"
+                  className="bg-white border border-slate-200 rounded-xl py-2 px-4 pr-10 focus:ring-4 focus:ring-blue-500/10 focus:border-[#1f5df9] text-[12px] font-black uppercase tracking-tight appearance-none cursor-pointer outline-none shadow-sm font-sans transition-all"
                 >
                   <option value="ALL">{language === 'TH' ? 'ทั้งหมด' : 'ALL'}</option>
                   <option value="PENDING">{language === 'TH' ? 'ยังไม่เสร็จ' : 'UNFINISHED'}</option>
@@ -3673,8 +3673,8 @@ const mockWorkflows: Workflow[] = [
                               <FileSpreadsheet size={18} />
                             </div>
                             <div>
-                              <p className="font-black text-[#010136] text-[13px] tracking-tight mb-0.5">{shipment.reference}</p>
-                              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                              <p className="font-black text-[#010136] text-[12px] tracking-tight mb-0.5">{shipment.reference}</p>
+                              <p className="text-[12px] font-bold text-slate-400 uppercase tracking-wider">
                                 {language === 'TH' ? 'วันที่เริ่ม: ' : 'STARTED: '} <span className="text-slate-500">{formatDisplayDate(shipment.createdAt)}</span>
                               </p>
                             </div>
@@ -3682,7 +3682,7 @@ const mockWorkflows: Workflow[] = [
                         </td>
                         <td className="px-8 py-5">
                           <div className="flex flex-col gap-1 w-[140px]">
-                            <div className="flex justify-between text-[11px] font-black text-slate-500 tabular-nums">
+                            <div className="flex justify-between text-[12px] font-black text-slate-500 tabular-nums">
                               <span>{shipment.completedCount}/{shipment.totalCount} {language === 'TH' ? 'เสร็จ' : 'done'}</span>
                               <span>{percent}%</span>
                             </div>
@@ -3692,19 +3692,19 @@ const mockWorkflows: Workflow[] = [
                           </div>
                         </td>
                         <td className="px-8 py-5">
-                          <span className="px-2.5 py-1 text-xs font-bold rounded-lg bg-blue-50 text-blue-700 border border-blue-100 inline-flex items-center gap-1.5 font-sans">
+                          <span className="px-2.5 py-1 text-[12px] font-bold rounded-lg bg-blue-50 text-blue-700 border border-blue-100 inline-flex items-center gap-1.5 font-sans">
                             <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div>
                             {shipment.currentPhase}
                           </span>
                         </td>
                         <td className="px-8 py-5">
                           {shipment.isUnfinished ? (
-                            <span className="text-[13px] font-bold text-slate-600 flex items-center gap-1.5">
+                            <span className="text-[12px] font-bold text-slate-600 flex items-center gap-1.5">
                               <div className="w-2 h-2 rounded-full bg-amber-400"></div>
                               {shipment.currentAssignee || (language === 'TH' ? 'ยังไม่ได้มอบหมาย' : 'Unassigned')}
                             </span>
                           ) : (
-                            <span className="text-[13px] font-black text-emerald-600 flex items-center gap-1.5 font-sans">
+                            <span className="text-[12px] font-black text-emerald-600 flex items-center gap-1.5 font-sans">
                               <ShieldCheck size={14} className="text-emerald-500" />
                               {language === 'TH' ? 'เสร็จสมบูรณ์' : 'All Completed'}
                             </span>
