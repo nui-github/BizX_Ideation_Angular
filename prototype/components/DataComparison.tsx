@@ -23,6 +23,14 @@ import { MOCK_PRESETS } from '../mock-data/preset.mock';
 // Mirrors the "ทีม LOGISTICS" badge shown in the sidebar profile menu (Layout.tsx) —
 // there's no real auth/session concept yet, so the current user's team is fixed here.
 const CURRENT_USER_TEAM = 'logistics';
+const CURRENT_USER_NAME = 'Kunawut W.';
+
+interface DocComment {
+  id: string;
+  user: string;
+  timestamp: string;
+  text: string;
+}
 
 // Demo toggle: "รายการรอรีวิว" (Pending Inbox) and "บันทึกประวัติ" (Activity Logs) tabs
 // aren't ready to show customers yet. Flip to true to bring them back for internal use —
@@ -402,11 +410,12 @@ export const DataComparison: React.FC<DataComparisonProps> = ({ language, tracki
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(true);
   const [overriddenValues, setOverriddenValues] = useState<Record<string, string>>({}); // field-tIdx -> value
   const [confirmedMismatches, setConfirmedMismatches] = useState<Record<string, boolean>>({}); // job_doc_field -> boolean
-  // Notes attached to a specific document within a job — key is `${jobId}_${docName}`.
-  // Carried forward to the next job in the shipment sequence on export (see handleConfirmExport).
-  const [docNotes, setDocNotes] = useState<Record<string, string>>({});
+  // Comments attached to a specific document within a job — key is `${jobId}_${docName}`.
+  // Anyone on the assigned team can add a comment; carried forward to the next job in the
+  // shipment sequence on export (see handleConfirmExport) so context isn't lost downstream.
+  const [docComments, setDocComments] = useState<Record<string, DocComment[]>>({});
   const [noteEditorDocName, setNoteEditorDocName] = useState<string | null>(null);
-  const [noteDraft, setNoteDraft] = useState('');
+  const [commentDraft, setCommentDraft] = useState('');
 
   const toggleConfirmMismatch = (docName: string, fieldName: string) => {
     if (!selectedJob) return;
@@ -797,15 +806,15 @@ const mockWorkflows: Workflow[] = [
     const seqIndex = shipmentJobs.findIndex(j => j.id === jobToExport.id);
     const nextJob = seqIndex !== -1 && seqIndex < shipmentJobs.length - 1 ? shipmentJobs[seqIndex + 1] : null;
 
-    // Carry document notes forward to the next job in the sequence so reviewers there
+    // Carry document comments forward to the next job in the sequence so reviewers there
     // still see context left on the same document earlier in the shipment.
     if (nextJob) {
-      setDocNotes(prev => {
+      setDocComments(prev => {
         const next = { ...prev };
         Object.keys(jobToExport.docs).forEach(docName => {
-          const note = prev[`${jobToExport.id}_${docName}`];
-          if (note) {
-            next[`${nextJob.id}_${docName}`] = note;
+          const comments = prev[`${jobToExport.id}_${docName}`];
+          if (comments && comments.length > 0) {
+            next[`${nextJob.id}_${docName}`] = comments;
           }
         });
         return next;
@@ -6530,23 +6539,28 @@ const mockWorkflows: Workflow[] = [
                                                     </Tooltip>
                                                )}
                                                <Tooltip content={
-                                                 docNotes[`${selectedJob.id}_${docName}`]
-                                                   ? (language === 'TH' ? 'ดู/แก้ไขโน้ต' : 'View/edit note')
-                                                   : (language === 'TH' ? 'เพิ่มโน้ต' : 'Add note')
+                                                 (docComments[`${selectedJob.id}_${docName}`]?.length ?? 0) > 0
+                                                   ? (language === 'TH' ? 'ดูความคิดเห็น' : 'View comments')
+                                                   : (language === 'TH' ? 'เพิ่มความคิดเห็น' : 'Add comment')
                                                }>
                                                  <button
                                                    onClick={(e) => {
                                                      e.stopPropagation();
-                                                     setNoteDraft(docNotes[`${selectedJob.id}_${docName}`] || '');
+                                                     setCommentDraft('');
                                                      setNoteEditorDocName(docName);
                                                    }}
-                                                   className={`h-[18px] w-[18px] flex items-center justify-center rounded-[4px] border transition-all cursor-pointer ${
-                                                     docNotes[`${selectedJob.id}_${docName}`]
+                                                   className={`h-[18px] w-[18px] flex items-center justify-center rounded-[4px] border transition-all cursor-pointer relative ${
+                                                     (docComments[`${selectedJob.id}_${docName}`]?.length ?? 0) > 0
                                                        ? 'bg-amber-400 border-amber-400 text-white hover:bg-amber-500 hover:border-amber-500 shadow-sm'
                                                        : 'bg-white border-slate-200 text-slate-400 hover:bg-slate-500 hover:text-white hover:border-slate-500 hover:shadow-lg shadow-sm'
                                                    }`}
                                                  >
                                                    <StickyNote size={10} strokeWidth={2.5} />
+                                                   {(docComments[`${selectedJob.id}_${docName}`]?.length ?? 0) > 0 && (
+                                                     <span className="absolute -top-1.5 -right-1.5 min-w-[12px] h-[12px] px-0.5 rounded-full bg-rose-500 text-white text-[7px] font-black flex items-center justify-center leading-none">
+                                                       {docComments[`${selectedJob.id}_${docName}`]!.length}
+                                                     </span>
+                                                   )}
                                                  </button>
                                                </Tooltip>
                                                {displayStatus === ComparisonDocStatus.MISMATCHED && (
@@ -7218,7 +7232,8 @@ const mockWorkflows: Workflow[] = [
         )}
       </AnimatePresence>
 
-      {/* Document Note Editor — a note attached to a specific document within this job.
+      {/* Document Comments — a discussion thread attached to a specific document within this
+          job. Anyone on the team can post; each person can only delete their own comments.
           Carried forward to the next job in the shipment sequence on export (see handleConfirmExport). */}
       <AnimatePresence>
         {noteEditorDocName && selectedJob && (
@@ -7232,16 +7247,16 @@ const mockWorkflows: Workflow[] = [
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="bg-white w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl flex flex-col border border-slate-200"
+              className="bg-white w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl flex flex-col border border-slate-200 max-h-[85vh]"
             >
-              <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-white">
+              <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="p-2.5 bg-amber-50 text-amber-600 rounded-xl">
                     <StickyNote size={18} />
                   </div>
                   <div>
                     <h3 className="font-black text-slate-800 tracking-tight text-base leading-tight">
-                      {language === 'TH' ? 'โน้ตเอกสาร' : 'Document Note'}
+                      {language === 'TH' ? 'ความคิดเห็นเอกสาร' : 'Document Comments'}
                     </h3>
                     <p className="text-[11px] font-bold text-slate-400 tracking-tight leading-none mt-0.5 uppercase">{noteEditorDocName}</p>
                   </div>
@@ -7254,65 +7269,86 @@ const mockWorkflows: Workflow[] = [
                 </button>
               </div>
 
-              <div className="p-5 bg-slate-50/50">
-                <textarea
-                  value={noteDraft}
-                  onChange={(e) => setNoteDraft(e.target.value)}
-                  rows={5}
-                  placeholder={language === 'TH' ? 'พิมพ์โน้ตสำหรับเอกสารนี้...' : 'Type a note for this document...'}
-                  className="w-full bg-white border border-slate-200 rounded-[4px] p-3 text-sm font-medium text-[#010136] outline-none focus:ring-2 focus:ring-[#1f5df9]/10 focus:border-[#1f5df9] transition-all resize-none"
-                  autoFocus
-                />
-                <p className="text-[11px] text-slate-400 font-medium mt-2">
-                  {language === 'TH'
-                    ? 'โน้ตนี้จะติดไปกับเอกสารนี้เมื่อถูกส่งต่อไปยังรายการย่อยถัดไปในชิปเมนต์เดียวกัน'
-                    : 'This note follows the document forward when it moves to the next job in this shipment.'}
-                </p>
+              <div className="flex-1 overflow-y-auto p-5 bg-slate-50/50 space-y-3">
+                {(docComments[`${selectedJob.id}_${noteEditorDocName}`] || []).length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-8 text-center opacity-60">
+                    <StickyNote size={22} className="text-slate-300 mb-2" />
+                    <p className="text-xs font-bold text-slate-400">
+                      {language === 'TH' ? 'ยังไม่มีความคิดเห็น' : 'No comments yet'}
+                    </p>
+                  </div>
+                ) : (
+                  (docComments[`${selectedJob.id}_${noteEditorDocName}`] || []).map(comment => (
+                    <div key={comment.id} className="bg-white border border-slate-200 rounded-xl p-3">
+                      <div className="flex items-center justify-between gap-2 mb-1.5">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[10px] font-black text-slate-600 uppercase shrink-0">
+                            {comment.user.slice(0, 2)}
+                          </div>
+                          <span className="text-xs font-bold text-slate-700">{comment.user}</span>
+                          <span className="text-[10px] font-semibold text-slate-400">
+                            {new Date(comment.timestamp).toLocaleDateString(language === 'TH' ? 'th-TH' : 'en-US', { day: '2-digit', month: 'short', year: 'numeric' })}
+                            {' '}
+                            {new Date(comment.timestamp).toLocaleTimeString(language === 'TH' ? 'th-TH' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                        {comment.user === CURRENT_USER_NAME && (
+                          <button
+                            onClick={() => {
+                              const key = `${selectedJob.id}_${noteEditorDocName}`;
+                              setDocComments(prev => ({
+                                ...prev,
+                                [key]: (prev[key] || []).filter(c => c.id !== comment.id)
+                              }));
+                            }}
+                            className="p-1 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded transition-colors shrink-0"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        )}
+                      </div>
+                      <p className="text-sm text-slate-600 font-medium whitespace-pre-wrap">{comment.text}</p>
+                    </div>
+                  ))
+                )}
               </div>
 
-              <div className="px-5 py-4 border-t border-slate-100 bg-white flex items-center justify-between gap-3">
-                {docNotes[`${selectedJob.id}_${noteEditorDocName}`] ? (
+              <div className="p-4 border-t border-slate-100 bg-white shrink-0">
+                <p className="text-[11px] text-slate-400 font-medium mb-2">
+                  {language === 'TH'
+                    ? 'ความคิดเห็นเหล่านี้จะติดไปกับเอกสารนี้เมื่อถูกส่งต่อไปยังรายการย่อยถัดไปในชิปเมนต์เดียวกัน'
+                    : 'Comments follow the document forward when it moves to the next job in this shipment.'}
+                </p>
+                <div className="flex items-end gap-2">
+                  <textarea
+                    value={commentDraft}
+                    onChange={(e) => setCommentDraft(e.target.value)}
+                    rows={2}
+                    placeholder={language === 'TH' ? 'พิมพ์ความคิดเห็น...' : 'Write a comment...'}
+                    className="flex-1 bg-slate-50 border border-slate-200 rounded-[4px] p-2.5 text-sm font-medium text-[#010136] outline-none focus:ring-2 focus:ring-[#1f5df9]/10 focus:border-[#1f5df9] transition-all resize-none"
+                    autoFocus
+                  />
                   <button
                     onClick={() => {
-                      const docName = noteEditorDocName;
-                      setDocNotes(prev => {
-                        const next = { ...prev };
-                        delete next[`${selectedJob.id}_${docName}`];
-                        return next;
-                      });
-                      setNoteEditorDocName(null);
+                      const trimmed = commentDraft.trim();
+                      if (!trimmed) return;
+                      const key = `${selectedJob.id}_${noteEditorDocName}`;
+                      const newComment: DocComment = {
+                        id: `comment-${Date.now()}`,
+                        user: CURRENT_USER_NAME,
+                        timestamp: new Date().toISOString(),
+                        text: trimmed
+                      };
+                      setDocComments(prev => ({
+                        ...prev,
+                        [key]: [...(prev[key] || []), newComment]
+                      }));
+                      setCommentDraft('');
                     }}
-                    className="px-4 py-2 bg-white border border-rose-200 text-rose-500 rounded-[4px] font-bold text-sm hover:bg-rose-50 transition-all"
+                    disabled={!commentDraft.trim()}
+                    className="px-4 py-2.5 bg-[#1f5df9] text-white rounded-[4px] font-bold text-sm flex items-center gap-2 hover:bg-blue-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm shrink-0"
                   >
-                    {language === 'TH' ? 'ลบโน้ต' : 'Delete Note'}
-                  </button>
-                ) : <div />}
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => setNoteEditorDocName(null)}
-                    className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-[4px] font-bold text-sm hover:bg-slate-100 transition-all"
-                  >
-                    {language === 'TH' ? 'ยกเลิก' : 'Cancel'}
-                  </button>
-                  <button
-                    onClick={() => {
-                      const docName = noteEditorDocName;
-                      const trimmed = noteDraft.trim();
-                      setDocNotes(prev => {
-                        const next = { ...prev };
-                        if (trimmed) {
-                          next[`${selectedJob.id}_${docName}`] = trimmed;
-                        } else {
-                          delete next[`${selectedJob.id}_${docName}`];
-                        }
-                        return next;
-                      });
-                      setNoteEditorDocName(null);
-                    }}
-                    className="px-6 py-2 bg-[#1f5df9] text-white rounded-[4px] font-bold text-sm flex items-center gap-2 hover:bg-blue-600 transition-all shadow-sm"
-                  >
-                    <Check size={16} />
-                    {language === 'TH' ? 'บันทึก' : 'Save'}
+                    <Send size={14} />
                   </button>
                 </div>
               </div>
