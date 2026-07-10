@@ -4,7 +4,7 @@ import {
   FileText, Upload, ArrowRight, Check, AlertCircle, 
   Search, Download, Columns, ChevronLeft, ChevronRight,
   Plus, Trash2, ArrowLeftRight, FileSpreadsheet, File as FileIcon,
-  CheckCircle2, XCircle, Info, Eye, EyeOff, Send, Filter, ListFilter, ArrowLeft, Save, RotateCcw,
+  CheckCircle2, XCircle, Info, Eye, Send, Filter, ListFilter, ArrowLeft, Save, RotateCcw,
   LayoutGrid, List, ScanEye, Bot, ChevronDown, Lock, Unlock, HelpCircle, X, Loader2, ShieldCheck, ArrowUpRight, ScanSearch, History, Edit3, UploadCloud, AlertTriangle,
   Printer, RotateCw, ZoomIn, ZoomOut, Menu, Copy, Star, CheckCheck, StickyNote
 } from 'lucide-react';
@@ -1333,7 +1333,6 @@ const mockWorkflows: Workflow[] = [
   const [replaceAutoStartOCR, setReplaceAutoStartOCR] = useState(true);
   const [hiddenLockedDocs, setHiddenLockedDocs] = useState<string[]>([]);
   const [showColumnSelector, setShowColumnSelector] = useState(false);
-  const [showHiddenDocsPopover, setShowHiddenDocsPopover] = useState(false);
   const [showDeleteColumnConfirmModal, setShowDeleteColumnConfirmModal] = useState(false);
   const [deleteColumnTargetDocName, setDeleteColumnTargetDocName] = useState<string | null>(null);
 
@@ -6429,13 +6428,18 @@ const mockWorkflows: Workflow[] = [
                         <button
                           disabled={isUnassigned}
                           onClick={() => setShowColumnSelector(!showColumnSelector)}
-                          className={`p-2.5 rounded-[4px] transition-all border flex items-center justify-center cursor-pointer shadow-sm disabled:opacity-30 disabled:cursor-not-allowed ${
+                          className={`relative p-2.5 rounded-[4px] transition-all border flex items-center justify-center cursor-pointer shadow-sm disabled:opacity-30 disabled:cursor-not-allowed ${
                             showColumnSelector
                               ? 'bg-blue-50 text-[#1f5df9] border-blue-200 shadow-[0_2px_8px_rgba(31,93,249,0.15)]'
                               : 'bg-white text-slate-500 border-slate-200/60 hover:bg-slate-50'
                           }`}
                         >
                           <Eye size={15} strokeWidth={2.5} className={showColumnSelector ? 'text-[#1f5df9]' : 'text-slate-400'} />
+                          {hiddenLockedDocs.length > 0 && (
+                            <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-amber-500 text-white text-[9px] font-black flex items-center justify-center leading-none shadow-sm">
+                              {hiddenLockedDocs.length}
+                            </span>
+                          )}
                         </button>
                       </Tooltip>
 
@@ -6499,56 +6503,6 @@ const mockWorkflows: Workflow[] = [
                                   </label>
                                 );
                               })}
-                            </div>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  )}
-
-                  {hiddenLockedDocs.length > 0 && (
-                    <div className="relative">
-                      <button
-                        onClick={() => setShowHiddenDocsPopover(!showHiddenDocsPopover)}
-                        disabled={isUnassigned}
-                        className={`flex items-center gap-1.5 px-2.5 h-[37px] rounded-[4px] border text-[9px] font-black uppercase tracking-widest transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${
-                          showHiddenDocsPopover
-                            ? 'bg-blue-50 text-[#1f5df9] border-blue-200'
-                            : 'bg-white text-slate-500 border-slate-200/80 hover:bg-slate-50'
-                        }`}
-                      >
-                        <EyeOff size={11} className={showHiddenDocsPopover ? 'text-[#1f5df9]' : 'text-slate-400'} />
-                        {language === 'TH' ? `ซ่อนอยู่ ${hiddenLockedDocs.length} คอลัมน์` : `${hiddenLockedDocs.length} Hidden`}
-                      </button>
-
-                      {showHiddenDocsPopover && (
-                        <>
-                          <div
-                            className="fixed inset-0 z-[90] cursor-default"
-                            onClick={() => setShowHiddenDocsPopover(false)}
-                          />
-                          <div className="absolute left-0 mt-1.5 w-64 bg-white border border-slate-200 rounded-lg shadow-xl p-3 z-[100] select-none">
-                            <p className="text-[10px] font-black text-[#010136] uppercase tracking-widest mb-2 pb-1.5 border-b border-slate-100 flex items-center justify-between">
-                              <span>{language === 'TH' ? 'คอลัมน์ที่ซ่อนอยู่' : 'HIDDEN COLUMNS'}</span>
-                              <button
-                                onClick={() => { setHiddenLockedDocs([]); setShowHiddenDocsPopover(false); }}
-                                className="text-[9px] font-black text-blue-600 hover:text-blue-700 normal-case tracking-normal"
-                              >
-                                {language === 'TH' ? 'แสดงทั้งหมด' : 'Show all'}
-                              </button>
-                            </p>
-                            <div className="flex flex-col gap-1 max-h-60 overflow-y-auto custom-scrollbar">
-                              {hiddenLockedDocs.map(name => (
-                                <button
-                                  key={name}
-                                  onClick={() => setHiddenLockedDocs(prev => prev.filter(x => x !== name))}
-                                  disabled={isUnassigned}
-                                  className="flex items-center justify-between gap-2 p-2 rounded-[4px] text-xs font-bold font-sans text-slate-700 hover:bg-slate-50 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-                                >
-                                  <span className="truncate uppercase" title={name}>{name}</span>
-                                  <Eye size={13} className="text-blue-600 shrink-0" />
-                                </button>
-                              ))}
                             </div>
                           </div>
                         </>
