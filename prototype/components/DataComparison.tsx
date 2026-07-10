@@ -9,7 +9,8 @@ import {
   Printer, RotateCw, ZoomIn, ZoomOut, Menu, Copy, Star, CheckCheck, StickyNote
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Tabs, Tag, Badge, Empty, Button, message } from 'antd';
+import { Tabs, Tag, Badge, Empty, Button, message, DatePicker } from 'antd';
+import dayjs from 'dayjs';
 import { CreateJobModal } from './CreateJobModal';
 import { Tooltip } from './Tooltip';
 import {
@@ -3598,38 +3599,19 @@ const mockWorkflows: Workflow[] = [
 
             <div className="flex items-center gap-2 text-[11px] font-black text-slate-400 uppercase tracking-widest font-sans shrink-0">
               <span>{language === 'TH' ? 'วันที่เริ่ม:' : 'Date range:'}</span>
-              <input
-                type="date"
-                value={shipmentDateFrom}
-                onChange={(e) => {
-                  setShipmentDateFrom(e.target.value);
+              <DatePicker.RangePicker
+                value={[
+                  shipmentDateFrom ? dayjs(shipmentDateFrom) : null,
+                  shipmentDateTo ? dayjs(shipmentDateTo) : null
+                ]}
+                onChange={(dates) => {
+                  setShipmentDateFrom(dates?.[0] ? dates[0].format('YYYY-MM-DD') : '');
+                  setShipmentDateTo(dates?.[1] ? dates[1].format('YYYY-MM-DD') : '');
                   setShipmentPage(1);
                 }}
-                className="bg-white border border-slate-200 rounded-xl py-2 px-3 focus:ring-4 focus:ring-blue-500/10 focus:border-[#1f5df9] text-[11px] font-black tracking-tight cursor-pointer outline-none shadow-sm font-sans transition-all"
+                allowClear
+                className="!bg-white !border-slate-200 !rounded-xl !py-2 !px-3 !shadow-sm font-sans"
               />
-              <span className="text-slate-300">–</span>
-              <input
-                type="date"
-                value={shipmentDateTo}
-                onChange={(e) => {
-                  setShipmentDateTo(e.target.value);
-                  setShipmentPage(1);
-                }}
-                className="bg-white border border-slate-200 rounded-xl py-2 px-3 focus:ring-4 focus:ring-blue-500/10 focus:border-[#1f5df9] text-[11px] font-black tracking-tight cursor-pointer outline-none shadow-sm font-sans transition-all"
-              />
-              {(shipmentDateFrom || shipmentDateTo) && (
-                <button
-                  onClick={() => {
-                    setShipmentDateFrom('');
-                    setShipmentDateTo('');
-                    setShipmentPage(1);
-                  }}
-                  className="text-slate-400 hover:text-rose-500 transition-colors p-1"
-                  title={language === 'TH' ? 'ล้างช่วงวันที่' : 'Clear date range'}
-                >
-                  <X size={14} />
-                </button>
-              )}
             </div>
 
             <div className="flex items-center gap-2 text-[11px] font-black text-slate-400 uppercase tracking-widest pl-2 font-sans shrink-0">
