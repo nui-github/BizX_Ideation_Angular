@@ -367,6 +367,9 @@ export const DataComparison: React.FC<DataComparisonProps> = ({ language, tracki
   const [searchTerm, setSearchTerm] = useState('');
   const [hoveredField, setHoveredField] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [shipmentDateFrom, setShipmentDateFrom] = useState('');
+  const [shipmentDateTo, setShipmentDateTo] = useState('');
+  const [shipmentPage, setShipmentPage] = useState(1);
   const [jobTypeFilter, setJobTypeFilter] = useState('ALL');
   const [assigneeFilter, setAssigneeFilter] = useState('ALL');
   const [sortBy, setSortBy] = useState('UPDATE_NEW');
@@ -3544,7 +3547,17 @@ const mockWorkflows: Workflow[] = [
         if (statusFilter === 'PENDING') return sh.isUnfinished;
         if (statusFilter === 'DONE') return !sh.isUnfinished;
         return true;
+      })
+      .filter(sh => {
+        if (!shipmentDateFrom && !shipmentDateTo) return true;
+        const createdAtMs = parseDateValue(sh.createdAt);
+        if (shipmentDateFrom && createdAtMs < new Date(shipmentDateFrom).getTime()) return false;
+        if (shipmentDateTo && createdAtMs > new Date(shipmentDateTo).getTime() + (24 * 60 * 60 * 1000 - 1)) return false;
+        return true;
       });
+
+    const shipmentTotalPages = Math.max(1, Math.ceil(filteredShipments.length / PAGE_SIZE));
+    const paginatedShipments = filteredShipments.slice((shipmentPage - 1) * PAGE_SIZE, shipmentPage * PAGE_SIZE);
 
     return (
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -3571,23 +3584,62 @@ const mockWorkflows: Workflow[] = [
           <div className="p-4 flex flex-wrap items-center gap-4 border-b border-slate-100 bg-slate-50/20">
             <div className="relative flex-1 min-w-[240px]">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-              <input 
+              <input
                 type="text"
                 placeholder={language === 'TH' ? 'ค้นหาเลขที่ Shipment...' : 'Search Shipment Reference...'}
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setShipmentPage(1);
+                }}
                 className="w-full bg-white border border-slate-200 rounded-xl py-2 pl-11 pr-4 focus:ring-4 focus:ring-blue-500/10 focus:border-[#1f5df9] text-sm font-bold outline-none shadow-sm font-sans transition-all"
               />
             </div>
-            
+
+            <div className="flex items-center gap-2 text-[11px] font-black text-slate-400 uppercase tracking-widest font-sans shrink-0">
+              <span>{language === 'TH' ? 'วันที่เริ่ม:' : 'Date range:'}</span>
+              <input
+                type="date"
+                value={shipmentDateFrom}
+                onChange={(e) => {
+                  setShipmentDateFrom(e.target.value);
+                  setShipmentPage(1);
+                }}
+                className="bg-white border border-slate-200 rounded-xl py-2 px-3 focus:ring-4 focus:ring-blue-500/10 focus:border-[#1f5df9] text-[11px] font-black tracking-tight cursor-pointer outline-none shadow-sm font-sans transition-all"
+              />
+              <span className="text-slate-300">–</span>
+              <input
+                type="date"
+                value={shipmentDateTo}
+                onChange={(e) => {
+                  setShipmentDateTo(e.target.value);
+                  setShipmentPage(1);
+                }}
+                className="bg-white border border-slate-200 rounded-xl py-2 px-3 focus:ring-4 focus:ring-blue-500/10 focus:border-[#1f5df9] text-[11px] font-black tracking-tight cursor-pointer outline-none shadow-sm font-sans transition-all"
+              />
+              {(shipmentDateFrom || shipmentDateTo) && (
+                <button
+                  onClick={() => {
+                    setShipmentDateFrom('');
+                    setShipmentDateTo('');
+                    setShipmentPage(1);
+                  }}
+                  className="text-slate-400 hover:text-rose-500 transition-colors p-1"
+                  title={language === 'TH' ? 'ล้างช่วงวันที่' : 'Clear date range'}
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+
             <div className="flex items-center gap-2 text-[11px] font-black text-slate-400 uppercase tracking-widest pl-2 font-sans shrink-0">
               <span>สถานะ Shipment:</span>
               <div className="relative">
-                <select 
+                <select
                   value={statusFilter}
                   onChange={(e) => {
                     setStatusFilter(e.target.value);
-                    setCurrentPage(1);
+                    setShipmentPage(1);
                   }}
                   className="bg-white border border-slate-200 rounded-xl py-2 px-4 pr-10 focus:ring-4 focus:ring-blue-500/10 focus:border-[#1f5df9] text-[11px] font-black uppercase tracking-tight appearance-none cursor-pointer outline-none shadow-sm font-sans transition-all"
                 >
@@ -3620,7 +3672,7 @@ const mockWorkflows: Workflow[] = [
                     </td>
                   </tr>
                 ) : (
-                  filteredShipments.map((shipment) => {
+                  paginatedShipments.map((shipment) => {
                     const percent = Math.round((shipment.completedCount / shipment.totalCount) * 100);
                     return (
                       <tr 
@@ -3690,6 +3742,44 @@ const mockWorkflows: Workflow[] = [
               </tbody>
             </table>
           </div>
+
+          {/* Pagination Footer */}
+          {filteredShipments.length > 0 && (
+            <div className="p-5 border-t border-slate-100 bg-slate-50/20 flex items-center justify-between font-sans">
+              <div className="text-[11px] font-black text-slate-400 uppercase tracking-widest">
+                {language === 'TH' ? 'แสดง' : 'Showing'} <span className="text-slate-800">{Math.min(filteredShipments.length, (shipmentPage - 1) * PAGE_SIZE + 1)}</span> {language === 'TH' ? 'ถึง' : 'to'} <span className="text-slate-800">{Math.min(filteredShipments.length, shipmentPage * PAGE_SIZE)}</span> {language === 'TH' ? 'จากทั้งหมด' : 'of'} <span className="text-slate-800">{filteredShipments.length}</span> {language === 'TH' ? 'รายการ' : 'items'}
+              </div>
+              {shipmentTotalPages > 1 && (
+                <div className="flex items-center gap-5">
+                  <button
+                    disabled={shipmentPage === 1}
+                    onClick={() => setShipmentPage(prev => Math.max(1, prev - 1))}
+                    className="p-2 rounded-[4px] border border-slate-200 bg-white text-slate-400 hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+                  <div className="flex items-center gap-2">
+                    {Array.from({ length: shipmentTotalPages }).map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setShipmentPage(i + 1)}
+                        className={`w-10 h-10 rounded-[4px] font-black text-xs transition-all ${shipmentPage === i + 1 ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20 scale-110' : 'bg-white border border-slate-100 text-slate-400 hover:border-blue-200 hover:bg-slate-50'}`}
+                      >
+                        {i + 1}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    disabled={shipmentPage === shipmentTotalPages}
+                    onClick={() => setShipmentPage(prev => Math.min(shipmentTotalPages, prev + 1))}
+                    className="p-2 rounded-[4px] border border-slate-200 bg-white text-slate-400 hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     );
