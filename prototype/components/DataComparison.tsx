@@ -23,6 +23,11 @@ import { MOCK_PRESETS } from '../mock-data/preset.mock';
 // Mirrors the "ทีม LOGISTICS" badge shown in the sidebar profile menu (Layout.tsx) —
 // there's no real auth/session concept yet, so the current user's team is fixed here.
 const CURRENT_USER_TEAM = 'logistics';
+
+// Demo toggle: "รายการรอรีวิว" (Pending Inbox) and "บันทึกประวัติ" (Activity Logs) tabs
+// aren't ready to show customers yet. Flip to true to bring them back for internal use —
+// nothing else needs to change, the features underneath are untouched.
+const SHOW_PENDING_AND_LOGS_TABS = false;
 import { 
   Inbox, FileWarning, Clock, User, Calendar, Mail
 } from 'lucide-react';
@@ -6017,7 +6022,7 @@ const mockWorkflows: Workflow[] = [
                     ),
                     children: renderShipmentGrid()
                   },
-                  {
+                  ...(SHOW_PENDING_AND_LOGS_TABS ? [{
                     key: 'pending',
                     label: (
                       <div className="flex items-center gap-2 px-1 py-2 group">
@@ -6025,9 +6030,9 @@ const mockWorkflows: Workflow[] = [
                         <span className="font-black uppercase tracking-[0.05em] text-[13px] text-slate-500 font-sans group-hover:text-slate-800 transition-colors">
                           {t.tabPendingInbox}
                         </span>
-                        <Badge 
-                          count={pendingInboxItems.filter(item => !readPendingIds.has(item.id)).length} 
-                          size="small" 
+                        <Badge
+                          count={pendingInboxItems.filter(item => !readPendingIds.has(item.id)).length}
+                          size="small"
                           className="ml-1"
                           styles={{ count: { fontSize: '10px', fontWeight: 900, backgroundColor: '#DC2626', color: '#ffffff', minWidth: '18px', height: '18px', lineHeight: '18px', border: 'none', boxShadow: 'none', opacity: 1 } }}
                         />
@@ -6046,7 +6051,7 @@ const mockWorkflows: Workflow[] = [
                       </div>
                     ),
                     children: renderActivityLogs()
-                  }
+                  }] : [])
                 ]}
               />
             </>
