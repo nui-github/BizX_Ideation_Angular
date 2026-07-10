@@ -10,7 +10,9 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Tabs, Tag, Badge, Empty, Button, message, DatePicker } from 'antd';
+import thTH from 'antd/locale/th_TH';
 import dayjs from 'dayjs';
+import 'dayjs/locale/th';
 import { CreateJobModal } from './CreateJobModal';
 import { Tooltip } from './Tooltip';
 import {
@@ -3501,6 +3503,7 @@ const mockWorkflows: Workflow[] = [
   };
 
   const renderShipmentGrid = () => {
+    dayjs.locale(language === 'TH' ? 'th' : 'en');
     const shipments = getShipments();
     const totalShipments = shipments.length;
     const unfinishedShipments = shipments.filter(sh => sh.isUnfinished).length;
@@ -3610,7 +3613,9 @@ const mockWorkflows: Workflow[] = [
                   setShipmentPage(1);
                 }}
                 allowClear
-                className="!bg-white !border-slate-200 !rounded-xl !py-2 !px-3 !shadow-sm font-sans"
+                locale={language === 'TH' ? thTH.DatePicker : undefined}
+                placeholder={language === 'TH' ? ['วันที่เริ่มต้น', 'วันที่สิ้นสุด'] : ['Start date', 'End date']}
+                className="!bg-white !border-slate-200 !rounded-[4px] !py-2 !px-3 !shadow-sm font-sans"
               />
             </div>
 
