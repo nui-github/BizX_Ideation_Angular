@@ -1333,6 +1333,7 @@ const mockWorkflows: Workflow[] = [
   const [replaceAutoStartOCR, setReplaceAutoStartOCR] = useState(true);
   const [hiddenLockedDocs, setHiddenLockedDocs] = useState<string[]>([]);
   const [showColumnSelector, setShowColumnSelector] = useState(false);
+  const [showHiddenDocsPopover, setShowHiddenDocsPopover] = useState(false);
   const [showDeleteColumnConfirmModal, setShowDeleteColumnConfirmModal] = useState(false);
   const [deleteColumnTargetDocName, setDeleteColumnTargetDocName] = useState<string | null>(null);
 
@@ -6506,27 +6507,52 @@ const mockWorkflows: Workflow[] = [
                   )}
 
                   {hiddenLockedDocs.length > 0 && (
-                    <div className="flex items-center gap-2 bg-white px-2.5 py-1.5 h-[37px] rounded-[4px] border border-slate-200/80 shadow-sm">
-                      <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5 select-none">
-                        <EyeOff size={11} className="text-slate-400" />
-                        {language === 'TH' ? 'ซ่อนคอลัมน์อยู่:' : 'Hidden:'}
-                      </span>
-                      <div className="flex items-center gap-1 flex-wrap">
-                        {hiddenLockedDocs.map(name => (
-                          <Tooltip key={name} content={language === 'TH' ? 'คลิกเพื่อแสดงคอลัมน์นี้' : 'Click to unhide column'}>
-                            <button 
-                              onClick={() => setHiddenLockedDocs(prev => prev.filter(x => x !== name))}
-                              disabled={isUnassigned}
-                              className="bg-slate-50 border border-slate-200/50 pl-2 pr-1.5 py-0.5 rounded-[4px] text-[9px] font-black text-slate-700 flex items-center gap-1 hover:border-slate-300 hover:bg-slate-100 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transform active:scale-95"
-                            >
-                              <span className="max-w-[70px] truncate uppercase">{name}</span>
-                              <div className="p-0.5 text-blue-600 flex items-center">
-                                <Eye size={10} />
-                              </div>
-                            </button>
-                          </Tooltip>
-                        ))}
-                      </div>
+                    <div className="relative">
+                      <button
+                        onClick={() => setShowHiddenDocsPopover(!showHiddenDocsPopover)}
+                        disabled={isUnassigned}
+                        className={`flex items-center gap-1.5 px-2.5 h-[37px] rounded-[4px] border text-[9px] font-black uppercase tracking-widest transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${
+                          showHiddenDocsPopover
+                            ? 'bg-blue-50 text-[#1f5df9] border-blue-200'
+                            : 'bg-white text-slate-500 border-slate-200/80 hover:bg-slate-50'
+                        }`}
+                      >
+                        <EyeOff size={11} className={showHiddenDocsPopover ? 'text-[#1f5df9]' : 'text-slate-400'} />
+                        {language === 'TH' ? `ซ่อนอยู่ ${hiddenLockedDocs.length} คอลัมน์` : `${hiddenLockedDocs.length} Hidden`}
+                      </button>
+
+                      {showHiddenDocsPopover && (
+                        <>
+                          <div
+                            className="fixed inset-0 z-[90] cursor-default"
+                            onClick={() => setShowHiddenDocsPopover(false)}
+                          />
+                          <div className="absolute left-0 mt-1.5 w-64 bg-white border border-slate-200 rounded-lg shadow-xl p-3 z-[100] select-none">
+                            <p className="text-[10px] font-black text-[#010136] uppercase tracking-widest mb-2 pb-1.5 border-b border-slate-100 flex items-center justify-between">
+                              <span>{language === 'TH' ? 'คอลัมน์ที่ซ่อนอยู่' : 'HIDDEN COLUMNS'}</span>
+                              <button
+                                onClick={() => { setHiddenLockedDocs([]); setShowHiddenDocsPopover(false); }}
+                                className="text-[9px] font-black text-blue-600 hover:text-blue-700 normal-case tracking-normal"
+                              >
+                                {language === 'TH' ? 'แสดงทั้งหมด' : 'Show all'}
+                              </button>
+                            </p>
+                            <div className="flex flex-col gap-1 max-h-60 overflow-y-auto custom-scrollbar">
+                              {hiddenLockedDocs.map(name => (
+                                <button
+                                  key={name}
+                                  onClick={() => setHiddenLockedDocs(prev => prev.filter(x => x !== name))}
+                                  disabled={isUnassigned}
+                                  className="flex items-center justify-between gap-2 p-2 rounded-[4px] text-xs font-bold font-sans text-slate-700 hover:bg-slate-50 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                                >
+                                  <span className="truncate uppercase" title={name}>{name}</span>
+                                  <Eye size={13} className="text-blue-600 shrink-0" />
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </div>
                   )}
 
