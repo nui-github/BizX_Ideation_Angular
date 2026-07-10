@@ -426,7 +426,8 @@ export const DataComparison: React.FC<DataComparisonProps> = ({ language, tracki
   const toggleConfirmMismatch = (docName: string, fieldName: string) => {
     if (!selectedJob) return;
     const key = `${selectedJob.id}_${docName}_${fieldName}`;
-    
+    assignJobToCurrentUser(selectedJob.id);
+
     setConfirmedMismatches(prev => {
       const isConfirmed = !prev[key];
       
@@ -1369,7 +1370,8 @@ const mockWorkflows: Workflow[] = [
       alert(language === 'TH' ? 'กรุณาอัปโหลดอย่างน้อย 1 ไฟล์' : 'Please upload at least 1 file.');
       return;
     }
-    
+    assignJobToCurrentUser(selectedJob.id);
+
     // Add activity log for new version
     const newLog = {
       id: Math.random().toString(36).substr(2, 9),
@@ -1490,6 +1492,7 @@ const mockWorkflows: Workflow[] = [
       alert(language === 'TH' ? 'ไม่มีเอกสารใหม่สำหรับนำเข้า' : 'No new documents to import.');
       return;
     }
+    assignJobToCurrentUser(selectedJob.id);
 
     // 3. Update jobs & selectedJob states
     setJobs(prev => prev.map(job => {
@@ -1558,6 +1561,7 @@ const mockWorkflows: Workflow[] = [
     });
 
     if (changedFields.length > 0) {
+      if (selectedJob) assignJobToCurrentUser(selectedJob.id);
       const activeSubObj = getSubFilesForDoc(pdfPreviewUrl).find(s => s.id === activeSubFileId);
       const subLabel = activeSubObj ? activeSubObj.label : activeSubFileId;
       const newLog = {
@@ -2387,6 +2391,14 @@ const mockWorkflows: Workflow[] = [
   // assigned team can manage it, so this always evaluates to false now.
   const isUnassigned = false;
 
+  // The first team member to act on a job (upload, read file, confirm a mismatch, etc.)
+  // becomes its assignee; whoever acts most recently keeps taking over "current assignee"
+  // so the list always reflects who is actively working the job right now.
+  const assignJobToCurrentUser = (jobId: string) => {
+    setJobs(prev => prev.map(job => job.id === jobId && job.assignee !== CURRENT_USER_NAME ? { ...job, assignee: CURRENT_USER_NAME } : job));
+    setSelectedJob(prev => (prev && prev.id === jobId && prev.assignee !== CURRENT_USER_NAME) ? { ...prev, assignee: CURRENT_USER_NAME } : prev);
+  };
+
   const handleStartComparison = (jobId: string) => {
     // Set to PROCESSING status first
     const markAsProcessing = (currentJobs: ComparisonJob[]) => {
@@ -2474,6 +2486,7 @@ const mockWorkflows: Workflow[] = [
   };
 
   const handleOCRFiles = (jobId: string, docNames: string[]) => {
+    assignJobToCurrentUser(jobId);
     // 1. Move specified docs to EXTRACTING
     setJobs(prev => prev.map(job => {
       if (job.id === jobId) {
@@ -4570,6 +4583,7 @@ const mockWorkflows: Workflow[] = [
       .filter(res => res.targets.some(t => t.fileName === docName && t.status === 'MISMATCH'))
       .map(res => res.fieldName);
     if (fieldNames.length === 0) return;
+    assignJobToCurrentUser(selectedJob.id);
 
     setConfirmedMismatches(prev => {
       const next = { ...prev };
