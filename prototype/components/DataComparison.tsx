@@ -5848,17 +5848,20 @@ const mockWorkflows: Workflow[] = [
                                     const target = res.targets.find((t: any) => t.fileName === pdfPreviewUrl);
                                     const isMismatch = target && target.status === 'MISMATCH';
                                     const fieldKey = `${res.group || 'no-group'}::${res.fieldName}`;
-                                    const isHighlighted = hoveredFieldKey === fieldKey || selectedFieldKey === fieldKey;
+                                    const isSelected = selectedFieldKey === fieldKey;
+                                    const isHovered = hoveredFieldKey === fieldKey;
                                     return (
                                       <div
                                         key={i}
-                                        className={`grid grid-cols-12 py-1.5 items-center transition-all relative group/row ${
-                                          isHighlighted ? 'bg-amber-50' : isMismatch ? 'bg-rose-50/50 hover:bg-rose-50' : 'bg-white hover:bg-slate-50/60'
+                                        className={`grid grid-cols-12 py-1.5 items-center transition-all relative group/row cursor-pointer ${
+                                          isSelected ? 'bg-blue-50 ring-1 ring-inset ring-[#1f5df9]/40' : isHovered ? 'bg-amber-50' : isMismatch ? 'bg-rose-50/50 hover:bg-rose-50' : 'bg-white hover:bg-slate-50/60'
                                         }`}
                                         onMouseEnter={() => setHoveredFieldKey(fieldKey)}
                                         onMouseLeave={() => setHoveredFieldKey(null)}
+                                        onClick={() => setSelectedFieldKey(prev => prev === fieldKey ? null : fieldKey)}
                                       >
                                         {isMismatch && <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-rose-400"></div>}
+                                        {isSelected && <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#1f5df9]"></div>}
                                         <div className={`col-span-5 font-bold text-[12px] capitalize font-sans leading-relaxed tracking-tight px-3 break-words flex items-center gap-1.5 ${isMismatch ? 'text-rose-600' : 'text-[#1f5df9]'}`}>
                                           {isMismatch && <AlertCircle size={11} className="shrink-0" />}
                                           {res.fieldName}
@@ -5872,7 +5875,7 @@ const mockWorkflows: Workflow[] = [
                                               disabled={isDisabled}
                                               onChange={(e) => setTempOCRData(prev => ({ ...prev, [res.fieldName]: e.target.value }))}
                                               onFocus={() => setSelectedFieldKey(fieldKey)}
-                                              onBlur={() => setSelectedFieldKey(prev => prev === fieldKey ? null : prev)}
+                                              onClick={(e) => e.stopPropagation()}
                                               className={`w-full p-2 pr-8 rounded-md text-[#010136] text-[13px] font-bold font-sans transition-all outline-none border ${
                                                 isMismatch ? 'border-rose-200' : 'border-transparent'
                                               } hover:border-slate-200 hover:bg-slate-50 focus:bg-white focus:border-[#1f5df9] focus:ring-2 focus:ring-[#1f5df9]/20 ${
