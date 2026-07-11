@@ -1602,6 +1602,15 @@ const mockWorkflows: Workflow[] = [
     setTimeout(() => setShowSaveToast(false), 3000);
   };
 
+  // The "mismatched only" filter and field selection are per-document — reset them whenever
+  // the previewed document changes so they don't carry over and silently hide fields on a doc
+  // that doesn't have (or doesn't need) them.
+  useEffect(() => {
+    setShowOnlyMismatchedFields(false);
+    setSelectedFieldKey(null);
+    setHoveredFieldKey(null);
+  }, [pdfPreviewUrl]);
+
   useEffect(() => {
     if (pdfPreviewUrl && selectedJob && activeSubFileId) {
       const results = getMockComparisonResults(selectedJob);
