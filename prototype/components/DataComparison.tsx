@@ -7571,13 +7571,13 @@ const mockWorkflows: Workflow[] = [
                     ? 'ความคิดเห็นเหล่านี้จะติดไปกับเอกสารนี้เมื่อถูกส่งต่อไปยังรายการย่อยถัดไปในชิปเมนต์เดียวกัน'
                     : 'Comments follow the document forward when it moves to the next job in this shipment.'}
                 </p>
-                <div className="flex items-end gap-2">
+                <div className="flex flex-col gap-2">
                   <textarea
                     value={commentDraft}
                     onChange={(e) => setCommentDraft(e.target.value)}
                     rows={2}
                     placeholder={language === 'TH' ? 'พิมพ์ความคิดเห็น...' : 'Write a comment...'}
-                    className="flex-1 bg-slate-50 border border-slate-200 rounded-[4px] p-2.5 text-sm font-medium text-[#010136] outline-none focus:ring-2 focus:ring-[#1f5df9]/10 focus:border-[#1f5df9] transition-all resize-none"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-[4px] p-2.5 text-sm font-medium text-[#010136] outline-none focus:ring-2 focus:ring-[#1f5df9]/10 focus:border-[#1f5df9] transition-all resize-none"
                     autoFocus
                   />
                   <button
@@ -7598,9 +7598,10 @@ const mockWorkflows: Workflow[] = [
                       setCommentDraft('');
                     }}
                     disabled={!commentDraft.trim()}
-                    className="px-4 py-2.5 bg-[#1f5df9] text-white rounded-[4px] font-bold text-sm flex items-center gap-2 hover:bg-blue-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm shrink-0"
+                    className="self-end px-4 py-2.5 bg-[#1f5df9] text-white rounded-[4px] font-bold text-sm flex items-center gap-2 hover:bg-blue-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm shrink-0"
                   >
                     <Send size={14} />
+                    {language === 'TH' ? 'เพิ่มความคิดเห็น' : 'Add comment'}
                   </button>
                 </div>
               </div>
