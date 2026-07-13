@@ -1067,6 +1067,52 @@ const mockWorkflows: Workflow[] = [
     setShowSkipFlowConfirm(false);
   };
 
+  // Lets a reviewer on job N send a previous job (N-1) in the same shipment back for correction
+  // — e.g. they spot that an earlier job's document is still wrong while reviewing this one.
+  // The previous job is marked REJECTED (not DONE), which re-blocks every job after it in the
+  // shipment list until it's fixed and re-completed.
+  const handleRejectFlow = (currentJob: ComparisonJob, reason: string) => {
+    const prevJob = getPreviousJobInShipment(currentJob);
+    if (!prevJob) return;
+
+    const rejectedPrevJob: ComparisonJob = {
+      ...prevJob,
+      status: JobStatus.REJECTED,
+      rejectionReason: reason,
+      rejectedAt: new Date().toISOString(),
+      rejectedBy: CURRENT_USER_NAME
+    };
+
+    setJobs(prevJobs => prevJobs.map(j => j.id === prevJob.id ? rejectedPrevJob : j));
+
+    setOcrLogs(prev => [
+      {
+        id: `log-reject-${Date.now()}`,
+        jobId: currentJob.id,
+        docName: Object.keys(currentJob.docs).join(', '),
+        timestamp: new Date().toISOString(),
+        action: 'REJECT_FLOW',
+        details: language === 'TH'
+          ? `ตีกลับไปยัง "${prevJob.workflowName || prevJob.reference}" เหตุผล: ${reason}`
+          : `Rejected back to "${prevJob.workflowName || prevJob.reference}". Reason: ${reason}`,
+        version: 1,
+        user: CURRENT_USER_NAME
+      },
+      ...prev
+    ]);
+
+    message.success(
+      language === 'TH'
+        ? `ตีกลับไปยัง "${prevJob.workflowName || prevJob.reference}" เรียบร้อยแล้ว`
+        : `Sent back to "${prevJob.workflowName || prevJob.reference}"`
+    );
+
+    setShowRejectFlowConfirm(false);
+    setRejectReason('');
+    setStep(0);
+    setSelectedJob(null);
+  };
+
 
   const [activityLogs, setActivityLogs] = useState<AuditLog[]>([
     {
@@ -1459,6 +1505,8 @@ const mockWorkflows: Workflow[] = [
   const [deleteColumnTargetDocName, setDeleteColumnTargetDocName] = useState<string | null>(null);
   const [confirmAllMismatchesTargetDocName, setConfirmAllMismatchesTargetDocName] = useState<string | null>(null);
   const [showSkipFlowConfirm, setShowSkipFlowConfirm] = useState(false);
+  const [showRejectFlowConfirm, setShowRejectFlowConfirm] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
 
   // --- Custom Handlers for Column Replace Feature ---
   const handleReplaceDragOver = (e: React.DragEvent) => {
@@ -3228,6 +3276,9 @@ const mockWorkflows: Workflow[] = [
 
   const getJobStatus = (job: ComparisonJob): JobStatus => {
     if (job.status === JobStatus.DONE) return JobStatus.DONE;
+    // A rejected job stays REJECTED until the reviewer redoes and re-completes it — don't let
+    // the doc-derived status below (which may already read READY/REVIEW again) mask that.
+    if (job.status === JobStatus.REJECTED) return JobStatus.REJECTED;
     // A manual re-compare sets job.status to PROCESSING directly, without necessarily putting
     // any individual doc into EXTRACTING — reflect that immediately rather than falling through
     // to the doc-derived status below, which would otherwise still show the stale REVIEW/READY
@@ -3291,6 +3342,23 @@ const mockWorkflows: Workflow[] = [
     if (shipmentJobs.length === 0) return false;
     const seqIndex = shipmentJobs.findIndex(j => j.id === job.id);
     return seqIndex === shipmentJobs.length - 1;
+  };
+
+  // Rejecting only makes sense from the second job in a shipment onward — there's no earlier
+  // step to kick a first job back to.
+  const canRejectToPreviousJob = (job: ComparisonJob) => {
+    if (!job) return false;
+    const shipmentJobs = jobs.filter(j => j.reference === job.reference);
+    if (shipmentJobs.length === 0) return false;
+    const seqIndex = shipmentJobs.findIndex(j => j.id === job.id);
+    return seqIndex > 0;
+  };
+
+  const getPreviousJobInShipment = (job: ComparisonJob): ComparisonJob | null => {
+    if (!job) return null;
+    const shipmentJobs = jobs.filter(j => j.reference === job.reference);
+    const seqIndex = shipmentJobs.findIndex(j => j.id === job.id);
+    return seqIndex > 0 ? shipmentJobs[seqIndex - 1] : null;
   };
 
   // Every doc has finished OCR extraction (whatever the comparison verdict, if any) — the
@@ -4099,6 +4167,15 @@ const mockWorkflows: Workflow[] = [
           );
         case JobStatus.REVIEW:
           return <span className="bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter inline-flex items-center gap-1.5 font-sans whitespace-nowrap"><div className="w-1 h-1 rounded-full bg-amber-500 animate-pulse"></div>{language === 'TH' ? 'รอตรวจสอบ' : 'REVIEW'}</span>;
+        case JobStatus.REJECTED:
+          return (
+            <Tooltip content={job.rejectionReason}>
+              <span className="bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter inline-flex items-center gap-1.5 font-sans whitespace-nowrap cursor-help">
+                <RotateCcw size={10} className="text-rose-500" />
+                {language === 'TH' ? 'ถูกตีกลับ' : 'REJECTED'}
+              </span>
+            </Tooltip>
+          );
         default:
           return null;
       }
@@ -4331,6 +4408,15 @@ const mockWorkflows: Workflow[] = [
           );
         case JobStatus.REVIEW:
           return <span className="bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter inline-flex items-center gap-1.5 font-sans whitespace-nowrap"><div className="w-1 h-1 rounded-full bg-amber-500 animate-pulse"></div>{language === 'TH' ? 'รอตรวจสอบ' : 'REVIEW'}</span>;
+        case JobStatus.REJECTED:
+          return (
+            <Tooltip content={job.rejectionReason}>
+              <span className="bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter inline-flex items-center gap-1.5 font-sans whitespace-nowrap cursor-help">
+                <RotateCcw size={10} className="text-rose-500" />
+                {language === 'TH' ? 'ถูกตีกลับ' : 'REJECTED'}
+              </span>
+            </Tooltip>
+          );
         default:
           return null;
       }
@@ -4343,6 +4429,7 @@ const mockWorkflows: Workflow[] = [
         case JobStatus.PENDING: return 'bg-blue-500';
         case JobStatus.PROCESSING: return 'bg-blue-600 animate-pulse';
         case JobStatus.REVIEW: return 'bg-amber-500';
+        case JobStatus.REJECTED: return 'bg-rose-500';
         default: return 'bg-slate-300';
       }
     };
@@ -6332,6 +6419,59 @@ const mockWorkflows: Workflow[] = [
         </div>
       )}
 
+      {/* Reject Flow Confirm Modal */}
+      {showRejectFlowConfirm && selectedJob && (() => {
+        const prevJob = getPreviousJobInShipment(selectedJob);
+        return (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300 font-sans">
+            <div className="bg-white p-10 rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 text-center flex flex-col items-center gap-6 animate-in zoom-in-95 duration-300">
+              <div className="text-rose-500 flex items-center justify-center mb-2">
+                <RotateCcw size={44} strokeWidth={3} />
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-[#010136] tracking-tight mb-3 font-sans">
+                  {language === 'TH' ? 'ตีกลับไปยังขั้นตอนก่อนหน้า' : 'Reject Back to Previous Job'}
+                </h3>
+                <p className="text-slate-500 font-medium text-[13px] leading-relaxed font-sans max-w-sm mx-auto">
+                  {language === 'TH'
+                    ? `รายการ "${prevJob?.workflowName || prevJob?.reference}" จะถูกทำเครื่องหมายว่า "ถูกตีกลับ" พร้อมเหตุผลที่ระบุ และจะบล็อกขั้นตอนถัดไปในชิปเมนต์นี้จนกว่าจะแก้ไขและดำเนินการให้เสร็จสมบูรณ์อีกครั้ง`
+                    : `"${prevJob?.workflowName || prevJob?.reference}" will be marked "Rejected" with the reason below, and every job after it in this shipment stays blocked until it's corrected and completed again.`}
+                </p>
+              </div>
+              <div className="w-full text-left">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">
+                  {language === 'TH' ? 'เหตุผลในการตีกลับ' : 'Reason for rejection'}
+                </label>
+                <textarea
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  placeholder={language === 'TH' ? 'ระบุเหตุผล เช่น ข้อมูลใน Packing List ยังไม่ถูกต้อง' : 'e.g. Packing List data is still incorrect'}
+                  className="w-full h-24 resize-none rounded-[4px] border border-slate-200 p-3 text-[13px] font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300 font-sans"
+                />
+              </div>
+              <div className="flex gap-4 w-full mt-2">
+                <Button
+                  size="large"
+                  className="flex-1 rounded-[4px] h-14 font-black uppercase tracking-widest text-[11px] border-slate-200 text-slate-600 hover:bg-slate-50 font-sans"
+                  onClick={() => { setShowRejectFlowConfirm(false); setRejectReason(''); }}
+                >
+                  {language === 'TH' ? 'ยกเลิก' : 'CANCEL'}
+                </Button>
+                <Button
+                  type="primary"
+                  size="large"
+                  disabled={!rejectReason.trim()}
+                  className="flex-1 rounded-[4px] h-14 font-black uppercase tracking-widest text-[11px] bg-rose-600 border-none shadow-lg shadow-rose-500/20 hover:!bg-rose-700 disabled:opacity-40 font-sans"
+                  onClick={() => handleRejectFlow(selectedJob, rejectReason.trim())}
+                >
+                  {language === 'TH' ? 'ยืนยันตีกลับ' : 'CONFIRM REJECT'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Workflow Warning Modal */}
       {showWorkflowWarning && (
         <div className="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
@@ -6655,6 +6795,7 @@ const mockWorkflows: Workflow[] = [
                                 status === JobStatus.NEW ? 'bg-slate-50 border-slate-200 text-slate-500' :
                                 status === JobStatus.REVIEW ? 'bg-amber-50 border-amber-200 text-amber-600' :
                                 status === JobStatus.PROCESSING ? 'bg-blue-600 border-blue-700 text-white animate-pulse' :
+                                status === JobStatus.REJECTED ? 'bg-rose-50 border-rose-200 text-rose-700' :
                                 'bg-slate-50 border-slate-200 text-slate-500'
                               }`}
                               onClick={() => setShowStatusGuide(true)}
@@ -6662,23 +6803,33 @@ const mockWorkflows: Workflow[] = [
                                 {(status === JobStatus.PROCESSING || status === JobStatus.REVIEW) && (
                                   <div className={`w-1.5 h-1.5 rounded-full ${status === JobStatus.PROCESSING ? 'bg-white' : 'bg-amber-500'} animate-pulse`}></div>
                                 )}
-                                {status === JobStatus.READY 
-                                    ? (language === 'TH' ? 'เสร็จสมบูรณ์' : 'READY') 
-                                    : status === JobStatus.DONE 
-                                    ? (language === 'TH' ? 'ส่งออกแล้ว' : 'EXPORTED') 
-                                    : status === JobStatus.PENDING 
-                                    ? (language === 'TH' ? 'รอดำเนินการ' : 'PENDING') 
-                                    : status === JobStatus.NEW 
-                                    ? (language === 'TH' ? 'รอไฟล์ครบ' : 'PENDING FILES') 
-                                    : status === JobStatus.PROCESSING 
-                                    ? (language === 'TH' ? 'กำลังเปรียบเทียบข้อมูล' : 'COMPARING') 
-                                    : status === JobStatus.REVIEW 
-                                    ? (language === 'TH' ? 'รอตรวจสอบ' : 'REVIEW') 
+                                {status === JobStatus.REJECTED && <RotateCcw size={10} className="text-rose-500" />}
+                                {status === JobStatus.READY
+                                    ? (language === 'TH' ? 'เสร็จสมบูรณ์' : 'READY')
+                                    : status === JobStatus.DONE
+                                    ? (language === 'TH' ? 'ส่งออกแล้ว' : 'EXPORTED')
+                                    : status === JobStatus.PENDING
+                                    ? (language === 'TH' ? 'รอดำเนินการ' : 'PENDING')
+                                    : status === JobStatus.NEW
+                                    ? (language === 'TH' ? 'รอไฟล์ครบ' : 'PENDING FILES')
+                                    : status === JobStatus.PROCESSING
+                                    ? (language === 'TH' ? 'กำลังเปรียบเทียบข้อมูล' : 'COMPARING')
+                                    : status === JobStatus.REVIEW
+                                    ? (language === 'TH' ? 'รอตรวจสอบ' : 'REVIEW')
+                                    : status === JobStatus.REJECTED
+                                    ? (language === 'TH' ? 'ถูกตีกลับ' : 'REJECTED')
                                     : status}
                                 <HelpCircle size={10} className="ml-1 opacity-40 group-hover/status:opacity-100 transition-opacity" />
                              </div>
                            );
                         })()}
+                        {selectedJob.status === JobStatus.REJECTED && selectedJob.rejectionReason && (
+                          <Tooltip content={selectedJob.rejectionReason}>
+                            <span className="text-[9px] font-bold text-rose-500 bg-rose-50 border border-rose-100 rounded-lg px-2 py-0.5 max-w-[220px] truncate cursor-help">
+                              {language === 'TH' ? 'เหตุผล: ' : 'Reason: '}{selectedJob.rejectionReason}
+                            </span>
+                          </Tooltip>
+                        )}
                       </div>
                       <div className="flex items-center gap-2 flex-wrap">
                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{selectedJob.workflowName}</p>
@@ -6867,6 +7018,21 @@ const mockWorkflows: Workflow[] = [
                         className="p-2.5 rounded-[4px] transition-all flex items-center justify-center border disabled:opacity-30 disabled:cursor-not-allowed bg-white border-slate-200/60 text-slate-500 hover:bg-slate-50 hover:text-[#1f5df9] hover:border-blue-200"
                       >
                         <SkipForward size={15} strokeWidth={2.5} />
+                      </button>
+                    </Tooltip>
+                  )}
+
+                  {/* Reject Flow — from the 2nd job in a shipment onward, send the previous job
+                      back for correction (e.g. a reviewer here spots the earlier job's document
+                      is still wrong). */}
+                  {canRejectToPreviousJob(selectedJob) && (
+                    <Tooltip content={language === 'TH' ? 'ตีกลับไปยังขั้นตอนก่อนหน้าเพื่อแก้ไข' : 'Reject back to the previous job for correction'}>
+                      <button
+                        disabled={isUnassigned}
+                        onClick={() => setShowRejectFlowConfirm(true)}
+                        className="p-2.5 rounded-[4px] transition-all flex items-center justify-center border disabled:opacity-30 disabled:cursor-not-allowed bg-white border-slate-200/60 text-slate-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200"
+                      >
+                        <RotateCcw size={15} strokeWidth={2.5} />
                       </button>
                     </Tooltip>
                   )}

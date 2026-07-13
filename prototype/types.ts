@@ -41,7 +41,10 @@ export enum JobStatus {
   REVIEW = 'REVIEW',
   READY = 'READY',
   DONE = 'DONE',
-  PROCESSING = 'PROCESSING'
+  PROCESSING = 'PROCESSING',
+  // A later job in the shipment was kicked back to this one for corrections — distinct from
+  // DONE so the shipment list re-blocks every job after this one until it's redone.
+  REJECTED = 'REJECTED'
 }
 
 export enum ComparisonDocStatus {
@@ -78,6 +81,10 @@ export interface ComparisonJob {
   totalFieldsCount?: number;
   accuracyScore?: number;
   tags?: string[];
+  // Present when a later job in the shipment rejected this job back for corrections.
+  rejectionReason?: string;
+  rejectedAt?: string;
+  rejectedBy?: string;
 }
 
 export type Language = 'EN' | 'TH';
