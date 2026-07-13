@@ -7234,7 +7234,7 @@ const mockWorkflows: Workflow[] = [
                                             `}</style>
                                          </div>
                                        )}
-                                      <div className="flex flex-col gap-0.5 items-center">
+                                      <div className="flex flex-col gap-3 items-center">
                                          {/* Status and Action Buttons */}
                                          <div className="flex items-center justify-between w-full px-1">
                                             <div className={`flex items-center gap-1.5 scale-100 origin-left ${
