@@ -6172,8 +6172,8 @@ const mockWorkflows: Workflow[] = [
         return (
           <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300 font-sans">
             <div className="bg-white p-10 rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 text-center flex flex-col items-center gap-6 animate-in zoom-in-95 duration-300">
-              <div className="w-24 h-24 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center border-4 border-rose-100 mb-2">
-                <CheckCheck size={44} strokeWidth={3} />
+              <div className="w-24 h-24 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center border-4 border-amber-100 mb-2">
+                <AlertCircle size={44} strokeWidth={3} />
               </div>
               <div>
                 <h3 className="text-xl font-black text-[#010136] tracking-tight mb-3 font-sans">
@@ -6196,7 +6196,7 @@ const mockWorkflows: Workflow[] = [
                 <Button
                   type="primary"
                   size="large"
-                  className="flex-1 rounded-[4px] h-14 font-black uppercase tracking-widest text-[11px] bg-rose-500 border-none shadow-lg shadow-rose-500/20 hover:bg-rose-600 font-sans"
+                  className="flex-1 rounded-[4px] h-14 font-black uppercase tracking-widest text-[11px] bg-[#1f5df9] border-none shadow-lg shadow-[#1f5df9]/20 hover:bg-[#104BE3] font-sans"
                   onClick={() => {
                     confirmAllMismatchesInDoc(targetDoc);
                     setConfirmAllMismatchesTargetDocName(null);
