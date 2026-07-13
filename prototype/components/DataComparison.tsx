@@ -6,7 +6,7 @@ import {
   Plus, Trash2, ArrowLeftRight, FileSpreadsheet, File as FileIcon,
   CheckCircle2, XCircle, Info, Eye, Send, Filter, ListFilter, ArrowLeft, Save, RotateCcw,
   LayoutGrid, List, ScanEye, Bot, ChevronDown, Lock, Unlock, HelpCircle, X, Loader2, ShieldCheck, ArrowUpRight, ScanSearch, History, Edit3, UploadCloud, AlertTriangle,
-  Printer, RotateCw, ZoomIn, ZoomOut, Menu, Copy, Star, CheckCheck, StickyNote, SkipForward
+  Printer, RotateCw, ZoomIn, ZoomOut, Menu, Copy, Star, CheckCheck, StickyNote, SkipForward, RefreshCw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Tabs, Tag, Badge, Empty, Button, message, DatePicker } from 'antd';
@@ -6697,6 +6697,25 @@ const mockWorkflows: Workflow[] = [
                       <ListFilter size={15} strokeWidth={2.5} className={showOnlyDiff ? 'text-rose-500' : 'text-slate-400'} />
                     </button>
                   </Tooltip>
+
+                  {/* Manual Compare — re-run comparison on demand, e.g. after editing compare rules.
+                      Independent of the automatic compare trigger, which still fires as-is after OCR. */}
+                  {selectedJob && selectedJob.status !== JobStatus.DONE && (
+                    <Tooltip content={language === 'TH' ? 'เปรียบเทียบข้อมูลใหม่อีกครั้ง' : 'Re-run comparison now'}>
+                      <button
+                        disabled={isUnassigned || selectedJob.status === JobStatus.PROCESSING || !Object.values(selectedJob.docs).some(s =>
+                          s !== ComparisonDocStatus.MISSING &&
+                          s !== ComparisonDocStatus.RECEIVED &&
+                          s !== ComparisonDocStatus.EXTRACTING &&
+                          s !== ComparisonDocStatus.ERROR
+                        )}
+                        onClick={() => handleStartComparison(selectedJob.id)}
+                        className="p-2.5 rounded-[4px] transition-all border flex items-center justify-center cursor-pointer shadow-sm disabled:opacity-30 disabled:cursor-not-allowed bg-white text-slate-500 border-slate-200/60 hover:bg-slate-50"
+                      >
+                        <RefreshCw size={15} strokeWidth={2.5} className={`text-slate-400 ${selectedJob.status === JobStatus.PROCESSING ? 'animate-spin' : ''}`} />
+                      </button>
+                    </Tooltip>
+                  )}
 
                   {/* Activity Logs for this job — who on the team did what, on which document/field */}
                   <Tooltip content={language === 'TH' ? 'ดูประวัติกิจกรรมของรายการนี้' : 'View activity logs for this job'}>
