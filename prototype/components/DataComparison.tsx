@@ -6311,7 +6311,7 @@ const mockWorkflows: Workflow[] = [
               <Button
                 type="primary"
                 size="large"
-                className="flex-1 rounded-[4px] h-14 font-black uppercase tracking-widest text-[11px] bg-[#1f5df9] border-none shadow-lg shadow-[#1f5df9]/20 hover:bg-[#104BE3] font-sans"
+                className="flex-1 rounded-[4px] h-14 font-black uppercase tracking-widest text-[11px] bg-[#1f5df9] border-none shadow-lg shadow-[#1f5df9]/20 hover:!bg-[#104BE3] font-sans"
                 onClick={() => handleSkipFlow(selectedJob)}
               >
                 {language === 'TH' ? 'ข้ามและไปต่อ' : 'SKIP & CONTINUE'}
