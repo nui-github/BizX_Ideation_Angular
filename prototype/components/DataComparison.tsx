@@ -6391,7 +6391,7 @@ const mockWorkflows: Workflow[] = [
           <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300 font-sans">
             <div className="bg-white p-10 rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 text-center flex flex-col items-center gap-6 animate-in zoom-in-95 duration-300">
               <div className="text-amber-500 flex items-center justify-center mb-2">
-                <AlertCircle size={44} strokeWidth={3} />
+                <AlertCircle size={44} strokeWidth={2} />
               </div>
               <div>
                 <h3 className="text-xl font-black text-[#010136] tracking-tight mb-3 font-sans">
@@ -6433,7 +6433,7 @@ const mockWorkflows: Workflow[] = [
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300 font-sans">
           <div className="bg-white p-10 rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 text-center flex flex-col items-center gap-6 animate-in zoom-in-95 duration-300">
             <div className="text-amber-500 flex items-center justify-center mb-2">
-              <SkipForward size={44} strokeWidth={3} />
+              <SkipForward size={44} strokeWidth={2} />
             </div>
             <div>
               <h3 className="text-xl font-black text-[#010136] tracking-tight mb-3 font-sans">
@@ -6472,7 +6472,7 @@ const mockWorkflows: Workflow[] = [
           <div className="bg-white p-8 rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 flex flex-col gap-4 animate-in zoom-in-95 duration-300" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-[#1f5df9]">
-                <Undo2 size={16} strokeWidth={2.5} />
+                <Undo2 size={16} strokeWidth={2} />
                 <h3 className="text-sm font-black uppercase tracking-widest">
                   {language === 'TH' ? 'เหตุผลที่ถูกตีกลับ' : 'Rejection Reason'}
                 </h3>
@@ -6500,7 +6500,7 @@ const mockWorkflows: Workflow[] = [
           <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300 font-sans">
             <div className="bg-white p-10 rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 text-center flex flex-col items-center gap-6 animate-in zoom-in-95 duration-300">
               <div className="text-[#1f5df9] flex items-center justify-center mb-2">
-                <Undo2 size={44} strokeWidth={3} />
+                <Undo2 size={44} strokeWidth={2} />
               </div>
               <div>
                 <h3 className="text-xl font-black text-[#010136] tracking-tight mb-3 font-sans">
