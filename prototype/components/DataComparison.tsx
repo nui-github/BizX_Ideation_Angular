@@ -6,7 +6,7 @@ import {
   Plus, Trash2, ArrowLeftRight, FileSpreadsheet, File as FileIcon,
   CheckCircle2, XCircle, Info, Eye, Send, Filter, ListFilter, ArrowLeft, Save, RotateCcw,
   LayoutGrid, List, ScanEye, Bot, ChevronDown, Lock, Unlock, HelpCircle, X, Loader2, ShieldCheck, ArrowUpRight, ScanSearch, History, Edit3, UploadCloud, AlertTriangle,
-  Printer, RotateCw, ZoomIn, ZoomOut, Menu, Copy, Star, CheckCheck, StickyNote, SkipForward, RefreshCw
+  Printer, RotateCw, ZoomIn, ZoomOut, Menu, Copy, Star, CheckCheck, StickyNote, SkipForward
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Tabs, Tag, Badge, Empty, Button, message, DatePicker } from 'antd';
@@ -6717,7 +6717,7 @@ const mockWorkflows: Workflow[] = [
                         onClick={() => handleStartComparison(selectedJob.id)}
                         className="p-2.5 rounded-[4px] transition-all border flex items-center justify-center cursor-pointer shadow-sm disabled:opacity-30 disabled:cursor-not-allowed bg-white text-slate-500 border-slate-200/60 hover:bg-slate-50"
                       >
-                        <RefreshCw size={15} strokeWidth={2.5} className={`text-slate-400 ${selectedJob.status === JobStatus.PROCESSING ? 'animate-spin' : ''}`} />
+                        <Bot size={15} strokeWidth={2.5} className={`text-slate-400 ${selectedJob.status === JobStatus.PROCESSING ? 'animate-pulse' : ''}`} />
                       </button>
                     </Tooltip>
                   )}
