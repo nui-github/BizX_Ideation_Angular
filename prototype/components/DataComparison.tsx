@@ -6425,7 +6425,7 @@ const mockWorkflows: Workflow[] = [
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300 font-sans" onClick={() => setShowRejectionReasonModal(false)}>
           <div className="bg-white p-8 rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 flex flex-col gap-4 animate-in zoom-in-95 duration-300" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-rose-600">
+              <div className="flex items-center gap-2 text-[#1f5df9]">
                 <RotateCcw size={16} strokeWidth={2.5} />
                 <h3 className="text-sm font-black uppercase tracking-widest">
                   {language === 'TH' ? 'เหตุผลที่ถูกตีกลับ' : 'Rejection Reason'}
