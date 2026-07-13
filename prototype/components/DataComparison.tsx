@@ -6,7 +6,7 @@ import {
   Plus, Trash2, ArrowLeftRight, FileSpreadsheet, File as FileIcon,
   CheckCircle2, XCircle, Info, Eye, Send, Filter, ListFilter, ArrowLeft, Save, RotateCcw,
   LayoutGrid, List, ScanEye, Bot, ChevronDown, Lock, Unlock, HelpCircle, X, Loader2, ShieldCheck, ArrowUpRight, ScanSearch, History, Edit3, UploadCloud, AlertTriangle,
-  Printer, RotateCw, ZoomIn, ZoomOut, Menu, Copy, Star, CheckCheck, StickyNote, SkipForward
+  Printer, RotateCw, ZoomIn, ZoomOut, Menu, Copy, Star, CheckCheck, StickyNote, SkipForward, Undo2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Tabs, Tag, Badge, Empty, Button, message, DatePicker } from 'antd';
@@ -4868,6 +4868,37 @@ const mockWorkflows: Workflow[] = [
     setOcrLogs(prevLogs => [newLog, ...prevLogs]);
   };
 
+  // Reverts a "confirm all mismatches" that was clicked by mistake or a user who changed their
+  // mind — un-confirms every field in this doc that was confirmed via confirmAllMismatchesInDoc,
+  // putting the document back to MISMATCHED so it goes through review again.
+  const unconfirmAllMismatchesInDoc = (docName: string) => {
+    if (!selectedJob) return;
+    const prefix = `${selectedJob.id}_${docName}_`;
+    const confirmedFieldKeys = Object.keys(confirmedMismatches).filter(key => key.startsWith(prefix) && confirmedMismatches[key]);
+    if (confirmedFieldKeys.length === 0) return;
+    assignJobToCurrentUser(selectedJob.id);
+
+    setConfirmedMismatches(prev => {
+      const next = { ...prev };
+      confirmedFieldKeys.forEach(key => { next[key] = false; });
+      return next;
+    });
+
+    const newLog = {
+      id: Math.random().toString(36).substr(2, 9),
+      jobId: selectedJob.id,
+      docName,
+      timestamp: new Date().toISOString(),
+      action: 'UNCONFIRM_DATA',
+      details: language === 'TH'
+        ? `กดยกเลิกการยืนยันทั้งเอกสาร "${docName}" (${confirmedFieldKeys.length} ฟิลด์)`
+        : `Unconfirmed all previously-confirmed values in "${docName}" (${confirmedFieldKeys.length} fields)`,
+      version: selectedJob.updatedDocs?.includes(docName) ? 2 : 1,
+      user: CURRENT_USER_NAME
+    };
+    setOcrLogs(prevLogs => [newLog, ...prevLogs]);
+  };
+
   const getLastJobWorkflowId = (shipmentRef: string) => {
     const shipmentJobs = jobs.filter(j => j.reference === shipmentRef);
     if (shipmentJobs.length === 0) return undefined;
@@ -7256,6 +7287,24 @@ const mockWorkflows: Workflow[] = [
                                                         }`}
                                                       >
                                                         <CheckCheck size={10} strokeWidth={2.5} />
+                                                      </button>
+                                                    </Tooltip>
+                                               )}
+                                               {docStatus === ComparisonDocStatus.MISMATCHED && displayStatus === ComparisonDocStatus.MATCHED && (
+                                                    <Tooltip content={language === 'TH' ? 'ยกเลิกการยืนยันทั้งเอกสาร (กลับไปเป็นไม่ตรงกัน)' : 'Undo confirm-all (revert to mismatched)'}>
+                                                      <button
+                                                        disabled={isUnassigned || selectedJob.status === JobStatus.DONE}
+                                                        onClick={(e) => {
+                                                          e.stopPropagation();
+                                                          unconfirmAllMismatchesInDoc(docName);
+                                                        }}
+                                                        className={`h-[18px] w-[18px] flex items-center justify-center rounded-[4px] bg-white border border-slate-200 transition-all ${
+                                                          (isUnassigned || selectedJob.status === JobStatus.DONE)
+                                                          ? 'text-slate-200 cursor-not-allowed opacity-50'
+                                                          : 'text-slate-400 hover:bg-slate-500 hover:text-white hover:border-slate-500 hover:shadow-lg shadow-sm cursor-pointer'
+                                                        }`}
+                                                      >
+                                                        <Undo2 size={10} strokeWidth={2.5} />
                                                       </button>
                                                     </Tooltip>
                                                )}
