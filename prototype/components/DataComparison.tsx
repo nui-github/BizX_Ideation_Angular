@@ -7811,10 +7811,24 @@ const mockWorkflows: Workflow[] = [
                         timestamp: new Date().toISOString(),
                         text: trimmed
                       };
-                      setDocComments(prev => ({
-                        ...prev,
-                        [key]: [...(prev[key] || []), newComment]
-                      }));
+                      setDocComments(prev => {
+                        const next = { ...prev, [key]: [...(prev[key] || []), newComment] };
+                        // If this job already moved on, the comment was added after the fact —
+                        // sync it forward to every later job in the shipment that shares this
+                        // doc type too, not just whichever job happened to be active at export
+                        // time, so it still reaches wherever the document is being worked now.
+                        if (selectedJob.status === JobStatus.DONE && noteEditorDocName) {
+                          const shipmentJobs = jobs.filter(j => j.reference === selectedJob.reference);
+                          const seqIndex = shipmentJobs.findIndex(j => j.id === selectedJob.id);
+                          shipmentJobs.slice(seqIndex + 1).forEach(laterJob => {
+                            const matchingDocName = Object.keys(laterJob.docs).find(n => n.toLowerCase() === noteEditorDocName.toLowerCase());
+                            if (!matchingDocName) return;
+                            const laterKey = `${laterJob.id}_${matchingDocName}`;
+                            next[laterKey] = [...(next[laterKey] || []), newComment];
+                          });
+                        }
+                        return next;
+                      });
                       setCommentDraft('');
                     }}
                     disabled={!commentDraft.trim()}
