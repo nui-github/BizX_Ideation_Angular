@@ -3282,6 +3282,14 @@ const mockWorkflows: Workflow[] = [
     return isLastJob && isAllDocsMatched(job);
   };
 
+  const isLastJobInShipment = (job: ComparisonJob) => {
+    if (!job) return false;
+    const shipmentJobs = jobs.filter(j => j.reference === job.reference);
+    if (shipmentJobs.length === 0) return false;
+    const seqIndex = shipmentJobs.findIndex(j => j.id === job.id);
+    return seqIndex === shipmentJobs.length - 1;
+  };
+
   // Every doc has finished OCR extraction (whatever the comparison verdict, if any) — the
   // point at which a flow that doesn't need comparison can be skipped forward.
   const isReadyToSkipFlow = (job: ComparisonJob) => {
@@ -6844,12 +6852,14 @@ const mockWorkflows: Workflow[] = [
                   {/* Skip Flow — for jobs that only need OCR, not comparison, before moving on */}
                   {selectedJob.status !== JobStatus.DONE && (
                     <Tooltip content={
-                      isReadyToSkipFlow(selectedJob)
+                      isLastJobInShipment(selectedJob)
+                        ? (language === 'TH' ? 'เป็นรายการย่อยสุดท้ายของ shipment แล้ว ไม่มีขั้นตอนถัดไปให้ข้ามไป' : 'This is the last job in the shipment — no next step to skip to')
+                        : isReadyToSkipFlow(selectedJob)
                         ? (language === 'TH' ? 'ข้ามการเปรียบเทียบและไปยังรายการย่อยถัดไปทันที' : 'Skip comparison and move straight to the next job')
                         : (language === 'TH' ? 'ต้องอ่านไฟล์ (OCR) ให้ครบทุกเอกสารก่อนจึงจะข้ามได้' : 'All documents must finish OCR before you can skip')
                     }>
                       <button
-                        disabled={isUnassigned || !isReadyToSkipFlow(selectedJob)}
+                        disabled={isUnassigned || !isReadyToSkipFlow(selectedJob) || isLastJobInShipment(selectedJob)}
                         onClick={() => setShowSkipFlowConfirm(true)}
                         className="p-2.5 rounded-[4px] transition-all flex items-center justify-center border disabled:opacity-30 disabled:cursor-not-allowed bg-white border-slate-200/60 text-slate-500 hover:bg-slate-50 hover:text-[#1f5df9] hover:border-blue-200"
                       >
