@@ -1352,6 +1352,7 @@ const mockWorkflows: Workflow[] = [
   const [showColumnSelector, setShowColumnSelector] = useState(false);
   const [showDeleteColumnConfirmModal, setShowDeleteColumnConfirmModal] = useState(false);
   const [deleteColumnTargetDocName, setDeleteColumnTargetDocName] = useState<string | null>(null);
+  const [confirmAllMismatchesTargetDocName, setConfirmAllMismatchesTargetDocName] = useState<string | null>(null);
 
   // --- Custom Handlers for Column Replace Feature ---
   const handleReplaceDragOver = (e: React.DragEvent) => {
@@ -6117,6 +6118,51 @@ const mockWorkflows: Workflow[] = [
         </div>
       )}
 
+      {/* Confirm-all-mismatches Modal */}
+      {confirmAllMismatchesTargetDocName && (() => {
+        const targetDoc = confirmAllMismatchesTargetDocName;
+        const mismatchCount = allComparisonResults.filter(res => res.targets.some(t => t.fileName === targetDoc && t.status === 'MISMATCH')).length;
+        return (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300 font-sans">
+            <div className="bg-white p-10 rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 text-center flex flex-col items-center gap-6 animate-in zoom-in-95 duration-300">
+              <div className="w-24 h-24 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center border-4 border-rose-100 mb-2">
+                <CheckCheck size={44} strokeWidth={3} />
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-[#010136] tracking-tight mb-3 font-sans">
+                  {language === 'TH' ? 'ยืนยันใช้ค่านี้ทั้งเอกสาร' : 'Confirm All Mismatches'}
+                </h3>
+                <p className="text-slate-500 font-medium text-[13px] leading-relaxed font-sans max-w-sm mx-auto">
+                  {language === 'TH'
+                    ? `คุณต้องการยืนยันใช้ค่าที่สกัดได้สำหรับฟิลด์ที่ไม่ตรงกันทั้งหมด ${mismatchCount} ฟิลด์ ในเอกสาร "${targetDoc}" ใช่หรือไม่? การกระทำนี้จะถือว่าทุกฟิลด์ที่ไม่ตรงกันผ่านการตรวจสอบแล้ว`
+                    : `Are you sure you want to confirm all ${mismatchCount} mismatched fields in "${targetDoc}"? This will mark every mismatched field as reviewed and accepted.`}
+                </p>
+              </div>
+              <div className="flex gap-4 w-full mt-4">
+                <Button
+                  size="large"
+                  className="flex-1 rounded-[4px] h-14 font-black uppercase tracking-widest text-[11px] border-slate-200 text-slate-600 hover:bg-slate-50 font-sans"
+                  onClick={() => setConfirmAllMismatchesTargetDocName(null)}
+                >
+                  {language === 'TH' ? 'ยกเลิก' : 'CANCEL'}
+                </Button>
+                <Button
+                  type="primary"
+                  size="large"
+                  className="flex-1 rounded-[4px] h-14 font-black uppercase tracking-widest text-[11px] bg-rose-500 border-none shadow-lg shadow-rose-500/20 hover:bg-rose-600 font-sans"
+                  onClick={() => {
+                    confirmAllMismatchesInDoc(targetDoc);
+                    setConfirmAllMismatchesTargetDocName(null);
+                  }}
+                >
+                  {language === 'TH' ? 'ยืนยัน' : 'CONFIRM'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Workflow Warning Modal */}
       {showWorkflowWarning && (
         <div className="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
@@ -6778,7 +6824,7 @@ const mockWorkflows: Workflow[] = [
                                                         disabled={isUnassigned || selectedJob.status === JobStatus.DONE}
                                                         onClick={(e) => {
                                                           e.stopPropagation();
-                                                          confirmAllMismatchesInDoc(docName);
+                                                          setConfirmAllMismatchesTargetDocName(docName);
                                                         }}
                                                         className={`h-[18px] w-[18px] flex items-center justify-center rounded-[4px] bg-white border border-slate-200 transition-all ${
                                                           (isUnassigned || selectedJob.status === JobStatus.DONE)
