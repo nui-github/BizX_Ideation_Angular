@@ -915,10 +915,11 @@ const mockWorkflows: Workflow[] = [
     // If a doc type in the next job was already uploaded and OCR'd in this job (e.g. "Invoice"
     // required by both this flow and the next one), carry its extracted data forward instead of
     // leaving it MISSING — the reviewer shouldn't have to re-upload and re-OCR the same file.
-    // The doc still lands as OCR_DONE (not MATCHED/MISMATCHED): the next flow compares against a
-    // different set of documents, so the previous flow's verdict isn't valid here and it needs to
-    // go through comparison again. This also applies to a SKIPPED doc — its data was never
-    // verified at all, so it needs a fresh comparison even more than a MISMATCHED one would.
+    // A doc that was already MATCHED in the previous flow carries forward as MATCHED directly —
+    // it's the same physical document, already verified, so it shouldn't be put through another
+    // random compare roll. Anything that was never verified (MISMATCHED, OCR_DONE, SKIPPED) lands
+    // as OCR_DONE and goes through comparison again, since the next flow compares against a
+    // different set of documents and the previous flow's verdict (or lack of one) isn't valid here.
     let carriedNextJob = nextJob;
     if (nextJob) {
       const updatedDocs = { ...nextJob.docs };
@@ -936,7 +937,9 @@ const mockWorkflows: Workflow[] = [
           prevStatus !== ComparisonDocStatus.OCR_DONE &&
           prevStatus !== ComparisonDocStatus.SKIPPED
         ) return;
-        updatedDocs[docName] = ComparisonDocStatus.OCR_DONE;
+        updatedDocs[docName] = prevStatus === ComparisonDocStatus.MATCHED
+          ? ComparisonDocStatus.MATCHED
+          : ComparisonDocStatus.OCR_DONE;
         changed = true;
       });
 
