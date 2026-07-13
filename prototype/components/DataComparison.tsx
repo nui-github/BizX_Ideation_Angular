@@ -936,8 +936,11 @@ const mockWorkflows: Workflow[] = [
     }
 
     // If a doc type in the next job was already uploaded and OCR'd in this job (e.g. "Invoice"
-    // required by both this flow and the next one), carry its extracted status forward instead
-    // of leaving it MISSING — the reviewer shouldn't have to re-upload and re-OCR the same file.
+    // required by both this flow and the next one), carry its extracted data forward instead of
+    // leaving it MISSING — the reviewer shouldn't have to re-upload and re-OCR the same file.
+    // The doc still lands as OCR_DONE (not MATCHED/MISMATCHED): the next flow compares against a
+    // different set of documents, so the previous flow's verdict isn't valid here and it needs to
+    // go through comparison again.
     let carriedNextJob = nextJob;
     if (nextJob) {
       const updatedDocs = { ...nextJob.docs };
@@ -949,25 +952,33 @@ const mockWorkflows: Workflow[] = [
         const prevStatus = jobToExport.docs[matchingPrevDocName];
         // Only carry forward docs that finished extraction — a doc still uploading/OCR'ing
         // in this job has nothing useful to hand off yet.
-        if (prevStatus === ComparisonDocStatus.MISSING || prevStatus === ComparisonDocStatus.RECEIVED || prevStatus === ComparisonDocStatus.EXTRACTING || prevStatus === ComparisonDocStatus.ERROR) return;
-        updatedDocs[docName] = prevStatus;
+        if (prevStatus !== ComparisonDocStatus.MATCHED && prevStatus !== ComparisonDocStatus.MISMATCHED && prevStatus !== ComparisonDocStatus.OCR_DONE) return;
+        updatedDocs[docName] = ComparisonDocStatus.OCR_DONE;
         changed = true;
       });
 
       if (changed) {
         const found = Object.values(updatedDocs).filter(s => s !== ComparisonDocStatus.MISSING).length;
-        const matched = Object.values(updatedDocs).filter(s => s === ComparisonDocStatus.MATCHED || s === ComparisonDocStatus.LOCKED).length;
-        const mismatched = Object.values(updatedDocs).filter(s => s === ComparisonDocStatus.MISMATCHED).length;
+        const extractedCount = Object.values(updatedDocs).filter(s =>
+          s !== ComparisonDocStatus.MISSING &&
+          s !== ComparisonDocStatus.RECEIVED &&
+          s !== ComparisonDocStatus.EXTRACTING &&
+          s !== ComparisonDocStatus.ERROR
+        ).length;
+        const isAnyExtracting = Object.values(updatedDocs).some(s => s === ComparisonDocStatus.EXTRACTING);
         carriedNextJob = {
           ...nextJob,
           docs: updatedDocs,
           foundDocs: found,
-          matchedCount: matched,
-          mismatchedCount: mismatched,
           progress: Math.round((found / nextJob.totalDocs) * 100)
         };
         const finalCarriedJob = carriedNextJob;
         setJobs(prevJobs => prevJobs.map(j => j.id === nextJob.id ? finalCarriedJob : j));
+        // Mirror the same auto-compare trigger used after a manual OCR read: once at least two
+        // docs are extracted and nothing is still mid-OCR, kick off comparison automatically.
+        if (extractedCount >= 2 && !isAnyExtracting) {
+          setTimeout(() => handleStartComparison(nextJob.id), 0);
+        }
       }
     }
 
