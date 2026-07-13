@@ -1507,6 +1507,7 @@ const mockWorkflows: Workflow[] = [
   const [showSkipFlowConfirm, setShowSkipFlowConfirm] = useState(false);
   const [showRejectFlowConfirm, setShowRejectFlowConfirm] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
+  const [showRejectionReasonModal, setShowRejectionReasonModal] = useState(false);
 
   // --- Custom Handlers for Column Replace Feature ---
   const handleReplaceDragOver = (e: React.DragEvent) => {
@@ -6419,6 +6420,33 @@ const mockWorkflows: Workflow[] = [
         </div>
       )}
 
+      {/* Rejection Reason Popup — full reason text behind the icon button next to the REJECTED pill */}
+      {showRejectionReasonModal && selectedJob?.rejectionReason && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300 font-sans" onClick={() => setShowRejectionReasonModal(false)}>
+          <div className="bg-white p-8 rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 flex flex-col gap-4 animate-in zoom-in-95 duration-300" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-rose-600">
+                <RotateCcw size={16} strokeWidth={2.5} />
+                <h3 className="text-sm font-black uppercase tracking-widest">
+                  {language === 'TH' ? 'เหตุผลที่ถูกตีกลับ' : 'Rejection Reason'}
+                </h3>
+              </div>
+              <button onClick={() => setShowRejectionReasonModal(false)} className="text-slate-400 hover:text-slate-600 transition-colors cursor-pointer">
+                <X size={18} />
+              </button>
+            </div>
+            <p className="text-slate-600 font-medium text-[13px] leading-relaxed font-sans whitespace-pre-wrap">
+              {selectedJob.rejectionReason}
+            </p>
+            {(selectedJob.rejectedBy || selectedJob.rejectedAt) && (
+              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest border-t border-slate-100 pt-3">
+                {selectedJob.rejectedBy}{selectedJob.rejectedAt ? ` · ${formatDisplayDate(selectedJob.rejectedAt)}` : ''}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Reject Flow Confirm Modal */}
       {showRejectFlowConfirm && selectedJob && (() => {
         const prevJob = getPreviousJobInShipment(selectedJob);
@@ -6824,10 +6852,13 @@ const mockWorkflows: Workflow[] = [
                            );
                         })()}
                         {selectedJob.status === JobStatus.REJECTED && selectedJob.rejectionReason && (
-                          <Tooltip content={selectedJob.rejectionReason}>
-                            <span className="text-[9px] font-bold text-rose-500 bg-rose-50 border border-rose-100 rounded-lg px-2 py-0.5 max-w-[220px] truncate cursor-help">
-                              {language === 'TH' ? 'เหตุผล: ' : 'Reason: '}{selectedJob.rejectionReason}
-                            </span>
+                          <Tooltip content={language === 'TH' ? 'ดูเหตุผลที่ถูกตีกลับ' : 'View rejection reason'}>
+                            <button
+                              onClick={() => setShowRejectionReasonModal(true)}
+                              className="w-5 h-5 rounded-full bg-rose-50 border border-rose-100 text-rose-500 flex items-center justify-center hover:bg-rose-100 transition-colors cursor-pointer shrink-0"
+                            >
+                              <StickyNote size={11} />
+                            </button>
                           </Tooltip>
                         )}
                       </div>
