@@ -3225,7 +3225,12 @@ const mockWorkflows: Workflow[] = [
 
   const getJobStatus = (job: ComparisonJob): JobStatus => {
     if (job.status === JobStatus.DONE) return JobStatus.DONE;
-    const docs = Object.entries(job.docs).map(([docName, s]) => 
+    // A manual re-compare sets job.status to PROCESSING directly, without necessarily putting
+    // any individual doc into EXTRACTING — reflect that immediately rather than falling through
+    // to the doc-derived status below, which would otherwise still show the stale REVIEW/READY
+    // verdict from before the re-compare was requested.
+    if (job.status === JobStatus.PROCESSING) return JobStatus.PROCESSING;
+    const docs = Object.entries(job.docs).map(([docName, s]) =>
       getEffectiveDocStatus(job, docName, s)
     );
     if (docs.some(s => s === ComparisonDocStatus.MISSING)) return JobStatus.NEW;
