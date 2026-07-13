@@ -6489,7 +6489,7 @@ const mockWorkflows: Workflow[] = [
                   type="primary"
                   size="large"
                   disabled={!rejectReason.trim()}
-                  className="flex-1 rounded-[4px] h-14 font-black uppercase tracking-widest text-[11px] bg-rose-600 border-none shadow-lg shadow-rose-500/20 hover:!bg-rose-700 disabled:opacity-40 font-sans"
+                  className="flex-1 rounded-[4px] h-14 font-black uppercase tracking-widest text-[11px] bg-[#1f5df9] border-none shadow-lg shadow-[#1f5df9]/20 hover:!bg-[#104BE3] disabled:opacity-40 font-sans"
                   onClick={() => handleRejectFlow(selectedJob, rejectReason.trim())}
                 >
                   {language === 'TH' ? 'ยืนยันตีกลับ' : 'CONFIRM REJECT'}
