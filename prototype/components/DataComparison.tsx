@@ -6453,7 +6453,7 @@ const mockWorkflows: Workflow[] = [
         return (
           <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300 font-sans">
             <div className="bg-white p-10 rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 text-center flex flex-col items-center gap-6 animate-in zoom-in-95 duration-300">
-              <div className="text-rose-500 flex items-center justify-center mb-2">
+              <div className="text-[#1f5df9] flex items-center justify-center mb-2">
                 <RotateCcw size={44} strokeWidth={3} />
               </div>
               <div>
