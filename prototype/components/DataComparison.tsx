@@ -1085,16 +1085,31 @@ const mockWorkflows: Workflow[] = [
 
     setJobs(prevJobs => prevJobs.map(j => j.id === prevJob.id ? rejectedPrevJob : j));
 
+    const rejectTimestamp = new Date().toISOString();
     setOcrLogs(prev => [
       {
         id: `log-reject-${Date.now()}`,
         jobId: currentJob.id,
         docName: Object.keys(currentJob.docs).join(', '),
-        timestamp: new Date().toISOString(),
+        timestamp: rejectTimestamp,
         action: 'REJECT_FLOW',
         details: language === 'TH'
           ? `ตีกลับไปยัง "${prevJob.workflowName || prevJob.reference}" เหตุผล: ${reason}`
           : `Rejected back to "${prevJob.workflowName || prevJob.reference}". Reason: ${reason}`,
+        version: 1,
+        user: CURRENT_USER_NAME
+      },
+      // Also log against the rejected (previous) job itself, so its own activity history
+      // shows the kickback — not just the job that initiated it.
+      {
+        id: `log-rejected-${Date.now()}`,
+        jobId: prevJob.id,
+        docName: language === 'TH' ? 'ทั้งหมด' : 'ALL',
+        timestamp: rejectTimestamp,
+        action: 'REJECTED',
+        details: language === 'TH'
+          ? `ถูกตีกลับจาก "${currentJob.workflowName || currentJob.reference}" เหตุผล: ${reason}`
+          : `Rejected back from "${currentJob.workflowName || currentJob.reference}". Reason: ${reason}`,
         version: 1,
         user: CURRENT_USER_NAME
       },
@@ -7904,6 +7919,8 @@ const mockWorkflows: Workflow[] = [
                                     : log.action === 'APPROVE' ? <Send size={14} className="text-teal-500" />
                                     : log.action === 'CONFIRM_DATA' ? <CheckCircle2 size={14} className="text-rose-500" />
                                     : log.action === 'UNCONFIRM_DATA' ? <XCircle size={14} className="text-slate-400" />
+                                    : log.action === 'SKIP_FLOW' ? <SkipForward size={14} className="text-amber-500" />
+                                    : (log.action === 'REJECT_FLOW' || log.action === 'REJECTED') ? <RotateCcw size={14} className="text-rose-500" />
                                     : <UploadCloud size={14} className="text-emerald-500" />}
                                   <span className="text-xs font-bold text-slate-700">
                                     {log.action === 'EDIT_DATA' ? (language === 'TH' ? 'แก้ไขข้อมูล OCR' : 'Edited OCR Data')
@@ -7911,6 +7928,9 @@ const mockWorkflows: Workflow[] = [
                                       : log.action === 'APPROVE' ? (language === 'TH' ? 'ส่งออกข้อมูล' : 'Exported Data')
                                       : log.action === 'CONFIRM_DATA' ? (language === 'TH' ? 'กดยืนยันใช้ค่านี้' : 'Confirmed Value')
                                       : log.action === 'UNCONFIRM_DATA' ? (language === 'TH' ? 'กดยกเลิกการยืนยัน' : 'Unconfirmed Value')
+                                      : log.action === 'SKIP_FLOW' ? (language === 'TH' ? 'ข้ามการเปรียบเทียบ' : 'Skipped Comparison')
+                                      : log.action === 'REJECT_FLOW' ? (language === 'TH' ? 'ตีกลับไปขั้นตอนก่อนหน้า' : 'Rejected to Previous Job')
+                                      : log.action === 'REJECTED' ? (language === 'TH' ? 'ถูกตีกลับ' : 'Rejected Back')
                                       : (language === 'TH' ? 'อัปโหลดเวอร์ชันใหม่' : 'Uploaded New Version')}
                                   </span>
                                 </div>
