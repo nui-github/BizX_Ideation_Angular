@@ -935,10 +935,46 @@ const mockWorkflows: Workflow[] = [
       });
     }
 
+    // If a doc type in the next job was already uploaded and OCR'd in this job (e.g. "Invoice"
+    // required by both this flow and the next one), carry its extracted status forward instead
+    // of leaving it MISSING — the reviewer shouldn't have to re-upload and re-OCR the same file.
+    let carriedNextJob = nextJob;
+    if (nextJob) {
+      const updatedDocs = { ...nextJob.docs };
+      let changed = false;
+      Object.keys(updatedDocs).forEach(docName => {
+        if (updatedDocs[docName] !== ComparisonDocStatus.MISSING) return;
+        const matchingPrevDocName = Object.keys(jobToExport.docs).find(n => n.toLowerCase() === docName.toLowerCase());
+        if (!matchingPrevDocName) return;
+        const prevStatus = jobToExport.docs[matchingPrevDocName];
+        // Only carry forward docs that finished extraction — a doc still uploading/OCR'ing
+        // in this job has nothing useful to hand off yet.
+        if (prevStatus === ComparisonDocStatus.MISSING || prevStatus === ComparisonDocStatus.RECEIVED || prevStatus === ComparisonDocStatus.EXTRACTING || prevStatus === ComparisonDocStatus.ERROR) return;
+        updatedDocs[docName] = prevStatus;
+        changed = true;
+      });
+
+      if (changed) {
+        const found = Object.values(updatedDocs).filter(s => s !== ComparisonDocStatus.MISSING).length;
+        const matched = Object.values(updatedDocs).filter(s => s === ComparisonDocStatus.MATCHED || s === ComparisonDocStatus.LOCKED).length;
+        const mismatched = Object.values(updatedDocs).filter(s => s === ComparisonDocStatus.MISMATCHED).length;
+        carriedNextJob = {
+          ...nextJob,
+          docs: updatedDocs,
+          foundDocs: found,
+          matchedCount: matched,
+          mismatchedCount: mismatched,
+          progress: Math.round((found / nextJob.totalDocs) * 100)
+        };
+        const finalCarriedJob = carriedNextJob;
+        setJobs(prevJobs => prevJobs.map(j => j.id === nextJob.id ? finalCarriedJob : j));
+      }
+    }
+
     // 3. If the exported job is currently selected (in details view), update selected job
     if (selectedJob && selectedJob.id === jobToExport.id) {
-      if (nextJob) {
-        setSelectedJob(nextJob);
+      if (carriedNextJob) {
+        setSelectedJob(carriedNextJob);
       } else {
         setSelectedJob(prev => prev ? { ...prev, status: JobStatus.DONE } : null);
       }
