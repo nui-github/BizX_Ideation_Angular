@@ -7269,7 +7269,7 @@ const mockWorkflows: Workflow[] = [
                                                    )}
                                                  </button>
                                                </Tooltip>
-                                               {displayStatus === ComparisonDocStatus.MISMATCHED && (
+                                               {(displayStatus === ComparisonDocStatus.MISMATCHED || displayStatus === ComparisonDocStatus.MATCHED) && (
                                                     <Tooltip content={language === 'TH' ? 'อัปโหลดไฟล์ใหม่ (Replace)' : 'Replace File'}>
                                                       <button
                                                         disabled={isUnassigned || selectedJob.status === JobStatus.DONE}
