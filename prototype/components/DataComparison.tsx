@@ -6,7 +6,7 @@ import {
   Plus, Trash2, ArrowLeftRight, FileSpreadsheet, File as FileIcon,
   CheckCircle2, XCircle, Info, Eye, Send, Filter, ListFilter, ArrowLeft, Save, RotateCcw,
   LayoutGrid, List, ScanEye, Bot, ChevronDown, Lock, Unlock, HelpCircle, X, Loader2, ShieldCheck, ArrowUpRight, ScanSearch, History, Edit3, UploadCloud, AlertTriangle,
-  Printer, RotateCw, ZoomIn, ZoomOut, Menu, Copy, Star, CheckCheck, StickyNote
+  Printer, RotateCw, ZoomIn, ZoomOut, Menu, Copy, Star, CheckCheck, StickyNote, SkipForward
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Tabs, Tag, Badge, Empty, Button, message, DatePicker } from 'antd';
@@ -882,36 +882,13 @@ const mockWorkflows: Workflow[] = [
   }
 ];
 
-  const handleConfirmExport = (jobToExport: ComparisonJob) => {
-    // 1. Log export action
-    const exportDetails = `Exported using workflow: ${jobToExport.workflowName || 'Default'}`;
-
-    setActivityLogs(prev => [
-      {
-        id: `log-${Date.now()}`,
-        action: 'APPROVE',
-        user: 'nuifolio@gmail.com',
-        timestamp: new Date().toISOString(),
-        details: language === 'TH' 
-          ? `ส่งออกข้อมูลรายการสำเร็จ (${exportDetails})` 
-          : `Successfully exported job telemetry (${exportDetails})`,
-        originalItem: jobToExport
-      },
-      ...prev
-    ]);
-
-    // 2. Transition status of the job in jobs state to DONE
-    setJobs(prevJobs => 
-      prevJobs.map(j => 
-        j.id === jobToExport.id 
-          ? { ...j, status: JobStatus.DONE } 
-          : j
-      )
-    );
-
-    // Find next sub-job under the same shipment reference
-    const shipmentJobs = jobs.filter(j => j.reference === jobToExport.reference);
-    const seqIndex = shipmentJobs.findIndex(j => j.id === jobToExport.id);
+  // Shared by both a normal export and a skipped flow: find the next sub-job in the shipment
+  // sequence, carry document comments and already-extracted doc data forward to it, and move
+  // the selected-job view onto it. `finishedJob` must already carry the final doc statuses for
+  // the job being left (e.g. DONE with docs marked MATCHED/MISMATCHED, or SKIPPED).
+  const advanceToNextJob = (finishedJob: ComparisonJob) => {
+    const shipmentJobs = jobs.filter(j => j.reference === finishedJob.reference);
+    const seqIndex = shipmentJobs.findIndex(j => j.id === finishedJob.id);
     const nextJob = seqIndex !== -1 && seqIndex < shipmentJobs.length - 1 ? shipmentJobs[seqIndex + 1] : null;
 
     // Carry document comments forward to the next job in the sequence so reviewers there
@@ -922,8 +899,8 @@ const mockWorkflows: Workflow[] = [
       setDocComments(prev => {
         const next = { ...prev };
         const nextJobDocNames = Object.keys(nextJob.docs);
-        Object.keys(jobToExport.docs).forEach(docName => {
-          const comments = prev[`${jobToExport.id}_${docName}`];
+        Object.keys(finishedJob.docs).forEach(docName => {
+          const comments = prev[`${finishedJob.id}_${docName}`];
           if (!comments || comments.length === 0) return;
           const matchingNextDocName = nextJobDocNames.find(n => n.toLowerCase() === docName.toLowerCase());
           if (matchingNextDocName) {
@@ -940,19 +917,25 @@ const mockWorkflows: Workflow[] = [
     // leaving it MISSING — the reviewer shouldn't have to re-upload and re-OCR the same file.
     // The doc still lands as OCR_DONE (not MATCHED/MISMATCHED): the next flow compares against a
     // different set of documents, so the previous flow's verdict isn't valid here and it needs to
-    // go through comparison again.
+    // go through comparison again. This also applies to a SKIPPED doc — its data was never
+    // verified at all, so it needs a fresh comparison even more than a MISMATCHED one would.
     let carriedNextJob = nextJob;
     if (nextJob) {
       const updatedDocs = { ...nextJob.docs };
       let changed = false;
       Object.keys(updatedDocs).forEach(docName => {
         if (updatedDocs[docName] !== ComparisonDocStatus.MISSING) return;
-        const matchingPrevDocName = Object.keys(jobToExport.docs).find(n => n.toLowerCase() === docName.toLowerCase());
+        const matchingPrevDocName = Object.keys(finishedJob.docs).find(n => n.toLowerCase() === docName.toLowerCase());
         if (!matchingPrevDocName) return;
-        const prevStatus = jobToExport.docs[matchingPrevDocName];
+        const prevStatus = finishedJob.docs[matchingPrevDocName];
         // Only carry forward docs that finished extraction — a doc still uploading/OCR'ing
         // in this job has nothing useful to hand off yet.
-        if (prevStatus !== ComparisonDocStatus.MATCHED && prevStatus !== ComparisonDocStatus.MISMATCHED && prevStatus !== ComparisonDocStatus.OCR_DONE) return;
+        if (
+          prevStatus !== ComparisonDocStatus.MATCHED &&
+          prevStatus !== ComparisonDocStatus.MISMATCHED &&
+          prevStatus !== ComparisonDocStatus.OCR_DONE &&
+          prevStatus !== ComparisonDocStatus.SKIPPED
+        ) return;
         updatedDocs[docName] = ComparisonDocStatus.OCR_DONE;
         changed = true;
       });
@@ -982,21 +965,14 @@ const mockWorkflows: Workflow[] = [
       }
     }
 
-    // 3. If the exported job is currently selected (in details view), update selected job
-    if (selectedJob && selectedJob.id === jobToExport.id) {
+    // If the finished job is currently selected (in details view), update selected job
+    if (selectedJob && selectedJob.id === finishedJob.id) {
       if (carriedNextJob) {
         setSelectedJob(carriedNextJob);
       } else {
         setSelectedJob(prev => prev ? { ...prev, status: JobStatus.DONE } : null);
       }
     }
-
-    // 4. Reset modal state and show success message
-    message.success(
-      language === 'TH' 
-        ? `ส่งออกข้อมูลรายการ "${jobToExport.reference}" เรียบร้อยแล้ว!` 
-        : `Exported "${jobToExport.reference}" successfully!`
-    );
 
     if (nextJob) {
       message.info(
@@ -1005,8 +981,87 @@ const mockWorkflows: Workflow[] = [
           : `Switched to next job: "${nextJob.workflowName}"`
       );
     }
+  };
+
+  const handleConfirmExport = (jobToExport: ComparisonJob) => {
+    // 1. Log export action
+    const exportDetails = `Exported using workflow: ${jobToExport.workflowName || 'Default'}`;
+
+    setActivityLogs(prev => [
+      {
+        id: `log-${Date.now()}`,
+        action: 'APPROVE',
+        user: 'nuifolio@gmail.com',
+        timestamp: new Date().toISOString(),
+        details: language === 'TH'
+          ? `ส่งออกข้อมูลรายการสำเร็จ (${exportDetails})`
+          : `Successfully exported job telemetry (${exportDetails})`,
+        originalItem: jobToExport
+      },
+      ...prev
+    ]);
+
+    // 2. Transition status of the job in jobs state to DONE
+    setJobs(prevJobs =>
+      prevJobs.map(j =>
+        j.id === jobToExport.id
+          ? { ...j, status: JobStatus.DONE }
+          : j
+      )
+    );
+
+    advanceToNextJob({ ...jobToExport, status: JobStatus.DONE });
+
+    // 4. Reset modal state and show success message
+    message.success(
+      language === 'TH'
+        ? `ส่งออกข้อมูลรายการ "${jobToExport.reference}" เรียบร้อยแล้ว!`
+        : `Exported "${jobToExport.reference}" successfully!`
+    );
 
     setExportJob(null);
+  };
+
+  // Some flows only need their documents OCR'd — not compared against a master document at
+  // all — before moving on. Skipping marks every extracted doc SKIPPED (data present, never
+  // verified) rather than MATCHED/MISMATCHED, and advances the shipment exactly like a normal
+  // export: the next job still gets this job's already-extracted data carried forward.
+  const handleSkipFlow = (jobToSkip: ComparisonJob) => {
+    const updatedDocs = { ...jobToSkip.docs };
+    Object.keys(updatedDocs).forEach(docName => {
+      const s = updatedDocs[docName];
+      if (s === ComparisonDocStatus.MISSING || s === ComparisonDocStatus.RECEIVED || s === ComparisonDocStatus.EXTRACTING || s === ComparisonDocStatus.ERROR) return;
+      updatedDocs[docName] = ComparisonDocStatus.SKIPPED;
+    });
+    const skippedJob: ComparisonJob = { ...jobToSkip, docs: updatedDocs, status: JobStatus.DONE };
+
+    setJobs(prevJobs => prevJobs.map(j => j.id === jobToSkip.id ? skippedJob : j));
+
+    setOcrLogs(prev => [
+      {
+        id: `log-skip-${Date.now()}`,
+        jobId: jobToSkip.id,
+        docName: Object.keys(jobToSkip.docs).join(', '),
+        timestamp: new Date().toISOString(),
+        action: 'SKIP_FLOW',
+        details: language === 'TH'
+          ? 'ข้ามการเปรียบเทียบข้อมูลของรายการย่อยนี้ และส่งต่อไปยังรายการย่อยถัดไป'
+          : 'Skipped comparison for this job and advanced to the next job',
+        version: 1,
+        user: CURRENT_USER_NAME
+      },
+      ...prev
+    ]);
+
+    advanceToNextJob(skippedJob);
+
+    message.success(
+      language === 'TH'
+        ? `ข้ามการเปรียบเทียบของ "${jobToSkip.workflowName}" เรียบร้อยแล้ว`
+        : `Skipped comparison for "${jobToSkip.workflowName}"`
+    );
+
+    setShowSkipFlowConfirm(false);
   };
 
 
@@ -1400,6 +1455,7 @@ const mockWorkflows: Workflow[] = [
   const [showDeleteColumnConfirmModal, setShowDeleteColumnConfirmModal] = useState(false);
   const [deleteColumnTargetDocName, setDeleteColumnTargetDocName] = useState<string | null>(null);
   const [confirmAllMismatchesTargetDocName, setConfirmAllMismatchesTargetDocName] = useState<string | null>(null);
+  const [showSkipFlowConfirm, setShowSkipFlowConfirm] = useState(false);
 
   // --- Custom Handlers for Column Replace Feature ---
   const handleReplaceDragOver = (e: React.DragEvent) => {
@@ -3219,6 +3275,17 @@ const mockWorkflows: Workflow[] = [
     const seqIndex = shipmentJobs.findIndex(j => j.id === job.id);
     const isLastJob = seqIndex === shipmentJobs.length - 1;
     return isLastJob && isAllDocsMatched(job);
+  };
+
+  // Every doc has finished OCR extraction (whatever the comparison verdict, if any) — the
+  // point at which a flow that doesn't need comparison can be skipped forward.
+  const isReadyToSkipFlow = (job: ComparisonJob) => {
+    return Object.values(job.docs).every(s =>
+      s !== ComparisonDocStatus.MISSING &&
+      s !== ComparisonDocStatus.RECEIVED &&
+      s !== ComparisonDocStatus.EXTRACTING &&
+      s !== ComparisonDocStatus.ERROR
+    );
   };
 
   const getLastSubItemExportTooltip = (job: ComparisonJob, defaultText: string) => {
@@ -5180,9 +5247,10 @@ const mockWorkflows: Workflow[] = [
                             'text-slate-400'
                           }`}>
                             {
-                              displayStatus === ComparisonDocStatus.LOCKED ? t.statusLocked : 
-                              (displayStatus === ComparisonDocStatus.RECEIVED || displayStatus === ComparisonDocStatus.EXTRACTING) ? t.statusReceived : 
+                              displayStatus === ComparisonDocStatus.LOCKED ? t.statusLocked :
+                              (displayStatus === ComparisonDocStatus.RECEIVED || displayStatus === ComparisonDocStatus.EXTRACTING) ? t.statusReceived :
                               displayStatus === ComparisonDocStatus.OCR_DONE ? t.statusOcrDone :
+                              displayStatus === ComparisonDocStatus.SKIPPED ? t.statusSkipped :
                               displayStatus
                             }
                           </span>
@@ -6210,6 +6278,44 @@ const mockWorkflows: Workflow[] = [
         );
       })()}
 
+      {/* Skip Flow Confirm Modal */}
+      {showSkipFlowConfirm && selectedJob && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300 font-sans">
+          <div className="bg-white p-10 rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 text-center flex flex-col items-center gap-6 animate-in zoom-in-95 duration-300">
+            <div className="text-amber-500 flex items-center justify-center mb-2">
+              <SkipForward size={44} strokeWidth={3} />
+            </div>
+            <div>
+              <h3 className="text-xl font-black text-[#010136] tracking-tight mb-3 font-sans">
+                {language === 'TH' ? 'ข้ามการเปรียบเทียบข้อมูล' : 'Skip Data Comparison'}
+              </h3>
+              <p className="text-slate-500 font-medium text-[13px] leading-relaxed font-sans max-w-sm mx-auto">
+                {language === 'TH'
+                  ? `เอกสารทั้งหมดในรายการย่อยนี้ถูกอ่านไฟล์ (OCR) แล้ว แต่จะไม่ถูกเปรียบเทียบกับเอกสารหลัก ระบบจะทำเครื่องหมายว่า "ข้ามการเปรียบเทียบ" และส่งต่อข้อมูลที่สกัดได้ไปยังรายการย่อยถัดไปทันที`
+                  : `Every document in this job has been OCR'd, but none will be compared against a master document. They'll be marked "Skipped" and their extracted data handed off to the next job immediately.`}
+              </p>
+            </div>
+            <div className="flex gap-4 w-full mt-4">
+              <Button
+                size="large"
+                className="flex-1 rounded-[4px] h-14 font-black uppercase tracking-widest text-[11px] border-slate-200 text-slate-600 hover:bg-slate-50 font-sans"
+                onClick={() => setShowSkipFlowConfirm(false)}
+              >
+                {language === 'TH' ? 'ยกเลิก' : 'CANCEL'}
+              </Button>
+              <Button
+                type="primary"
+                size="large"
+                className="flex-1 rounded-[4px] h-14 font-black uppercase tracking-widest text-[11px] bg-[#1f5df9] border-none shadow-lg shadow-[#1f5df9]/20 hover:bg-[#104BE3] font-sans"
+                onClick={() => handleSkipFlow(selectedJob)}
+              >
+                {language === 'TH' ? 'ข้ามและไปต่อ' : 'SKIP & CONTINUE'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Workflow Warning Modal */}
       {showWorkflowWarning && (
         <div className="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
@@ -6711,6 +6817,23 @@ const mockWorkflows: Workflow[] = [
                     </Tooltip>
                   )}
 
+                  {/* Skip Flow — for jobs that only need OCR, not comparison, before moving on */}
+                  {selectedJob.status !== JobStatus.DONE && (
+                    <Tooltip content={
+                      isReadyToSkipFlow(selectedJob)
+                        ? (language === 'TH' ? 'ข้ามการเปรียบเทียบและไปยังรายการย่อยถัดไปทันที' : 'Skip comparison and move straight to the next job')
+                        : (language === 'TH' ? 'ต้องอ่านไฟล์ (OCR) ให้ครบทุกเอกสารก่อนจึงจะข้ามได้' : 'All documents must finish OCR before you can skip')
+                    }>
+                      <button
+                        disabled={isUnassigned || !isReadyToSkipFlow(selectedJob)}
+                        onClick={() => setShowSkipFlowConfirm(true)}
+                        className="p-2.5 rounded-[4px] transition-all flex items-center justify-center border disabled:opacity-30 disabled:cursor-not-allowed bg-white border-slate-200/60 text-slate-500 hover:bg-slate-50 hover:text-[#1f5df9] hover:border-blue-200"
+                      >
+                        <SkipForward size={15} strokeWidth={2.5} />
+                      </button>
+                    </Tooltip>
+                  )}
+
                   {/* 6. Export Data Button */}
                   <Tooltip content={getLastSubItemExportTooltip(selectedJob, t.exportData)}>
                       <button 
@@ -6838,6 +6961,7 @@ const mockWorkflows: Workflow[] = [
                                               displayStatus === ComparisonDocStatus.MATCHED || displayStatus === ComparisonDocStatus.LOCKED ? 'px-2.5 py-0.5 bg-emerald-50 text-emerald-600 border border-emerald-200/60 rounded-[4px] shadow-sm' :
                                               displayStatus === ComparisonDocStatus.OCR_DONE ? 'px-2.5 py-0.5 bg-amber-50 text-amber-600 border border-amber-200/60 rounded-[4px] shadow-sm' :
                                               displayStatus === ComparisonDocStatus.ERROR || displayStatus === ComparisonDocStatus.MISMATCHED ? 'px-2.5 py-0.5 bg-rose-50 text-rose-600 border border-rose-200/60 rounded-[4px] shadow-sm' :
+                                              displayStatus === ComparisonDocStatus.SKIPPED ? 'px-2.5 py-0.5 bg-slate-100 text-slate-500 border border-slate-200/60 rounded-[4px] shadow-sm' :
                                               ''
                                             }`}>
                                                <div className={`w-1.5 h-1.5 rounded-full ${
@@ -6845,6 +6969,7 @@ const mockWorkflows: Workflow[] = [
                                                  displayStatus === ComparisonDocStatus.OCR_DONE ? 'bg-amber-500' :
                                                  displayStatus === ComparisonDocStatus.EXTRACTING || displayStatus === ComparisonDocStatus.RECEIVED ? 'bg-amber-500 animate-pulse' :
                                                  displayStatus === ComparisonDocStatus.ERROR || displayStatus === ComparisonDocStatus.MISMATCHED ? 'bg-rose-500' :
+                                                 displayStatus === ComparisonDocStatus.SKIPPED ? 'bg-slate-400' :
                                                  'bg-slate-300'
                                                }`}></div>
                                                <span className={`text-[9px] font-black uppercase tracking-wider ${
@@ -6852,12 +6977,14 @@ const mockWorkflows: Workflow[] = [
                                                  displayStatus === ComparisonDocStatus.OCR_DONE ? 'text-amber-500' :
                                                  displayStatus === ComparisonDocStatus.EXTRACTING || displayStatus === ComparisonDocStatus.RECEIVED ? 'text-amber-500' :
                                                  displayStatus === ComparisonDocStatus.ERROR || displayStatus === ComparisonDocStatus.MISMATCHED ? 'text-rose-500' :
+                                                 displayStatus === ComparisonDocStatus.SKIPPED ? 'text-slate-500' :
                                                  'text-slate-400'
                                                }`}>
                                                    {
-                                                     displayStatus === ComparisonDocStatus.LOCKED ? t.statusLocked : 
-                                                     (displayStatus === ComparisonDocStatus.RECEIVED || displayStatus === ComparisonDocStatus.EXTRACTING) ? t.statusReceived : 
+                                                     displayStatus === ComparisonDocStatus.LOCKED ? t.statusLocked :
+                                                     (displayStatus === ComparisonDocStatus.RECEIVED || displayStatus === ComparisonDocStatus.EXTRACTING) ? t.statusReceived :
                                                      displayStatus === ComparisonDocStatus.OCR_DONE ? t.statusOcrDone :
+                                                     displayStatus === ComparisonDocStatus.SKIPPED ? t.statusSkipped :
                                                      displayStatus
                                                    }
                                                </span>

@@ -52,7 +52,11 @@ export enum ComparisonDocStatus {
   MATCHED = 'MATCHED',
   MISMATCHED = 'MISMATCHED',
   LOCKED = 'LOCKED',
-  OCR_DONE = 'OCR_DONE'
+  OCR_DONE = 'OCR_DONE',
+  // Extracted via OCR but the job was skipped before comparison ran — the data is present
+  // but unverified, so it must render distinctly from MATCHED/LOCKED rather than implying
+  // the values were checked against the master document.
+  SKIPPED = 'SKIPPED'
 }
 
 export interface ComparisonJob {
