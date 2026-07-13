@@ -173,7 +173,7 @@ export const UploadPage: React.FC<UploadPageProps> = ({ language, onUpload }) =>
               </button>
               <button 
                   onClick={() => onUpload(files)}
-                  className="px-4 py-2 bg-[#1f5df9] text-white rounded-[4px] font-medium hover:bg-blue-700 transition-colors shadow-sm"
+                  className="px-4 py-2 bg-[#1f5df9] text-white rounded-[4px] font-medium hover:bg-[#104BE3] transition-colors shadow-sm"
               >
                   {t.btnUploadAll} ({files.length} {language === 'TH' ? 'ไฟล์' : 'files'})
               </button>

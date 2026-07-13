@@ -758,7 +758,7 @@ export const MasterDataSettings: React.FC<MasterDataSettingsProps> = ({ language
               type="primary"
               onClick={handleOpenAddTable}
               icon={<Plus size={16} />}
-              className="bg-[#1f5df9] hover:bg-[#1f5df9]/90 border-none font-bold rounded-[4px] h-[42px] px-5 flex items-center justify-center gap-1.5 cursor-pointer shadow-sm text-sm shrink-0"
+              className="bg-[#1f5df9] hover:!bg-[#104BE3] border-none font-bold rounded-[4px] h-[42px] px-5 flex items-center justify-center gap-1.5 cursor-pointer shadow-sm text-sm shrink-0"
             >
               {t.addTableBtn}
             </Button>
@@ -952,7 +952,7 @@ export const MasterDataSettings: React.FC<MasterDataSettingsProps> = ({ language
                     type="primary"
                     onClick={handleOpenAddRecord}
                     icon={<Plus size={16} />}
-                    className="bg-[#1f5df9] hover:bg-[#1f5df9]/90 border-none font-bold rounded-[4px] h-[40px] px-5 flex items-center justify-center gap-1.5 cursor-pointer shadow-sm text-sm"
+                    className="bg-[#1f5df9] hover:!bg-[#104BE3] border-none font-bold rounded-[4px] h-[40px] px-5 flex items-center justify-center gap-1.5 cursor-pointer shadow-sm text-sm"
                   >
                     {t.addRecordBtn}
                   </Button>
@@ -1078,7 +1078,7 @@ export const MasterDataSettings: React.FC<MasterDataSettingsProps> = ({ language
             </button>
             <button
               onClick={handleSaveRecord}
-              className="px-4 py-2 bg-[#1f5df9] hover:bg-[#1f5df9]/90 text-white font-bold rounded-[4px] transition-colors text-xs inline-flex items-center justify-center cursor-pointer border-none h-[36px]"
+              className="px-4 py-2 bg-[#1f5df9] hover:bg-[#104BE3] text-white font-bold rounded-[4px] transition-colors text-xs inline-flex items-center justify-center cursor-pointer border-none h-[36px]"
             >
               {t.save}
             </button>
@@ -1242,7 +1242,7 @@ export const MasterDataSettings: React.FC<MasterDataSettingsProps> = ({ language
             </button>
             <button
               onClick={handleSaveTable}
-              className="px-4 py-2 bg-[#1f5df9] hover:bg-[#1f5df9]/90 text-white font-bold rounded-[4px] transition-colors text-xs inline-flex items-center justify-center cursor-pointer border-none h-[36px]"
+              className="px-4 py-2 bg-[#1f5df9] hover:bg-[#104BE3] text-white font-bold rounded-[4px] transition-colors text-xs inline-flex items-center justify-center cursor-pointer border-none h-[36px]"
             >
               {t.save}
             </button>
@@ -1319,7 +1319,7 @@ export const MasterDataSettings: React.FC<MasterDataSettingsProps> = ({ language
             </button>
             <button
               onClick={handleSaveEditTable}
-              className="px-4 py-2 bg-[#1f5df9] hover:bg-[#1f5df9]/90 text-white font-bold rounded-[4px] transition-colors text-xs inline-flex items-center justify-center cursor-pointer border-none h-[36px]"
+              className="px-4 py-2 bg-[#1f5df9] hover:bg-[#104BE3] text-white font-bold rounded-[4px] transition-colors text-xs inline-flex items-center justify-center cursor-pointer border-none h-[36px]"
             >
               {language === 'TH' ? 'บันทึกการแก้ไข' : 'Save Changes'}
             </button>
@@ -1426,7 +1426,7 @@ export const MasterDataSettings: React.FC<MasterDataSettingsProps> = ({ language
             </div>
             <button
               onClick={handleDownloadTemplate}
-              className="px-3 py-1.5 bg-[#1f5df9] text-white hover:bg-[#1f5df9]/95 text-xs font-bold rounded-[4px] border-none inline-flex items-center gap-1.5 cursor-pointer shrink-0 shadow-sm shadow-[#1f5df9]/20 transition-all"
+              className="px-3 py-1.5 bg-[#1f5df9] text-white hover:bg-[#104BE3] text-xs font-bold rounded-[4px] border-none inline-flex items-center gap-1.5 cursor-pointer shrink-0 shadow-sm shadow-[#1f5df9]/20 transition-all"
             >
               <Download size={12} />
               <span>{language === 'TH' ? 'ดาวน์โหลดแม่แบบ' : 'Template'}</span>

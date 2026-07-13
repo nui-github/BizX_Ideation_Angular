@@ -612,7 +612,7 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
           {schemas.length > 0 && (
             <button
               onClick={handleOpenCreate}
-              className="px-5 py-2.5 bg-[#1f5df9] hover:bg-[#0352cc] text-white font-black text-sm uppercase tracking-wider rounded-[4px] shadow-md shadow-blue-500/15 flex items-center gap-2 transition-all active:scale-95 cursor-pointer"
+              className="px-5 py-2.5 bg-[#1f5df9] hover:bg-[#104BE3] text-white font-black text-sm uppercase tracking-wider rounded-[4px] shadow-md shadow-blue-500/15 flex items-center gap-2 transition-all active:scale-95 cursor-pointer"
             >
               <Plus size={16} />
               <span>{isTh ? 'สร้างสคีมาใหม่' : 'Create Schema'}</span>
@@ -641,7 +641,7 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
           </p>
           <button
             onClick={handleOpenCreate}
-            className="px-6 py-3 bg-[#1f5df9] hover:bg-[#0352cc] text-white font-black text-sm uppercase tracking-wider rounded-[4px] shadow-md flex items-center gap-2 transition-all active:scale-95 cursor-pointer"
+            className="px-6 py-3 bg-[#1f5df9] hover:bg-[#104BE3] text-white font-black text-sm uppercase tracking-wider rounded-[4px] shadow-md flex items-center gap-2 transition-all active:scale-95 cursor-pointer"
           >
             <Plus size={16} />
             <span>{isTh ? 'สร้าง Label schema' : 'Create Label Schema'}</span>
@@ -706,7 +706,7 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
                 <button
                   type="button"
                   onClick={handleOpenCreate}
-                  className="h-[38px] px-4 bg-[#1f5df9] hover:bg-blue-700 active:scale-95 text-white font-bold text-xs uppercase tracking-wider shadow-md shadow-blue-500/10 flex items-center gap-2 transition cursor-pointer"
+                  className="h-[38px] px-4 bg-[#1f5df9] hover:bg-[#104BE3] active:scale-95 text-white font-bold text-xs uppercase tracking-wider shadow-md shadow-blue-500/10 flex items-center gap-2 transition cursor-pointer"
                   style={{ borderRadius: '4px' }}
                 >
                   <Plus size={15} strokeWidth={2.5} />
@@ -1040,7 +1040,7 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
             <Button 
               onClick={handleSave} 
               type="primary" 
-              className="bg-[#1f5df9] hover:bg-[#0352cc] text-white font-black px-6 py-2.5 rounded-[4px] border-none shadow-md shadow-blue-500/10 cursor-pointer text-xs uppercase tracking-wider h-[40px]"
+              className="bg-[#1f5df9] hover:!bg-[#104BE3] text-white font-black px-6 py-2.5 rounded-[4px] border-none shadow-md shadow-blue-500/10 cursor-pointer text-xs uppercase tracking-wider h-[40px]"
             >
               {isTh ? 'บันทึกข้อมูล' : 'Save Schema'}
             </Button>
@@ -1118,7 +1118,7 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
                   type="primary"
                   onClick={handleAddNewDocTypeClick}
                   disabled={!selectedDocTypeToAdd}
-                  className="bg-[#1f5df9] hover:bg-[#0352cc] hover:shadow-xs text-white font-bold h-[32px] rounded-[4px] border-none flex items-center px-3.5 text-xs shadow-3xs transition-all duration-200"
+                  className="bg-[#1f5df9] hover:!bg-[#104BE3] hover:shadow-xs text-white font-bold h-[32px] rounded-[4px] border-none flex items-center px-3.5 text-xs shadow-3xs transition-all duration-200"
                 >
                   <Plus size={13} className="mr-1" />
                   <span>{isTh ? 'เพิ่ม' : 'Add'}</span>
@@ -1525,7 +1525,7 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
                   submitSave(pendingSavePayload);
                 }
               }}
-              className="px-4 py-2.5 bg-[#1f5df9] text-white hover:bg-[#0352cc] font-black text-xs uppercase tracking-wider rounded-[4px] transition-all shadow-md shadow-blue-500/10 cursor-pointer h-[40px]"
+              className="px-4 py-2.5 bg-[#1f5df9] text-white hover:bg-[#104BE3] font-black text-xs uppercase tracking-wider rounded-[4px] transition-all shadow-md shadow-blue-500/10 cursor-pointer h-[40px]"
             >
               {isTh ? 'ต้องการบันทึกต่อไป' : 'Continue Saving'}
             </button>

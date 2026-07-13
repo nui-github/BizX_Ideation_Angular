@@ -495,7 +495,7 @@ export const DocTypeMaster: React.FC<DocTypeMasterProps> = ({
               <button
                 type="button"
                 onClick={handleOpenAddModal}
-                className="h-[38px] px-4 bg-[#1f5df9] hover:bg-blue-700 active:scale-95 text-white font-bold text-xs uppercase tracking-wider shadow-md shadow-blue-500/10 flex items-center gap-2 transition cursor-pointer"
+                className="h-[38px] px-4 bg-[#1f5df9] hover:bg-[#104BE3] active:scale-95 text-white font-bold text-xs uppercase tracking-wider shadow-md shadow-blue-500/10 flex items-center gap-2 transition cursor-pointer"
                 style={{ borderRadius: '4px' }}
               >
                 <Plus size={15} strokeWidth={2.5} />

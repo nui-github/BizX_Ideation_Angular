@@ -302,7 +302,7 @@ export const TrackingPage: React.FC<TrackingPageProps> = ({ language, items, onV
           <h1 className="text-xl font-bold text-slate-800">{t.trackingTitle}</h1>
           <button 
               onClick={onUploadClick}
-              className="flex items-center gap-2 bg-[#1f5df9] hover:bg-blue-800 text-white px-4 py-2 rounded-[4px] text-sm font-medium transition-colors shadow-sm"
+              className="flex items-center gap-2 bg-[#1f5df9] hover:bg-[#104BE3] text-white px-4 py-2 rounded-[4px] text-sm font-medium transition-colors shadow-sm"
           >
             <Upload size={16} />
             {t.btnUpload}
@@ -379,7 +379,7 @@ export const TrackingPage: React.FC<TrackingPageProps> = ({ language, items, onV
               <button className="flex-1 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 px-4 py-2 rounded-[4px] text-sm font-medium transition-colors">
                 {t.btnReset}
               </button>
-              <button className="flex-1 bg-[#1f5df9] hover:bg-blue-800 text-white px-4 py-2 rounded-[4px] text-sm font-medium transition-colors shadow-sm">
+              <button className="flex-1 bg-[#1f5df9] hover:bg-[#104BE3] text-white px-4 py-2 rounded-[4px] text-sm font-medium transition-colors shadow-sm">
                 {t.btnSearch}
               </button>
             </div>
@@ -545,7 +545,7 @@ export const TrackingPage: React.FC<TrackingPageProps> = ({ language, items, onV
                       </button>
                       <button 
                           onClick={handleConfirmRead}
-                          className="px-6 py-2 bg-[#1f5df9] text-white rounded-[4px] text-sm font-medium hover:bg-blue-700 shadow-sm transition-colors"
+                          className="px-6 py-2 bg-[#1f5df9] text-white rounded-[4px] text-sm font-medium hover:bg-[#104BE3] shadow-sm transition-colors"
                       >
                           {t.btnStartRead}
                       </button>

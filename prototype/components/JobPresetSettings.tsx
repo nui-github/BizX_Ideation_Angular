@@ -163,7 +163,7 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
         <button
           type="button"
           onClick={() => handleOpenModal()}
-          className="h-[38px] px-4 bg-[#1f5df9] hover:bg-blue-700 active:scale-95 text-white font-bold text-xs uppercase tracking-wider shadow-md shadow-blue-500/10 flex items-center gap-2 transition cursor-pointer shrink-0"
+          className="h-[38px] px-4 bg-[#1f5df9] hover:bg-[#104BE3] active:scale-95 text-white font-bold text-xs uppercase tracking-wider shadow-md shadow-blue-500/10 flex items-center gap-2 transition cursor-pointer shrink-0"
           style={{ borderRadius: '4px' }}
         >
           <Plus size={15} strokeWidth={2.5} />
@@ -432,7 +432,7 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
                 <button
                   onClick={handleSave}
                   disabled={!canSave}
-                  className="px-6 py-2 bg-[#1f5df9] text-white rounded-[4px] font-bold text-sm flex items-center gap-2 hover:bg-blue-600 disabled:opacity-50 disabled:hover:bg-[#1f5df9] disabled:cursor-not-allowed transition-all shadow-sm"
+                  className="px-6 py-2 bg-[#1f5df9] text-white rounded-[4px] font-bold text-sm flex items-center gap-2 hover:bg-[#104BE3] disabled:opacity-50 disabled:hover:bg-[#1f5df9] disabled:cursor-not-allowed transition-all shadow-sm"
                 >
                   <Check size={16} />
                   {t.save}

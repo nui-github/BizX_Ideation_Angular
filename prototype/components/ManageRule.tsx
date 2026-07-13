@@ -631,7 +631,7 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
               <button 
                 onClick={handleCreateNew}
                 disabled={!newRuleData.name || newRuleData.docTypes.length < 2}
-                className="px-5 py-2.5 rounded-[4px] text-white font-bold text-sm bg-[#1f5df9] hover:bg-blue-700 transition-all shadow-sm active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100 disabled:cursor-not-allowed"
+                className="px-5 py-2.5 rounded-[4px] text-white font-bold text-sm bg-[#1f5df9] hover:bg-[#104BE3] transition-all shadow-sm active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100 disabled:cursor-not-allowed"
                 id="btn-confirm-create-rule"
               >
                 {isTh ? 'เริ่มสร้าง' : 'Create Rule'}

@@ -6269,7 +6269,7 @@ const mockWorkflows: Workflow[] = [
                 <Button
                   type="primary"
                   size="large"
-                  className="flex-1 rounded-[4px] h-14 font-black uppercase tracking-widest text-[11px] bg-[#1f5df9] border-none shadow-lg shadow-[#1f5df9]/20 hover:bg-[#104BE3] font-sans"
+                  className="flex-1 rounded-[4px] h-14 font-black uppercase tracking-widest text-[11px] bg-[#1f5df9] border-none shadow-lg shadow-[#1f5df9]/20 hover:!bg-[#104BE3] font-sans"
                   onClick={() => {
                     confirmAllMismatchesInDoc(targetDoc);
                     setConfirmAllMismatchesTargetDocName(null);
@@ -6440,7 +6440,7 @@ const mockWorkflows: Workflow[] = [
                 <Button 
                   type="primary" 
                   size="large" 
-                  className="flex-1 rounded-[4px] h-12 font-black uppercase tracking-widest text-[11px] bg-[#1f5df9] hover:bg-[#0352c7] border-none shadow-lg shadow-blue-500/20 font-sans cursor-pointer"
+                  className="flex-1 rounded-[4px] h-12 font-black uppercase tracking-widest text-[11px] bg-[#1f5df9] hover:!bg-[#104BE3] border-none shadow-lg shadow-blue-500/20 font-sans cursor-pointer"
                   onClick={() => handleConfirmExport(exportJob)}
                 >
                   {language === 'TH' ? 'ส่งออกข้อมูล' : 'EXPORT DATA'}
@@ -7856,7 +7856,7 @@ const mockWorkflows: Workflow[] = [
                       setCommentDraft('');
                     }}
                     disabled={!commentDraft.trim()}
-                    className="self-end px-4 py-2.5 bg-[#1f5df9] text-white rounded-[4px] font-bold text-sm flex items-center gap-2 hover:bg-blue-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm shrink-0"
+                    className="self-end px-4 py-2.5 bg-[#1f5df9] text-white rounded-[4px] font-bold text-sm flex items-center gap-2 hover:bg-[#104BE3] disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm shrink-0"
                   >
                     <Send size={14} />
                     {language === 'TH' ? 'เพิ่มความคิดเห็น' : 'Add comment'}

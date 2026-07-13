@@ -421,7 +421,7 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({
             className={`rounded-[4px] font-sans font-bold h-10 px-5 text-xs uppercase tracking-widest transition-all border-none shadow-sm text-white ${
               isFormInvalid
                 ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                : 'bg-[#1f5df9] hover:bg-blue-600 cursor-pointer'
+                : 'bg-[#1f5df9] hover:bg-[#104BE3] cursor-pointer'
             }`}
           >
             {prefilledReference ? (isTh ? 'สร้างรายการย่อย' : 'Create Job') : (isTh ? 'สร้าง Shipment และรายการย่อย' : 'Create Shipment')}
