@@ -6,7 +6,8 @@ import {
   Plus, Trash2, ArrowLeftRight, FileSpreadsheet, File as FileIcon,
   CheckCircle2, XCircle, Info, Eye, Send, Filter, ListFilter, ArrowLeft, Save, RotateCcw,
   LayoutGrid, List, ScanEye, Bot, ChevronDown, Lock, Unlock, HelpCircle, X, Loader2, ShieldCheck, ArrowUpRight, ScanSearch, History, Edit3, UploadCloud, AlertTriangle,
-  Printer, RotateCw, ZoomIn, ZoomOut, Menu, Copy, Star, CheckCheck, StickyNote, SkipForward, Undo2
+  Printer, RotateCw, ZoomIn, ZoomOut, Menu, Copy, Star, CheckCheck, StickyNote, SkipForward, Undo2,
+  FileBarChart2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Tabs, Tag, Badge, Empty, Button, message, DatePicker } from 'antd';
@@ -14,6 +15,7 @@ import thTH from 'antd/locale/th_TH';
 import dayjs from 'dayjs';
 import 'dayjs/locale/th';
 import { CreateJobModal } from './CreateJobModal';
+import { GenerateReportModal } from './GenerateReportModal';
 import { Tooltip } from './Tooltip';
 import {
   Language, ComparisonFile, FieldMapping, TrackingItem, ReviewStatus,
@@ -34,6 +36,7 @@ interface DocComment {
   timestamp: string;
   text: string;
 }
+
 
 // Demo toggle: "รายการรอรีวิว" (Pending Inbox) and "บันทึกประวัติ" (Activity Logs) tabs
 // aren't ready to show customers yet. Flip to true to bring them back for internal use —
@@ -68,7 +71,8 @@ const LOCAL_T = {
     btnOpenWorkspaceDesc: "เพิ่มคอลัมน์ OCR ใหม่ผ่าน Drag & Drop",
     replaceModalTitle: "อัปโหลดไฟล์ทดแทน (Replace & Merge)",
     replaceModalSubtitle: "อัปโหลดไฟล์ใหม่เพื่อมาแทนที่หรือเพิ่มในคอลัมน์ \"%column%\" (จำนวนกี่ไฟล์ก็จะถูกรวมเป็นคอลัมน์นี้เพียง 1 คอลัมน์โดยอัตโนมัติอัตโนมัติ)",
-    btnConfirmReplace: "ยืนยันการแทนที่และรอ OCR"
+    btnConfirmReplace: "ยืนยันการแทนที่และรอ OCR",
+    btnGenerateReport: "สร้างรายงาน"
   },
   EN: {
     uploadManageTitle: "Upload & Multi-File Grouping Workspace",
@@ -94,7 +98,8 @@ const LOCAL_T = {
     btnOpenWorkspaceDesc: "Create new OCR columns via drag & drop",
     replaceModalTitle: "Replace Files (Merge to Column)",
     replaceModalSubtitle: "Upload new files to replace or merge into \"%column%\" (all files will be grouped).",
-    btnConfirmReplace: "Confirm Replace & Wait for OCR"
+    btnConfirmReplace: "Confirm Replace & Wait for OCR",
+    btnGenerateReport: "Generate Report"
   }
 };
 
@@ -1525,6 +1530,7 @@ const mockWorkflows: Workflow[] = [
   const [showRejectFlowConfirm, setShowRejectFlowConfirm] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectionReasonModal, setShowRejectionReasonModal] = useState(false);
+  const [showGenerateReportDrawer, setShowGenerateReportDrawer] = useState(false);
 
   // --- Custom Handlers for Column Replace Feature ---
   const handleReplaceDragOver = (e: React.DragEvent) => {
@@ -6742,6 +6748,12 @@ const mockWorkflows: Workflow[] = [
         />
       )}
 
+      <GenerateReportModal
+        visible={showGenerateReportDrawer}
+        onClose={() => setShowGenerateReportDrawer(false)}
+        language={language}
+      />
+
       {/* Reject Data confirmation modal */}
        {showRejectFileModal && rejectFileTargetDocName && (
          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
@@ -6808,16 +6820,26 @@ const mockWorkflows: Workflow[] = [
                     </button>
                   </div>
                 </div>
-                <button 
-                  onClick={() => setShowCreateJobModal(true)}
-                  className="px-4 py-2 bg-[#1f5df9] text-white rounded-[4px] flex items-center gap-2 text-xs font-black uppercase tracking-widest hover:bg-[#104BE3] transition-all shadow-sm cursor-pointer"
-                  id="create-new-job-btn"
-                >
-                  <Plus size={16} />
-                  สร้างรายการใหม่
-                </button>
+                <div className="flex items-center gap-2.5">
+                  <button
+                    onClick={() => setShowGenerateReportDrawer(true)}
+                    className="px-4 py-2 bg-white text-[#1f5df9] border border-[#1f5df9] rounded-[4px] flex items-center gap-2 text-xs font-black uppercase tracking-widest hover:bg-blue-50 transition-all shadow-sm cursor-pointer"
+                    id="generate-report-btn"
+                  >
+                    <FileBarChart2 size={16} />
+                    {LOCAL_T[language].btnGenerateReport}
+                  </button>
+                  <button
+                    onClick={() => setShowCreateJobModal(true)}
+                    className="px-4 py-2 bg-[#1f5df9] text-white rounded-[4px] flex items-center gap-2 text-xs font-black uppercase tracking-widest hover:bg-[#104BE3] transition-all shadow-sm cursor-pointer"
+                    id="create-new-job-btn"
+                  >
+                    <Plus size={16} />
+                    สร้างรายการใหม่
+                  </button>
+                </div>
               </div>
-              
+
               {SHOW_PENDING_AND_LOGS_TABS ? (
                 <Tabs
                   activeKey={activeBoardTab}
