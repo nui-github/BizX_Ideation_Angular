@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Drawer, DatePicker, message } from 'antd';
 import thTH from 'antd/locale/th_TH';
 import dayjs, { Dayjs } from 'dayjs';
+import * as XLSX from 'xlsx';
 import {
   X, FileBarChart2, Info, Loader2, CheckCircle2, XCircle, Download, ChevronLeft, ChevronRight
 } from 'lucide-react';
@@ -25,12 +26,49 @@ interface GenerateReportModalProps {
   language: string;
 }
 
+// Seed data so the drawer doesn't open to an empty table — mirrors reports a real
+// team would already have generated over the past few weeks.
+const MOCK_REPORTS: GeneratedReport[] = [
+  {
+    id: 'report-mock-1',
+    dateFrom: dayjs().subtract(7, 'day').format('YYYY-MM-DD'),
+    dateTo: dayjs().subtract(1, 'day').format('YYYY-MM-DD'),
+    statusFilter: 'ALL',
+    createdAt: dayjs().subtract(1, 'day').hour(9).minute(12).toISOString(),
+    status: 'DONE'
+  },
+  {
+    id: 'report-mock-2',
+    dateFrom: dayjs().subtract(30, 'day').format('YYYY-MM-DD'),
+    dateTo: dayjs().subtract(15, 'day').format('YYYY-MM-DD'),
+    statusFilter: 'DONE',
+    createdAt: dayjs().subtract(4, 'day').hour(16).minute(45).toISOString(),
+    status: 'DONE'
+  },
+  {
+    id: 'report-mock-3',
+    dateFrom: dayjs().subtract(60, 'day').format('YYYY-MM-DD'),
+    dateTo: dayjs().subtract(45, 'day').format('YYYY-MM-DD'),
+    statusFilter: 'PENDING',
+    createdAt: dayjs().subtract(10, 'day').hour(11).minute(3).toISOString(),
+    status: 'FAILED'
+  },
+  {
+    id: 'report-mock-4',
+    dateFrom: dayjs().subtract(90, 'day').format('YYYY-MM-DD'),
+    dateTo: dayjs().subtract(60, 'day').format('YYYY-MM-DD'),
+    statusFilter: 'ALL',
+    createdAt: dayjs().subtract(20, 'day').hour(8).minute(30).toISOString(),
+    status: 'DONE'
+  }
+];
+
 export const GenerateReportModal: React.FC<GenerateReportModalProps> = ({ visible, onClose, language }) => {
   const isTh = language === 'TH';
 
   const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(null);
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDING' | 'DONE'>('ALL');
-  const [generatedReports, setGeneratedReports] = useState<GeneratedReport[]>([]);
+  const [generatedReports, setGeneratedReports] = useState<GeneratedReport[]>(MOCK_REPORTS);
   const [reportPage, setReportPage] = useState(1);
 
   useEffect(() => {
@@ -78,27 +116,25 @@ export const GenerateReportModal: React.FC<GenerateReportModalProps> = ({ visibl
 
   const getReportFileName = (report: GeneratedReport) =>
     isTh
-      ? `รายงาน_${report.dateFrom}_ถึง_${report.dateTo}.csv`
-      : `Report_${report.dateFrom}_to_${report.dateTo}.csv`;
-
-  const handleDownloadReport = (report: GeneratedReport) => {
-    if (report.status !== 'DONE') return;
-    const csvContent = `Date From,Date To,Shipment Status\n${report.dateFrom},${report.dateTo},${report.statusFilter}\n`;
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = getReportFileName(report);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
+      ? `รายงาน_${report.dateFrom}_ถึง_${report.dateTo}.xlsx`
+      : `Report_${report.dateFrom}_to_${report.dateTo}.xlsx`;
 
   const statusFilterLabel = (sf: GeneratedReport['statusFilter']) =>
     sf === 'ALL' ? (isTh ? 'ทั้งหมด' : 'ALL')
       : sf === 'PENDING' ? (isTh ? 'ยังไม่เสร็จ' : 'UNFINISHED')
       : (isTh ? 'เสร็จสิ้นแล้ว' : 'COMPLETED');
+
+  const handleDownloadReport = (report: GeneratedReport) => {
+    if (report.status !== 'DONE') return;
+    const headers = isTh
+      ? ['วันที่เริ่มต้น', 'วันที่สิ้นสุด', 'สถานะ Shipment']
+      : ['Date From', 'Date To', 'Shipment Status'];
+    const row = [report.dateFrom, report.dateTo, statusFilterLabel(report.statusFilter)];
+    const worksheet = XLSX.utils.aoa_to_sheet([headers, row]);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, isTh ? 'รายงาน' : 'Report');
+    XLSX.writeFile(workbook, getReportFileName(report));
+  };
 
   const statusPill = (status: GeneratedReport['status']) => {
     if (status === 'GENERATING') {
