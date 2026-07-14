@@ -5385,7 +5385,7 @@ const mockWorkflows: Workflow[] = [
                 <button
                   onClick={handleConfirmReplace}
                   className="w-full py-4 rounded-[4px] font-black text-xs uppercase tracking-widest transition-all text-white bg-[#1f5df9] hover:bg-[#104BE3] shadow-xl shadow-[#1f5df9]/20 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer disabled:bg-slate-300 disabled:shadow-none disabled:cursor-not-allowed"
-                  disabled={replaceUploadedFiles.length === 0}
+                  disabled={replaceUploadedFiles.length === 0 || replaceUploadedFiles.some(f => f.pageMode === 'custom' && !f.pageRange.trim())}
                   id="submit-replace-import-btn"
                 >
                   {LOCAL_T[language].btnConfirmReplace}
