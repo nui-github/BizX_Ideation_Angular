@@ -6,7 +6,7 @@
       "runtimeExecutable": "/Users/nui.kunawut/.nvm/versions/node/v20.11.1/bin/node",
       "runtimeArgs": ["/Users/nui.kunawut/Desktop/BizX_Design_Ideation/prototype/node_modules/.bin/vite"],
       "port": 3000,
-      "autoPort": false,
+      "autoPort": true,
       "cwd": "/Users/nui.kunawut/Desktop/BizX_Design_Ideation/prototype"
     }
   ]
