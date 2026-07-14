@@ -6487,8 +6487,9 @@ const mockWorkflows: Workflow[] = [
               )}
             </div>
             <Button
+              type="primary"
               size="large"
-              className="w-full rounded-[4px] h-14 font-black uppercase tracking-widest text-[11px] border-slate-200 text-slate-600 hover:bg-slate-50 font-sans mt-4"
+              className="w-full rounded-[4px] h-14 font-black uppercase tracking-widest text-[11px] bg-[#1f5df9] border-none shadow-lg shadow-[#1f5df9]/20 hover:!bg-[#104BE3] font-sans mt-4"
               onClick={() => setShowRejectionReasonModal(false)}
             >
               {language === 'TH' ? 'ปิด' : 'CLOSE'}
