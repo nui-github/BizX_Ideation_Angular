@@ -5235,7 +5235,7 @@ const mockWorkflows: Workflow[] = [
           <div className="bg-white w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl flex flex-col border border-slate-100 font-sans">
             <div className="p-6 border-b border-slate-100 flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl border border-indigo-100">
+                <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl border border-blue-100">
                   <ArrowLeftRight size={20} />
                 </div>
                 <div>
@@ -5269,8 +5269,8 @@ const mockWorkflows: Workflow[] = [
                 onClick={() => document.getElementById('replace-file-uploader')?.click()}
                 className={`border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 ${
                   replaceIsDragging 
-                    ? 'border-indigo-500 bg-indigo-50/50 scale-[0.99] shadow-inner shadow-indigo-100' 
-                    : 'border-slate-200 bg-white hover:border-indigo-400 hover:bg-indigo-50/10'
+                    ? 'border-blue-500 bg-blue-50/50 scale-[0.99] shadow-inner shadow-blue-100' 
+                    : 'border-slate-200 bg-white hover:border-blue-400 hover:bg-blue-50/10'
                 }`}
                 id="replace-dropzone-container"
               >
@@ -5282,7 +5282,7 @@ const mockWorkflows: Workflow[] = [
                   className="hidden"
                   onChange={handleReplaceFileInputChange}
                 />
-                <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-500 mb-4 shadow-sm border border-indigo-100">
+                <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-500 mb-4 shadow-sm border border-blue-100">
                   <Upload size={22} />
                 </div>
                 <p className="text-xs font-black text-slate-700 uppercase tracking-wider">
@@ -5300,14 +5300,14 @@ const mockWorkflows: Workflow[] = [
                     {LOCAL_T[language].newUploadedHeader.replace('%count%', String(replaceUploadedFiles.length))}
                   </h4>
                   {replaceUploadedFiles.map(file => (
-                    <div key={file.id} className="p-2.5 rounded-xl border border-indigo-100 bg-indigo-50/30 flex flex-col gap-2 group/replaceFile" onClick={(e) => e.stopPropagation()}>
+                    <div key={file.id} className="p-2.5 rounded-xl border border-blue-100 bg-blue-50/30 flex flex-col gap-2 group/replaceFile" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3 min-w-0">
-                          <div className="p-1.5 rounded-lg bg-white text-indigo-500 border border-indigo-100 shadow-sm shrink-0">
+                          <div className="p-1.5 rounded-lg bg-white text-blue-500 border border-blue-100 shadow-sm shrink-0">
                             <FileIcon size={12} />
                           </div>
                           <div className="flex flex-col text-left min-w-0">
-                            <span className="text-[11px] font-bold text-indigo-900 truncate max-w-[260px] leading-tight">
+                            <span className="text-[11px] font-bold text-blue-900 truncate max-w-[260px] leading-tight">
                               {file.name}
                             </span>
                             <span className="text-[8px] font-mono text-slate-400 leading-none mt-0.5 font-bold">
@@ -5332,7 +5332,7 @@ const mockWorkflows: Workflow[] = [
                           <button
                             onClick={() => setReplaceFilePageMode(file.id, 'all')}
                             className={`px-2 py-0.5 rounded-[3px] text-[8px] font-black uppercase tracking-widest transition-all cursor-pointer ${
-                              file.pageMode === 'all' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                              file.pageMode === 'all' ? 'bg-blue-500 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'
                             }`}
                           >
                             {language === 'TH' ? 'ทั้งหมด' : 'All'}
@@ -5340,7 +5340,7 @@ const mockWorkflows: Workflow[] = [
                           <button
                             onClick={() => setReplaceFilePageMode(file.id, 'custom')}
                             className={`px-2 py-0.5 rounded-[3px] text-[8px] font-black uppercase tracking-widest transition-all cursor-pointer ${
-                              file.pageMode === 'custom' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                              file.pageMode === 'custom' ? 'bg-blue-500 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'
                             }`}
                           >
                             {language === 'TH' ? 'เลือกเอง' : 'Custom'}
@@ -5357,7 +5357,7 @@ const mockWorkflows: Workflow[] = [
                               ? 'เช่น 1-3, 5, 8-10 (หน้าติดกันใช้ - / ข้ามหน้าใช้ , คั่น)'
                               : 'e.g. 1-3, 5, 8-10 (use - for consecutive pages, , to skip)'
                           }
-                          className="w-full text-[10px] font-mono px-2.5 py-1.5 rounded-[4px] border border-slate-200 text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300"
+                          className="w-full text-[10px] font-mono px-2.5 py-1.5 rounded-[4px] border border-slate-200 text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300"
                         />
                       )}
                     </div>
@@ -5376,7 +5376,7 @@ const mockWorkflows: Workflow[] = [
                     type="checkbox"
                     checked={replaceAutoStartOCR}
                     onChange={(e) => setReplaceAutoStartOCR(e.target.checked)}
-                    className="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-100 shrink-0 cursor-pointer"
+                    className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-100 shrink-0 cursor-pointer"
                   />
                   <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wide group-hover:text-slate-800 leading-none">
                     {LOCAL_T[language].autoOCRLabel}
@@ -5384,7 +5384,7 @@ const mockWorkflows: Workflow[] = [
                 </label>
                 <button
                   onClick={handleConfirmReplace}
-                  className="w-full py-4 rounded-[4px] font-black text-xs uppercase tracking-widest transition-all text-white bg-indigo-600 hover:bg-indigo-700 shadow-xl shadow-indigo-500/20 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer disabled:bg-slate-300 disabled:shadow-none disabled:cursor-not-allowed"
+                  className="w-full py-4 rounded-[4px] font-black text-xs uppercase tracking-widest transition-all text-white bg-[#1f5df9] hover:bg-[#104BE3] shadow-xl shadow-[#1f5df9]/20 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer disabled:bg-slate-300 disabled:shadow-none disabled:cursor-not-allowed"
                   disabled={replaceUploadedFiles.length === 0}
                   id="submit-replace-import-btn"
                 >
