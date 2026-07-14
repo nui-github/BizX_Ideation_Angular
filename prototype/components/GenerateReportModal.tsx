@@ -290,9 +290,9 @@ export const GenerateReportModal: React.FC<GenerateReportModalProps> = ({ visibl
                   paginatedReports.map(report => (
                     <tr key={report.id} className="hover:bg-slate-50/40 transition-colors">
                       <td className="px-5 py-3.5 font-bold text-slate-700 text-xs">{getReportFileName(report)}</td>
-                      <td className="px-5 py-3.5 text-xs text-slate-500 font-mono">{report.dateFrom} - {report.dateTo}</td>
+                      <td className="px-5 py-3.5 text-xs text-slate-500 font-sans font-normal">{report.dateFrom} - {report.dateTo}</td>
                       <td className="px-5 py-3.5 text-xs text-slate-500">{statusFilterLabel(report.statusFilter)}</td>
-                      <td className="px-5 py-3.5 text-xs text-slate-500 font-mono">{dayjs(report.createdAt).format('YYYY-MM-DD HH:mm')}</td>
+                      <td className="px-5 py-3.5 text-xs text-slate-500 font-sans font-normal">{dayjs(report.createdAt).format('YYYY-MM-DD HH:mm')}</td>
                       <td className="px-5 py-3.5">{statusPill(report.status)}</td>
                       <td className="px-5 py-3.5 text-right">
                         <button
