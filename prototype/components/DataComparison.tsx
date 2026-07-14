@@ -1511,6 +1511,8 @@ const mockWorkflows: Workflow[] = [
     name: string;
     size: number;
     type: string;
+    pageMode: 'all' | 'custom';
+    pageRange: string;
   }[]>([]);
   const [replaceIsDragging, setReplaceIsDragging] = useState(false);
   const [replaceAutoStartOCR, setReplaceAutoStartOCR] = useState(true);
@@ -1545,12 +1547,20 @@ const mockWorkflows: Workflow[] = [
       id: `replace-file-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       name: f.name,
       size: f.size,
-      type: f.type || 'application/pdf'
+      type: f.type || 'application/pdf',
+      pageMode: 'all' as const,
+      pageRange: ''
     }));
     setReplaceUploadedFiles(prev => [...prev, ...newFiles]);
   };
   const handleRemoveReplaceFile = (fileId: string) => {
     setReplaceUploadedFiles(prev => prev.filter(f => f.id !== fileId));
+  };
+  const setReplaceFilePageMode = (fileId: string, pageMode: 'all' | 'custom') => {
+    setReplaceUploadedFiles(prev => prev.map(f => f.id === fileId ? { ...f, pageMode } : f));
+  };
+  const setReplaceFilePageRange = (fileId: string, pageRange: string) => {
+    setReplaceUploadedFiles(prev => prev.map(f => f.id === fileId ? { ...f, pageRange } : f));
   };
   const handleConfirmReplace = () => {
     if (!selectedJob || !replaceTargetColumn) return;
@@ -5285,34 +5295,71 @@ const mockWorkflows: Workflow[] = [
 
               {/* Uploaded Files Section */}
               {replaceUploadedFiles.length > 0 && (
-                <div className="flex flex-col gap-2 max-h-[180px] overflow-auto border border-slate-150 rounded-xl p-3 bg-white shadow-sm">
+                <div className="flex flex-col gap-2 max-h-[320px] overflow-auto border border-slate-150 rounded-xl p-3 bg-white shadow-sm">
                   <h4 className="text-[10px] font-black text-slate-400 tracking-widest uppercase mb-1">
                     {LOCAL_T[language].newUploadedHeader.replace('%count%', String(replaceUploadedFiles.length))}
                   </h4>
                   {replaceUploadedFiles.map(file => (
-                    <div key={file.id} className="p-2.5 rounded-xl border border-indigo-100 bg-indigo-50/30 flex items-center justify-between group/replaceFile">
-                      <div className="flex items-center gap-3">
-                        <div className="p-1.5 rounded-lg bg-white text-indigo-500 border border-indigo-100 shadow-sm">
-                          <FileIcon size={12} />
+                    <div key={file.id} className="p-2.5 rounded-xl border border-indigo-100 bg-indigo-50/30 flex flex-col gap-2 group/replaceFile" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="p-1.5 rounded-lg bg-white text-indigo-500 border border-indigo-100 shadow-sm shrink-0">
+                            <FileIcon size={12} />
+                          </div>
+                          <div className="flex flex-col text-left min-w-0">
+                            <span className="text-[11px] font-bold text-indigo-900 truncate max-w-[260px] leading-tight">
+                              {file.name}
+                            </span>
+                            <span className="text-[8px] font-mono text-slate-400 leading-none mt-0.5 font-bold">
+                              {(file.size / 1024).toFixed(1)} KB
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex flex-col text-left">
-                          <span className="text-[11px] font-bold text-indigo-900 truncate max-w-[300px] leading-tight">
-                            {file.name}
-                          </span>
-                          <span className="text-[8px] font-mono text-slate-400 leading-none mt-0.5 font-bold">
-                            {(file.size / 1024).toFixed(1)} KB
-                          </span>
+                        <button
+                          onClick={() => handleRemoveReplaceFile(file.id)}
+                          className="p-1.5 hover:bg-rose-50 rounded-[4px] text-slate-300 hover:text-rose-500 transition-colors shrink-0"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+
+                      {/* Per-file page selection — which pages of this file to run OCR on */}
+                      <div className="flex items-center gap-2 pl-1">
+                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest shrink-0">
+                          {language === 'TH' ? 'หน้าที่จะอ่าน:' : 'Pages to read:'}
+                        </span>
+                        <div className="flex items-center gap-0.5 bg-white border border-slate-200 rounded-[4px] p-0.5 shrink-0">
+                          <button
+                            onClick={() => setReplaceFilePageMode(file.id, 'all')}
+                            className={`px-2 py-0.5 rounded-[3px] text-[8px] font-black uppercase tracking-widest transition-all cursor-pointer ${
+                              file.pageMode === 'all' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                            }`}
+                          >
+                            {language === 'TH' ? 'ทั้งหมด' : 'All'}
+                          </button>
+                          <button
+                            onClick={() => setReplaceFilePageMode(file.id, 'custom')}
+                            className={`px-2 py-0.5 rounded-[3px] text-[8px] font-black uppercase tracking-widest transition-all cursor-pointer ${
+                              file.pageMode === 'custom' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                            }`}
+                          >
+                            {language === 'TH' ? 'เลือกเอง' : 'Custom'}
+                          </button>
                         </div>
                       </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRemoveReplaceFile(file.id);
-                        }}
-                        className="p-1.5 hover:bg-rose-50 rounded-[4px] text-slate-300 hover:text-rose-500 transition-colors"
-                      >
-                        <Trash2 size={12} />
-                      </button>
+                      {file.pageMode === 'custom' && (
+                        <input
+                          type="text"
+                          value={file.pageRange}
+                          onChange={(e) => setReplaceFilePageRange(file.id, e.target.value)}
+                          placeholder={
+                            language === 'TH'
+                              ? 'เช่น 1-3, 5, 8-10 (หน้าติดกันใช้ - / ข้ามหน้าใช้ , คั่น)'
+                              : 'e.g. 1-3, 5, 8-10 (use - for consecutive pages, , to skip)'
+                          }
+                          className="w-full text-[10px] font-mono px-2.5 py-1.5 rounded-[4px] border border-slate-200 text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300"
+                        />
+                      )}
                     </div>
                   ))}
                   <div className="text-[9px] font-bold text-amber-600 bg-amber-50 p-2 rounded-lg flex items-center gap-2 mt-2">
