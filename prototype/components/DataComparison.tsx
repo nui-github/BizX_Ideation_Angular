@@ -6468,27 +6468,31 @@ const mockWorkflows: Workflow[] = [
 
       {/* Rejection Reason Popup — full reason text behind the icon button next to the REJECTED pill */}
       {showRejectionReasonModal && selectedJob?.rejectionReason && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300 font-sans" onClick={() => setShowRejectionReasonModal(false)}>
-          <div className="bg-white p-8 rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 flex flex-col gap-4 animate-in zoom-in-95 duration-300" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-[#1f5df9]">
-                <Undo2 size={16} strokeWidth={2} />
-                <h3 className="text-sm font-black uppercase tracking-widest">
-                  {language === 'TH' ? 'เหตุผลที่ถูกตีกลับ' : 'Rejection Reason'}
-                </h3>
-              </div>
-              <button onClick={() => setShowRejectionReasonModal(false)} className="text-slate-400 hover:text-slate-600 transition-colors cursor-pointer">
-                <X size={18} />
-              </button>
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300 font-sans">
+          <div className="bg-white p-10 rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 text-center flex flex-col items-center gap-6 animate-in zoom-in-95 duration-300">
+            <div className="text-[#1f5df9] flex items-center justify-center mb-2">
+              <Undo2 size={44} strokeWidth={2} />
             </div>
-            <p className="text-slate-600 font-medium text-[13px] leading-relaxed font-sans whitespace-pre-wrap">
-              {selectedJob.rejectionReason}
-            </p>
-            {(selectedJob.rejectedBy || selectedJob.rejectedAt) && (
-              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest border-t border-slate-100 pt-3">
-                {selectedJob.rejectedBy}{selectedJob.rejectedAt ? ` · ${formatDisplayDate(selectedJob.rejectedAt)}` : ''}
-              </div>
-            )}
+            <div>
+              <h3 className="text-xl font-black text-[#010136] tracking-tight mb-3 font-sans">
+                {language === 'TH' ? 'เหตุผลที่ถูกตีกลับ' : 'Rejection Reason'}
+              </h3>
+              <p className="text-slate-500 font-medium text-[13px] leading-relaxed font-sans max-w-sm mx-auto whitespace-pre-wrap">
+                {selectedJob.rejectionReason}
+              </p>
+              {(selectedJob.rejectedBy || selectedJob.rejectedAt) && (
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-4 pt-4 border-t border-slate-100">
+                  {selectedJob.rejectedBy}{selectedJob.rejectedAt ? ` · ${formatDisplayDate(selectedJob.rejectedAt)}` : ''}
+                </p>
+              )}
+            </div>
+            <Button
+              size="large"
+              className="w-full rounded-[4px] h-14 font-black uppercase tracking-widest text-[11px] border-slate-200 text-slate-600 hover:bg-slate-50 font-sans mt-4"
+              onClick={() => setShowRejectionReasonModal(false)}
+            >
+              {language === 'TH' ? 'ปิด' : 'CLOSE'}
+            </Button>
           </div>
         </div>
       )}
