@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Select, Switch } from 'antd';
+import { Select, Switch, message } from 'antd';
 import { motion, AnimatePresence } from 'motion/react';
 import { Plus, Trash2, Edit3, CheckCircle2, AlertCircle, ArrowLeft, Settings, Search, X, Check } from 'lucide-react';
 import { Language, Workflow, JobPreset, JobPresetWorkflow } from '../types';
@@ -137,6 +137,7 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
     } else {
       onAddPreset(newPreset);
     }
+    message.success(language === 'TH' ? 'บันทึกพรีเซ็ตสำเร็จ' : 'Preset saved successfully');
     handleCloseModal();
   };
 
