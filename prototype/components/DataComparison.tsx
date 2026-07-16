@@ -5301,43 +5301,43 @@ const mockWorkflows: Workflow[] = [
 
               {/* Uploaded Files Section */}
               {replaceUploadedFiles.length > 0 && (
-                <div className="flex flex-col gap-2 max-h-[320px] overflow-auto border border-slate-150 rounded-xl p-3 bg-white shadow-sm">
-                  <h4 className="text-[10px] font-black text-slate-400 tracking-widest uppercase mb-1">
+                <div className="flex flex-col gap-2.5 max-h-[320px] overflow-auto border border-slate-150 rounded-xl p-3 bg-white shadow-sm">
+                  <h4 className="text-xs font-black text-slate-400 tracking-widest uppercase mb-1">
                     {LOCAL_T[language].newUploadedHeader.replace('%count%', String(replaceUploadedFiles.length))}
                   </h4>
                   {replaceUploadedFiles.map(file => (
-                    <div key={file.id} className="p-2.5 rounded-xl border border-blue-100 bg-blue-50/30 flex flex-col gap-2 group/replaceFile" onClick={(e) => e.stopPropagation()}>
+                    <div key={file.id} className="p-3 rounded-xl border border-blue-100 bg-blue-50/30 flex flex-col gap-2.5 group/replaceFile" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3 min-w-0">
-                          <div className="p-1.5 rounded-lg bg-white text-blue-500 border border-blue-100 shadow-sm shrink-0">
-                            <FileIcon size={12} />
+                          <div className="p-2 rounded-lg bg-white text-blue-500 border border-blue-100 shadow-sm shrink-0">
+                            <FileIcon size={16} />
                           </div>
                           <div className="flex flex-col text-left min-w-0">
-                            <span className="text-[11px] font-bold text-blue-900 truncate max-w-[260px] leading-tight">
+                            <span className="text-sm font-bold text-blue-900 truncate max-w-[260px] leading-tight">
                               {file.name}
                             </span>
-                            <span className="text-[8px] font-mono text-slate-400 leading-none mt-0.5 font-bold">
+                            <span className="text-[11px] font-mono text-slate-400 leading-none mt-1 font-bold">
                               {(file.size / 1024).toFixed(1)} KB
                             </span>
                           </div>
                         </div>
                         <button
                           onClick={() => handleRemoveReplaceFile(file.id)}
-                          className="p-1.5 hover:bg-rose-50 rounded-[4px] text-slate-300 hover:text-rose-500 transition-colors shrink-0"
+                          className="p-2 hover:bg-rose-50 rounded-[4px] text-slate-300 hover:text-rose-500 transition-colors shrink-0"
                         >
-                          <Trash2 size={12} />
+                          <Trash2 size={16} />
                         </button>
                       </div>
 
                       {/* Per-file page selection — which pages of this file to run OCR on */}
                       <div className="flex items-center gap-2 pl-1">
-                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest shrink-0">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0">
                           {language === 'TH' ? 'หน้าที่จะอ่าน:' : 'Pages to read:'}
                         </span>
                         <div className="flex items-center gap-0.5 bg-white border border-slate-200 rounded-[4px] p-0.5 shrink-0">
                           <button
                             onClick={() => setReplaceFilePageMode(file.id, 'all')}
-                            className={`px-2 py-0.5 rounded-[3px] text-[8px] font-black uppercase tracking-widest transition-all cursor-pointer ${
+                            className={`px-3 py-1 rounded-[3px] text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
                               file.pageMode === 'all' ? 'bg-blue-500 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'
                             }`}
                           >
@@ -5345,7 +5345,7 @@ const mockWorkflows: Workflow[] = [
                           </button>
                           <button
                             onClick={() => setReplaceFilePageMode(file.id, 'custom')}
-                            className={`px-2 py-0.5 rounded-[3px] text-[8px] font-black uppercase tracking-widest transition-all cursor-pointer ${
+                            className={`px-3 py-1 rounded-[3px] text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
                               file.pageMode === 'custom' ? 'bg-blue-500 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'
                             }`}
                           >
@@ -5363,13 +5363,13 @@ const mockWorkflows: Workflow[] = [
                               ? 'เช่น 1-3, 5, 8-10 (หน้าติดกันใช้ - / ข้ามหน้าใช้ , คั่น)'
                               : 'e.g. 1-3, 5, 8-10 (use - for consecutive pages, , to skip)'
                           }
-                          className="w-full text-[10px] font-mono px-2.5 py-1.5 rounded-[4px] border border-slate-200 text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300"
+                          className="w-full text-xs font-mono px-3 py-2 rounded-[4px] border border-slate-200 text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300"
                         />
                       )}
                     </div>
                   ))}
-                  <div className="text-[9px] font-bold text-amber-600 bg-amber-50 p-2 rounded-lg flex items-center gap-2 mt-2">
-                    <Info size={12} />
+                  <div className="text-xs font-bold text-amber-600 bg-amber-50 p-2.5 rounded-lg flex items-center gap-2 mt-2">
+                    <Info size={14} />
                     {language === 'TH' ? 'ไฟล์ทั้งหมดด้านบนนี้จะถูกคลุกรวม (Merge) ให้อยู่ในคอลัมน์เดียว' : 'All files above will be merged into this single column'}
                   </div>
                 </div>
