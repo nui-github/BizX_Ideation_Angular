@@ -2,52 +2,59 @@
 
 > ⚠️ **Snapshot notice — read before trusting this doc**
 > This document (mapping table, "Resolved"/"Open items" sections) reflects `/prototype` as of
-> **2026-07-07**. Vibe design on `/prototype` is still ongoing and will keep adding/changing
-> components after this date, while `/angular` stays frozen in the meantime (see rationale below).
-> **Before actually handing off to the dev team**, re-scan `/prototype/components/` against the
-> mapping table and refresh anything that's drifted — do not assume this table is still accurate.
+> **2026-07-16**. Vibe design on `/prototype` is still ongoing and will keep adding/changing
+> components after this date, while the Angular app only gets the features listed as "Ported"
+> below (see rationale below). **Before actually handing off to the dev team**, re-scan
+> `/prototype/components/` against the mapping table and refresh anything that's drifted — do not
+> assume this table is still accurate.
+>
+> Superseded structure note: this doc originally described `/angular` as a separate sibling folder
+> next to `/prototype`. As of the Phase 0 restructuring in [`MIGRATION_PLAN.md`](MIGRATION_PLAN.md),
+> the Angular app lives at the **repo root** instead (`Amethyst_Angular`-style) — paths below have
+> been updated to match. See `MIGRATION_PLAN.md` for the phased porting strategy this table feeds into.
 
-This repo now has three top-level parts:
+This repo now has two top-level parts:
 
 ```
+/            The Angular app (angular.json, package.json, src/, public/) — the real deliverable
 /prototype   React + Vite design prototype (source of visual truth — "vibe design" output)
-/angular     Target Angular app the dev team builds out from here
-/docs        Architecture, rules, data models, design system (this file included)
+/docs        Architecture, rules, data models, design system, migration plan (this file included)
 ```
 
 The prototype is not meant to ship. It exists to iterate on UX/visuals fast. The Angular app is
 the real deliverable — build every feature there, using the prototype only as a visual/behavioral
 reference and `/docs` as the binding spec.
 
-**Why `/angular` is frozen during vibe design:** trying to keep the Angular scaffold in sync with
-every prototype iteration would be wasted effort — the prototype's shape will keep changing until
-design is finalized. Instead, `/angular` stays as a structural scaffold (folders, config, the 2
-already-ported features) and this doc's mapping table is only refreshed once, right before the
-real handoff.
+**Why the Angular app doesn't track every prototype iteration:** trying to keep it in sync with
+every prototype tweak would be wasted effort — the prototype's shape will keep changing until
+design is finalized. Instead, the Angular app only picks up features once they're ported per
+`MIGRATION_PLAN.md`'s phase list, and this doc's mapping table is refreshed periodically (not
+after every prototype commit) to track drift.
 
 ## Read these first
 
-1. [`ARCHITECTURE.md`](ARCHITECTURE.md) — layering (mock-data → services → components) & domain entities
-2. [`PROJECT_RULES.md`](PROJECT_RULES.md) — tech stack rules (ng-zorro-antd, SCSS, Lucide icons, localization, mock-data discipline)
-3. [`DATA_MODELS.md`](DATA_MODELS.md) — canonical TypeScript interfaces (already mirrored in `angular/src/app/core/models/types.model.ts`)
-4. [`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md) — colors, typography, status semantics (already wired into `angular/src/styles/theme.less`)
+1. [`MIGRATION_PLAN.md`](MIGRATION_PLAN.md) — phased plan for the Angular-at-root restructuring and feature-by-feature port order
+2. [`ARCHITECTURE.md`](ARCHITECTURE.md) — layering (mock-data → services → components) & domain entities
+3. [`PROJECT_RULES.md`](PROJECT_RULES.md) — tech stack rules (ng-zorro-antd, SCSS, Lucide icons, localization, mock-data discipline)
+4. [`DATA_MODELS.md`](DATA_MODELS.md) — canonical TypeScript interfaces (already mirrored in `src/app/core/models/types.model.ts`)
+5. [`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md) — colors, typography, status semantics (already wired into `src/styles/theme.less`)
 
 ## What's already ported and working
 
-| Angular path | Status | Notes |
+| Angular path (repo root) | Status | Notes |
 |---|---|---|
-| `core/models/types.model.ts` | ✅ Ported | Matches `DATA_MODELS.md` |
-| `core/services/agent.service.ts` | ✅ Ported | Wraps `mock-data/agents.mock.ts` |
-| `core/services/tracking.service.ts` | ✅ Ported | Wraps `mock-data/tracking.mock.ts` |
-| `core/services/workflow.service.ts` | ✅ Ported | Wraps `mock-data/workflows.mock.ts` |
-| `features/dashboard` | ✅ Ported, standalone, routed at `/data-comparison/jobs` | Clean — no Tailwind, mock data wired |
-| `features/exdoc/workflow-builder` | ✅ Ported, standalone, routed at `/exdoc/workflow-builder` | This is the **generic** builder (`WorkflowBuilder.tsx`) — not the Data Comparison one, see below |
-| `layout/shell` | ⚠️ Partial | Sidebar/header structure only — nav tree, permissions, and language toggle from `Layout.tsx` not yet ported |
+| `src/app/core/models/types.model.ts` | ✅ Ported | Matches `DATA_MODELS.md` |
+| `src/app/core/services/agent.service.ts` | ✅ Ported | Wraps `mock-data/agents.mock.ts` |
+| `src/app/core/services/tracking.service.ts` | ✅ Ported | Wraps `mock-data/tracking.mock.ts` |
+| `src/app/core/services/workflow.service.ts` | ✅ Ported | Wraps `mock-data/workflows.mock.ts` |
+| `src/app/features/dashboard` | ✅ Ported, standalone, routed at `/data-comparison/jobs` | Clean — no Tailwind, mock data wired |
+| `src/app/features/exdoc/workflow-builder` | ✅ Ported, standalone, routed at `/exdoc/workflow-builder` | This is the **generic** builder (`WorkflowBuilder.tsx`) — not the Data Comparison one, see below |
+| `src/app/layout/shell` | ⚠️ Partial | Sidebar/header structure only — nav tree, permissions, and language toggle from `Layout.tsx` not yet ported |
 
 ## What still needs porting
 
 Every row below is a prototype component with no Angular equivalent yet. Suggested target paths
-follow the `features/<area>/<name>.component.ts` convention already used by `dashboard` and
+follow the `src/app/features/<area>/<name>.component.ts` convention already used by `dashboard` and
 `workflow-builder` — feel free to adjust as the real routing/IA is finalized.
 
 | Prototype source | Suggested Angular target | Sidebar area (per current design) |
@@ -58,8 +65,9 @@ follow the `features/<area>/<name>.component.ts` convention already used by `das
 | `components/AgentList.tsx` | `features/agents/agent-list` | (agent.service.ts already exists) |
 | `components/AgentForm.tsx` | `features/agents/agent-form` | (agent.service.ts already exists) |
 | `components/CreateJobModal.tsx` | `features/data-comparison/create-job-modal` | Data Comparison → รายการงาน (modal) |
+| `components/GenerateReportModal.tsx` | `features/data-comparison/generate-report-modal` | Data Comparison → รายการงาน (สร้างรายงาน drawer) — new since the last scan: row select/delete/bulk-action toolbar, per-file report management |
 | `components/ComparisonWorkflow.tsx` | `features/data-comparison/comparison-workflow` | Data Comparison |
-| `components/DataComparisonWorkflowBuilder.tsx` | `features/data-comparison/workflow-builder` | Data Comparison → จัดการเวิร์กโฟลว์ (**not started** — 4,282 lines, the biggest single port in this list; do not confuse with the already-ported generic builder at `features/exdoc/workflow-builder`) |
+| `components/DataComparisonWorkflowBuilder.tsx` | `features/data-comparison/workflow-builder` | Data Comparison → จัดการเวิร์กโฟลว์ (**not started** — 4,248 lines, the biggest single port in this list; do not confuse with the already-ported generic builder at `features/exdoc/workflow-builder`) |
 | `components/ManageRule.tsx` | `features/data-comparison/rules/manage-rule` | Data Comparison → Compare rules |
 | `components/RuleList.tsx` | `features/data-comparison/rules/rule-list` | Data Comparison → Compare rules |
 | `components/RuleMatrix.tsx` | `features/data-comparison/rules/rule-matrix` | Data Comparison → Compare rules |
@@ -70,9 +78,9 @@ follow the `features/<area>/<name>.component.ts` convention already used by `das
 | `components/WorkflowList.tsx` | `features/exdoc/workflow-list` | ExDoc / generic workflow list |
 | `components/Tooltip.tsx` | `shared/tooltip` | Cross-cutting |
 
-Follow the same pattern for each: add a `mock-data/*.mock.ts` file (if new data is needed), a
-`core/services/*.service.ts` wrapping it in an `Observable`, then a standalone
-`features/**/*.component.ts` that subscribes to the service. Register icons used by the new
+Follow the same pattern for each: add a `src/mock-data/*.mock.ts` file (if new data is needed), a
+`src/app/core/services/*.service.ts` wrapping it in an `Observable`, then a standalone
+`src/app/features/**/*.component.ts` that subscribes to the service. Register icons used by the new
 template in `shared/icons.provider.ts` (Lucide icons are tree-shaken by name — components will
 fail at runtime with "icon not found" if you forget this step).
 
@@ -114,8 +122,8 @@ These were caught while scaffolding and are already fixed — noted here so the 
 ## Running things
 
 ```bash
-cd prototype && npm install && npm run dev     # design reference, http://localhost:3000
-cd angular   && npm install && npm start        # the real app, http://localhost:4200
+npm install && npm start                          # Angular app (root), the real deliverable, http://localhost:4200
+cd prototype && npm install && npm run dev        # React design prototype (reference), http://localhost:3000
 ```
 
 The two projects have independent `package.json`/`node_modules` — installing one does not
