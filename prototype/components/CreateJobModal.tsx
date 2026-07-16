@@ -3,7 +3,7 @@ import { Drawer, message } from 'antd';
 import {
   AlertCircle, Plus, Trash2, ArrowRight, CheckCircle,
   User, Layers, HelpCircle, Briefcase, FileText,
-  GripVertical, Link2, Link2Off, X, Lock, Sparkles
+  GripVertical, Link2, Link2Off, X, Sparkles
 } from 'lucide-react';
 import { ComparisonJob, JobStatus, Workflow, ComparisonDocStatus, JobPreset } from '../types';
 import { MOCK_TEAMS } from '../mock-data/teams.mock';
@@ -561,14 +561,17 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({
             {teamPresets && teamPresets.length > 0 && (
               <div className="bg-slate-50 p-4 rounded-[8px] border border-slate-100">
                 <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1.5">
-                  {isTh ? 'เลือกชุด Preset เริ่มต้น' : 'STARTING PRESET'}
+                  {isTh ? 'เลือกชุด Shipment เริ่มต้น' : 'STARTING PRESET'}
                 </label>
                 <select
                   value={selectedPresetId}
                   onChange={(e) => setSelectedPresetId(e.target.value)}
-                  className="w-full bg-white border border-slate-200 rounded-[4px] py-2.5 px-3 text-sm font-bold text-[#010136] outline-none focus:ring-2 focus:ring-[#1f5df9]/10 focus:border-[#1f5df9] transition-all"
+                  disabled={teamPresets.length === 1}
+                  className="w-full bg-white border border-slate-200 rounded-[4px] py-2.5 px-3 text-sm font-bold text-[#010136] outline-none focus:ring-2 focus:ring-[#1f5df9]/10 focus:border-[#1f5df9] transition-all disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
                 >
-                  <option value="">{isTh ? '-- กำหนดเอง (ไม่ใช้พรีเซ็ต) --' : '-- Custom (No Preset) --'}</option>
+                  {teamPresets.length > 1 && (
+                    <option value="">{isTh ? '-- กำหนดเอง (ไม่ใช้พรีเซ็ต) --' : '-- Custom (No Preset) --'}</option>
+                  )}
                   {teamPresets.map(p => (
                     <option key={p.id} value={p.id}>{p.name}</option>
                   ))}
@@ -692,11 +695,7 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({
                   <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">
                     {isTh ? 'การตั้งค่ารายการย่อย' : 'CHILD JOBS CONFIGURATION'}
                   </span>
-                  {isPresetLocked ? (
-                    <span className="text-[10px] text-slate-400 font-bold mt-0.5 flex items-center gap-1">
-                      <Lock size={10} /> {isTh ? 'ล็อกตามพรีเซ็ตของทีม แก้ไขไม่ได้' : 'Locked by your team preset — not editable'}
-                    </span>
-                  ) : (
+                  {!isPresetLocked && (
                     <span className="text-[10px] text-amber-600 font-bold mt-0.5">
                       {isTh ? '★ สามารถลาก (Drag & Drop) เพื่อจัดลำดับรายการย่อยได้' : '★ Drag & drop rows to reorder child jobs'}
                     </span>
