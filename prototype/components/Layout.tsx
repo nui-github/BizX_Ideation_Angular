@@ -221,7 +221,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentUserRole, onTog
                     {activeMenu === 'settings_doc_type' 
                       ? (language === 'TH' ? 'ตั้งค่า Doc Type' : 'Doc Type Settings') 
                       : activeMenu === 'settings_job_preset'
-                      ? (language === 'TH' ? 'ตั้งค่าพรีเซ็ตงานเริ่มต้น' : 'Job Preset Settings')
+                      ? (language === 'TH' ? 'ตั้งค่าชุด Shipment เริ่มต้น' : 'Starting Shipment Set Settings')
                       : activeMenu === 'settings_master_data'
                       ? (language === 'TH' ? 'ตั้งค่า Master data' : 'Master Data Settings')
                       : (language === 'TH' ? 'ตั้งค่า Label schema' : 'Label Schema Settings')}
@@ -313,7 +313,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentUserRole, onTog
                     className="w-full text-left px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 flex items-center gap-2"
                   >
                     <Settings size={16} className="text-slate-400" />
-                    <span>{language === 'TH' ? 'ตั้งค่าพรีเซ็ตงานเริ่มต้น' : 'Job Preset Settings'}</span>
+                    <span>{language === 'TH' ? 'ตั้งค่าชุด Shipment เริ่มต้น' : 'Starting Shipment Set Settings'}</span>
                   </button>
                 </div>
                 <div className="border-t border-slate-100 py-1">

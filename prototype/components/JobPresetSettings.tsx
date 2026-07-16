@@ -47,8 +47,8 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
   const [selectedWorkflowTeams, setSelectedWorkflowTeams] = useState<string[]>([]);
 
   const t = {
-    title: language === 'TH' ? 'ตั้งค่าพรีเซ็ตงานเริ่มต้น' : 'Default Job Preset Settings',
-    subtitle: language === 'TH' ? 'จัดการพรีเซ็ตสำหรับสร้าง Shipment ใหม่' : 'Manage presets for creating new Shipments',
+    title: language === 'TH' ? 'ตั้งค่าชุด Shipment เริ่มต้น' : 'Starting Shipment Set Settings',
+    subtitle: language === 'TH' ? 'จัดการชุด Shipment เริ่มต้นที่ใช้ตอนสร้าง Shipment ใหม่' : 'Manage the starting shipment sets used when creating a new Shipment',
     search: language === 'TH' ? 'ค้นหาพรีเซ็ต...' : 'Search presets...',
     create: language === 'TH' ? 'สร้างพรีเซ็ต' : 'Create Preset',
     edit: language === 'TH' ? 'แก้ไขพรีเซ็ต' : 'Edit Preset',
