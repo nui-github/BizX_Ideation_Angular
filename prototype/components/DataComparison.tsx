@@ -5366,7 +5366,7 @@ const mockWorkflows: Workflow[] = [
                               ? 'เช่น 1-3, 5, 8-10 (หน้าติดกันใช้ - / ข้ามหน้าใช้ , คั่น)'
                               : 'e.g. 1-3, 5, 8-10 (use - for consecutive pages, , to skip)'
                           }
-                          className="w-full text-xs font-mono px-3 py-2 rounded-[4px] border border-slate-200 text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300"
+                          className="w-full text-xs px-3 py-2 rounded-[4px] border border-slate-200 text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300"
                         />
                       )}
                     </div>
