@@ -910,7 +910,10 @@ const mockWorkflows: Workflow[] = [
           const matchingNextDocName = nextJobDocNames.find(n => n.toLowerCase() === docName.toLowerCase());
           if (matchingNextDocName) {
             const key = `${nextJob.id}_${matchingNextDocName}`;
-            next[key] = [...(next[key] || []), ...comments];
+            const existing = next[key] || [];
+            const existingIds = new Set(existing.map(c => c.id));
+            const newOnes = comments.filter(c => !existingIds.has(c.id));
+            next[key] = [...existing, ...newOnes];
           }
         });
         return next;
