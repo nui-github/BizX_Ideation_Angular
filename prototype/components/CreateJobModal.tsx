@@ -539,19 +539,19 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({
           </div>
         ) : (
           /* Multi-Job Shipment Creation Mode */
-          <div className="space-y-6">
+          <div className="space-y-5">
             {/* Shipment Name Section */}
-            <div className="bg-slate-50 p-4 rounded-[8px] border border-slate-100">
+            <div>
               <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1.5">
                 {isTh ? 'ชื่อรายการ Shipment' : 'SHIPMENT REFERENCE NAME'} <span className="text-red-500">*</span>
               </label>
-                <input
-                  type="text"
-                  value={shipmentName}
-                  onChange={(e) => setShipmentName(e.target.value)}
-                  className="w-full bg-white border border-slate-200 rounded-[4px] px-3.5 py-2.5 text-sm font-black text-[#010136] font-sans placeholder:font-normal placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-[#1f5df9]/10 focus:border-[#1f5df9] transition-all"
-                  placeholder={shipmentPlaceholder}
-                />
+              <input
+                type="text"
+                value={shipmentName}
+                onChange={(e) => setShipmentName(e.target.value)}
+                className="w-full bg-white border border-slate-200 rounded-[4px] px-3.5 py-2.5 text-sm font-black text-[#010136] font-sans placeholder:font-normal placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-[#1f5df9]/10 focus:border-[#1f5df9] transition-all"
+                placeholder={shipmentPlaceholder}
+              />
               <p className="text-[10px] text-slate-400 font-bold mt-1.5">
                 {isTh ? 'ระบุเลขที่ควบคุมสำหรับกลุ่มเวิร์กโฟลว์ย่อย เช่น CN-TH-2026-80942' : 'Set control reference name for grouping sub-workflows.'}
               </p>
@@ -559,7 +559,7 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({
 
             {/* Starting Preset Picker */}
             {teamPresets && teamPresets.length > 0 && (
-              <div className="bg-slate-50 p-4 rounded-[8px] border border-slate-100">
+              <div>
                 <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1.5">
                   {isTh ? 'เลือกชุด Shipment เริ่มต้น' : 'STARTING PRESET'}
                 </label>
