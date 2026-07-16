@@ -8009,14 +8009,14 @@ const mockWorkflows: Workflow[] = [
 
                   return (
                     <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-                      <table className="w-full text-left border-collapse">
+                      <table className="w-full text-left border-collapse table-fixed">
                         <thead>
                           <tr className="bg-slate-50 border-b border-slate-200">
-                            <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{language === 'TH' ? 'วัน/เวลา' : 'Date/Time'}</th>
-                            <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{language === 'TH' ? 'ผู้ใช้งาน' : 'User'}</th>
-                            <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{language === 'TH' ? 'การกระทำ' : 'Action'}</th>
-                            <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{language === 'TH' ? 'เอกสาร' : 'Document'}</th>
-                            <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-1/3">{language === 'TH' ? 'รายละเอียด (ฟิลด์)' : 'Details (Fields)'}</th>
+                            <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-28">{language === 'TH' ? 'วัน/เวลา' : 'Date/Time'}</th>
+                            <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-36">{language === 'TH' ? 'ผู้ใช้งาน' : 'User'}</th>
+                            <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-40">{language === 'TH' ? 'การกระทำ' : 'Action'}</th>
+                            <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-36">{language === 'TH' ? 'เอกสาร' : 'Document'}</th>
+                            <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{language === 'TH' ? 'รายละเอียด (ฟิลด์)' : 'Details (Fields)'}</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -8061,8 +8061,8 @@ const mockWorkflows: Workflow[] = [
                                   </span>
                                 </div>
                               </td>
-                              <td className="p-4 whitespace-nowrap">
-                                <span className="text-[10px] font-black px-2.5 py-1 rounded-full border bg-slate-100 text-slate-600 border-slate-200 uppercase">
+                              <td className="p-4">
+                                <span className="text-[10px] font-black px-2.5 py-1 rounded-full border bg-slate-100 text-slate-600 border-slate-200 uppercase inline-block max-w-full truncate align-bottom">
                                   {log.docName}
                                 </span>
                               </td>
