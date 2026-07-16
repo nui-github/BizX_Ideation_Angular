@@ -6834,7 +6834,7 @@ const mockWorkflows: Workflow[] = [
                   </button>
                   <button
                     onClick={() => setShowCreateJobModal(true)}
-                    className="px-4 py-2 bg-[#1f5df9] text-white rounded-[4px] flex items-center gap-2 text-xs font-black uppercase tracking-widest hover:bg-[#104BE3] transition-all shadow-sm cursor-pointer"
+                    className="px-4 py-2 bg-[#1f5df9] text-white border border-transparent rounded-[4px] flex items-center gap-2 text-xs font-black uppercase tracking-widest hover:bg-[#104BE3] transition-all shadow-sm cursor-pointer"
                     id="create-new-job-btn"
                   >
                     <Plus size={16} />
