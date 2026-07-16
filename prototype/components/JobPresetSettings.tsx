@@ -297,7 +297,7 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
                     />
                     <p className="text-[11px] text-slate-400 font-medium mt-1.5">
                       {language === 'TH'
-                        ? 'ทุกบัญชีในทีมที่เลือกจะใช้พรีเซ็ตนี้โดยอัตโนมัติเมื่อสร้างรายการใหม่'
+                        ? 'ทุกบัญชีในทีมที่เลือกจะใช้ชุด shipment นี้โดยอัตโนมัติเมื่อสร้างรายการใหม่'
                         : 'All accounts in the selected teams will automatically use this preset when creating a new shipment.'}
                     </p>
                   </div>
