@@ -16,10 +16,11 @@ interface CreateJobModalProps {
   language?: string;
   prefilledReference?: string;
   previousWorkflowId?: string;
-  /** Job preset assigned to the current user's team. When present (and creating a new
-   * shipment, not a child job), the child job sequence is auto-filled from it and locked —
-   * the user may only name the shipment and submit. */
-  preset?: JobPreset;
+  /** Job presets assigned to the current user's team. When creating a new shipment (not a
+   * child job) and at least one applies, the user picks a starting preset from a dropdown;
+   * the child job sequence is then pulled from it and locked, or left fully editable if
+   * "custom" is chosen. */
+  teamPresets?: JobPreset[];
 }
 
 interface ChildJobConfig {
@@ -30,13 +31,17 @@ interface ChildJobConfig {
 }
 
 export const CreateJobModal: React.FC<CreateJobModalProps> = ({
-  visible, onClose, onCreate, workflows, language, prefilledReference, previousWorkflowId, preset
+  visible, onClose, onCreate, workflows, language, prefilledReference, previousWorkflowId, teamPresets
 }) => {
   const isTh = language === 'TH';
 
-  // Shipment creation is locked to the team's preset when one applies — the user can only
-  // name the shipment; the child job sequence comes pre-filled and read-only.
-  const isPresetLocked = !prefilledReference && !!preset && preset.workflows.length > 0;
+  // Which starting preset the user picked from the dropdown, if any ('' means custom/manual).
+  const [selectedPresetId, setSelectedPresetId] = useState<string>('');
+  const selectedPreset = teamPresets?.find(p => p.id === selectedPresetId);
+
+  // Shipment creation is locked to the chosen preset — the user can only name the shipment;
+  // the child job sequence comes pre-filled and read-only.
+  const isPresetLocked = !prefilledReference && !!selectedPreset && selectedPreset.workflows.length > 0;
 
   // State for single job mode (used when prefilledReference is present)
   const [singleWorkflowId, setSingleWorkflowId] = useState<string | null>(null);
@@ -85,29 +90,37 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({
       } else {
         setShipmentPlaceholder(isTh ? 'โปรดระบุชื่อรายการ Shipment' : 'Please specify shipment reference name');
         setShipmentName('');
-
-        if (preset && preset.workflows.length > 0) {
-          // Auto-fill the sequence from the team's preset (locked, not user-editable).
-          // Naming is fully automatic: JOB-0001, JOB-0002, ... in preset order.
-          setChildJobs(preset.workflows.map((pwf, idx) => {
-            const wf = workflows.find(w => w.id === pwf.workflowId);
-            const hasCreateJobNode = wf?.nodes.some(n => n.type === 'create_job');
-            const suffixValue = hasCreateJobNode ? String(idx + 1).padStart(4, '0') : '';
-            return {
-              id: `cj-preset-${idx}-${Date.now()}`,
-              workflowId: pwf.workflowId,
-              suffixValue,
-              assignee: 'unassigned'
-            };
-          }));
-        } else {
-          setChildJobs([
-            { id: `cj-${Date.now()}`, workflowId: null, suffixValue: '', assignee: 'unassigned' }
-          ]);
-        }
+        // Pre-select the starting preset only when the team has exactly one — otherwise
+        // the user picks explicitly from the dropdown.
+        setSelectedPresetId(teamPresets && teamPresets.length === 1 ? teamPresets[0].id : '');
       }
     }
-  }, [visible, prefilledReference, isTh, preset, workflows]);
+  }, [visible, prefilledReference, isTh, teamPresets]);
+
+  // Pull the chosen preset's workflow sequence into the child job rows (locked), or fall back
+  // to a single blank editable row when "custom" is selected.
+  useEffect(() => {
+    if (!visible || prefilledReference) return;
+    const preset = teamPresets?.find(p => p.id === selectedPresetId);
+    if (preset && preset.workflows.length > 0) {
+      // Naming is fully automatic: JOB-0001, JOB-0002, ... in preset order.
+      setChildJobs(preset.workflows.map((pwf, idx) => {
+        const wf = workflows.find(w => w.id === pwf.workflowId);
+        const hasCreateJobNode = wf?.nodes.some(n => n.type === 'create_job');
+        const suffixValue = hasCreateJobNode ? String(idx + 1).padStart(4, '0') : '';
+        return {
+          id: `cj-preset-${idx}-${Date.now()}`,
+          workflowId: pwf.workflowId,
+          suffixValue,
+          assignee: 'unassigned'
+        };
+      }));
+    } else {
+      setChildJobs([
+        { id: `cj-${Date.now()}`, workflowId: null, suffixValue: '', assignee: 'unassigned' }
+      ]);
+    }
+  }, [selectedPresetId, teamPresets, visible, prefilledReference, workflows]);
 
   const modalTitle = prefilledReference 
     ? (isTh ? 'สร้างรายการย่อย (Child Job)' : 'Create Child Job')
@@ -544,13 +557,37 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({
               </p>
             </div>
 
+            {/* Starting Preset Picker */}
+            {teamPresets && teamPresets.length > 0 && (
+              <div className="bg-slate-50 p-4 rounded-[8px] border border-slate-100">
+                <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1.5">
+                  {isTh ? 'เลือกชุด Preset เริ่มต้น' : 'STARTING PRESET'}
+                </label>
+                <select
+                  value={selectedPresetId}
+                  onChange={(e) => setSelectedPresetId(e.target.value)}
+                  className="w-full bg-white border border-slate-200 rounded-[4px] py-2.5 px-3 text-sm font-bold text-[#010136] outline-none focus:ring-2 focus:ring-[#1f5df9]/10 focus:border-[#1f5df9] transition-all"
+                >
+                  <option value="">{isTh ? '-- กำหนดเอง (ไม่ใช้พรีเซ็ต) --' : '-- Custom (No Preset) --'}</option>
+                  {teamPresets.map(p => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+                <p className="text-[10px] text-slate-400 font-bold mt-1.5">
+                  {isTh
+                    ? 'เลือกชุด Shipment ที่ต้องการเริ่มต้น ระบบจะดึงลำดับรายการย่อยจากพรีเซ็ตนั้นมาแสดงให้'
+                    : "Pick a starting shipment set — its child job sequence will be pulled in automatically."}
+                </p>
+              </div>
+            )}
+
             {/* Preset-locked notice */}
             {isPresetLocked && (
               <div className="flex items-start gap-2.5 p-3.5 bg-blue-50 border border-blue-100 rounded-[8px]">
                 <Sparkles className="text-[#1f5df9] shrink-0" size={16} />
                 <div className="flex flex-col">
                   <span className="text-[10px] font-black text-[#1f5df9] uppercase tracking-wider mb-0.5">
-                    {isTh ? `ใช้พรีเซ็ตของทีมคุณโดยอัตโนมัติ: ${preset!.name}` : `Auto-applied from your team's preset: ${preset!.name}`}
+                    {isTh ? `ใช้ชุด Preset ที่เลือก: ${selectedPreset!.name}` : `Using selected preset: ${selectedPreset!.name}`}
                   </span>
                   <span className="text-xs text-blue-800/80 font-bold leading-relaxed">
                     {isTh
@@ -784,7 +821,7 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({
                                 type="text"
                                 disabled
                                 readOnly
-                                value={(preset?.workflows[idx]?.assignedTeams || [])
+                                value={(selectedPreset?.workflows[idx]?.assignedTeams || [])
                                   .map(teamValue => MOCK_TEAMS.find(t => t.value === teamValue)?.label || teamValue)
                                   .join(', ')}
                                 className="w-full h-[38px] bg-slate-100 border border-slate-200 rounded-[4px] px-2.5 text-xs font-black text-slate-500 disabled:cursor-not-allowed"

@@ -574,9 +574,9 @@ export const DataComparison: React.FC<DataComparisonProps> = ({ language, tracki
   const [rejectPendingId, setRejectPendingId] = useState<string | null>(null);
   const [showRejectFileModal, setShowRejectFileModal] = useState(false);
   const [showCreateJobModal, setShowCreateJobModal] = useState(false);
-  // The job preset assigned to the current user's team (Job Preset Settings) — when present,
-  // new shipments auto-fill their child job sequence from it instead of a blank, editable row.
-  const activeTeamPreset = MOCK_PRESETS.find(p => p.isActive && p.assignedTeams.includes(CURRENT_USER_TEAM));
+  // Job presets assigned to the current user's team (Job Preset Settings) — a team can match
+  // multiple presets, so the user picks a starting one from a dropdown when creating a shipment.
+  const teamPresets = MOCK_PRESETS.filter(p => p.isActive && p.assignedTeams.includes(CURRENT_USER_TEAM));
   const [rejectFileTargetDocName, setRejectFileTargetDocName] = useState<string | null>(null);
   const [pendingFilter, setPendingFilter] = useState('All');
   const [collapsedParts, setCollapsedParts] = useState<Record<string, boolean>>({
@@ -6744,7 +6744,7 @@ const mockWorkflows: Workflow[] = [
           language={language}
           prefilledReference={selectedShipment || undefined}
           previousWorkflowId={selectedShipment ? getLastJobWorkflowId(selectedShipment) : undefined}
-          preset={activeTeamPreset}
+          teamPresets={teamPresets}
         />
       )}
 
