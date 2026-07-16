@@ -65,21 +65,6 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
 
   const allWorkflows = [...workflows, ...comparisonWorkflows];
 
-  // Each team may only be assigned to a single preset — otherwise the system
-  // wouldn't know which preset to apply when a member creates a new job.
-  const teamToPresetName = new Map<string, string>();
-  presets.forEach(p => {
-    if (editingPreset && p.id === editingPreset.id) return;
-    p.assignedTeams.forEach(teamValue => teamToPresetName.set(teamValue, p.name));
-  });
-  const teamOptions = MOCK_TEAMS.map(team => ({
-    ...team,
-    disabled: teamToPresetName.has(team.value),
-    label: teamToPresetName.has(team.value)
-      ? `${team.label} (${teamToPresetName.get(team.value)})`
-      : team.label
-  }));
-
   const handleOpenModal = (preset?: JobPreset) => {
     if (preset) {
       setEditingPreset(preset);
@@ -300,19 +285,20 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
                       {t.teams} <span className="text-rose-500">*</span>
                     </label>
                     <Select
+                      mode="multiple"
                       allowClear
                       className="w-full custom-select"
                       popupClassName="!z-[2100]"
                       placeholder={language === 'TH' ? 'เลือกทีม' : 'Select team'}
-                      value={assignedTeams[0]}
-                      onChange={(value) => setAssignedTeams(value ? [value] : [])}
-                      options={teamOptions}
-                      style={{ width: '100%', height: '46px' }}
+                      value={assignedTeams}
+                      onChange={setAssignedTeams}
+                      options={MOCK_TEAMS}
+                      style={{ width: '100%' }}
                     />
                     <p className="text-[11px] text-slate-400 font-medium mt-1.5">
                       {language === 'TH'
-                        ? 'ทุกบัญชีในทีมนี้จะใช้พรีเซ็ตนี้โดยอัตโนมัติเมื่อสร้างรายการใหม่ • 1 ทีมใช้ได้เพียง 1 พรีเซ็ตเท่านั้น'
-                        : 'All accounts in this team will automatically use this preset when creating a new shipment. Each team can only be assigned to one preset.'}
+                        ? 'ทุกบัญชีในทีมที่เลือกจะใช้พรีเซ็ตนี้โดยอัตโนมัติเมื่อสร้างรายการใหม่'
+                        : 'All accounts in the selected teams will automatically use this preset when creating a new shipment.'}
                     </p>
                   </div>
 
