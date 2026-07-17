@@ -263,7 +263,7 @@ export const GenerateReportModal: React.FC<GenerateReportModalProps> = ({ visibl
             <button
               type="button"
               onClick={() => setDeleteTarget('bulk')}
-              className="font-sans font-bold h-10 px-5 text-xs uppercase tracking-widest rounded-[4px] border border-rose-200 text-rose-500 bg-white hover:bg-rose-50 transition-all cursor-pointer"
+              className="font-sans font-bold h-10 px-5 text-xs uppercase tracking-widest text-slate-500 rounded-[4px] border border-slate-200 hover:border-slate-300 hover:text-slate-700 transition-all cursor-pointer bg-white"
             >
               {isTh ? 'ลบรายการที่เลือก' : 'Delete Selected'}
             </button>
