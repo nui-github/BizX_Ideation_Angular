@@ -235,7 +235,7 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
                       })}
                     </div>
                   </div>
-                  <div>
+                  <div className="pt-3 border-t border-slate-100">
                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">{t.lastUpdated}</span>
                     <span className="text-xs font-bold text-slate-600">{dayjs(preset.updatedAt).format('YYYY-MM-DD HH:mm')}</span>
                   </div>
