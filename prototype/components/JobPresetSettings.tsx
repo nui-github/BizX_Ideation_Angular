@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import dayjs from 'dayjs';
 import { Select, Switch, message } from 'antd';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Trash2, Edit3, CheckCircle2, AlertCircle, ArrowLeft, Settings, Search, X, Check } from 'lucide-react';
+import { Plus, Trash2, Edit3, CheckCircle2, AlertCircle, ArrowLeft, Settings, Search, X, Check, LayoutGrid, List } from 'lucide-react';
 import { Language, Workflow, JobPreset, JobPresetWorkflow } from '../types';
 import { MOCK_TEAMS } from '../mock-data/teams.mock';
 import { Tooltip } from './Tooltip';
@@ -30,6 +30,7 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
   onBack
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<'CARD' | 'LIST'>('CARD');
   const [showModal, setShowModal] = useState(false);
   const [editingPreset, setEditingPreset] = useState<JobPreset | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; preset: JobPreset | null }>({
@@ -182,10 +183,41 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
             </button>
           )}
         </div>
+
+        {/* View Toggle */}
+        <div className="flex bg-slate-200/60 p-1 border border-slate-200/40 h-[38px] items-center" style={{ borderRadius: '4px' }}>
+          <button
+            type="button"
+            onClick={() => setViewMode('CARD')}
+            className={`h-full px-2.5 transition-all duration-200 flex items-center justify-center cursor-pointer ${
+              viewMode === 'CARD'
+                ? 'bg-white text-blue-600 shadow-sm'
+                : 'text-slate-500 hover:text-slate-800'
+            }`}
+            style={{ borderRadius: '2px' }}
+            title="Card View"
+          >
+            <LayoutGrid size={14} />
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode('LIST')}
+            className={`h-full px-2.5 transition-all duration-200 flex items-center justify-center cursor-pointer ${
+              viewMode === 'LIST'
+                ? 'bg-white text-blue-600 shadow-sm'
+                : 'text-slate-500 hover:text-slate-800'
+            }`}
+            style={{ borderRadius: '2px' }}
+            title="List View"
+          >
+            <List size={14} />
+          </button>
+        </div>
       </div>
 
       {/* Main Area */}
       <div className="!mt-4">
+        {viewMode === 'CARD' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredPresets.map(preset => (
               <div key={preset.id} className="bg-white rounded-lg border border-slate-200 p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
@@ -243,6 +275,81 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
               </div>
             ))}
         </div>
+        ) : (
+        <div className="overflow-x-auto border border-slate-200/70 rounded-2xl bg-white shadow-xs">
+          <table className="min-w-full divide-y divide-slate-100">
+            <thead className="bg-slate-50/75">
+              <tr>
+                <th scope="col" className="px-6 py-4 text-left text-[11px] font-black text-slate-400 uppercase tracking-wider">
+                  {language === 'TH' ? 'ชื่อ' : 'Name'}
+                </th>
+                <th scope="col" className="px-6 py-4 text-left text-[11px] font-black text-slate-400 uppercase tracking-wider">
+                  {language === 'TH' ? 'สถานะ' : 'Status'}
+                </th>
+                <th scope="col" className="px-6 py-4 text-left text-[11px] font-black text-slate-400 uppercase tracking-wider">
+                  {t.teams}
+                </th>
+                <th scope="col" className="px-6 py-4 text-left text-[11px] font-black text-slate-400 uppercase tracking-wider">
+                  {t.lastUpdated}
+                </th>
+                <th scope="col" className="relative px-6 py-4 w-24 text-right">
+                  <span className="text-[11px] font-black text-slate-400 uppercase tracking-wider">{language === 'TH' ? 'จัดการ' : 'Actions'}</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 bg-white">
+              {filteredPresets.map(preset => (
+                <tr key={preset.id} className="hover:bg-slate-50/50 transition-colors group">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-black text-[#010136] tracking-tight">{preset.name}</div>
+                    <div className="text-[10px] font-bold text-slate-400">{preset.workflows.length} Workflows</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${preset.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500'}`}>
+                      {preset.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center flex-wrap gap-1">
+                      {preset.assignedTeams.map(team => {
+                        const teamLabel = MOCK_TEAMS.find(t => t.value === team)?.label || team;
+                        return (
+                          <span key={team} className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-bold rounded">
+                            {teamLabel}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-xs font-bold text-slate-600 font-sans">
+                    {dayjs(preset.updatedAt).format('YYYY-MM-DD HH:mm')}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <div className="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                      <Tooltip content={language === 'TH' ? 'แก้ไขพรีเซ็ต' : 'Edit preset'}>
+                        <button
+                          onClick={() => handleOpenModal(preset)}
+                          className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        >
+                          <Edit3 size={14} />
+                        </button>
+                      </Tooltip>
+                      <Tooltip content={language === 'TH' ? 'ลบพรีเซ็ต' : 'Delete preset'}>
+                        <button
+                          onClick={() => setDeleteConfirm({ isOpen: true, preset })}
+                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </Tooltip>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        )}
       </div>
 
       {/* Modal */}
