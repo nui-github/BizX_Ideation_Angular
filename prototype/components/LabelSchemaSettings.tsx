@@ -674,32 +674,34 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
             <div className="flex items-center gap-3">
               {/* View Mode Toggle */}
               <div className="flex bg-slate-200/60 p-1 border border-slate-200/40 h-[38px] items-center" style={{ borderRadius: '4px' }}>
-                <button
-                  type="button"
-                  onClick={() => setViewMode('GRID')}
-                  className={`h-full px-2.5 rounded-[4px]-sm transition-all duration-200 flex items-center justify-center cursor-pointer ${
-                    viewMode === 'GRID'
-                      ? 'bg-white text-blue-600 shadow-sm'
-                      : 'text-slate-500 hover:text-slate-800'
-                  }`}
-                  style={{ borderRadius: '2px' }}
-                  title={isTh ? 'แสดงแบบตารางการ์ด' : 'Grid View'}
-                >
-                  <LayoutGrid size={14} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewMode('LIST')}
-                  className={`h-full px-2.5 rounded-[4px]-sm transition-all duration-200 flex items-center justify-center cursor-pointer ${
-                    viewMode === 'LIST'
-                      ? 'bg-white text-blue-600 shadow-sm'
-                      : 'text-slate-500 hover:text-slate-800'
-                  }`}
-                  style={{ borderRadius: '2px' }}
-                  title={isTh ? 'แสดงแบบรายการเรียง' : 'List View'}
-                >
-                  <List size={14} />
-                </button>
+                <Tooltip title={isTh ? 'แบบกริด' : 'Grid view'}>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('GRID')}
+                    className={`h-full px-2.5 rounded-[4px]-sm transition-all duration-200 flex items-center justify-center cursor-pointer ${
+                      viewMode === 'GRID'
+                        ? 'bg-white text-blue-600 shadow-sm'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                    style={{ borderRadius: '2px' }}
+                  >
+                    <LayoutGrid size={14} />
+                  </button>
+                </Tooltip>
+                <Tooltip title={isTh ? 'แบบรายการ' : 'List view'}>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('LIST')}
+                    className={`h-full px-2.5 rounded-[4px]-sm transition-all duration-200 flex items-center justify-center cursor-pointer ${
+                      viewMode === 'LIST'
+                        ? 'bg-white text-blue-600 shadow-sm'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                    style={{ borderRadius: '2px' }}
+                  >
+                    <List size={14} />
+                  </button>
+                </Tooltip>
               </div>
 
               {hideHeader && (

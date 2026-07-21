@@ -789,31 +789,35 @@ export const MasterDataSettings: React.FC<MasterDataSettingsProps> = ({ language
                   />
                 </div>
 
-                <div className="flex items-center gap-1 bg-slate-100/80 p-1 rounded-[4px] border border-slate-200/40 select-none">
-                  <button
-                    type="button"
-                    onClick={() => setViewMode('grid')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-xs font-black transition-all cursor-pointer ${
-                      viewMode === 'grid'
-                        ? 'bg-white text-[#1f5df9] shadow-sm border border-slate-200/50'
-                        : 'text-slate-500 hover:text-slate-800'
-                    }`}
-                  >
-                    <LayoutGrid size={14} />
-                    <span>{language === 'TH' ? 'แบบกริด' : 'Grid'}</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setViewMode('list')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-xs font-black transition-all cursor-pointer ${
-                      viewMode === 'list'
-                        ? 'bg-white text-[#1f5df9] shadow-sm border border-slate-200/50'
-                        : 'text-slate-500 hover:text-slate-800'
-                    }`}
-                  >
-                    <List size={14} />
-                    <span>{language === 'TH' ? 'แบบรายการ' : 'List'}</span>
-                  </button>
+                <div className="flex bg-slate-200/60 p-1 border border-slate-200/40 h-[38px] items-center" style={{ borderRadius: '4px' }}>
+                  <Tooltip title={language === 'TH' ? 'แบบกริด' : 'Grid view'}>
+                    <button
+                      type="button"
+                      onClick={() => setViewMode('grid')}
+                      className={`h-full px-2.5 transition-all duration-200 flex items-center justify-center cursor-pointer ${
+                        viewMode === 'grid'
+                          ? 'bg-white text-blue-600 shadow-sm'
+                          : 'text-slate-500 hover:text-slate-800'
+                      }`}
+                      style={{ borderRadius: '2px' }}
+                    >
+                      <LayoutGrid size={14} />
+                    </button>
+                  </Tooltip>
+                  <Tooltip title={language === 'TH' ? 'แบบรายการ' : 'List view'}>
+                    <button
+                      type="button"
+                      onClick={() => setViewMode('list')}
+                      className={`h-full px-2.5 transition-all duration-200 flex items-center justify-center cursor-pointer ${
+                        viewMode === 'list'
+                          ? 'bg-white text-blue-600 shadow-sm'
+                          : 'text-slate-500 hover:text-slate-800'
+                      }`}
+                      style={{ borderRadius: '2px' }}
+                    >
+                      <List size={14} />
+                    </button>
+                  </Tooltip>
                 </div>
               </div>
 

@@ -463,32 +463,34 @@ export const DocTypeMaster: React.FC<DocTypeMasterProps> = ({
             <div className="flex items-center gap-3">
               {/* View Toggle */}
               <div className="flex bg-slate-200/60 p-1 border border-slate-200/40 h-[38px] items-center" style={{ borderRadius: '4px' }}>
-                <button
-                  type="button"
-                  onClick={() => setViewMode('CARD')}
-                  className={`h-full px-2.5 rounded-[4px]-sm transition-all duration-200 flex items-center justify-center cursor-pointer ${
-                    viewMode === 'CARD'
-                      ? 'bg-white text-blue-600 shadow-sm'
-                      : 'text-slate-500 hover:text-slate-800'
-                  }`}
-                  style={{ borderRadius: '2px' }}
-                  title="Card View"
-                >
-                  <LayoutGrid size={14} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewMode('LIST')}
-                  className={`h-full px-2.5 rounded-[4px]-sm transition-all duration-200 flex items-center justify-center cursor-pointer ${
-                    viewMode === 'LIST'
-                      ? 'bg-white text-blue-600 shadow-sm'
-                      : 'text-slate-500 hover:text-slate-800'
-                  }`}
-                  style={{ borderRadius: '2px' }}
-                  title="List View"
-                >
-                  <List size={14} />
-                </button>
+                <Tooltip content={language === 'TH' ? 'แบบกริด' : 'Grid view'}>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('CARD')}
+                    className={`h-full px-2.5 rounded-[4px]-sm transition-all duration-200 flex items-center justify-center cursor-pointer ${
+                      viewMode === 'CARD'
+                        ? 'bg-white text-blue-600 shadow-sm'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                    style={{ borderRadius: '2px' }}
+                  >
+                    <LayoutGrid size={14} />
+                  </button>
+                </Tooltip>
+                <Tooltip content={language === 'TH' ? 'แบบรายการ' : 'List view'}>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('LIST')}
+                    className={`h-full px-2.5 rounded-[4px]-sm transition-all duration-200 flex items-center justify-center cursor-pointer ${
+                      viewMode === 'LIST'
+                        ? 'bg-white text-blue-600 shadow-sm'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                    style={{ borderRadius: '2px' }}
+                  >
+                    <List size={14} />
+                  </button>
+                </Tooltip>
               </div>
 
               {/* "+ เพิ่ม DOC TYPE" button on the same row, far right */}
