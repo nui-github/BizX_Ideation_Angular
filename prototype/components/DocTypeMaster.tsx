@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Select, Input } from 'antd';
+import { Select, Input, Tooltip as AntTooltip } from 'antd';
 import { 
   FileText, Plus, Trash2, Edit3, AlertCircle, XCircle, ArrowLeft, 
   Settings, Check, Search, Sparkles, X, Info, FileCode,
@@ -463,7 +463,7 @@ export const DocTypeMaster: React.FC<DocTypeMasterProps> = ({
             <div className="flex items-center gap-3">
               {/* View Toggle */}
               <div className="flex bg-slate-200/60 p-1 border border-slate-200/40 h-[38px] items-center" style={{ borderRadius: '4px' }}>
-                <Tooltip content={language === 'TH' ? 'แบบกริด' : 'Grid view'}>
+                <AntTooltip title={language === 'TH' ? 'แบบกริด' : 'Grid view'}>
                   <button
                     type="button"
                     onClick={() => setViewMode('CARD')}
@@ -476,8 +476,8 @@ export const DocTypeMaster: React.FC<DocTypeMasterProps> = ({
                   >
                     <LayoutGrid size={14} />
                   </button>
-                </Tooltip>
-                <Tooltip content={language === 'TH' ? 'แบบรายการ' : 'List view'}>
+                </AntTooltip>
+                <AntTooltip title={language === 'TH' ? 'แบบรายการ' : 'List view'}>
                   <button
                     type="button"
                     onClick={() => setViewMode('LIST')}
@@ -490,7 +490,7 @@ export const DocTypeMaster: React.FC<DocTypeMasterProps> = ({
                   >
                     <List size={14} />
                   </button>
-                </Tooltip>
+                </AntTooltip>
               </div>
 
               {/* "+ เพิ่ม DOC TYPE" button on the same row, far right */}

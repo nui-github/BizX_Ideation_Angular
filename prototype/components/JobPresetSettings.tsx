@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import dayjs from 'dayjs';
-import { Select, Switch, message } from 'antd';
+import { Select, Switch, message, Tooltip as AntTooltip } from 'antd';
 import { motion, AnimatePresence } from 'motion/react';
 import { Plus, Trash2, Edit3, CheckCircle2, AlertCircle, ArrowLeft, Settings, Search, X, Check, LayoutGrid, List } from 'lucide-react';
 import { Language, Workflow, JobPreset, JobPresetWorkflow } from '../types';
@@ -186,7 +186,7 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
 
         {/* View Toggle */}
         <div className="flex bg-slate-200/60 p-1 border border-slate-200/40 h-[38px] items-center" style={{ borderRadius: '4px' }}>
-          <Tooltip content={language === 'TH' ? 'แบบกริด' : 'Grid view'}>
+          <AntTooltip title={language === 'TH' ? 'แบบกริด' : 'Grid view'}>
             <button
               type="button"
               onClick={() => setViewMode('CARD')}
@@ -199,8 +199,8 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
             >
               <LayoutGrid size={14} />
             </button>
-          </Tooltip>
-          <Tooltip content={language === 'TH' ? 'แบบรายการ' : 'List view'}>
+          </AntTooltip>
+          <AntTooltip title={language === 'TH' ? 'แบบรายการ' : 'List view'}>
             <button
               type="button"
               onClick={() => setViewMode('LIST')}
@@ -213,7 +213,7 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
             >
               <List size={14} />
             </button>
-          </Tooltip>
+          </AntTooltip>
         </div>
       </div>
 
