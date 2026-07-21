@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
+import dayjs from 'dayjs';
 import { Select, Switch, message } from 'antd';
 import { motion, AnimatePresence } from 'motion/react';
 import { Plus, Trash2, Edit3, CheckCircle2, AlertCircle, ArrowLeft, Settings, Search, X, Check } from 'lucide-react';
@@ -61,6 +62,7 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
     cancel: language === 'TH' ? 'ยกเลิก' : 'Cancel',
     active: language === 'TH' ? 'เปิดใช้งาน' : 'Active',
     noWorkflows: language === 'TH' ? 'ยังไม่มีเวิร์กโฟลว์ กรุณาเพิ่มอย่างน้อย 1 รายการ' : 'No workflows added. Please add at least 1.',
+    lastUpdated: language === 'TH' ? 'อัปเดตล่าสุด' : 'Last Updated',
   };
 
   const allWorkflows = [...workflows, ...comparisonWorkflows];
@@ -126,7 +128,9 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
     handleCloseModal();
   };
 
-  const filteredPresets = presets.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredPresets = presets
+    .filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 
   const canSave = name.trim() !== '' && assignedTeams.length > 0 && presetWorkflows.length > 0;
 
@@ -230,6 +234,10 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
                         );
                       })}
                     </div>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">{t.lastUpdated}</span>
+                    <span className="text-xs font-bold text-slate-600">{dayjs(preset.updatedAt).format('YYYY-MM-DD HH:mm')}</span>
                   </div>
                 </div>
               </div>
