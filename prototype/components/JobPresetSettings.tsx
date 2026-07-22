@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import dayjs from 'dayjs';
 import { Select, Switch, message, Tooltip as AntTooltip } from 'antd';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Trash2, Edit3, CheckCircle2, AlertCircle, ArrowLeft, Settings, Search, X, Check, LayoutGrid, List } from 'lucide-react';
+import { Plus, Trash2, Pencil, CheckCircle2, AlertCircle, ArrowLeft, Settings, Search, X, Check, LayoutGrid, List } from 'lucide-react';
 import { Language, Workflow, JobPreset, JobPresetWorkflow } from '../types';
 import { MOCK_TEAMS } from '../mock-data/teams.mock';
 import { Tooltip } from './Tooltip';
@@ -241,7 +241,7 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
                         onClick={() => handleOpenModal(preset)}
                         className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                       >
-                        <Edit3 size={16} />
+                        <Pencil size={16} />
                       </button>
                     </Tooltip>
                     <Tooltip content={language === 'TH' ? 'ลบพรีเซ็ต' : 'Delete preset'}>
@@ -333,7 +333,7 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
                           onClick={() => handleOpenModal(preset)}
                           className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                         >
-                          <Edit3 size={14} />
+                          <Pencil size={14} />
                         </button>
                       </Tooltip>
                       <Tooltip content={language === 'TH' ? 'ลบพรีเซ็ต' : 'Delete preset'}>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Modal, Select, Input, Empty, Button, Tooltip, Tag, Popconfirm, Checkbox, Switch, message, Drawer } from 'antd';
 import { 
-  FileText, Plus, Trash2, Edit3, AlertCircle, ArrowLeft, 
+  FileText, Plus, Trash2, Pencil, AlertCircle, ArrowLeft,
   Settings, Check, Search, Calendar, ChevronRight, Workflow as WorkflowIcon,
   Layers, Database, Clock, Info, HelpCircle, LayoutGrid, List, X,
   ChevronDown
@@ -861,16 +861,18 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
                                   onClick={() => handleOpenEdit(schema)}
                                   className="p-2 hover:bg-slate-50 text-slate-400 hover:text-[#1f5df9] bg-white border border-slate-150 rounded-[4px] transition-all cursor-pointer"
                                 >
-                                  <Edit3 size={14} />
+                                  <Pencil size={14} />
                                 </button>
                               </Tooltip>
 
-                              <button
-                                onClick={() => setSchemaToDelete(schema)}
-                                className="p-2 hover:bg-rose-50 text-slate-400 hover:text-rose-600 bg-white border border-slate-150 rounded-[4px] transition-all cursor-pointer"
-                              >
-                                <Trash2 size={14} />
-                              </button>
+                              <Tooltip title={isTh ? 'ลบ' : 'Delete'}>
+                                <button
+                                  onClick={() => setSchemaToDelete(schema)}
+                                  className="p-2 hover:bg-rose-50 text-slate-400 hover:text-rose-600 bg-white border border-slate-150 rounded-[4px] transition-all cursor-pointer"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </Tooltip>
                             </div>
                           </td>
                         </motion.tr>
@@ -909,22 +911,24 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
                             
                             {/* Action Buttons */}
                             <div className="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                              <button
-                                type="button"
-                                onClick={() => handleOpenEdit(schema)}
-                                className="p-1.5 hover:bg-slate-100 text-slate-500 hover:text-blue-600 rounded-[4px] transition-colors cursor-pointer"
-                                title={isTh ? 'แก้ไขสคีมา' : 'Edit Schema'}
-                              >
-                                <Edit3 size={13} />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setSchemaToDelete(schema)}
-                                className="p-1.5 hover:bg-rose-50 text-slate-500 hover:text-destructive rounded-[4px] transition-colors cursor-pointer"
-                                title="Delete"
-                              >
-                                <Trash2 size={13} />
-                              </button>
+                              <Tooltip title={isTh ? 'แก้ไขสคีมา' : 'Edit Schema'}>
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenEdit(schema)}
+                                  className="p-1.5 hover:bg-slate-100 text-slate-500 hover:text-blue-600 rounded-[4px] transition-colors cursor-pointer"
+                                >
+                                  <Pencil size={13} />
+                                </button>
+                              </Tooltip>
+                              <Tooltip title={isTh ? 'ลบ' : 'Delete'}>
+                                <button
+                                  type="button"
+                                  onClick={() => setSchemaToDelete(schema)}
+                                  className="p-1.5 hover:bg-rose-50 text-slate-500 hover:text-destructive rounded-[4px] transition-colors cursor-pointer"
+                                >
+                                  <Trash2 size={13} />
+                                </button>
+                              </Tooltip>
                             </div>
                           </div>
 

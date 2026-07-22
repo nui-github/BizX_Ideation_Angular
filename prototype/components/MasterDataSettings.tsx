@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Modal, Input, Button, Tag, message, Tooltip, Empty, Drawer } from 'antd';
 import { 
-  Database, ArrowLeft, Plus, Search, Edit3, Trash2, HelpCircle, 
+  Database, ArrowLeft, Plus, Search, Pencil, Trash2, HelpCircle,
   Tag as TagIcon, Calendar, CheckCircle, ChevronRight, Hash, ShieldAlert,
   LayoutGrid, List, Upload, Download, FileSpreadsheet, Check, X
 } from 'lucide-react';
@@ -739,13 +739,13 @@ export const MasterDataSettings: React.FC<MasterDataSettingsProps> = ({ language
                       }}
                       className="p-1.5 text-[#1f5df9] bg-blue-50/50 hover:bg-blue-100/50 border border-blue-200/40 rounded-[4px] transition-all cursor-pointer flex items-center justify-center"
                     >
-                      <Edit3 size={13} />
+                      <Pencil size={13} />
                     </button>
                   </Tooltip>
                 )}
               </div>
               <p className="text-sm font-bold text-slate-500">
-                {selectedTableId && activeTable 
+                {selectedTableId && activeTable
                   ? `Table code/ID: ${activeTable.id}`
                   : t.subtitle
                 }
@@ -1023,7 +1023,7 @@ export const MasterDataSettings: React.FC<MasterDataSettingsProps> = ({ language
                             onClick={() => handleOpenEditRecord(rec)}
                             className="p-2 text-slate-500 hover:text-[#1f5df9] border border-slate-200/80 hover:border-blue-200 hover:bg-blue-50/50 rounded-[4px] transition-all cursor-pointer flex items-center justify-center grow sm:grow-0"
                           >
-                            <Edit3 size={15} />
+                            <Pencil size={15} />
                           </button>
                         </Tooltip>
 
@@ -1304,7 +1304,7 @@ export const MasterDataSettings: React.FC<MasterDataSettingsProps> = ({ language
         title={
           <div className="flex items-center gap-2">
             <div className="p-1.5 bg-blue-50 text-[#1f5df9] rounded-[4px]">
-              <Edit3 size={16} />
+              <Pencil size={16} />
             </div>
             <span className="text-[18px] font-black text-[#010136]">
               {language === 'TH' ? 'แก้ไขชื่อรายการ' : 'Edit Item Name'}

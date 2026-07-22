@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Select, Input, Tooltip as AntTooltip } from 'antd';
 import { 
-  FileText, Plus, Trash2, Edit3, AlertCircle, XCircle, ArrowLeft, 
+  FileText, Plus, Trash2, Pencil, AlertCircle, XCircle, ArrowLeft,
   Settings, Check, Search, Sparkles, X, Info, FileCode,
   LayoutGrid, List, Database, Layers
  } from 'lucide-react';
@@ -553,22 +553,24 @@ export const DocTypeMaster: React.FC<DocTypeMasterProps> = ({
                   
                   {/* Action Buttons */}
                   <div className="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                    <button
-                      type="button"
-                      onClick={() => handleOpenEditModal(dt)}
-                      className="p-1.5 hover:bg-slate-100 text-slate-500 hover:text-blue-600 rounded-[4px] transition-colors cursor-pointer"
-                      title={text.modalEditTitle}
-                    >
-                      <Edit3 size={13} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(dt)}
-                      className="p-1.5 hover:bg-rose-50 text-slate-500 hover:text-destructive rounded-[4px] transition-colors cursor-pointer"
-                      title="Delete"
-                    >
-                      <Trash2 size={13} />
-                    </button>
+                    <AntTooltip title={text.modalEditTitle}>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEditModal(dt)}
+                        className="p-1.5 hover:bg-slate-100 text-slate-500 hover:text-blue-600 rounded-[4px] transition-colors cursor-pointer"
+                      >
+                        <Pencil size={13} />
+                      </button>
+                    </AntTooltip>
+                    <AntTooltip title={language === 'TH' ? 'ลบ' : 'Delete'}>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(dt)}
+                        className="p-1.5 hover:bg-rose-50 text-slate-500 hover:text-destructive rounded-[4px] transition-colors cursor-pointer"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </AntTooltip>
                   </div>
                 </div>
 
@@ -720,22 +722,24 @@ export const DocTypeMaster: React.FC<DocTypeMasterProps> = ({
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right">
                     <div className="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity pr-2">
-                      <button
-                        type="button"
-                        onClick={() => handleOpenEditModal(dt)}
-                        className="p-1.5 hover:bg-slate-100 text-slate-500 hover:text-blue-600 rounded-[4px] transition-colors cursor-pointer"
-                        title={text.modalEditTitle}
-                      >
-                        <Edit3 size={13} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(dt)}
-                        className="p-1.5 hover:bg-rose-50 text-slate-500 hover:text-destructive rounded-[4px] transition-colors cursor-pointer"
-                        title="Delete"
-                      >
-                        <Trash2 size={13} />
-                      </button>
+                      <AntTooltip title={text.modalEditTitle}>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditModal(dt)}
+                          className="p-1.5 hover:bg-slate-100 text-slate-500 hover:text-blue-600 rounded-[4px] transition-colors cursor-pointer"
+                        >
+                          <Pencil size={13} />
+                        </button>
+                      </AntTooltip>
+                      <AntTooltip title={language === 'TH' ? 'ลบ' : 'Delete'}>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(dt)}
+                          className="p-1.5 hover:bg-rose-50 text-slate-500 hover:text-destructive rounded-[4px] transition-colors cursor-pointer"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </AntTooltip>
                     </div>
                   </td>
                 </tr>
