@@ -858,7 +858,7 @@ export const MasterDataSettings: React.FC<MasterDataSettingsProps> = ({ language
                               <button
                                 type="button"
                                 onClick={(e) => { e.stopPropagation(); setTableDeleteTarget(tbl); }}
-                                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-[4px] transition-colors cursor-pointer opacity-0 group-hover:opacity-100"
+                                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-[4px] transition-colors cursor-pointer"
                               >
                                 <Trash2 size={14} />
                               </button>
