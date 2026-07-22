@@ -1,9 +1,10 @@
 import React, { useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Modal, Input, Button, Tag, message, Tooltip, Empty, Drawer } from 'antd';
-import { 
+import {
   Database, ArrowLeft, Plus, Search, Pencil, Trash2, HelpCircle,
   Tag as TagIcon, Calendar, CheckCircle, ChevronRight, Hash, ShieldAlert,
-  LayoutGrid, List, Upload, Download, FileSpreadsheet, Check, X
+  LayoutGrid, List, Upload, Download, FileSpreadsheet, Check, X, AlertCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import * as XLSX from 'xlsx';
@@ -103,6 +104,9 @@ export const MasterDataSettings: React.FC<MasterDataSettingsProps> = ({ language
   // Confirmation Modal for Deletion
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [recordToDelete, setRecordToDelete] = useState<MasterRecord | null>(null);
+
+  // Confirmation Dialog for Table Deletion
+  const [tableDeleteTarget, setTableDeleteTarget] = useState<MasterTable | null>(null);
 
   // Add Table Modal States
   const [isAddTableModalOpen, setIsAddTableModalOpen] = useState(false);
@@ -336,6 +340,18 @@ export const MasterDataSettings: React.FC<MasterDataSettingsProps> = ({ language
     message.success(t.successDelete);
     setDeleteConfirmOpen(false);
     setRecordToDelete(null);
+  };
+
+  const handleConfirmDeleteTable = () => {
+    if (!tableDeleteTarget) return;
+
+    setMasterTables(prev => prev.filter(tbl => tbl.id !== tableDeleteTarget.id));
+    message.success(
+      language === 'TH'
+        ? `ลบตาราง "${tableDeleteTarget.nameTH}" สำเร็จ`
+        : `Deleted table "${tableDeleteTarget.nameEN}" successfully`
+    );
+    setTableDeleteTarget(null);
   };
 
   // ================= EXCEL IMPORT HANDLERS =================
@@ -833,15 +849,20 @@ export const MasterDataSettings: React.FC<MasterDataSettingsProps> = ({ language
                         className="bg-slate-50/40 hover:bg-white border border-slate-100 rounded-[8px] p-6 shadow-sm hover:shadow-md cursor-pointer transition-all flex flex-col justify-between group"
                       >
                         <div className="space-y-4">
-                          {/* Top bar with icon & record quantity count badge */}
+                          {/* Top bar with icon & delete action */}
                           <div className="flex items-center justify-between">
                             <div className="w-11 h-11 rounded-[8px] bg-blue-50 text-[#1f5df9] flex items-center justify-center group-hover:bg-[#1f5df9] group-hover:text-white transition-colors duration-200">
                               <Database size={20} />
                             </div>
-                            <span className="text-xs font-black text-[#010136] bg-white border border-slate-100 rounded-[4px] px-2.5 py-1 flex items-center gap-1 group-hover:bg-blue-50 group-hover:border-blue-100/30 transition-colors">
-                              <Hash size={12} className="text-slate-400" />
-                              <span>{tbl.records.length} {language === 'TH' ? 'รายการ' : 'Records'}</span>
-                            </span>
+                            <Tooltip title={language === 'TH' ? 'ลบตาราง' : 'Delete table'}>
+                              <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); setTableDeleteTarget(tbl); }}
+                                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-[4px] transition-colors cursor-pointer opacity-0 group-hover:opacity-100"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </Tooltip>
                           </div>
 
                           {/* Content headings */}
@@ -857,11 +878,17 @@ export const MasterDataSettings: React.FC<MasterDataSettingsProps> = ({ language
 
                         {/* Bottom footer bar */}
                         <div className="border-t border-slate-100/80 pt-4 mt-5 flex items-center justify-between text-xs text-slate-400 font-medium">
-                          <div className="flex items-center gap-1.5">
-                            <Calendar size={13} className="text-slate-300" />
-                            <span>{formatDateTime(tbl.updatedAt)}</span>
+                          <div className="flex items-center gap-2.5">
+                            <span className="text-xs font-black text-[#010136] bg-white border border-slate-100 rounded-[4px] px-2.5 py-1 flex items-center gap-1 shrink-0 group-hover:bg-blue-50 group-hover:border-blue-100/30 transition-colors">
+                              <Hash size={12} className="text-slate-400" />
+                              <span>{tbl.records.length} {language === 'TH' ? 'รายการ' : 'Records'}</span>
+                            </span>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <Calendar size={13} className="text-slate-300" />
+                              <span>{formatDateTime(tbl.updatedAt)}</span>
+                            </div>
                           </div>
-                          <ChevronRight size={14} className="text-slate-300 group-hover:text-[#1f5df9] group-hover:translate-x-1 transition-all" />
+                          <ChevronRight size={14} className="text-slate-300 group-hover:text-[#1f5df9] group-hover:translate-x-1 transition-all shrink-0" />
                         </div>
                       </motion.div>
                     ))}
@@ -1541,6 +1568,76 @@ export const MasterDataSettings: React.FC<MasterDataSettingsProps> = ({ language
           )}
         </div>
       </Drawer>
+
+      {/* ================= DELETE TABLE CONFIRMATION DIALOG ================= */}
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {tableDeleteTarget && (
+            <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setTableDeleteTarget(null)}
+                className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm cursor-pointer"
+              />
+
+              <motion.div
+                initial={{ scale: 0.95, y: 20, opacity: 0 }}
+                animate={{ scale: 1, y: 0, opacity: 1 }}
+                exit={{ scale: 0.95, y: 20, opacity: 0 }}
+                transition={{ type: 'spring', damping: 25, stiffness: 250 }}
+                className="relative bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-md w-full overflow-hidden z-10 p-6 text-center"
+              >
+                <div className="flex items-center justify-center mx-auto mb-4 text-rose-500">
+                  <AlertCircle size={48} />
+                </div>
+
+                <div className="space-y-1.5 mb-4">
+                  <h3 className="text-xl font-black text-[#010136] tracking-tight leading-tight">
+                    {language === 'TH'
+                      ? `ลบตาราง "${tableDeleteTarget.nameTH}" ใช่หรือไม่`
+                      : `Delete "${tableDeleteTarget.nameEN}"?`}
+                  </h3>
+                </div>
+
+                <div className="space-y-3 text-left mb-6">
+                  {tableDeleteTarget.records.length > 0 && (
+                    <p className="text-xs font-bold text-rose-500 leading-relaxed bg-rose-50 border border-rose-100 rounded-xl p-3">
+                      {language === 'TH'
+                        ? `ตารางนี้มีข้อมูลอยู่ทั้งหมด ${tableDeleteTarget.records.length} รายการ การลบตารางจะลบข้อมูลเหล่านี้ทั้งหมดไปด้วย`
+                        : `This table contains ${tableDeleteTarget.records.length} records. Deleting it will remove all of them as well.`}
+                    </p>
+                  )}
+                  <p className="text-xs font-semibold text-slate-600 leading-relaxed text-center">
+                    {language === 'TH'
+                      ? 'คุณยืนยันที่จะลบตารางนี้ใช่หรือไม่? การลบนี้ไม่สามารถกู้คืนได้เมื่อดำเนินการสำเร็จ'
+                      : 'Are you sure you want to permanently delete this table? This action cannot be undone.'}
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setTableDeleteTarget(null)}
+                    className="flex-1 py-2.5 rounded-[4px] border border-slate-200 bg-white text-slate-600 font-bold hover:bg-slate-50 text-xs transition active:scale-95 cursor-pointer h-[40px]"
+                  >
+                    {language === 'TH' ? 'ยกเลิก' : 'Cancel'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleConfirmDeleteTable}
+                    className="flex-1 py-2.5 rounded-[4px] bg-[#1F5DF9] hover:bg-[#104BE3] text-white font-bold text-xs transition active:scale-95 cursor-pointer shadow-md shadow-blue-500/10 h-[40px]"
+                  >
+                    {language === 'TH' ? 'ลบตาราง' : 'Confirm Delete'}
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 };
