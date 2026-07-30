@@ -37,9 +37,10 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
   };
 
   const isDocTypeBoundToSchema = (docName: string): boolean => {
+    if (docName === t.docTypeHSCode) return true;
     const docTypeId = getDocTypeIdFromColName(docName);
-    return DEFAULT_SCHEMAS.some(schema => 
-      schema.docTypes.includes(docTypeId) || 
+    return DEFAULT_SCHEMAS.some(schema =>
+      schema.docTypes.includes(docTypeId) ||
       schema.configs?.some(cfg => cfg.docTypeId === docTypeId)
     );
   };
