@@ -53,7 +53,7 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
   // Mock Rules Data
   const [rules, setRules] = useState(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('bizx_compare_rules_v5');
+      const saved = localStorage.getItem('bizx_compare_rules_v6');
       if (saved) {
         try {
           return JSON.parse(saved);
@@ -73,7 +73,7 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
         updatedAt: '2026-05-29',
         workflowIds: ['cwf-leo', 'cwf-cds'],
         docTypes: [
-          t.docTypeShort, t.docTypePO, t.docTypeInvoice, t.docTypePL, 
+          t.docTypeShort, t.docTypePO, t.docTypeInvoice, t.docTypePL,
           t.docTypeBL, t.docTypeRemark
         ],
         totalFields: 14,
@@ -98,11 +98,11 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
                 {type: 'TEXT', text: ''}
               ] },
               { id: 'h3', detail: 'Buyer Name', detailTh: 'ชื่อผู้ซื้อ (Buyer Name)', values: [
-                {type: 'MASTER_LOOKUP', schemaId: 'ls-1', schemaField: 'Invoice#', masterDb: 'Customers'},
-                {type: 'MASTER_LOOKUP', schemaId: 'ls-2', schemaField: 'PO No', masterDb: 'Customers'},
-                {type: '', schemaId: 'ls-1', schemaField: 'Invoice#', isMain: true, masterDb: 'Customers'},
-                {type: 'MASTER_LOOKUP', schemaId: 'ls-1', schemaField: 'Packing#', masterDb: 'Customers'},
-                {type: 'MASTER_LOOKUP', schemaId: 'ls-1', schemaField: 'B/L No', masterDb: 'Customers'},
+                {type: 'MASTER_LOOKUP', schemaId: 'ls-1', schemaField: 'Invoice#', lookupSource: 'MASTER_DATA', masterDb: 'Customers'},
+                {type: 'MASTER_LOOKUP', schemaId: 'ls-2', schemaField: 'PO No', lookupSource: 'MASTER_DATA', masterDb: 'Customers'},
+                {type: '', schemaId: 'ls-1', schemaField: 'Invoice#', isMain: true},
+                {type: 'MASTER_LOOKUP', schemaId: 'ls-1', schemaField: 'Packing#', lookupSource: 'MASTER_DATA', masterDb: 'Customers'},
+                {type: 'MASTER_LOOKUP', schemaId: 'ls-1', schemaField: 'B/L No', lookupSource: 'DOC_TYPE', lookupDocType: t.docTypeInvoice, lookupMatchColumns: 'Customer Name, Tax ID'},
                 {type: 'TEXT', text: ''}
               ] },
               { id: 'h4', detail: 'Invoice No.', detailTh: 'เลขที่ใบแจ้งหนี้ (Invoice No.)', values: [
@@ -177,7 +177,7 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
               { id: 'd6', detail: 'Internal Remarks', detailTh: 'หมายเหตุภายใน', values: [
                 {type: '', schemaId: 'ls-1', schemaField: 'Invoice#'},
                 {type: '', schemaId: 'ls-2', schemaField: 'PO No'},
-                {type: '', schemaId: 'ls-1', schemaField: 'Invoice#'},
+                {type: '', schemaId: 'ls-1', schemaField: 'Invoice#', isMain: true},
                 {type: '', schemaId: 'ls-1', schemaField: 'Packing#'},
                 {type: '', schemaId: 'ls-1', schemaField: 'B/L No'},
                 {type: 'TEXT', text: ''}
@@ -211,13 +211,13 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
         id: 'rule-002',
         name: 'Standard Export Documents',
         nameTh: 'กฎตรวจสอบเอกสารส่งออกมาตรฐาน',
-        description: 'Standard operational rules for outward shipments, focusing on tracking, invoice verification, and weigh bill tallies.',
-        descriptionTh: 'กฎเกณฑ์มาตรฐานปฏิบัติการสำหรับการส่งสินค้าออกนอกประเทศ เน้นควบคุมการติดตามสถานะ ตรวจสอบใบกำกับสินค้า และบันทึกบัญชีน้ำหนักรวม',
+        description: 'Standard operational rules for outward shipments, focusing on tracking, invoice verification, weight tallies, and a carried-forward container seal reference from the express clearance flow.',
+        descriptionTh: 'กฎเกณฑ์มาตรฐานปฏิบัติการสำหรับการส่งสินค้าออกนอกประเทศ เน้นควบคุมการติดตามสถานะ ตรวจสอบใบกำกับสินค้า บันทึกบัญชีน้ำหนักรวม และดึงค่าเลขซีลตู้คอนเทนเนอร์ต่อเนื่องจากเวิร์กโฟลว์ Express Clearance',
         status: 'Active',
         updatedAt: '2026-05-15',
-        workflowIds: [],
+        workflowIds: ['cwf-3'],
         docTypes: [t.docTypeInvoice, t.docTypePL, t.docTypeBL, t.docTypePO, t.docTypeRemark],
-        totalFields: 5,
+        totalFields: 6,
         parts: [
           {
             title: t.ruleHeader,
@@ -244,14 +244,14 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
               { id: 'd1_2', detail: 'Total Weight', detailTh: 'น้ำหนักรวมทั้งหมด (Weight)', values: [
                 {type: '', schemaId: 'ls-1', schemaField: 'Invoice#'},
                 {type: 'NUMBER_WORD', schemaId: 'ls-1', schemaField: 'Weight'},
-                {type: 'NUMBER_WORD', schemaId: 'ls-1', schemaField: 'B/L No'},
+                {type: '', schemaId: 'ls-1', schemaField: 'B/L No', isMain: true},
                 {type: 'NUMBER_WORD', schemaId: 'ls-2', schemaField: 'PO No'},
                 {type: 'TEXT', text: ''}
               ] },
               { id: 'd2_2', detail: 'Total Volume', detailTh: 'ปริมาตรรวมทั้งหมด (Volume)', values: [
                 {type: '', schemaId: 'ls-1', schemaField: 'Invoice#'},
                 {type: 'NUMBER_WORD', schemaId: 'ls-1', schemaField: 'Weight'},
-                {type: 'NUMBER_WORD', schemaId: 'ls-1', schemaField: 'B/L No'},
+                {type: '', schemaId: 'ls-1', schemaField: 'B/L No', isMain: true},
                 {type: 'NUMBER_WORD', schemaId: 'ls-2', schemaField: 'PO No'},
                 {type: 'TEXT', text: ''}
               ] },
@@ -263,8 +263,15 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
               { id: 'f1_2', detail: 'Port of Loading', detailTh: 'ท่าเรือต้นทาง (Port of Loading)', values: [
                 {type: 'EXACT', schemaId: 'ls-1', schemaField: 'Invoice#'},
                 {type: '', schemaId: 'ls-1', schemaField: 'Packing#'},
-                {type: 'EXACT', schemaId: 'ls-1', schemaField: 'B/L No'},
+                {type: '', schemaId: 'ls-1', schemaField: 'B/L No', isMain: true},
                 {type: 'EXACT', schemaId: 'ls-2', schemaField: 'PO No'},
+                {type: 'TEXT', text: ''}
+              ] },
+              { id: 'f2_2', detail: 'Container Seal No.', detailTh: 'เลขซีลตู้คอนเทนเนอร์ (Container Seal No.)', values: [
+                {type: 'CROSS_FLOW_CARRY', schemaId: 'ls-1', schemaField: 'Invoice#', carryRule: 'Gate Pass Rule', carryField: 'Seal No'},
+                {type: 'CROSS_FLOW_CARRY', schemaId: 'ls-1', schemaField: 'Packing#', carryRule: 'Gate Pass Rule', carryField: 'Seal No'},
+                {type: '', schemaId: 'ls-1', schemaField: 'B/L No', isMain: true},
+                {type: 'CROSS_FLOW_CARRY', schemaId: 'ls-2', schemaField: 'PO No', carryRule: 'Gate Pass Rule', carryField: 'Seal No'},
                 {type: 'TEXT', text: ''}
               ] },
             ]
@@ -279,7 +286,7 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
         descriptionTh: 'ชั้นข้อมูลการตรวจสอบแบบพิเศษสำหรับเอกสารแจ้งสินค้าอันตราย ใบรับรองเคมีภัณฑ์ กลุ่มการบรรจุภัณฑ์ และช่องทางติดต่อฉุกเฉิน',
         status: 'Inactive',
         updatedAt: '2026-05-10',
-        workflowIds: [],
+        workflowIds: ['cwf-1'],
         docTypes: [t.docTypeInvoice, t.docTypePL, t.docTypeBL, t.docTypePO, t.docTypeRemark],
         totalFields: 5,
         parts: [
@@ -289,14 +296,14 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
               { id: 'h1_3', detail: 'UN Number', detailTh: 'หมายเลขสหประชาชาติ (UN Number)', values: [
                 {type: 'EXACT', schemaId: 'ls-1', schemaField: 'Invoice#'},
                 {type: 'EXACT', schemaId: 'ls-1', schemaField: 'Packing#'},
-                {type: 'EXACT', schemaId: 'ls-1', schemaField: 'B/L No'},
+                {type: '', schemaId: 'ls-1', schemaField: 'B/L No', isMain: true},
                 {type: 'EXACT', schemaId: 'ls-2', schemaField: 'PO No'},
                 {type: 'TEXT', text: ''}
               ] },
               { id: 'h2_3', detail: 'Proper Shipping Name', detailTh: 'ชื่อที่ถูกต้องในการขนส่ง (Proper Shipping Name)', values: [
                 {type: 'BILINGUAL', schemaId: 'ls-1', schemaField: 'Invoice#'},
                 {type: 'BILINGUAL', schemaId: 'ls-1', schemaField: 'Packing#'},
-                {type: 'BILINGUAL', schemaId: 'ls-1', schemaField: 'B/L No'},
+                {type: '', schemaId: 'ls-1', schemaField: 'B/L No', isMain: true},
                 {type: 'BILINGUAL', schemaId: 'ls-2', schemaField: 'PO No'},
                 {type: 'TEXT', text: ''}
               ] },
@@ -308,14 +315,14 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
               { id: 'd1_3', detail: 'Hazard Class', detailTh: 'ระดับความเป็นอันตราย (Hazard Class)', values: [
                 {type: '', schemaId: 'ls-1', schemaField: 'Invoice#'},
                 {type: '', schemaId: 'ls-1', schemaField: 'Packing#'},
-                {type: 'EXACT', schemaId: 'ls-1', schemaField: 'B/L No'},
+                {type: '', schemaId: 'ls-1', schemaField: 'B/L No', isMain: true},
                 {type: 'EXACT', schemaId: 'ls-2', schemaField: 'PO No'},
                 {type: 'TEXT', text: ''}
               ] },
               { id: 'd2_3', detail: 'Packing Group', detailTh: 'กลุ่มการบรรจุทางเคมี (Packing Group)', values: [
                 {type: '', schemaId: 'ls-1', schemaField: 'Invoice#'},
                 {type: '', schemaId: 'ls-1', schemaField: 'Packing#'},
-                {type: 'EXACT', schemaId: 'ls-1', schemaField: 'B/L No'},
+                {type: '', schemaId: 'ls-1', schemaField: 'B/L No', isMain: true},
                 {type: 'EXACT', schemaId: 'ls-2', schemaField: 'PO No'},
                 {type: 'TEXT', text: ''}
               ] },
@@ -327,7 +334,7 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
               { id: 'f1_3', detail: 'Emergency Contact', detailTh: 'เบอร์ติดต่อกรณีฉุกเฉิน (Emergency Contact)', values: [
                 {type: 'EXACT', schemaId: 'ls-1', schemaField: 'Invoice#'},
                 {type: '', schemaId: 'ls-1', schemaField: 'Packing#'},
-                {type: 'EXACT', schemaId: 'ls-1', schemaField: 'B/L No'},
+                {type: '', schemaId: 'ls-1', schemaField: 'B/L No', isMain: true},
                 {type: 'EXACT', schemaId: 'ls-2', schemaField: 'PO No'},
                 {type: 'TEXT', text: ''}
               ] },
@@ -339,11 +346,11 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
         id: 'rule-004',
         name: 'Automated HS Code Verification',
         nameTh: 'กฎเปรียบเทียบพิกัดศุลกากร (HS Code) อัตโนมัติ',
-        description: 'Verifies standard HS Code classifications and special duty rate matches for general imports against FTA agreements.',
-        descriptionTh: 'ประเมินข้ามข้อมูลพิกัดสิทธิประโยชน์ทางภาษี อัตราอากรศุลกากร และระบบตรวจสอบหนังสือรับรองแหล่งกำเนิดสินค้าภายใต้ข้อตกลง FTA',
+        description: 'Verifies standard HS Code classifications and special duty rate matches for general imports against FTA agreements, cross-referencing the HS Code Master File doc type directly.',
+        descriptionTh: 'ประเมินข้ามข้อมูลพิกัดสิทธิประโยชน์ทางภาษี อัตราอากรศุลกากร และระบบตรวจสอบหนังสือรับรองแหล่งกำเนิดสินค้าภายใต้ข้อตกลง FTA โดยอ้างอิงไฟล์ HS Code Master File โดยตรง',
         status: 'Active',
         updatedAt: '2026-05-24',
-        workflowIds: [],
+        workflowIds: ['cwf-2'],
         docTypes: [t.docTypeHSCode, t.docTypeFTADraft, t.docTypeInvoice],
         totalFields: 4,
         parts: [
@@ -352,8 +359,8 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
             rows: [
               { id: 'h1_4', detail: 'HS Code Listing', detailTh: 'พิกัดอัตราศุลกากร (HS Code Listing)', values: [
                 {type: 'EXACT', schemaId: 'ls-1', schemaField: 'HS Code'},
-                {type: 'EXACT', schemaId: 'ls-2', schemaField: 'PO No'},
-                {type: 'TEXT', text: ''}
+                {type: 'MASTER_LOOKUP', schemaId: 'ls-2', schemaField: 'PO No', lookupSource: 'DOC_TYPE', lookupDocType: t.docTypeHSCode, lookupMatchColumns: 'HS Code, Description'},
+                {type: '', schemaId: 'ls-1', schemaField: 'Invoice#', isMain: true}
               ] }
             ]
           },
@@ -362,11 +369,13 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
             rows: [
               { id: 'd1_4', detail: 'Duty Rate %', detailTh: 'อัตราอากรศุลกากร % (Duty Rate %)', values: [
                 {type: 'EXACT', schemaId: 'ls-1', schemaField: 'Duty Rate'},
-                {type: 'TEXT', text: ''}
+                {type: 'EXACT', schemaId: 'ls-2', schemaField: 'PO No'},
+                {type: '', schemaId: 'ls-1', schemaField: 'Invoice#', isMain: true}
               ] },
               { id: 'd2_4', detail: 'Country of Origin', detailTh: 'ประเทศแหล่งกำเนิดสินค้า (Country of Origin)', values: [
                 {type: 'BILINGUAL', schemaId: 'ls-1', schemaField: 'Origin Country'},
-                {type: 'TEXT', text: ''}
+                {type: 'BILINGUAL', schemaId: 'ls-2', schemaField: 'Origin Country'},
+                {type: '', schemaId: 'ls-1', schemaField: 'Invoice#', isMain: true}
               ] }
             ]
           },
@@ -375,7 +384,8 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
             rows: [
               { id: 'f1_4', detail: 'FTA Reference No.', detailTh: 'เลขที่หนังสือรับรอง FTA (FTA Reference No.)', values: [
                 {type: 'EXACT', schemaId: 'ls-1', schemaField: 'FTA Ref No.'},
-                {type: 'TEXT', text: ''}
+                {type: 'EXACT', schemaId: 'ls-2', schemaField: 'FTA Ref No.'},
+                {type: '', schemaId: 'ls-1', schemaField: 'Invoice#', isMain: true}
               ] }
             ]
           }
@@ -398,6 +408,7 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
             rows: [
               { id: 'h1_5', detail: 'Carrier Name', detailTh: 'ชื่อบริษัทผู้ขนส่ง (Carrier Name)', values: [
                 {type: 'BILINGUAL', schemaId: 'ls-1', schemaField: 'Carrier'},
+                {type: '', schemaId: 'ls-1', schemaField: 'Invoice#', isMain: true},
                 {type: 'TEXT', text: ''}
               ] }
             ]
@@ -407,6 +418,7 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
             rows: [
               { id: 'd1_5', detail: 'Surcharge breakdown', detailTh: 'รายการค่าธรรมเนียมพิเศษ (Surcharge breakdown)', values: [
                 {type: 'EXACT', schemaId: 'ls-1', schemaField: 'Surcharges'},
+                {type: '', schemaId: 'ls-1', schemaField: 'Invoice#', isMain: true},
                 {type: 'TEXT', text: ''}
               ] }
             ]
@@ -416,6 +428,7 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
             rows: [
               { id: 'f1_5', detail: 'Billing Signature Verification', detailTh: 'ลายเซ็นยืนยันการรับบิลสำหรับเรียกเก็บเงิน', values: [
                 {type: 'EXISTENCE', schemaId: 'ls-1', schemaField: 'Signature'},
+                {type: '', schemaId: 'ls-1', schemaField: 'Invoice#', isMain: true},
                 {type: 'TEXT', text: ''}
               ] }
             ]
@@ -427,7 +440,7 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('bizx_compare_rules_v5', JSON.stringify(rules));
+      localStorage.setItem('bizx_compare_rules_v6', JSON.stringify(rules));
     }
   }, [rules]);
 
