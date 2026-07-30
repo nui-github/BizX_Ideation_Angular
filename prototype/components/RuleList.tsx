@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Switch } from 'antd';
-import { Settings, Plus, LayoutList, ChevronRight, Trash2, Tag, Calendar, Waypoints, Copy, AlertCircle } from 'lucide-react';
+import { Settings, Plus, LayoutList, ChevronRight, Trash2, Tag, Calendar, Waypoints, Copy, AlertCircle, Search, Filter } from 'lucide-react';
 import { TRANSLATIONS } from '../translations';
 import { Language } from '../types';
 import { Tooltip } from './Tooltip';
@@ -10,6 +10,19 @@ export const RuleList = ({ rules, onSelect, onCreate, onDelete, onToggleStatus, 
   const t = TRANSLATIONS[language as Language] || TRANSLATIONS.EN;
   const isTh = language === 'TH';
   const [ruleToDelete, setRuleToDelete] = useState<any>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'Active' | 'Inactive'>('ALL');
+
+  const filteredRules = (rules || []).filter((rule: any) => {
+    const matchesStatus = statusFilter === 'ALL' || rule.status === statusFilter;
+    const q = searchTerm.toLowerCase();
+    const matchesSearch = !q ||
+      (rule.name || '').toLowerCase().includes(q) ||
+      (rule.nameTh || '').toLowerCase().includes(q) ||
+      (rule.description || '').toLowerCase().includes(q) ||
+      (rule.descriptionTh || '').toLowerCase().includes(q);
+    return matchesStatus && matchesSearch;
+  });
 
   const getWorkflowsUsingRule = (ruleId: string) => {
     if (!comparisonWorkflows) return [];
@@ -51,6 +64,41 @@ export const RuleList = ({ rules, onSelect, onCreate, onDelete, onToggleStatus, 
         )}
       </div>
 
+      {rules && rules.length > 0 && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-1">
+          <div className="relative flex-1 w-full max-w-md animate-in fade-in slide-in-from-left duration-300">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <input
+              type="text"
+              placeholder={isTh ? 'ค้นหา rule...' : 'Search rules...'}
+              className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-200/80 rounded-xl text-sm font-bold text-slate-700 shadow-sm focus:ring-2 focus:ring-blue-500 transition-all outline-none placeholder:font-medium"
+              style={{ borderRadius: '8px' }}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+          <div className="flex bg-slate-200/60 p-1 rounded-xl shadow-inner border border-slate-200/40 animate-in fade-in slide-in-from-right duration-300" style={{ borderRadius: '8px' }}>
+            {['ALL', 'Active', 'Inactive'].map((status) => (
+              <button
+                key={status}
+                onClick={() => setStatusFilter(status as any)}
+                className={`px-4 py-1.5 rounded-[4px] text-xs font-black uppercase tracking-widest transition-all ${
+                  statusFilter === status
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/20'
+                }`}
+                style={{ borderRadius: '6px' }}
+              >
+                {status === 'ALL' ? (isTh ? 'ทั้งหมด' : 'All') :
+                 status === 'Active' ? t.active :
+                 t.inactive}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 gap-4">
         {(!rules || rules.length === 0) ? (
           <div className="py-16 flex flex-col items-center justify-center bg-slate-50 border border-dashed border-slate-200 rounded-xl">
@@ -71,8 +119,20 @@ export const RuleList = ({ rules, onSelect, onCreate, onDelete, onToggleStatus, 
               <span>{t.btnCreateRuleSet}</span>
             </button>
           </div>
+        ) : filteredRules.length === 0 ? (
+          <div className="bg-white rounded-lg border border-slate-200 shadow-sm py-16 flex flex-col items-center justify-center text-center">
+            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+              <Filter size={24} className="text-slate-400" />
+            </div>
+            <h3 className="text-md font-black text-slate-800 tracking-tight mb-1">
+              {isTh ? 'ไม่พบ rule ที่ตรงกับเงื่อนไข' : 'No rules found'}
+            </h3>
+            <p className="text-sm font-medium text-slate-400">
+              {isTh ? 'ลองเปลี่ยนเงื่อนไขการค้นหาหรือตัวกรองของคุณ' : 'Try adjusting your search or filters.'}
+            </p>
+          </div>
         ) : (
-          rules.map((rule: any) => (
+          filteredRules.map((rule: any) => (
             <div key={rule.id} onClick={() => onSelect(rule.id)} className="bg-white rounded-lg p-5 border border-slate-200 shadow-sm hover:shadow-md hover:border-blue-300 transition-all cursor-pointer group flex items-center justify-between gap-4 relative overflow-hidden">
               <div className="flex items-center gap-5 min-w-0">
                 <div className="w-12 h-12 shrink-0 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
