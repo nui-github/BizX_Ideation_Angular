@@ -1573,47 +1573,45 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
 
                     return (
                       <div className="flex flex-col gap-4">
-                        <div className="flex flex-col gap-1.5">
+                        <div className="flex flex-col gap-2">
                           <span className="text-[10px] font-black text-[#010136]/50 uppercase tracking-wide">
-                            {language === 'TH' ? 'แหล่งข้อมูล Master lookup' : 'Master Lookup Source'}
+                            {language === 'TH' ? 'แหล่งข้อมูล Master lookup (เลือกได้ 1 แบบ)' : 'Master Lookup Source (choose one)'}
                           </span>
-                          <div className="flex bg-slate-200/60 p-1 border border-slate-200/40 gap-1" style={{ borderRadius: '4px' }}>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const newValues = [...editFormData.values];
-                                newValues[openDrawerInfo.colIdx] = {
-                                  ...newValues[openDrawerInfo.colIdx],
-                                  lookupSource: 'MASTER_DATA'
-                                };
-                                setEditFormData({...editFormData, values: newValues});
-                              }}
-                              className={`flex-1 px-3 py-2 rounded-[4px] text-xs font-bold transition-all cursor-pointer ${
-                                lookupSource === 'MASTER_DATA'
-                                  ? 'bg-white text-blue-600 shadow-sm'
-                                  : 'text-slate-500 hover:text-slate-800'
-                              }`}
-                            >
-                              {language === 'TH' ? 'ฐานข้อมูล Master Data' : 'Master Data'}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const newValues = [...editFormData.values];
-                                newValues[openDrawerInfo.colIdx] = {
-                                  ...newValues[openDrawerInfo.colIdx],
-                                  lookupSource: 'DOC_TYPE_HSCODE'
-                                };
-                                setEditFormData({...editFormData, values: newValues});
-                              }}
-                              className={`flex-1 px-3 py-2 rounded-[4px] text-xs font-bold transition-all cursor-pointer ${
-                                lookupSource === 'DOC_TYPE_HSCODE'
-                                  ? 'bg-white text-blue-600 shadow-sm'
-                                  : 'text-slate-500 hover:text-slate-800'
-                              }`}
-                            >
-                              {language === 'TH' ? `Doc Type: ${t.docTypeHSCode}` : `Doc Type: ${t.docTypeHSCode}`}
-                            </button>
+                          <div className="flex flex-col gap-2 bg-slate-50 p-3 border border-slate-200" style={{ borderRadius: '8px' }}>
+                            <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700 select-none">
+                              <input
+                                type="radio"
+                                name={`masterLookupSource-${openDrawerInfo.rowId}-${openDrawerInfo.colIdx}`}
+                                checked={lookupSource === 'MASTER_DATA'}
+                                onChange={() => {
+                                  const newValues = [...editFormData.values];
+                                  newValues[openDrawerInfo.colIdx] = {
+                                    ...newValues[openDrawerInfo.colIdx],
+                                    lookupSource: 'MASTER_DATA'
+                                  };
+                                  setEditFormData({...editFormData, values: newValues});
+                                }}
+                                className="w-3.5 h-3.5 text-blue-600 border-slate-300 focus:ring-blue-500 accent-blue-600 cursor-pointer"
+                              />
+                              <span>{language === 'TH' ? 'ฐานข้อมูล Master Data' : 'Master Data'}</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700 select-none">
+                              <input
+                                type="radio"
+                                name={`masterLookupSource-${openDrawerInfo.rowId}-${openDrawerInfo.colIdx}`}
+                                checked={lookupSource === 'DOC_TYPE_HSCODE'}
+                                onChange={() => {
+                                  const newValues = [...editFormData.values];
+                                  newValues[openDrawerInfo.colIdx] = {
+                                    ...newValues[openDrawerInfo.colIdx],
+                                    lookupSource: 'DOC_TYPE_HSCODE'
+                                  };
+                                  setEditFormData({...editFormData, values: newValues});
+                                }}
+                                className="w-3.5 h-3.5 text-blue-600 border-slate-300 focus:ring-blue-500 accent-blue-600 cursor-pointer"
+                              />
+                              <span>{language === 'TH' ? `Doc Type: ${t.docTypeHSCode}` : `Doc Type: ${t.docTypeHSCode}`}</span>
+                            </label>
                           </div>
                         </div>
 
