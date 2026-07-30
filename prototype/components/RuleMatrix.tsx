@@ -1069,8 +1069,8 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                                         case 'MASTER_LOOKUP':
                                           return (
                                             <div className="flex items-center justify-center gap-1 mt-1.5 text-[8px] font-black text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200/50 text-center max-w-full">
-                                              {val.lookupSource === 'DOC_TYPE_HSCODE' ? (
-                                                <span className="truncate">{t.docTypeHSCode}{val.hsMatchField ? ` · ${val.hsMatchField}` : ''}</span>
+                                              {val.lookupSource === 'DOC_TYPE' ? (
+                                                <span className="truncate">{val.lookupDocType || '—'}{val.lookupMatchColumns ? ` · ${val.lookupMatchColumns}` : ''}</span>
                                               ) : (
                                                 <span>DB: {val.masterDb || 'Customers'}</span>
                                               )}
@@ -1563,13 +1563,8 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                     );
 
                   case 'MASTER_LOOKUP':
-                    const lookupSource = drawerVal.lookupSource === 'DOC_TYPE_HSCODE' ? 'DOC_TYPE_HSCODE' : 'MASTER_DATA';
-                    const hsCodeMatchFieldOptions = [
-                      { value: 'HS Code', labelTh: 'HS Code', labelEn: 'HS Code' },
-                      { value: 'Product Description', labelTh: 'รายละเอียดสินค้า (Description)', labelEn: 'Product Description' },
-                      { value: 'Import Duty Rate', labelTh: 'อัตราอากรขาเข้า (Import Duty Rate)', labelEn: 'Import Duty Rate' },
-                      { value: 'UOM', labelTh: 'หน่วยนับ (UOM)', labelEn: 'UOM' },
-                    ];
+                    const lookupSource = drawerVal.lookupSource === 'DOC_TYPE' ? 'DOC_TYPE' : 'MASTER_DATA';
+                    const lookupDocTypeOptions = activeRule.docTypes.filter((d: string) => d !== t.docTypeRemark && d.trim() !== '');
 
                     return (
                       <div className="flex flex-col gap-4">
@@ -1599,18 +1594,18 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                               <input
                                 type="radio"
                                 name={`masterLookupSource-${openDrawerInfo.rowId}-${openDrawerInfo.colIdx}`}
-                                checked={lookupSource === 'DOC_TYPE_HSCODE'}
+                                checked={lookupSource === 'DOC_TYPE'}
                                 onChange={() => {
                                   const newValues = [...editFormData.values];
                                   newValues[openDrawerInfo.colIdx] = {
                                     ...newValues[openDrawerInfo.colIdx],
-                                    lookupSource: 'DOC_TYPE_HSCODE'
+                                    lookupSource: 'DOC_TYPE'
                                   };
                                   setEditFormData({...editFormData, values: newValues});
                                 }}
                                 className="w-3.5 h-3.5 text-blue-600 border-slate-300 focus:ring-blue-500 accent-blue-600 cursor-pointer"
                               />
-                              <span>{language === 'TH' ? `Doc Type: ${t.docTypeHSCode}` : `Doc Type: ${t.docTypeHSCode}`}</span>
+                              <span>{language === 'TH' ? 'เลือก Doc Type มาใช้เป็นฐานข้อมูล' : 'Use a Doc Type as the database'}</span>
                             </label>
                           </div>
                         </div>
@@ -1643,33 +1638,65 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                             </select>
                           </div>
                         ) : (
-                          <div className="bg-slate-50 p-4 border border-slate-200 flex flex-col gap-3" style={{ borderRadius: '8px' }}>
-                            <span className="text-[10px] font-black text-[#010136]/50 uppercase tracking-wide">
-                              {language === 'TH' ? `เลือกคอลัมน์ที่ใช้ค้นหาใน ${t.docTypeHSCode}` : `Select Column to Match in ${t.docTypeHSCode}`}
-                            </span>
-                            <p className="text-xs text-slate-500 leading-relaxed mb-1">
-                              {language === 'TH'
-                                ? `ระบบจะนำค่าของฟิลด์นี้ไปค้นหาในไฟล์ ${t.docTypeHSCode} ที่อยู่ในชุดเอกสารของ workflow เดียวกัน`
-                                : `The value of this field will be looked up in the ${t.docTypeHSCode} document within the same workflow's document set.`}
-                            </p>
-                            <select
-                              className="w-full bg-white border border-slate-200 rounded px-2.5 py-1.5 text-xs font-bold text-slate-700 outline-none focus:ring-1 focus:ring-blue-500"
-                              style={{ borderRadius: '4px' }}
-                              value={drawerVal.hsMatchField || 'HS Code'}
-                              onChange={(e) => {
-                                const newValues = [...editFormData.values];
-                                newValues[openDrawerInfo.colIdx] = {
-                                  ...newValues[openDrawerInfo.colIdx],
-                                  hsMatchField: e.target.value
-                                };
-                                setEditFormData({...editFormData, values: newValues});
-                              }}
-                            >
-                              {hsCodeMatchFieldOptions.map(opt => (
-                                <option key={opt.value} value={opt.value}>{language === 'TH' ? opt.labelTh : opt.labelEn}</option>
-                              ))}
-                            </select>
-                          </div>
+                          <>
+                            <div className="bg-slate-50 p-4 border border-slate-200 flex flex-col gap-3" style={{ borderRadius: '8px' }}>
+                              <span className="text-[10px] font-black text-[#010136]/50 uppercase tracking-wide">
+                                {language === 'TH' ? 'เลือก Doc Type ที่ใช้เป็นฐานข้อมูล' : 'Select Doc Type to Use as Database'}
+                              </span>
+                              <p className="text-xs text-slate-500 leading-relaxed mb-1">
+                                {language === 'TH'
+                                  ? 'แสดงเฉพาะ Doc Type ที่มีอยู่ในกฎเปรียบเทียบนี้เท่านั้น'
+                                  : 'Only doc types included in this compare rule are shown.'}
+                              </p>
+                              <select
+                                className="w-full bg-white border border-slate-200 rounded px-2.5 py-1.5 text-xs font-bold text-slate-700 outline-none focus:ring-1 focus:ring-blue-500"
+                                style={{ borderRadius: '4px' }}
+                                value={drawerVal.lookupDocType || ''}
+                                onChange={(e) => {
+                                  const newValues = [...editFormData.values];
+                                  newValues[openDrawerInfo.colIdx] = {
+                                    ...newValues[openDrawerInfo.colIdx],
+                                    lookupDocType: e.target.value,
+                                    lookupMatchColumns: ''
+                                  };
+                                  setEditFormData({...editFormData, values: newValues});
+                                }}
+                              >
+                                <option value="">{language === 'TH' ? 'เลือก Doc Type' : 'Select Doc Type'}</option>
+                                {lookupDocTypeOptions.map((d: string) => (
+                                  <option key={d} value={d}>{d}</option>
+                                ))}
+                              </select>
+                            </div>
+
+                            {!!drawerVal.lookupDocType && (
+                              <div className="bg-slate-50 p-4 border border-slate-200 flex flex-col gap-3 animate-in fade-in duration-200" style={{ borderRadius: '8px' }}>
+                                <span className="text-[10px] font-black text-[#010136]/50 uppercase tracking-wide">
+                                  {language === 'TH' ? `เลือกคอลัมน์ที่ใช้ค้นหาใน ${drawerVal.lookupDocType}` : `Column to Match in ${drawerVal.lookupDocType}`}
+                                </span>
+                                <p className="text-xs text-slate-500 leading-relaxed mb-1">
+                                  {language === 'TH'
+                                    ? `ระบบจะนำค่าของฟิลด์นี้ไปค้นหาในไฟล์ ${drawerVal.lookupDocType} ที่อยู่ในชุดเอกสารของ workflow เดียวกัน`
+                                    : `The value of this field will be looked up in the ${drawerVal.lookupDocType} document within the same workflow's document set.`}
+                                </p>
+                                <input
+                                  type="text"
+                                  className="w-full bg-white border border-slate-200 rounded px-2.5 py-1.5 text-xs font-bold text-slate-700 outline-none focus:ring-1 focus:ring-blue-500"
+                                  style={{ borderRadius: '4px' }}
+                                  placeholder={language === 'TH' ? 'พิมพ์ชื่อคอลัมน์ คั่นด้วยเครื่องหมาย , เช่น HS Code, Description' : 'Type column names separated by commas, e.g. HS Code, Description'}
+                                  value={drawerVal.lookupMatchColumns || ''}
+                                  onChange={(e) => {
+                                    const newValues = [...editFormData.values];
+                                    newValues[openDrawerInfo.colIdx] = {
+                                      ...newValues[openDrawerInfo.colIdx],
+                                      lookupMatchColumns: e.target.value
+                                    };
+                                    setEditFormData({...editFormData, values: newValues});
+                                  }}
+                                />
+                              </div>
+                            )}
+                          </>
                         )}
 
                         <div className="p-4 bg-slate-50 border border-slate-200 text-xs text-slate-600 font-black flex flex-col gap-1.5 leading-relaxed" style={{ borderRadius: '8px' }}>
