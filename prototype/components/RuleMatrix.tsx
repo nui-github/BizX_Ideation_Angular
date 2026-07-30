@@ -126,9 +126,10 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
   };
 
   const isDocTypeBoundToSchema = (docName: string): boolean => {
+    if (docName === t.docTypeHSCode) return true;
     const docTypeId = getDocTypeIdFromColName(docName);
-    return DEFAULT_SCHEMAS.some(schema => 
-      schema.docTypes.includes(docTypeId) || 
+    return DEFAULT_SCHEMAS.some(schema =>
+      schema.docTypes.includes(docTypeId) ||
       schema.configs?.some(cfg => cfg.docTypeId === docTypeId)
     );
   };
@@ -1158,7 +1159,7 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
           </div>
         </div>
       )}
-      {isAddDocTypeModalOpen && (
+      {isAddDocTypeModalOpen && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
             <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50/50">
@@ -1230,7 +1231,8 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
       {deletingDocType !== null && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
