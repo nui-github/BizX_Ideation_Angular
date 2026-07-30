@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
+import { Switch } from 'antd';
 import { Settings, Plus, LayoutList, ChevronRight, Trash2, Tag, Calendar, Waypoints, Copy, AlertCircle } from 'lucide-react';
 import { TRANSLATIONS } from '../translations';
 import { Language } from '../types';
@@ -25,11 +26,6 @@ export const RuleList = ({ rules, onSelect, onCreate, onDelete, onToggleStatus, 
   const confirmDelete = (e: React.MouseEvent, rule: any) => {
     e.stopPropagation();
     setRuleToDelete(rule);
-  };
-
-  const handleToggle = (e: React.MouseEvent, ruleId: string) => {
-    e.stopPropagation();
-    onToggleStatus(ruleId);
   };
 
   const handleDelete = () => {
@@ -77,17 +73,17 @@ export const RuleList = ({ rules, onSelect, onCreate, onDelete, onToggleStatus, 
           </div>
         ) : (
           rules.map((rule: any) => (
-            <div key={rule.id} onClick={() => onSelect(rule.id)} className="bg-white rounded-lg p-5 border border-slate-200 shadow-sm hover:shadow-md hover:border-blue-300 transition-all cursor-pointer group flex items-center justify-between relative overflow-hidden">
-              <div className="flex items-center gap-5">
-                <div className="w-12 h-12 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <div key={rule.id} onClick={() => onSelect(rule.id)} className="bg-white rounded-lg p-5 border border-slate-200 shadow-sm hover:shadow-md hover:border-blue-300 transition-all cursor-pointer group flex items-center justify-between gap-4 relative overflow-hidden">
+              <div className="flex items-center gap-5 min-w-0">
+                <div className="w-12 h-12 shrink-0 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <Settings size={22} />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <h3 className="text-lg font-black text-slate-800 tracking-tight mb-1 group-hover:text-blue-600 transition-colors">
                     {isTh && rule.nameTh ? rule.nameTh : rule.name}
                   </h3>
                   {(rule.description || rule.descriptionTh) && (
-                    <p className="text-sm font-bold text-slate-500 tracking-tight">
+                    <p className="text-sm font-normal text-slate-500 tracking-tight line-clamp-1">
                       {isTh && rule.descriptionTh ? rule.descriptionTh : rule.description}
                     </p>
                   )}
@@ -110,26 +106,24 @@ export const RuleList = ({ rules, onSelect, onCreate, onDelete, onToggleStatus, 
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-6">
-                <div className="text-right flex flex-col items-end">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">{t.status}</p>
-                  <div className="flex items-center gap-3">
-                    <div className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black tracking-tight border ${
-                      rule.status === 'Active' 
-                        ? 'bg-emerald-50 text-emerald-700 border-emerald-100' 
-                        : 'bg-slate-50 text-slate-600 border-slate-200'
-                    }`}>
-                      <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
-                        rule.status === 'Active' ? 'bg-emerald-500' : 'bg-slate-400'
-                      }`}></span>
-                      {rule.status === 'Active' ? t.active : t.inactive}
-                    </div>
-                  </div>
+              <div className="flex items-center gap-6 shrink-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                    {rule.status === 'Active' ? t.active : t.inactive}
+                  </span>
+                  <Switch
+                    size="small"
+                    checked={rule.status === 'Active'}
+                    onClick={(_checked, e) => {
+                      e.stopPropagation();
+                      onToggleStatus(rule.id);
+                    }}
+                  />
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                   <Tooltip content={isTh ? 'ทำซ้ำรายการ' : 'Duplicate'}>
-                    <button 
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
                         if (onDuplicate) {
@@ -143,7 +137,7 @@ export const RuleList = ({ rules, onSelect, onCreate, onDelete, onToggleStatus, 
                   </Tooltip>
 
                   <Tooltip content={isTh ? 'ลบรายการ' : 'Delete'}>
-                    <button 
+                    <button
                       onClick={(e) => confirmDelete(e, rule)}
                       className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-[4px] flex items-center justify-center transition-all"
                     >
