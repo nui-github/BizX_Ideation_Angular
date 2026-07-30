@@ -1068,8 +1068,12 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                                           );
                                         case 'MASTER_LOOKUP':
                                           return (
-                                            <div className="flex items-center justify-center gap-1 mt-1.5 text-[8px] font-black text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200/50">
-                                              <span>DB: {val.masterDb || 'Customers'}</span>
+                                            <div className="flex items-center justify-center gap-1 mt-1.5 text-[8px] font-black text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200/50 text-center max-w-full">
+                                              {val.lookupSource === 'DOC_TYPE_HSCODE' ? (
+                                                <span className="truncate">{t.docTypeHSCode}{val.hsMatchField ? ` · ${val.hsMatchField}` : ''}</span>
+                                              ) : (
+                                                <span>DB: {val.masterDb || 'Customers'}</span>
+                                              )}
                                             </div>
                                           );
                                         case 'CONDITIONAL':
@@ -1559,34 +1563,116 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                     );
 
                   case 'MASTER_LOOKUP':
+                    const lookupSource = drawerVal.lookupSource === 'DOC_TYPE_HSCODE' ? 'DOC_TYPE_HSCODE' : 'MASTER_DATA';
+                    const hsCodeMatchFieldOptions = [
+                      { value: 'HS Code', labelTh: 'HS Code', labelEn: 'HS Code' },
+                      { value: 'Product Description', labelTh: 'รายละเอียดสินค้า (Description)', labelEn: 'Product Description' },
+                      { value: 'Import Duty Rate', labelTh: 'อัตราอากรขาเข้า (Import Duty Rate)', labelEn: 'Import Duty Rate' },
+                      { value: 'UOM', labelTh: 'หน่วยนับ (UOM)', labelEn: 'UOM' },
+                    ];
+
                     return (
                       <div className="flex flex-col gap-4">
-                        <div className="bg-slate-50 p-4 border border-slate-200 flex flex-col gap-3" style={{ borderRadius: '8px' }}>
+                        <div className="flex flex-col gap-1.5">
                           <span className="text-[10px] font-black text-[#010136]/50 uppercase tracking-wide">
-                            {language === 'TH' ? 'เลือกตารางฐานข้อมูล Master' : 'Reference Master Database'}
+                            {language === 'TH' ? 'แหล่งข้อมูล Master lookup' : 'Master Lookup Source'}
                           </span>
-                          <p className="text-xs text-slate-500 leading-relaxed mb-1">
-                            {language === 'TH' ? 'ระบบ lookup ค่าจากเอกสารใน master table, normalize, trim, case-insensitive' : 'Looks up values from master, normalized & case-insensitive.'}
-                          </p>
-                          <select 
-                            className="w-full bg-white border border-slate-200 rounded px-2.5 py-1.5 text-xs font-bold text-slate-700 outline-none focus:ring-1 focus:ring-blue-500"
-                            style={{ borderRadius: '4px' }}
-                            value={drawerVal.masterDb || 'Customers'}
-                            onChange={(e) => {
-                              const newValues = [...editFormData.values];
-                              newValues[openDrawerInfo.colIdx] = { 
-                                ...newValues[openDrawerInfo.colIdx], 
-                                masterDb: e.target.value 
-                              };
-                              setEditFormData({...editFormData, values: newValues});
-                            }}
-                          >
-                            <option value="Customers">{language === 'TH' ? 'ฐานข้อมูลลูกค้า (Master Customers)' : 'Master Customers'}</option>
-                            <option value="Products">{language === 'TH' ? 'ฐานข้อมูลสินค้า (Master Products)' : 'Master Products'}</option>
-                            <option value="Suppliers">{language === 'TH' ? 'ฐานข้อมูลผู้ขาย (Master Suppliers)' : 'Master Suppliers'}</option>
-                            <option value="Currencies">{language === 'TH' ? 'ฐานข้อมูลสกุลเงิน (Master Currencies)' : 'Master Currencies'}</option>
-                          </select>
+                          <div className="flex bg-slate-200/60 p-1 border border-slate-200/40 gap-1" style={{ borderRadius: '4px' }}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newValues = [...editFormData.values];
+                                newValues[openDrawerInfo.colIdx] = {
+                                  ...newValues[openDrawerInfo.colIdx],
+                                  lookupSource: 'MASTER_DATA'
+                                };
+                                setEditFormData({...editFormData, values: newValues});
+                              }}
+                              className={`flex-1 px-3 py-2 rounded-[4px] text-xs font-bold transition-all cursor-pointer ${
+                                lookupSource === 'MASTER_DATA'
+                                  ? 'bg-white text-blue-600 shadow-sm'
+                                  : 'text-slate-500 hover:text-slate-800'
+                              }`}
+                            >
+                              {language === 'TH' ? 'ฐานข้อมูล Master Data' : 'Master Data'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newValues = [...editFormData.values];
+                                newValues[openDrawerInfo.colIdx] = {
+                                  ...newValues[openDrawerInfo.colIdx],
+                                  lookupSource: 'DOC_TYPE_HSCODE'
+                                };
+                                setEditFormData({...editFormData, values: newValues});
+                              }}
+                              className={`flex-1 px-3 py-2 rounded-[4px] text-xs font-bold transition-all cursor-pointer ${
+                                lookupSource === 'DOC_TYPE_HSCODE'
+                                  ? 'bg-white text-blue-600 shadow-sm'
+                                  : 'text-slate-500 hover:text-slate-800'
+                              }`}
+                            >
+                              {language === 'TH' ? `Doc Type: ${t.docTypeHSCode}` : `Doc Type: ${t.docTypeHSCode}`}
+                            </button>
+                          </div>
                         </div>
+
+                        {lookupSource === 'MASTER_DATA' ? (
+                          <div className="bg-slate-50 p-4 border border-slate-200 flex flex-col gap-3" style={{ borderRadius: '8px' }}>
+                            <span className="text-[10px] font-black text-[#010136]/50 uppercase tracking-wide">
+                              {language === 'TH' ? 'เลือกตารางฐานข้อมูล Master' : 'Reference Master Database'}
+                            </span>
+                            <p className="text-xs text-slate-500 leading-relaxed mb-1">
+                              {language === 'TH' ? 'ระบบ lookup ค่าจากเอกสารใน master table, normalize, trim, case-insensitive' : 'Looks up values from master, normalized & case-insensitive.'}
+                            </p>
+                            <select
+                              className="w-full bg-white border border-slate-200 rounded px-2.5 py-1.5 text-xs font-bold text-slate-700 outline-none focus:ring-1 focus:ring-blue-500"
+                              style={{ borderRadius: '4px' }}
+                              value={drawerVal.masterDb || 'Customers'}
+                              onChange={(e) => {
+                                const newValues = [...editFormData.values];
+                                newValues[openDrawerInfo.colIdx] = {
+                                  ...newValues[openDrawerInfo.colIdx],
+                                  masterDb: e.target.value
+                                };
+                                setEditFormData({...editFormData, values: newValues});
+                              }}
+                            >
+                              <option value="Customers">{language === 'TH' ? 'ฐานข้อมูลลูกค้า (Master Customers)' : 'Master Customers'}</option>
+                              <option value="Products">{language === 'TH' ? 'ฐานข้อมูลสินค้า (Master Products)' : 'Master Products'}</option>
+                              <option value="Suppliers">{language === 'TH' ? 'ฐานข้อมูลผู้ขาย (Master Suppliers)' : 'Master Suppliers'}</option>
+                              <option value="Currencies">{language === 'TH' ? 'ฐานข้อมูลสกุลเงิน (Master Currencies)' : 'Master Currencies'}</option>
+                            </select>
+                          </div>
+                        ) : (
+                          <div className="bg-slate-50 p-4 border border-slate-200 flex flex-col gap-3" style={{ borderRadius: '8px' }}>
+                            <span className="text-[10px] font-black text-[#010136]/50 uppercase tracking-wide">
+                              {language === 'TH' ? `เลือกคอลัมน์ที่ใช้ค้นหาใน ${t.docTypeHSCode}` : `Select Column to Match in ${t.docTypeHSCode}`}
+                            </span>
+                            <p className="text-xs text-slate-500 leading-relaxed mb-1">
+                              {language === 'TH'
+                                ? `ระบบจะนำค่าของฟิลด์นี้ไปค้นหาในไฟล์ ${t.docTypeHSCode} ที่อยู่ในชุดเอกสารของ workflow เดียวกัน`
+                                : `The value of this field will be looked up in the ${t.docTypeHSCode} document within the same workflow's document set.`}
+                            </p>
+                            <select
+                              className="w-full bg-white border border-slate-200 rounded px-2.5 py-1.5 text-xs font-bold text-slate-700 outline-none focus:ring-1 focus:ring-blue-500"
+                              style={{ borderRadius: '4px' }}
+                              value={drawerVal.hsMatchField || 'HS Code'}
+                              onChange={(e) => {
+                                const newValues = [...editFormData.values];
+                                newValues[openDrawerInfo.colIdx] = {
+                                  ...newValues[openDrawerInfo.colIdx],
+                                  hsMatchField: e.target.value
+                                };
+                                setEditFormData({...editFormData, values: newValues});
+                              }}
+                            >
+                              {hsCodeMatchFieldOptions.map(opt => (
+                                <option key={opt.value} value={opt.value}>{language === 'TH' ? opt.labelTh : opt.labelEn}</option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
 
                         <div className="p-4 bg-slate-50 border border-slate-200 text-xs text-slate-600 font-black flex flex-col gap-1.5 leading-relaxed" style={{ borderRadius: '8px' }}>
                           <div className="text-emerald-600">✓ {language === 'TH' ? 'พบ 1 ค่า → auto match แสดงชื่อเต็ม' : 'Found 1 -> auto match'}</div>
