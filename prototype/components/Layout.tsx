@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { 
-  LayoutDashboard, Bot, Users, ShieldAlert, Settings, LogOut, 
+import {
+  LayoutDashboard, Bot, Users, ShieldAlert, Settings, LogOut,
   Globe, Menu, Home, Folder, ChevronDown, User as UserIcon,
-  FileText, Upload, HardDrive, List, Layers, ArrowLeftRight, Database
+  FileText, Upload, HardDrive, List, Layers, ArrowLeftRight, Database,
+  Bell, PackagePlus, Undo2
 } from 'lucide-react';
 import { UserRole, Language } from '../types';
 import { TRANSLATIONS } from '../translations';
@@ -14,13 +15,55 @@ interface LayoutProps {
   language: Language;
   onLanguageChange: (lang: Language) => void;
   onNavigate: (view: 'TRACKING' | 'AGENT_LIST' | 'UPLOAD' | 'WORKFLOW_LIST' | 'DATA_COMPARISON_JOBS' | 'DATA_COMPARISON_WORKFLOW' | 'DATA_COMPARISON_RULE' | 'DATA_COMPARISON_WORKFLOW_BUILDER' | 'SETTINGS_DOC_TYPE_MASTER' | 'SETTINGS_LABEL_SCHEMA' | 'SETTINGS_MASTER_DATA') => void;
+  onNotificationClick: (jobId: string) => void;
 }
 
-export const Layout: React.FC<LayoutProps> = ({ children, currentUserRole, onToggleRole, language, onLanguageChange, onNavigate }) => {
+interface AppNotification {
+  id: string;
+  type: 'NEW_SHIPMENT' | 'FLOW_REJECTED';
+  jobId: string;
+  reference: string;
+  workflowName: string;
+  timestamp: string;
+  read: boolean;
+}
+
+const INITIAL_NOTIFICATIONS: AppNotification[] = [
+  {
+    id: 'notif-1',
+    type: 'FLOW_REJECTED',
+    jobId: 'job-004a',
+    reference: 'KR-TH-2026-00567',
+    workflowName: 'Korea Cosmetics Processing',
+    timestamp: '29 APR 2026 09:10',
+    read: false
+  },
+  {
+    id: 'notif-2',
+    type: 'NEW_SHIPMENT',
+    jobId: 'job-012a',
+    reference: 'EU-TH-2026-00778',
+    workflowName: 'EU Fashion & Apparel Rules',
+    timestamp: '29 APR 2026 08:00',
+    read: false
+  }
+];
+
+export const Layout: React.FC<LayoutProps> = ({ children, currentUserRole, onToggleRole, language, onLanguageChange, onNavigate, onNotificationClick }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [notifications, setNotifications] = useState<AppNotification[]>(INITIAL_NOTIFICATIONS);
   const [activeMenu, setActiveMenu] = useState('tracking');
   const t = TRANSLATIONS[language];
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  const handleNotificationItemClick = (notif: AppNotification) => {
+    setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n));
+    setNotifOpen(false);
+    setActiveMenu('comparison_jobs');
+    onNotificationClick(notif.jobId);
+  };
 
   // Sidebar Sub-menu Logic
   const [exDocOpen, setExDocOpen] = useState(true);
@@ -235,8 +278,59 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentUserRole, onTog
             </div>
           </div>
 
+          <div className="flex items-center gap-2">
           <div className="relative">
-            <button 
+            <button
+              onClick={() => setNotifOpen(!notifOpen)}
+              onBlur={() => setTimeout(() => setNotifOpen(false), 200)}
+              className="relative p-2 hover:bg-slate-100 rounded-[4px] text-slate-600 transition-colors"
+            >
+              <Bell size={20} />
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full border border-white"></span>
+              )}
+            </button>
+
+            {notifOpen && (
+              <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-slate-100 py-1 z-[1200] animate-in fade-in zoom-in-95 duration-100">
+                <div className="px-4 py-3 border-b border-slate-100 font-bold text-[#010136] text-sm">
+                  {language === 'TH' ? 'การแจ้งเตือน' : 'Notifications'}
+                </div>
+                {notifications.length === 0 ? (
+                  <div className="px-4 py-6 text-center text-xs text-slate-400">
+                    {language === 'TH' ? 'ไม่มีการแจ้งเตือน' : 'No notifications'}
+                  </div>
+                ) : (
+                  <div className="max-h-80 overflow-y-auto">
+                    {notifications.map(notif => (
+                      <button
+                        key={notif.id}
+                        onMouseDown={() => handleNotificationItemClick(notif)}
+                        className={`w-full text-left px-4 py-3 flex items-start gap-3 hover:bg-slate-50 border-b border-slate-50 last:border-b-0 transition-colors ${!notif.read ? 'bg-blue-50/40' : ''}`}
+                      >
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${notif.type === 'NEW_SHIPMENT' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+                          {notif.type === 'NEW_SHIPMENT' ? <PackagePlus size={16} /> : <Undo2 size={16} />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-bold text-slate-700">
+                            {notif.type === 'NEW_SHIPMENT'
+                              ? (language === 'TH' ? 'มี Shipment ใหม่เข้ามา' : 'New shipment received')
+                              : (language === 'TH' ? 'Flow ถูกส่งกลับให้แก้ไข' : 'Flow was sent back for correction')}
+                          </div>
+                          <div className="text-xs text-slate-500 mt-0.5 truncate">{notif.reference} · {notif.workflowName}</div>
+                          <div className="text-[10px] text-slate-400 mt-1">{notif.timestamp}</div>
+                        </div>
+                        {!notif.read && <span className="w-1.5 h-1.5 mt-1 bg-[#1f5df9] rounded-full shrink-0"></span>}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="relative">
+            <button
               onClick={() => setProfileOpen(!profileOpen)}
               onBlur={() => setTimeout(() => setProfileOpen(false), 200)}
               className="flex items-center gap-3 hover:bg-slate-50 p-2 rounded-[4px] transition-colors border border-transparent hover:border-slate-100"
@@ -341,6 +435,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentUserRole, onTog
                 </div>
               </div>
             )}
+          </div>
           </div>
         </header>
 

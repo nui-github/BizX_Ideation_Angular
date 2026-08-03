@@ -1014,6 +1014,12 @@ function App() {
       setCurrentView(view);
   };
 
+  const [notifyTargetJobId, setNotifyTargetJobId] = useState<string | null>(null);
+  const handleNotificationClick = (jobId: string) => {
+      setNotifyTargetJobId(jobId);
+      setCurrentView('DATA_COMPARISON_JOBS');
+  };
+
   React.useEffect(() => {
     const handleViewChange = (e: Event) => {
       const customEvent = e as CustomEvent;
@@ -1069,6 +1075,7 @@ function App() {
         language={language} 
         onLanguageChange={setLanguage}
         onNavigate={handleNavigate}
+        onNotificationClick={handleNotificationClick}
       >
         {currentView === 'TRACKING' && (
            <TrackingPage 
@@ -1150,10 +1157,12 @@ function App() {
         )}
 
         {currentView === 'DATA_COMPARISON_JOBS' && (
-          <DataComparison 
+          <DataComparison
             language={language}
             trackingItems={trackingItems}
             role={role}
+            targetJobId={notifyTargetJobId}
+            onConsumeTargetJobId={() => setNotifyTargetJobId(null)}
           />
         )}
 

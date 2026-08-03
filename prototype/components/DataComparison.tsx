@@ -107,6 +107,8 @@ interface DataComparisonProps {
   language: Language;
   trackingItems: TrackingItem[];
   role?: UserRole;
+  targetJobId?: string | null;
+  onConsumeTargetJobId?: () => void;
 }
 
 export const AVAILABLE_DOC_TYPES = [
@@ -239,7 +241,7 @@ const getDetailedDiffExplanation = (targetVal: string, masterVal: string, lang: 
   return lang === 'TH' ? 'ค่าต่างกันบางส่วน' : 'Partially different value';
 };
 
-export const DataComparison: React.FC<DataComparisonProps> = ({ language, trackingItems, role = UserRole.USER }) => {
+export const DataComparison: React.FC<DataComparisonProps> = ({ language, trackingItems, role = UserRole.USER, targetJobId, onConsumeTargetJobId }) => {
   const t = TRANSLATIONS[language];
   
   const getMismatchRule = (fieldName: string, part: string, ruleTitleOverride?: string, ruleDescOverride?: string) => {
@@ -2075,7 +2077,10 @@ const mockWorkflows: Workflow[] = [
       createdAt: '23 APR 2026',
       workflowName: 'Korea Cosmetics Processing',
       assignee: 'Nui P.',
-      status: JobStatus.DONE,
+      status: JobStatus.REJECTED,
+      rejectionReason: 'เลขที่ CO ใน Invoice ไม่ตรงกับเอกสาร Compliance Check กรุณาตรวจสอบและแก้ไขใหม่',
+      rejectedAt: '2026-04-29T09:10:00.000Z',
+      rejectedBy: 'Somchai T.',
       isLocked: true,
       totalFieldsCount: 110,
       accuracyScore: 100.0,
@@ -2578,6 +2583,17 @@ const mockWorkflows: Workflow[] = [
       mismatchedCount: 0
     }
   ]);
+
+  // Jump straight into a job from a notification bell click (see Layout.tsx).
+  useEffect(() => {
+    if (!targetJobId) return;
+    const job = jobs.find(j => j.id === targetJobId);
+    if (job) {
+      setSelectedJob(job);
+      setStep(1);
+    }
+    onConsumeTargetJobId?.();
+  }, [targetJobId]);
 
 
   // Sync selectedJob when jobs state updates (e.g. background processing completes)
