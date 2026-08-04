@@ -5462,6 +5462,11 @@ const mockWorkflows: Workflow[] = [
                   id="submit-replace-import-btn"
                 >
                   {LOCAL_T[language].btnConfirmReplace}
+                  {replaceUploadedFiles.length > 0 && (
+                    language === 'TH'
+                      ? ` (${replaceUploadedFiles.length} ไฟล์)`
+                      : ` (${replaceUploadedFiles.length} ${replaceUploadedFiles.length === 1 ? 'file' : 'files'})`
+                  )}
                 </button>
               </div>
             </div>
