@@ -7669,7 +7669,7 @@ const mockWorkflows: Workflow[] = [
                                          const groupFields = partResults.filter(r => (r.group || 'no-group') === group);
                                          
                                          return (
-                                           <tbody key={group} className="divide-y divide-slate-100">
+                                           <tbody key={group} className="divide-y divide-slate-200">
                                              {group !== 'no-group' && (
                                                 <tr className="bg-slate-100/80 group/itemheader hover:bg-slate-200/50 cursor-pointer transition-colors" onClick={(e) => toggleGroup(e, group as string)}>
                                                    <td colSpan={comparedDocs.length + 1} className="sticky top-[114px] z-[24] p-0 border-y-2 border-slate-200/80 bg-slate-100/90 shadow-sm relative">
