@@ -7669,7 +7669,7 @@ const mockWorkflows: Workflow[] = [
                                          const groupFields = partResults.filter(r => (r.group || 'no-group') === group);
                                          
                                          return (
-                                           <tbody key={group} className="divide-y divide-slate-200">
+                                           <tbody key={group}>
                                              {group !== 'no-group' && (
                                                 <tr className="bg-slate-100/80 group/itemheader hover:bg-slate-200/50 cursor-pointer transition-colors" onClick={(e) => toggleGroup(e, group as string)}>
                                                    <td colSpan={comparedDocs.length + 1} className="sticky top-[114px] z-[24] p-0 border-y-2 border-slate-200/80 bg-slate-100/90 shadow-sm relative">
@@ -7714,7 +7714,7 @@ const mockWorkflows: Workflow[] = [
                                              )}
                                              {!collapsedGroups[group] && groupFields.map((res, i) => (
                                               <tr key={res.fieldName} className={`hover:bg-slate-50/80 transition-colors group/row ${i === groupFields.length - 1 ? 'border-b-2 border-slate-200/80' : ''}`}>
-                                                 <td className={`sticky left-0 z-20 bg-slate-50 border-r border-slate-100 p-4 font-black text-slate-700 group-hover/row:text-[#1f5df9] shadow-[2px_0_10px_rgba(0,0,0,0.02)] transition-colors relative`}>
+                                                 <td className={`sticky left-0 z-20 bg-slate-50 border-r border-r-slate-100 border-t border-t-slate-200 p-4 font-black text-slate-700 group-hover/row:text-[#1f5df9] shadow-[2px_0_10px_rgba(0,0,0,0.02)] transition-colors relative`}>
                                                   {group !== 'no-group' && <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-slate-100"></div>}
                                                   <div className="flex flex-col ml-1">
                                                      <span className="text-[11px] tracking-wide">{res.fieldName}</span>
@@ -7727,7 +7727,7 @@ const mockWorkflows: Workflow[] = [
                                     const isMissing = selectedJob && selectedJob.docs[docName] === ComparisonDocStatus.MISSING;
                                     if (isMissing) {
                                       return (
-                                        <td key={docName} className="p-0 border-r border-slate-100 bg-slate-50/5">
+                                        <td key={docName} className="p-0 border-r border-r-slate-100 border-t border-t-slate-200 bg-slate-50/5">
                                           <div className="px-4 py-4 text-xs font-bold text-slate-400 text-center flex items-center justify-center min-h-full font-mono">
                                             -
                                           </div>
@@ -7736,7 +7736,7 @@ const mockWorkflows: Workflow[] = [
                                     }
                                     if (!target) {
                                       return (
-                                        <td key={docName} className="p-0 border-r border-slate-100 bg-slate-50/5">
+                                        <td key={docName} className="p-0 border-r border-r-slate-100 border-t border-t-slate-200 bg-slate-50/5">
                                           <div className="px-4 py-4 text-[10px] font-black text-slate-300 text-center flex items-center justify-center gap-1.5 min-h-full">
                                              <Loader2 size={10} className="animate-spin opacity-40" />
                                              <span className="uppercase tracking-widest opacity-40">WAITING</span>
@@ -7756,7 +7756,7 @@ const mockWorkflows: Workflow[] = [
                                     const subFileMatchCount = subFileRows.filter(r => r.isMatch).length;
                                     const showSubFileBreakdown = subFileRows.length > 1 && subFileMatchCount < subFileRows.length;
                                     return (
-                                      <td key={docName} className={`p-0 border-r border-slate-100 transition-all ${
+                                      <td key={docName} className={`p-0 border-r border-r-slate-100 border-t border-t-slate-200 transition-all ${
                                          isUserConfirmed ? 'bg-emerald-50/10' :
                                          target.status === 'MATCH' ? 'bg-white' :
                                          target.status === 'WAITING' ? 'bg-white' :
