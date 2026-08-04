@@ -8096,9 +8096,9 @@ const mockWorkflows: Workflow[] = [
                         <thead>
                           <tr className="bg-slate-50 border-b border-slate-200">
                             <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-28">{language === 'TH' ? 'วัน/เวลา' : 'Date/Time'}</th>
-                            <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-36">{language === 'TH' ? 'ผู้ใช้งาน' : 'User'}</th>
-                            <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-40">{language === 'TH' ? 'การกระทำ' : 'Action'}</th>
-                            <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-36">{language === 'TH' ? 'เอกสาร' : 'Document'}</th>
+                            <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-48">{language === 'TH' ? 'ผู้ใช้งาน' : 'User'}</th>
+                            <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-44">{language === 'TH' ? 'การกระทำ' : 'Action'}</th>
+                            <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-32">{language === 'TH' ? 'เอกสาร' : 'Document'}</th>
                             <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{language === 'TH' ? 'รายละเอียด (ฟิลด์)' : 'Details (Fields)'}</th>
                           </tr>
                         </thead>
@@ -8113,25 +8113,25 @@ const mockWorkflows: Workflow[] = [
                                   {new Date(log.timestamp).toLocaleTimeString(language === 'TH' ? 'th-TH' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
                                 </span>
                               </td>
-                              <td className="p-4 whitespace-nowrap">
-                                <div className="flex items-center gap-2">
+                              <td className="p-4 overflow-hidden">
+                                <div className="flex items-center gap-2 min-w-0">
                                   <div className="w-6 h-6 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[10px] font-black text-slate-600 uppercase shrink-0">
                                     {log.user.slice(0, 2)}
                                   </div>
-                                  <span className="text-sm font-semibold text-slate-600">{log.user}</span>
+                                  <span className="text-sm font-semibold text-slate-600 truncate">{log.user}</span>
                                 </div>
                               </td>
-                              <td className="p-4 whitespace-nowrap">
-                                <div className="flex items-center gap-2">
-                                  {log.action === 'EDIT_DATA' ? <Edit3 size={14} className="text-blue-500" />
-                                    : log.action === 'OCR_DONE' ? <ScanSearch size={14} className="text-indigo-500" />
-                                    : log.action === 'APPROVE' ? <Send size={14} className="text-teal-500" />
-                                    : log.action === 'CONFIRM_DATA' ? <CheckCircle2 size={14} className="text-rose-500" />
-                                    : log.action === 'UNCONFIRM_DATA' ? <XCircle size={14} className="text-slate-400" />
-                                    : log.action === 'SKIP_FLOW' ? <SkipForward size={14} className="text-amber-500" />
-                                    : (log.action === 'REJECT_FLOW' || log.action === 'REJECTED') ? <Undo2 size={14} className="text-rose-500" />
-                                    : <UploadCloud size={14} className="text-emerald-500" />}
-                                  <span className="text-xs font-bold text-slate-700">
+                              <td className="p-4 overflow-hidden">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  {log.action === 'EDIT_DATA' ? <Edit3 size={14} className="text-blue-500 shrink-0" />
+                                    : log.action === 'OCR_DONE' ? <ScanSearch size={14} className="text-indigo-500 shrink-0" />
+                                    : log.action === 'APPROVE' ? <Send size={14} className="text-teal-500 shrink-0" />
+                                    : log.action === 'CONFIRM_DATA' ? <CheckCircle2 size={14} className="text-rose-500 shrink-0" />
+                                    : log.action === 'UNCONFIRM_DATA' ? <XCircle size={14} className="text-slate-400 shrink-0" />
+                                    : log.action === 'SKIP_FLOW' ? <SkipForward size={14} className="text-amber-500 shrink-0" />
+                                    : (log.action === 'REJECT_FLOW' || log.action === 'REJECTED') ? <Undo2 size={14} className="text-rose-500 shrink-0" />
+                                    : <UploadCloud size={14} className="text-emerald-500 shrink-0" />}
+                                  <span className="text-xs font-bold text-slate-700 truncate">
                                     {log.action === 'EDIT_DATA' ? (language === 'TH' ? 'แก้ไขข้อมูล OCR' : 'Edited OCR Data')
                                       : log.action === 'OCR_DONE' ? (language === 'TH' ? 'อ่านไฟล์ (OCR)' : 'Read File (OCR)')
                                       : log.action === 'APPROVE' ? (language === 'TH' ? 'ส่งออกข้อมูล' : 'Exported Data')
