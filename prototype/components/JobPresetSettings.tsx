@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import dayjs from 'dayjs';
 import { Select, Switch, message, Tooltip as AntTooltip } from 'antd';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Trash2, Pencil, CheckCircle2, AlertCircle, ArrowLeft, Settings, Search, X, Check, LayoutGrid, List } from 'lucide-react';
+import { Plus, Trash2, Pencil, Copy, CheckCircle2, AlertCircle, ArrowLeft, Settings, Search, X, Check, LayoutGrid, List } from 'lucide-react';
 import { Language, Workflow, JobPreset, JobPresetWorkflow } from '../types';
 import { MOCK_TEAMS } from '../mock-data/teams.mock';
 import { Tooltip } from './Tooltip';
@@ -129,6 +129,20 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
     handleCloseModal();
   };
 
+  const handleDuplicatePreset = (preset: JobPreset) => {
+    const cloned: JobPreset = {
+      ...preset,
+      id: `preset-${Date.now()}`,
+      name: language === 'TH' ? `สำเนาของ ${preset.name}` : `Copy of ${preset.name}`,
+      workflows: preset.workflows.map(pwf => ({ ...pwf })),
+      isActive: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    onAddPreset(cloned);
+    message.success(language === 'TH' ? 'ทำสำเนาพรีเซ็ตสำเร็จ' : 'Preset duplicated successfully');
+  };
+
   const filteredPresets = presets
     .filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
@@ -244,6 +258,14 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
                         <Pencil size={16} />
                       </button>
                     </Tooltip>
+                    <Tooltip content={language === 'TH' ? 'ทำสำเนาพรีเซ็ต' : 'Duplicate preset'}>
+                      <button
+                        onClick={() => handleDuplicatePreset(preset)}
+                        className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      >
+                        <Copy size={16} />
+                      </button>
+                    </Tooltip>
                     <Tooltip content={language === 'TH' ? 'ลบพรีเซ็ต' : 'Delete preset'}>
                       <button
                         onClick={() => setDeleteConfirm({ isOpen: true, preset })}
@@ -334,6 +356,14 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
                           className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                         >
                           <Pencil size={14} />
+                        </button>
+                      </Tooltip>
+                      <Tooltip content={language === 'TH' ? 'ทำสำเนาพรีเซ็ต' : 'Duplicate preset'}>
+                        <button
+                          onClick={() => handleDuplicatePreset(preset)}
+                          className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        >
+                          <Copy size={14} />
                         </button>
                       </Tooltip>
                       <Tooltip content={language === 'TH' ? 'ลบพรีเซ็ต' : 'Delete preset'}>
