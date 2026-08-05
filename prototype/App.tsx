@@ -497,6 +497,7 @@ const MOCK_WORKFLOWS: Workflow[] = [
 
 if (typeof window !== 'undefined') {
   localStorage.removeItem('bizx_label_schemas_v3');
+  localStorage.removeItem('bizx_label_schemas_v4');
 }
 
 function App() {

@@ -49,143 +49,129 @@ interface LabelSchemaSettingsProps {
 
 export const DEFAULT_SCHEMAS: LabelSchema[] = [
   {
-    id: 'ls-1',
-    name: 'Import standard v2',
-    description: 'Schema สำหรับเอกสารนำเข้าทั่วไป ตรวจสอบ Invoice, Packing List และ Bill of Lading ร่วมกันเพื่อเปรียบเทียบข้อมูลหลัก',
-    templateType: 'import-standard',
-    docTypes: ['INV', 'BL', 'PL'],
-    workflowIds: ['cwf-1', 'wf-1'],
-    updatedAt: '2026-05-26T17:30:00Z',
+    id: 'ls-inv',
+    name: 'Invoice',
+    description: 'Schema สำหรับเอกสาร Invoice — ตรวจสอบเลขที่ใบแจ้งหนี้ วันที่ และยอดรวม',
+    templateType: 'invoice-schema',
+    docTypes: ['INV'],
+    workflowIds: ['cwf-1', 'cwf-po-pi', 'cwf-shipping-doc', 'cwf-import-dec-1'],
+    updatedAt: '2026-06-01T09:00:00Z',
     configs: [
       {
         docTypeId: 'INV',
         labels: [
-          { id: 'l-1', name: 'Invoice#', required: true, compare: true, section: 'Header', type: 'string' },
-          { id: 'l-1-date', name: 'Invoice Date', required: true, compare: true, section: 'Header', type: 'date' },
-          { id: 'l-1-cust', name: 'Customer Name', required: true, compare: false, section: 'Header', type: 'string' },
-          { id: 'l-3', name: 'Line Items', required: true, compare: false, section: 'Description', type: 'array',
-            subLabels: [
-              { id: 'l-3-sub-1', name: 'Item Code', required: true, type: 'string', compare: false },
-              { id: 'l-3-sub-2', name: 'Product Name', required: true, type: 'string', compare: false },
-              { id: 'l-3-sub-3', name: 'Quantity', required: true, type: 'number', compare: false },
-              { id: 'l-3-sub-4', name: 'Unit Price', required: true, type: 'number', compare: false }
-            ]
-          },
-          { id: 'l-items-qty', name: 'items.quantity', required: false, compare: true, section: 'Description', type: 'array' },
-          { id: 'l-items-hscode', name: 'items.hsCode', required: false, compare: true, section: 'Description', type: 'array' },
-          { id: 'l-items-desc', name: 'items.description', required: false, compare: true, section: 'Description', type: 'array' },
-          { id: 'l-2', name: 'Total Value', required: true, compare: true, section: 'Footer', type: 'number' },
-          { id: 'l-2-tax', name: 'VAT (7%)', required: false, compare: false, section: 'Footer', type: 'number' }
-        ]
-      },
-      {
-        docTypeId: 'BL',
-        labels: [
-          { id: 'l-4', name: 'B/L No', required: true, compare: true, section: 'Header', type: 'string' },
-          { id: 'l-5', name: 'Shipper', required: true, compare: false, section: 'Header', type: 'string' },
-          { id: 'l-6', name: 'Consignee', required: false, compare: false, section: 'Header', type: 'string' },
-          { 
-            id: 'l-bl-desc-items', 
-            name: 'Containers', 
-            required: true, 
-            compare: false, 
-            section: 'Description', 
-            type: 'array',
-            subLabels: [
-              { id: 'l-bl-sub-1', name: 'Container No', required: true, type: 'string', compare: false },
-              { id: 'l-bl-sub-2', name: 'Seal No', required: true, type: 'string', compare: false },
-              { id: 'l-bl-sub-3', name: 'Weight (KGS)', required: true, type: 'number', compare: false }
-            ]
-          },
-          { id: 'l-bl-footer-weight', name: 'Total Gross Weight', required: true, compare: true, section: 'Footer', type: 'number' }
-        ]
-      },
-      {
-        docTypeId: 'PL',
-        labels: [
-          { id: 'l-7', name: 'Packing#', required: true, compare: true, section: 'Header', type: 'string' },
-          { id: 'l-pl-header-date', name: 'Packing List Date', required: true, compare: false, section: 'Header', type: 'date' },
-          { 
-            id: 'l-pl-desc-items', 
-            name: 'Packed Goods List', 
-            required: true, 
-            compare: false, 
-            section: 'Description', 
-            type: 'array',
-            subLabels: [
-              { id: 'l-pl-sub-1', name: 'Package No', required: true, type: 'string', compare: false },
-              { id: 'l-pl-sub-2', name: 'Description of Goods', required: true, type: 'string', compare: false },
-              { id: 'l-pl-sub-3', name: 'Quantity Limit', required: true, type: 'number', compare: false }
-            ]
-          },
-          { id: 'l-8', name: 'Weight', required: false, compare: false, section: 'Footer', type: 'number' },
-          { id: 'l-pl-items-qty', name: 'items.quantity', required: false, compare: true, section: 'Description', type: 'array' },
-          { id: 'l-pl-items-hscode', name: 'items.hsCode', required: false, compare: true, section: 'Description', type: 'array' },
-          { id: 'l-pl-items-desc', name: 'items.description', required: false, compare: true, section: 'Description', type: 'array' },
-          { id: 'l-pl-footer-packages', name: 'Total Packages', required: true, compare: true, section: 'Footer', type: 'number' }
+          { id: 'l-inv-1', name: 'Invoice Number', required: true, compare: true, section: 'Header', type: 'string' },
+          { id: 'l-inv-2', name: 'Invoice Date', required: true, compare: false, section: 'Header', type: 'date' },
+          { id: 'l-inv-3', name: 'Vendor Name', required: false, compare: false, section: 'Header', type: 'string' },
+          { id: 'l-inv-4', name: 'Tax ID', required: false, compare: true, section: 'Header', type: 'string' },
+          { id: 'l-inv-5', name: 'Total Amount', required: true, compare: true, section: 'Footer', type: 'number' }
         ]
       }
     ]
   },
   {
-    id: 'ls-2',
-    name: 'FTA HS Code Compliance',
-    description: 'ตรวจสอบความถูกต้องของพิกัดอัตราศุลกากร (HS Code) และหนังสือรับรองถิ่นกำเนิดสินค้าเพื่อสิทธิประโยชน์ทางภาษี',
-    templateType: 'fta-compliance',
+    id: 'ls-bl',
+    name: 'Bill of Lading',
+    description: 'Schema สำหรับเอกสาร Bill of Lading — ตรวจสอบผู้ส่ง ผู้รับ และรายละเอียดการขนส่ง',
+    templateType: 'bl-schema',
+    docTypes: ['BL'],
+    workflowIds: ['cwf-shipping-doc', 'cwf-import-dec-1'],
+    updatedAt: '2026-06-02T09:00:00Z',
+    configs: [
+      {
+        docTypeId: 'BL',
+        labels: [
+          { id: 'l-bl-1', name: 'B/L Number', required: true, compare: true, section: 'Header', type: 'string' },
+          { id: 'l-bl-2', name: 'Shipper Name', required: true, compare: false, section: 'Header', type: 'string' },
+          { id: 'l-bl-3', name: 'Consignee Name', required: true, compare: true, section: 'Header', type: 'string' },
+          { id: 'l-bl-4', name: 'Vessel Name', required: false, compare: false, section: 'Header', type: 'string' },
+          { id: 'l-bl-5', name: 'Port of Loading', required: false, compare: true, section: 'Header', type: 'string' }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'ls-pl',
+    name: 'Packing List',
+    description: 'Schema สำหรับเอกสาร Packing List — ตรวจสอบเลขที่และจำนวนหีบห่อ',
+    templateType: 'pl-schema',
+    docTypes: ['PL'],
+    workflowIds: ['cwf-1', 'cwf-shipping-doc', 'cwf-import-dec-1'],
+    updatedAt: '2026-06-03T09:00:00Z',
+    configs: [
+      {
+        docTypeId: 'PL',
+        labels: [
+          { id: 'l-pl-1', name: 'Packing List No', required: false, compare: true, section: 'Header', type: 'string' },
+          { id: 'l-pl-2', name: 'Total Packages', required: true, compare: true, section: 'Footer', type: 'number' }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'ls-po',
+    name: 'Purchase Order',
+    description: 'Schema สำหรับเอกสาร Purchase Order — ตรวจสอบเลขที่ใบสั่งซื้อและยอดรวม',
+    templateType: 'po-schema',
+    docTypes: ['PO'],
+    workflowIds: ['cwf-2'],
+    updatedAt: '2026-06-04T09:00:00Z',
+    configs: [
+      {
+        docTypeId: 'PO',
+        labels: [
+          { id: 'l-po-1', name: 'PO Number', required: true, compare: true, section: 'Header', type: 'string' },
+          { id: 'l-po-2', name: 'PO Date', required: true, compare: false, section: 'Header', type: 'date' },
+          { id: 'l-po-3', name: 'Total Amount', required: false, compare: true, section: 'Footer', type: 'number' }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'ls-co',
+    name: 'Certificate of Origin',
+    description: 'ตรวจสอบความถูกต้องของหนังสือรับรองถิ่นกำเนิดสินค้าเพื่อสิทธิประโยชน์ทางภาษี',
+    templateType: 'co-schema',
     docTypes: ['CO'],
     workflowIds: ['cwf-2'],
-    updatedAt: '2026-05-27T08:15:00Z',
+    updatedAt: '2026-06-05T09:00:00Z',
     configs: [
       {
         docTypeId: 'CO',
         labels: [
-          { id: 'l-11', name: 'Certificate No', required: true, compare: true, section: 'Header', type: 'string' },
-          { id: 'l-12', name: 'Origin Country', required: true, compare: true, section: 'Header', type: 'string' }
+          { id: 'l-co-1', name: 'Certificate No', required: true, compare: true, section: 'Header', type: 'string' },
+          { id: 'l-co-2', name: 'Origin Country', required: true, compare: true, section: 'Header', type: 'string' }
         ]
       }
     ]
   },
   {
-    id: 'ls-3',
-    name: 'Custom Import Schema (Premium)',
-    description: 'Schema สำหรับเอกสารพรีเมียมและการตรวจสอบระดับละเอียดเพิ่มความรอบคอบ',
-    templateType: 'import-premium',
-    docTypes: ['INV', 'BL', 'PL'],
+    id: 'ls-do',
+    name: 'Delivery Order',
+    description: 'Schema สำหรับเอกสาร Delivery Order — ตรวจสอบเลขที่และผู้รับสินค้า',
+    templateType: 'do-schema',
+    docTypes: ['DO'],
     workflowIds: [],
-    updatedAt: '2026-05-28T10:00:00Z',
+    updatedAt: '2026-06-06T09:00:00Z',
     configs: [
       {
-        docTypeId: 'INV',
+        docTypeId: 'DO',
         labels: [
-          { id: 'l-13', name: 'Premium Inv#', required: true, compare: true, section: 'Header', type: 'string' },
-          { id: 'l-14', name: 'Discount Checked', required: false, compare: false, section: 'Description', type: 'boolean' },
-          { id: 'l-15', name: 'VAT Total', required: true, compare: true, section: 'Footer', type: 'number' }
-        ]
-      },
-      {
-        docTypeId: 'BL',
-        labels: [
-          { id: 'l-16', name: 'Vessel Voyage', required: true, compare: true, section: 'Footer', type: 'string' },
-          { id: 'l-17', name: 'BL Special No', required: true, compare: true, section: 'Header', type: 'string' }
-        ]
-      },
-      {
-        docTypeId: 'PL',
-        labels: [
-          { id: 'l-18', name: 'PL Package Count', required: true, compare: true, section: 'Description', type: 'number' },
-          { id: 'l-19', name: 'Gross Weight CBM', required: false, compare: false, section: 'Footer', type: 'number' }
+          { id: 'l-do-1', name: 'DO Number', required: true, compare: true, section: 'Header', type: 'string' },
+          { id: 'l-do-2', name: 'Consignee Name', required: true, compare: false, section: 'Header', type: 'string' },
+          { id: 'l-do-3', name: 'Release Date', required: false, compare: false, section: 'Footer', type: 'date' }
         ]
       }
     ]
   },
   {
-    id: 'ls-4',
-    name: 'Extended Trade Documents',
-    description: 'Schema สำหรับเอกสารประกอบการนำเข้าเพิ่มเติม เช่น PO/PI, Freight Invoice, HS Code, FTA, ประกันภัย, ใบอนุญาต และเอกสารอื่นๆ',
-    templateType: 'extended-trade-docs',
-    docTypes: ['POPI', 'FRT', 'HS', 'FTAD', 'FTAO', 'INS', 'LIC', 'LPI', 'OTH'],
-    workflowIds: ['cwf-po-pi', 'cwf-shipping-doc', 'cwf-import-dec-1', 'cwf-import-dec-2'],
-    updatedAt: '2026-05-30T09:00:00Z',
+    id: 'ls-popi',
+    name: 'PO/PI',
+    description: 'Schema สำหรับเอกสาร PO/PI — ตรวจสอบเลขที่ วันที่ และมูลค่ารวมก่อนสร้าง Shipment',
+    templateType: 'popi-schema',
+    docTypes: ['POPI'],
+    workflowIds: ['cwf-po-pi'],
+    updatedAt: '2026-06-07T09:00:00Z',
     configs: [
       {
         docTypeId: 'POPI',
@@ -194,7 +180,18 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
           { id: 'l-popi-2', name: 'PO/PI Date', required: true, compare: false, section: 'Header', type: 'date' },
           { id: 'l-popi-3', name: 'Total Value', required: false, compare: true, section: 'Footer', type: 'number' }
         ]
-      },
+      }
+    ]
+  },
+  {
+    id: 'ls-frt',
+    name: 'FREIGHT INVOICE',
+    description: 'Schema สำหรับเอกสาร Freight Invoice — ตรวจสอบค่าขนส่งและผู้ให้บริการ',
+    templateType: 'frt-schema',
+    docTypes: ['FRT'],
+    workflowIds: ['cwf-shipping-doc', 'cwf-import-dec-1'],
+    updatedAt: '2026-06-08T09:00:00Z',
+    configs: [
       {
         docTypeId: 'FRT',
         labels: [
@@ -202,48 +199,126 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
           { id: 'l-frt-2', name: 'Carrier Name', required: false, compare: false, section: 'Header', type: 'string' },
           { id: 'l-frt-3', name: 'Freight Amount', required: true, compare: true, section: 'Footer', type: 'number' }
         ]
-      },
+      }
+    ]
+  },
+  {
+    id: 'ls-hs',
+    name: 'HS Code Master File',
+    description: 'Schema สำหรับไฟล์อ้างอิงพิกัดอัตราศุลกากร (HS Code) หลัก',
+    templateType: 'hs-schema',
+    docTypes: ['HS'],
+    workflowIds: ['cwf-shipping-doc', 'cwf-import-dec-1'],
+    updatedAt: '2026-06-09T09:00:00Z',
+    configs: [
       {
         docTypeId: 'HS',
         labels: [
           { id: 'l-hs-1', name: 'HS Code', required: true, compare: true, section: 'Header', type: 'string' },
           { id: 'l-hs-2', name: 'Product Description', required: false, compare: false, section: 'Description', type: 'string' }
         ]
-      },
+      }
+    ]
+  },
+  {
+    id: 'ls-ftad',
+    name: 'Form FTA (Draft version)',
+    description: 'Schema สำหรับแบบฟอร์ม FTA ฉบับร่าง ก่อนออกฉบับจริง',
+    templateType: 'ftad-schema',
+    docTypes: ['FTAD'],
+    workflowIds: ['cwf-shipping-doc'],
+    updatedAt: '2026-06-10T09:00:00Z',
+    configs: [
       {
         docTypeId: 'FTAD',
         labels: [
           { id: 'l-ftad-1', name: 'FTA Form No', required: true, compare: true, section: 'Header', type: 'string' },
           { id: 'l-ftad-2', name: 'Origin Country', required: false, compare: true, section: 'Header', type: 'string' }
         ]
-      },
+      }
+    ]
+  },
+  {
+    id: 'ls-ftao',
+    name: 'Form FTA (Original version)',
+    description: 'Schema สำหรับแบบฟอร์ม FTA ฉบับจริงที่ได้รับการรับรองแล้ว',
+    templateType: 'ftao-schema',
+    docTypes: ['FTAO'],
+    workflowIds: [],
+    updatedAt: '2026-06-11T09:00:00Z',
+    configs: [
       {
         docTypeId: 'FTAO',
         labels: [
           { id: 'l-ftao-1', name: 'FTA Form No', required: true, compare: true, section: 'Header', type: 'string' },
           { id: 'l-ftao-2', name: 'Certificate Date', required: false, compare: false, section: 'Header', type: 'date' }
         ]
-      },
+      }
+    ]
+  },
+  {
+    id: 'ls-ins',
+    name: 'Insurance Sheet',
+    description: 'Schema สำหรับเอกสารกรมธรรม์ประกันภัยสินค้า — ตรวจสอบเลขที่กรมธรรม์และมูลค่าเอาประกัน',
+    templateType: 'ins-schema',
+    docTypes: ['INS'],
+    workflowIds: ['cwf-import-dec-1'],
+    updatedAt: '2026-06-12T09:00:00Z',
+    configs: [
       {
         docTypeId: 'INS',
         labels: [
           { id: 'l-ins-1', name: 'Policy No', required: true, compare: true, section: 'Header', type: 'string' },
-          { id: 'l-ins-2', name: 'Insured Value', required: false, compare: false, section: 'Footer', type: 'number' }
+          { id: 'l-ins-2', name: 'Insured Value', required: false, compare: true, section: 'Footer', type: 'number' }
         ]
-      },
+      }
+    ]
+  },
+  {
+    id: 'ls-lic',
+    name: 'License',
+    description: 'Schema สำหรับใบอนุญาตนำเข้า/ส่งออก — ตรวจสอบเลขที่และวันหมดอายุ',
+    templateType: 'lic-schema',
+    docTypes: ['LIC'],
+    workflowIds: ['cwf-import-dec-2'],
+    updatedAt: '2026-06-13T09:00:00Z',
+    configs: [
       {
         docTypeId: 'LIC',
         labels: [
           { id: 'l-lic-1', name: 'License No', required: true, compare: true, section: 'Header', type: 'string' },
-          { id: 'l-lic-2', name: 'Issue Date', required: false, compare: false, section: 'Header', type: 'date' }
+          { id: 'l-lic-2', name: 'Issue Date', required: false, compare: false, section: 'Header', type: 'date' },
+          { id: 'l-lic-3', name: 'Expiry Date', required: false, compare: false, section: 'Header', type: 'date' }
         ]
-      },
+      }
+    ]
+  },
+  {
+    id: 'ls-lpi',
+    name: 'LPI',
+    description: 'Schema สำหรับเอกสารประกอบการนำเข้า (LPI)',
+    templateType: 'lpi-schema',
+    docTypes: ['LPI'],
+    workflowIds: ['cwf-import-dec-2'],
+    updatedAt: '2026-06-14T09:00:00Z',
+    configs: [
       {
         docTypeId: 'LPI',
         labels: [
           { id: 'l-lpi-1', name: 'LPI No', required: true, compare: true, section: 'Header', type: 'string' }
         ]
-      },
+      }
+    ]
+  },
+  {
+    id: 'ls-oth',
+    name: 'Other',
+    description: 'Schema สำหรับเอกสารประกอบอื่นๆ ที่ไม่เข้าพวกกับประเภทเอกสารหลัก',
+    templateType: 'oth-schema',
+    docTypes: ['OTH'],
+    workflowIds: ['cwf-import-dec-2'],
+    updatedAt: '2026-06-15T09:00:00Z',
+    configs: [
       {
         docTypeId: 'OTH',
         labels: [
@@ -264,7 +339,7 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
   hideHeader = false
 }) => {
   const [schemas, setSchemas] = useState<LabelSchema[]>(() => {
-    const saved = typeof window !== 'undefined' ? localStorage.getItem('bizx_label_schemas_v4') : null;
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('bizx_label_schemas_v5') : null;
     if (saved) {
       try {
         return JSON.parse(saved);
@@ -277,7 +352,7 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('bizx_label_schemas_v4', JSON.stringify(schemas));
+      localStorage.setItem('bizx_label_schemas_v5', JSON.stringify(schemas));
     }
   }, [schemas]);
   const [searchQuery, setSearchQuery] = useState('');
