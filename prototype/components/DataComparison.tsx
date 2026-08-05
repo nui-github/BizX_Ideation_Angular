@@ -866,7 +866,7 @@ const mockWorkflows: Workflow[] = [
   },
   {
     id: 'wf-op-1',
-    name: 'PO/PI & Invoice Matching',
+    name: 'PO/PI Matching',
     description: 'Operation team: matches PO/PI against Invoice',
     status: 'ACTIVE',
     createdAt: new Date().toISOString(),
@@ -877,7 +877,7 @@ const mockWorkflows: Workflow[] = [
         type: 'create_job',
         position: { x: 0, y: 0 },
         data: {
-          jobName: 'PO/PI & Invoice Matching',
+          jobName: 'PO/PI Matching',
           docTypes: ['PO/PI', 'Invoice']
         }
       },
@@ -886,9 +886,9 @@ const mockWorkflows: Workflow[] = [
         type: 'send_to',
         position: { x: 400, y: 0 },
         data: {
-          nodeName: 'ส่งต่องาน ไปยัง Freight & Customs Reference Check',
+          nodeName: 'ส่งต่องาน ไปยัง Shipping Doc Matching',
           nextWorkflowId: 'wf-op-2',
-          nextWorkflowName: 'Freight & Customs Reference Check'
+          nextWorkflowName: 'Shipping Doc Matching'
         }
       }
     ],
@@ -898,8 +898,8 @@ const mockWorkflows: Workflow[] = [
   },
   {
     id: 'wf-op-2',
-    name: 'Freight & Customs Reference Check',
-    description: 'Operation team: verifies invoice through FTA draft documents',
+    name: 'Shipping Doc Matching',
+    description: 'Operation team: cross-checks Invoice, Packing List, B/L, Freight Invoice, HS Code, and the draft FTA form',
     status: 'ACTIVE',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -909,7 +909,7 @@ const mockWorkflows: Workflow[] = [
         type: 'create_job',
         position: { x: 0, y: 0 },
         data: {
-          jobName: 'Freight & Customs Reference Check',
+          jobName: 'Shipping Doc Matching',
           docTypes: ['Invoice', 'Packing List', 'Bill of Lading', 'FREIGHT INVOICE', 'HS Code Master File', 'Form FTA (Draft version)']
         }
       },
@@ -918,9 +918,9 @@ const mockWorkflows: Workflow[] = [
         type: 'send_to',
         position: { x: 400, y: 0 },
         data: {
-          nodeName: 'ส่งต่องาน ไปยัง Full Export Declaration Set',
+          nodeName: 'ส่งต่องาน ไปยัง Import Declaration Matching#1',
           nextWorkflowId: 'wf-op-3',
-          nextWorkflowName: 'Full Export Declaration Set'
+          nextWorkflowName: 'Import Declaration Matching#1'
         }
       }
     ],
@@ -930,8 +930,8 @@ const mockWorkflows: Workflow[] = [
   },
   {
     id: 'wf-op-3',
-    name: 'Full Export Declaration Set',
-    description: 'Operation team: full document set through export declaration',
+    name: 'Import Declaration Matching#1',
+    description: 'Customs team: full import declaration document set including Freight Invoice, HS Code, FTA, and Insurance Sheet',
     status: 'ACTIVE',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -941,8 +941,40 @@ const mockWorkflows: Workflow[] = [
         type: 'create_job',
         position: { x: 0, y: 0 },
         data: {
-          jobName: 'Full Export Declaration Set',
-          docTypes: ['PO/PI', 'Invoice', 'Packing List', 'Bill of Lading', 'FREIGHT INVOICE', 'HS Code Master File', 'Form FTA (Draft version)', 'Form FTA (Original version)', 'ใบขนสินค้า']
+          jobName: 'Import Declaration Matching#1',
+          docTypes: ['Invoice', 'Packing List', 'Bill of Lading', 'FREIGHT INVOICE', 'HS Code Master File', 'Form FTA', 'Insurance Sheet']
+        }
+      },
+      {
+        id: 'node-send-to-op-3',
+        type: 'send_to',
+        position: { x: 400, y: 0 },
+        data: {
+          nodeName: 'ส่งต่องาน ไปยัง Import Declaration Matching#2',
+          nextWorkflowId: 'wf-op-4',
+          nextWorkflowName: 'Import Declaration Matching#2'
+        }
+      }
+    ],
+    edges: [
+      { id: 'e-op-3-send', source: 'node-create-job-op-3', target: 'node-send-to-op-3' }
+    ]
+  },
+  {
+    id: 'wf-op-4',
+    name: 'Import Declaration Matching#2',
+    description: 'Customs team: supplementary FTA, License, LPI, and other supporting documents',
+    status: 'ACTIVE',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    nodes: [
+      {
+        id: 'node-create-job-op-4',
+        type: 'create_job',
+        position: { x: 0, y: 0 },
+        data: {
+          jobName: 'Import Declaration Matching#2',
+          docTypes: ['Form FTA', 'License', 'LPI', 'Other']
         }
       }
     ],
