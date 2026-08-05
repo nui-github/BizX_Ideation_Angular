@@ -1315,21 +1315,13 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
                                           {sectionLabels.length} {isTh ? 'ฟิลด์' : 'fields'}
                                         </span>
                                       </div>
-                                      <button
-                                        type="button"
-                                        onClick={() => handleAddLabelRow(config.docTypeId, sect.key)}
-                                        className="px-3 py-1.5 border border-dashed border-[#1f5df9]/40 hover:border-[#1f5df9]/70 hover:bg-[#1f5df9]/5 hover:text-[#1f5df9] text-[#1f5df9]/80 font-black text-xs rounded-[4px] transition-all flex items-center gap-1 bg-white cursor-pointer active:scale-98"
-                                      >
-                                        <Plus size={12} className="text-[#1f5df9]" />
-                                        <span>{isTh ? '+ เพิ่ม Field' : '+ Add Field'}</span>
-                                      </button>
                                     </div>
 
                                     {/* Fields List */}
                                     <div className="space-y-3.5">
                                       {sectionLabels.length === 0 ? (
                                         <div className="py-6 text-center text-slate-400 text-xs font-medium border border-dashed border-slate-100 rounded-[8px] bg-slate-50/20">
-                                          {isTh ? 'ยังไม่มีฟิลด์ในส่วนนี้' : 'No fields defined. Click "+ เพิ่ม Field" to begin.'}
+                                          {isTh ? 'ยังไม่มีฟิลด์ในส่วนนี้' : 'No fields defined. Click "เพิ่ม Field" to begin.'}
                                         </div>
                                       ) : (
                                         <div className="space-y-4 animate-in fade-in duration-200">
@@ -1376,19 +1368,6 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
                                                   </div>
                                                 </div>
 
-                                                {/* Required Checkbox */}
-                                                <div className="flex items-center min-w-[100px]">
-                                                  <label className="flex items-center gap-2 select-none cursor-pointer text-sm font-bold text-slate-600 hover:text-slate-900 transition-colors">
-                                                    <input 
-                                                      type="checkbox"
-                                                      checked={label.required}
-                                                      onChange={(e) => handleUpdateLabelRow(config.docTypeId, label.id, { required: e.target.checked })}
-                                                      className="w-4.5 h-4.5 rounded border-slate-300 text-[#1f5df9] focus:ring-[#1f5df9]/20 cursor-pointer"
-                                                    />
-                                                    <span>Required</span>
-                                                  </label>
-                                                </div>
-
                                                 {/* Dangerously delete label field */}
                                                 <button
                                                   type="button"
@@ -1408,20 +1387,12 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
                                                       <span className="w-1.5 h-1.5 rounded-full bg-[#16EA9E]" />
                                                       {isTh ? `ฟิลด์ย่อย (Array Items: ${label.name || '?'})` : `Sub-Fields for Array Items: ${label.name || '?'}`}
                                                     </span>
-                                                    <Button
-                                                      type="dashed"
-                                                      onClick={() => handleAddSubLabelRow(config.docTypeId, label.id)}
-                                                      className="border-dashed border-[#1f5df9]/50 text-[#1f5df9] hover:text-[#0352cc] hover:border-[#0352cc] text-[11px] h-[26px] py-0 px-2.5 rounded-[4px] flex items-center font-bold"
-                                                    >
-                                                      <Plus size={12} className="mr-1" />
-                                                      {isTh ? 'เพิ่ม Field ย่อย' : 'Add Sub Field'}
-                                                    </Button>
                                                   </div>
 
                                                   {/* Sub-fields list */}
                                                   {(!label.subLabels || label.subLabels.length === 0) ? (
                                                     <div className="p-4 text-center text-slate-400 text-xs font-semibold bg-white/70 border border-dashed border-slate-200/80 rounded-[8px]">
-                                                      {isTh ? 'ยังไม่มีฟิลด์ย่อย กดปุ่ม "เพิ่ม Field ย่อย" เพื่อเริ่มกำหนดค่า' : 'No nested fields yet. Click "Add Sub Field" to begin.'}
+                                                      {isTh ? 'ยังไม่มีฟิลด์ย่อย กดปุ่มด้านล่างเพื่อเริ่มกำหนดค่า' : 'No nested fields yet. Click the button below to begin.'}
                                                     </div>
                                                   ) : (
                                                     <div className="space-y-2.5">
@@ -1456,19 +1427,6 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
                                                               </div>
                                                             </div>
 
-                                                            {/* Sub-Field Required */}
-                                                            <div className="flex items-center min-w-[90px] pl-1">
-                                                              <label className="flex items-center gap-1.5 select-none cursor-pointer text-xs font-bold text-slate-600 hover:text-slate-900 transition-colors">
-                                                                <input 
-                                                                  type="checkbox"
-                                                                  checked={subLabel.required}
-                                                                  onChange={(e) => handleUpdateSubLabelRow(config.docTypeId, label.id, subLabel.id, { required: e.target.checked })}
-                                                                  className="w-3.5 h-3.5 rounded border-slate-300 text-[#1f5df9] focus:ring-[#1f5df9]/20 cursor-pointer"
-                                                                />
-                                                                <span>Required</span>
-                                                              </label>
-                                                            </div>
-
                                                             {/* Delete Sub-Field */}
                                                             <button
                                                               type="button"
@@ -1483,12 +1441,30 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
                                                       ))}
                                                     </div>
                                                   )}
+
+                                                  <Button
+                                                    type="dashed"
+                                                    onClick={() => handleAddSubLabelRow(config.docTypeId, label.id)}
+                                                    className="border-dashed border-[#1f5df9]/50 text-[#1f5df9] hover:text-[#0352cc] hover:border-[#0352cc] text-[11px] h-[26px] py-0 px-2.5 rounded-[4px] flex items-center justify-center w-full font-bold"
+                                                  >
+                                                    <Plus size={12} className="mr-1" />
+                                                    {isTh ? 'เพิ่ม Field ย่อย' : 'Add Sub Field'}
+                                                  </Button>
                                                 </div>
                                               )}
                                             </div>
                                           ))}
                                         </div>
                                       )}
+
+                                      <button
+                                        type="button"
+                                        onClick={() => handleAddLabelRow(config.docTypeId, sect.key)}
+                                        className="w-full px-3 py-1.5 border border-dashed border-[#1f5df9]/40 hover:border-[#1f5df9]/70 hover:bg-[#1f5df9]/5 hover:text-[#1f5df9] text-[#1f5df9]/80 font-black text-xs rounded-[4px] transition-all flex items-center justify-center gap-1 bg-white cursor-pointer active:scale-98"
+                                      >
+                                        <Plus size={12} className="text-[#1f5df9]" />
+                                        <span>{isTh ? 'เพิ่ม Field' : 'Add Field'}</span>
+                                      </button>
                                     </div>
                                   </div>
                                 );
