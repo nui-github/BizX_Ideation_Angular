@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Modal, Select, Input, Empty, Button, Tooltip, Tag, Popconfirm, Checkbox, Switch, message, Drawer } from 'antd';
 import { 
-  FileText, Plus, Trash2, Pencil, AlertCircle, ArrowLeft,
+  FileText, Plus, Trash2, Pencil, Copy, AlertCircle, ArrowLeft,
   Settings, Check, Search, Calendar, ChevronRight, Workflow as WorkflowIcon,
   Layers, Database, Clock, Info, HelpCircle, LayoutGrid, List, X,
   ChevronDown
@@ -359,6 +359,17 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
     setExpandedDocTypes({});
     setErrorMsg('');
     setShowModal(true);
+  };
+
+  const handleDuplicateSchema = (schema: LabelSchema) => {
+    const cloned: LabelSchema = {
+      ...JSON.parse(JSON.stringify(schema)),
+      id: `ls-${Date.now()}`,
+      name: isTh ? `สำเนาของ ${schema.name}` : `Copy of ${schema.name}`,
+      workflowIds: [],
+      updatedAt: new Date().toISOString()
+    };
+    setSchemas(prev => [cloned, ...prev]);
   };
 
   const handleDeleteSchema = (id: string) => {
@@ -939,6 +950,15 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
                                 </button>
                               </Tooltip>
 
+                              <Tooltip title={isTh ? 'ทำสำเนา' : 'Duplicate'}>
+                                <button
+                                  onClick={() => handleDuplicateSchema(schema)}
+                                  className="p-2 hover:bg-slate-50 text-slate-400 hover:text-[#1f5df9] bg-white border border-slate-150 rounded-[4px] transition-all cursor-pointer"
+                                >
+                                  <Copy size={14} />
+                                </button>
+                              </Tooltip>
+
                               <Tooltip title={isTh ? 'ลบ' : 'Delete'}>
                                 <button
                                   onClick={() => setSchemaToDelete(schema)}
@@ -992,6 +1012,15 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
                                   className="p-1.5 hover:bg-slate-100 text-slate-500 hover:text-blue-600 rounded-[4px] transition-colors cursor-pointer"
                                 >
                                   <Pencil size={13} />
+                                </button>
+                              </Tooltip>
+                              <Tooltip title={isTh ? 'ทำสำเนา' : 'Duplicate'}>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDuplicateSchema(schema)}
+                                  className="p-1.5 hover:bg-slate-100 text-slate-500 hover:text-blue-600 rounded-[4px] transition-colors cursor-pointer"
+                                >
+                                  <Copy size={13} />
                                 </button>
                               </Tooltip>
                               <Tooltip title={isTh ? 'ลบ' : 'Delete'}>
