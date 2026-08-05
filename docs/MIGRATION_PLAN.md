@@ -53,3 +53,4 @@
 ## หมายเหตุความเสี่ยง
 - ระหว่างเฟส 1–2 เดโมลูกค้ายังชี้ที่ React prototype (ไม่พัง)
 - อย่าลบ `prototype/` จนกว่าจะ port + verify ครบทุกตัว
+- `LabelSchemaSettings.tsx` mock data (`DEFAULT_SCHEMAS`) เปลี่ยนโครง 2026-08-05 เป็น 1 schema : 1 doc type (เดิมเป็น grouped schema) — ตอน port เฟส 2 ข้อ 6 ต้องยึดโครงใหม่นี้ ดู [`HANDOFF.md`](HANDOFF.md)
