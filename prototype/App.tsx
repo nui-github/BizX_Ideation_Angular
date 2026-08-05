@@ -696,6 +696,118 @@ function App() {
         { id: 'ex-e1', source: 'ex-1', target: 'ex-2' },
         { id: 'ex-e2', source: 'ex-2', target: 'ex-3' }
       ]
+    },
+    {
+      id: 'cwf-po-pi',
+      name: 'PO/PI Matching',
+      description: 'Matches Purchase Order / Proforma Invoice against the Commercial Invoice before a shipment is created.',
+      status: 'ACTIVE',
+      createdAt: '2026-04-02T09:00:00Z',
+      updatedAt: '2026-05-10T09:00:00Z',
+      nodes: [
+        { id: 'popi-1', type: 'get_file', position: { x: 100, y: 300 }, data: {
+          nodeName: 'Mail Connector (Sales)',
+          source: 'e-mail',
+          agent: 'Logistics Bot A',
+          manualUpload: true,
+          protocol: 'IMAP',
+          tenantId: 'popi-tenant',
+          clientId: 'popi-client',
+          clientSecret: 'popi-sec',
+          folder: 'INBOX/PO',
+          pollInterval: '5 min'
+        } },
+        { id: 'popi-2', type: 'group_of_file', position: { x: 500, y: 300 }, data: { rule: 'PO_PI_MATCH#2026', fileTypes: ['PO/PI', 'Invoice'] } },
+        { id: 'popi-3', type: 'create_job', position: { x: 900, y: 300 }, data: { namingFormat: 'POPI-{Ref}', jobType: 'Comparison' } }
+      ],
+      edges: [
+        { id: 'popi-e1', source: 'popi-1', target: 'popi-2' },
+        { id: 'popi-e2', source: 'popi-2', target: 'popi-3' }
+      ]
+    },
+    {
+      id: 'cwf-shipping-doc',
+      name: 'Shipping Doc Matching',
+      description: 'Cross-checks Invoice, Packing List, Bill of Lading, Freight Invoice, HS Code, and the draft FTA form for a shipment.',
+      status: 'ACTIVE',
+      createdAt: '2026-04-08T09:00:00Z',
+      updatedAt: '2026-05-12T09:00:00Z',
+      nodes: [
+        { id: 'ship-1', type: 'get_file', position: { x: 100, y: 300 }, data: {
+          nodeName: 'Mail Connector (Shipping)',
+          source: 'e-mail',
+          agent: 'Logistics Bot B',
+          manualUpload: true,
+          protocol: 'IMAP',
+          tenantId: 'ship-tenant',
+          clientId: 'ship-client',
+          clientSecret: 'ship-sec',
+          folder: 'INBOX/Shipping',
+          pollInterval: '5 min'
+        } },
+        { id: 'ship-2', type: 'group_of_file', position: { x: 500, y: 300 }, data: { rule: 'SHIPPING_DOC_MATCH#2026', fileTypes: ['Invoice', 'Packing list (PL)', 'Bill of Lading (BL)', 'FREIGHT INVOICE', 'HS Code Master File', 'Form FTA (Draft version)'] } },
+        { id: 'ship-3', type: 'create_job', position: { x: 900, y: 300 }, data: { namingFormat: 'SHIP-{Ref}', jobType: 'Comparison' } }
+      ],
+      edges: [
+        { id: 'ship-e1', source: 'ship-1', target: 'ship-2' },
+        { id: 'ship-e2', source: 'ship-2', target: 'ship-3' }
+      ]
+    },
+    {
+      id: 'cwf-import-dec-1',
+      name: 'Import Declaration Matching#1',
+      description: 'Full import declaration matching set: Invoice, Packing List, B/L, Freight Invoice, HS Code, Form FTA, and Insurance Sheet.',
+      status: 'ACTIVE',
+      createdAt: '2026-04-14T09:00:00Z',
+      updatedAt: '2026-05-14T09:00:00Z',
+      nodes: [
+        { id: 'imp1-1', type: 'get_file', position: { x: 100, y: 300 }, data: {
+          nodeName: 'FTP Connector (Customs)',
+          source: 'FTP Server',
+          agent: 'Compliance Monitor',
+          manualUpload: false,
+          protocol: 'SFTP',
+          tenantId: 'imp1-tenant',
+          clientId: 'imp1-client',
+          clientSecret: 'imp1-sec',
+          folder: '/imports/declaration',
+          pollInterval: '10 min'
+        } },
+        { id: 'imp1-2', type: 'group_of_file', position: { x: 500, y: 300 }, data: { rule: 'IMPORT_DEC_MATCH1#2026', fileTypes: ['Invoice', 'Packing list (PL)', 'Bill of Lading (BL)', 'FREIGHT INVOICE', 'HS Code Master File', 'Form FTA', 'Insurance Sheet'] } },
+        { id: 'imp1-3', type: 'create_job', position: { x: 900, y: 300 }, data: { namingFormat: 'IMPDEC1-{Ref}', jobType: 'Comparison' } }
+      ],
+      edges: [
+        { id: 'imp1-e1', source: 'imp1-1', target: 'imp1-2' },
+        { id: 'imp1-e2', source: 'imp1-2', target: 'imp1-3' }
+      ]
+    },
+    {
+      id: 'cwf-import-dec-2',
+      name: 'Import Declaration Matching#2',
+      description: 'Supplementary import declaration matching for FTA form, License, LPI, and other supporting documents.',
+      status: 'ACTIVE',
+      createdAt: '2026-04-20T09:00:00Z',
+      updatedAt: '2026-05-16T09:00:00Z',
+      nodes: [
+        { id: 'imp2-1', type: 'get_file', position: { x: 100, y: 300 }, data: {
+          nodeName: 'FTP Connector (Customs)',
+          source: 'FTP Server',
+          agent: 'Compliance Monitor',
+          manualUpload: false,
+          protocol: 'SFTP',
+          tenantId: 'imp2-tenant',
+          clientId: 'imp2-client',
+          clientSecret: 'imp2-sec',
+          folder: '/imports/supporting',
+          pollInterval: '10 min'
+        } },
+        { id: 'imp2-2', type: 'group_of_file', position: { x: 500, y: 300 }, data: { rule: 'IMPORT_DEC_MATCH2#2026', fileTypes: ['Form FTA', 'License', 'LPI', 'Other'] } },
+        { id: 'imp2-3', type: 'create_job', position: { x: 900, y: 300 }, data: { namingFormat: 'IMPDEC2-{Ref}', jobType: 'Comparison' } }
+      ],
+      edges: [
+        { id: 'imp2-e1', source: 'imp2-1', target: 'imp2-2' },
+        { id: 'imp2-e2', source: 'imp2-2', target: 'imp2-3' }
+      ]
     }
   ]);
   const [selectedWorkflow, setSelectedWorkflow] = useState<Workflow | undefined>(undefined);
