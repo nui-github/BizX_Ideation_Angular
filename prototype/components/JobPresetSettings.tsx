@@ -48,6 +48,10 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
   const [selectedWorkflowId, setSelectedWorkflowId] = useState<string>('');
   const [selectedWorkflowTeams, setSelectedWorkflowTeams] = useState<string[]>([]);
 
+  // Inline edit state for an existing workflow row's assigned team
+  const [editingWorkflowRowId, setEditingWorkflowRowId] = useState<string | null>(null);
+  const [editingWorkflowRowTeam, setEditingWorkflowRowTeam] = useState<string>('');
+
   const t = {
     title: language === 'TH' ? 'ตั้งค่าชุด Shipment เริ่มต้น' : 'Starting Shipment Set Settings',
     subtitle: language === 'TH' ? 'จัดการชุด Shipment เริ่มต้นที่ใช้ตอนสร้าง Shipment ใหม่' : 'Manage the starting shipment sets used when creating a new Shipment',
@@ -84,11 +88,15 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
     }
     setSelectedWorkflowId('');
     setSelectedWorkflowTeams([]);
+    setEditingWorkflowRowId(null);
+    setEditingWorkflowRowTeam('');
     setShowModal(true);
   };
 
   const handleCloseModal = () => {
     setShowModal(false);
+    setEditingWorkflowRowId(null);
+    setEditingWorkflowRowTeam('');
   };
 
   const handleAddWorkflow = () => {
@@ -105,6 +113,23 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
 
   const handleRemoveWorkflow = (id: string) => {
     setPresetWorkflows(presetWorkflows.filter(pwf => pwf.id !== id));
+  };
+
+  const handleStartEditWorkflowRow = (pwf: JobPresetWorkflow) => {
+    setEditingWorkflowRowId(pwf.id);
+    setEditingWorkflowRowTeam(pwf.assignedTeams[0] || '');
+  };
+
+  const handleSaveWorkflowRowTeam = (id: string) => {
+    if (!editingWorkflowRowTeam) return;
+    setPresetWorkflows(prev => prev.map(pwf => pwf.id === id ? { ...pwf, assignedTeams: [editingWorkflowRowTeam] } : pwf));
+    setEditingWorkflowRowId(null);
+    setEditingWorkflowRowTeam('');
+  };
+
+  const handleCancelEditWorkflowRow = () => {
+    setEditingWorkflowRowId(null);
+    setEditingWorkflowRowTeam('');
   };
 
   const handleSave = () => {
@@ -519,8 +544,8 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
                                   <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-px bg-blue-100" />
                                 )}
                               </div>
-                              <div className="flex-1 flex items-center justify-between">
-                                <div>
+                              <div className="flex-1 flex items-center justify-between gap-3">
+                                <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2">
                                     <h4 className="text-sm font-bold text-[#010136]">
                                       {wf?.name || 'Unknown Workflow'}
@@ -529,23 +554,63 @@ export const JobPresetSettings: React.FC<JobPresetSettingsProps> = ({
                                       JOB-{String(index + 1).padStart(4, '0')}
                                     </span>
                                   </div>
-                                  <div className="flex flex-wrap gap-1 mt-1">
-                                    {pwf.assignedTeams.map(team => {
-                                      const teamLabel = MOCK_TEAMS.find(t => t.value === team)?.label || team;
-                                      return (
-                                        <span key={team} className="px-1.5 py-0.5 bg-slate-100 text-slate-600 text-[9px] font-bold rounded">
-                                          {teamLabel}
-                                        </span>
-                                      );
-                                    })}
-                                  </div>
+                                  {editingWorkflowRowId === pwf.id ? (
+                                    <Select
+                                      autoFocus
+                                      className="w-full max-w-[220px] mt-1.5"
+                                      popupClassName="!z-[2100]"
+                                      placeholder={language === 'TH' ? 'เลือกทีม' : 'Select team'}
+                                      value={editingWorkflowRowTeam || undefined}
+                                      onChange={(value) => setEditingWorkflowRowTeam(value)}
+                                      options={MOCK_TEAMS}
+                                    />
+                                  ) : (
+                                    <div className="flex flex-wrap gap-1 mt-1">
+                                      {pwf.assignedTeams.map(team => {
+                                        const teamLabel = MOCK_TEAMS.find(t => t.value === team)?.label || team;
+                                        return (
+                                          <span key={team} className="px-1.5 py-0.5 bg-slate-100 text-slate-600 text-[9px] font-bold rounded">
+                                            {teamLabel}
+                                          </span>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
                                 </div>
-                                <button
-                                  onClick={() => handleRemoveWorkflow(pwf.id)}
-                                  className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
-                                >
-                                  <Trash2 size={16} />
-                                </button>
+                                <div className="flex items-center gap-1 shrink-0">
+                                  {editingWorkflowRowId === pwf.id ? (
+                                    <>
+                                      <button
+                                        onClick={() => handleSaveWorkflowRowTeam(pwf.id)}
+                                        disabled={!editingWorkflowRowTeam}
+                                        className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                      >
+                                        <Check size={16} />
+                                      </button>
+                                      <button
+                                        onClick={handleCancelEditWorkflowRow}
+                                        className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                                      >
+                                        <X size={16} />
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <button
+                                        onClick={() => handleStartEditWorkflowRow(pwf)}
+                                        className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                      >
+                                        <Pencil size={16} />
+                                      </button>
+                                      <button
+                                        onClick={() => handleRemoveWorkflow(pwf.id)}
+                                        className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                                      >
+                                        <Trash2 size={16} />
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           );

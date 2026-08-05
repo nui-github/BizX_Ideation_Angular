@@ -455,7 +455,7 @@ const MOCK_WORKFLOWS: Workflow[] = [
   },
   {
     id: 'wf-op-1',
-    name: 'PO/PI & Invoice Matching',
+    name: 'PO/PI Matching',
     description: 'Operation team: matches PO/PI against Invoice',
     status: 'ACTIVE',
     createdAt: '2026-05-01T09:00:00Z',
@@ -465,8 +465,8 @@ const MOCK_WORKFLOWS: Workflow[] = [
   },
   {
     id: 'wf-op-2',
-    name: 'Freight & Customs Reference Check',
-    description: 'Operation team: verifies invoice through FTA draft documents',
+    name: 'Shipping Doc Matching',
+    description: 'Operation team: cross-checks Invoice, Packing List, B/L, Freight Invoice, HS Code, and the draft FTA form',
     status: 'ACTIVE',
     createdAt: '2026-05-01T09:00:00Z',
     updatedAt: '2026-05-01T09:00:00Z',
@@ -475,8 +475,18 @@ const MOCK_WORKFLOWS: Workflow[] = [
   },
   {
     id: 'wf-op-3',
-    name: 'Full Export Declaration Set',
-    description: 'Operation team: full document set through export declaration',
+    name: 'Import Declaration Matching#1',
+    description: 'Customs team: full import declaration document set including Freight Invoice, HS Code, FTA, and Insurance Sheet',
+    status: 'ACTIVE',
+    createdAt: '2026-05-01T09:00:00Z',
+    updatedAt: '2026-05-01T09:00:00Z',
+    nodes: [],
+    edges: []
+  },
+  {
+    id: 'wf-op-4',
+    name: 'Import Declaration Matching#2',
+    description: 'Customs team: supplementary FTA, License, LPI, and other supporting documents',
     status: 'ACTIVE',
     createdAt: '2026-05-01T09:00:00Z',
     updatedAt: '2026-05-01T09:00:00Z',
