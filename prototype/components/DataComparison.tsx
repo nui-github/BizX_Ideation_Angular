@@ -51,7 +51,7 @@ const LOCAL_T = {
     uploadManageTitle: "อัปโหลดและสะสมกลุ่มเอกสาร (Upload & Multi-File Grouping)",
     uploadManageSubtitle: "อัปโหลดไฟล์เอกสาร PDF/รูปภาพเพิ่มเติม และเลือกจับกลุ่มเพื่อเชื่อมข้อมูลเป็น 1 คอลัมน์สำหรับ OCR และเปรียบเทียบข้อมูลร่วมกัน",
     dropzonePlaceholder: "ลากไฟล์มาวางที่นี่ หรือ คลิกเพื่อเลือกไฟล์",
-    dropzoneSub: "รองรับ PDF, PNG, JPG, Excel, XML (เลือกหรือลากพร้อมกันได้หลายไฟล์)",
+    dropzoneSub: "รองรับ PDF, Excel, XML (เลือกหรือลากพร้อมกันได้หลายไฟล์)",
     newUploadedHeader: "ไฟล์ที่เพิ่งอัปโหลดใหม่ (%count% ไฟล์)",
     noFilesUploaded: "ยังไม่มีไฟล์ที่อัปโหลด ดรอปไฟล์ที่นี่เพื่อเริ่มใช้งาน",
     groupHeading: "การจัดกลุ่มเอกสารที่จะ Merge (Grouping Columns)",
@@ -78,7 +78,7 @@ const LOCAL_T = {
     uploadManageTitle: "Upload & Multi-File Grouping Workspace",
     uploadManageSubtitle: "Upload additional PDF/Image source files and select to group them as a unified column for joint OCR and comparison.",
     dropzonePlaceholder: "Drag & drop files here, or click to browse",
-    dropzoneSub: "Supports PDF, PNG, JPG, Excel, XML (multiple files allowed)",
+    dropzoneSub: "Supports PDF, Excel, XML (multiple files allowed)",
     newUploadedHeader: "Newly Uploaded Files (%count% files)",
     noFilesUploaded: "No files uploaded yet. Drag & drop files here to begin.",
     groupHeading: "Document Grouping Option (Merge to Column)",
@@ -5089,7 +5089,7 @@ const mockWorkflows: Workflow[] = [
                     type="file"
                     id="local-file-uploader"
                     multiple
-                    accept=".pdf,.png,.jpg,.jpeg,.xlsx,.xls,.xml"
+                    accept=".pdf,.xlsx,.xls,.xml"
                     className="hidden"
                     onChange={handleFileInputChange}
                   />
@@ -5383,7 +5383,7 @@ const mockWorkflows: Workflow[] = [
                   type="file"
                   id="replace-file-uploader"
                   multiple
-                  accept=".pdf,.png,.jpg,.jpeg,.xlsx,.xls,.xml"
+                  accept=".pdf,.xlsx,.xls,.xml"
                   className="hidden"
                   onChange={handleReplaceFileInputChange}
                 />
