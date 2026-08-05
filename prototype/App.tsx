@@ -531,7 +531,72 @@ function App() {
     },
     { id: 'PO', name: 'Purchase Order', hint: 'Commercial document issued by a buyer', pattern: 'PO_*' },
     { id: 'CO', name: 'Certificate of Origin', hint: 'Declares in which country a commodity was manufactured', pattern: 'CO_*, CERT_*' },
-    { id: 'DO', name: 'Delivery Order', hint: 'Order from consignee to carrier to release cargo', pattern: 'DO_*' }
+    { id: 'DO', name: 'Delivery Order', hint: 'Order from consignee to carrier to release cargo', pattern: 'DO_*' },
+    {
+      id: 'POPI',
+      name: 'PO/PI',
+      hint: 'Purchase Order / Proforma Invoice issued before shipment',
+      pattern: 'PO_*, PI_*',
+      schema: [
+        { id: 'f-popi-1', key: 'popi_no', name: 'PO/PI Number', type: 'text', required: true, minConfidence: 85 },
+        { id: 'f-popi-2', key: 'popi_date', name: 'PO/PI Date', type: 'date', required: true, minConfidence: 80 },
+        { id: 'f-popi-3', key: 'total_value', name: 'Total Value', type: 'currency', required: false, minConfidence: 80 }
+      ]
+    },
+    {
+      id: 'FRT',
+      name: 'FREIGHT INVOICE',
+      hint: 'Invoice for freight / shipping charges',
+      pattern: 'FRT_*, FREIGHT_*',
+      schema: [
+        { id: 'f-frt-1', key: 'freight_invoice_no', name: 'Freight Invoice No', type: 'text', required: true, minConfidence: 85 },
+        { id: 'f-frt-2', key: 'carrier_name', name: 'Carrier Name', type: 'text', required: false, minConfidence: 75 },
+        { id: 'f-frt-3', key: 'freight_amount', name: 'Freight Amount', type: 'currency', required: true, minConfidence: 85 }
+      ]
+    },
+    {
+      id: 'HS',
+      name: 'HS Code Master File',
+      hint: 'Master reference file listing HS codes for products',
+      pattern: 'HS_*, HSCODE_*',
+      schema: [
+        { id: 'f-hs-1', key: 'hs_code', name: 'HS Code', type: 'text', required: true, minConfidence: 90 },
+        { id: 'f-hs-2', key: 'product_description', name: 'Product Description', type: 'text', required: false, minConfidence: 75 }
+      ]
+    },
+    {
+      id: 'FTAD',
+      name: 'Form FTA (Draft version)',
+      hint: 'Draft Free Trade Agreement form pending approval',
+      pattern: 'FTA_DRAFT_*',
+      schema: [
+        { id: 'f-ftad-1', key: 'fta_form_no', name: 'FTA Form No', type: 'text', required: true, minConfidence: 80 },
+        { id: 'f-ftad-2', key: 'origin_country', name: 'Origin Country', type: 'text', required: false, minConfidence: 75 }
+      ]
+    },
+    {
+      id: 'FTAO',
+      name: 'Form FTA (Original version)',
+      hint: 'Approved original Free Trade Agreement form',
+      pattern: 'FTA_ORIG_*',
+      schema: [
+        { id: 'f-ftao-1', key: 'fta_form_no', name: 'FTA Form No', type: 'text', required: true, minConfidence: 85 },
+        { id: 'f-ftao-2', key: 'certificate_date', name: 'Certificate Date', type: 'date', required: false, minConfidence: 80 }
+      ]
+    },
+    {
+      id: 'INS',
+      name: 'Insurance Sheet',
+      hint: 'Cargo insurance coverage details',
+      pattern: 'INS_*, INSURANCE_*',
+      schema: [
+        { id: 'f-ins-1', key: 'policy_no', name: 'Policy No', type: 'text', required: true, minConfidence: 85 },
+        { id: 'f-ins-2', key: 'insured_value', name: 'Insured Value', type: 'currency', required: false, minConfidence: 80 }
+      ]
+    },
+    { id: 'LIC', name: 'License', hint: 'Import / export license issued by authority', pattern: 'LIC_*, LICENSE_*' },
+    { id: 'LPI', name: 'LPI', hint: 'Supporting import permission document', pattern: 'LPI_*' },
+    { id: 'OTH', name: 'Other', hint: 'Miscellaneous supporting documents', pattern: 'OTHER_*' }
   ]);
   const [formMode, setFormMode] = useState<'CREATE' | 'EDIT' | 'VIEW'>('CREATE');
   const [agents, setAgents] = useState<Agent[]>(MOCK_AGENTS);

@@ -177,6 +177,80 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
         ]
       }
     ]
+  },
+  {
+    id: 'ls-4',
+    name: 'Extended Trade Documents',
+    description: 'Schema สำหรับเอกสารประกอบการนำเข้าเพิ่มเติม เช่น PO/PI, Freight Invoice, HS Code, FTA, ประกันภัย, ใบอนุญาต และเอกสารอื่นๆ',
+    templateType: 'extended-trade-docs',
+    docTypes: ['POPI', 'FRT', 'HS', 'FTAD', 'FTAO', 'INS', 'LIC', 'LPI', 'OTH'],
+    workflowIds: ['cwf-po-pi', 'cwf-shipping-doc', 'cwf-import-dec-1', 'cwf-import-dec-2'],
+    updatedAt: '2026-05-30T09:00:00Z',
+    configs: [
+      {
+        docTypeId: 'POPI',
+        labels: [
+          { id: 'l-popi-1', name: 'PO/PI Number', required: true, compare: true, section: 'Header', type: 'string' },
+          { id: 'l-popi-2', name: 'PO/PI Date', required: true, compare: false, section: 'Header', type: 'date' },
+          { id: 'l-popi-3', name: 'Total Value', required: false, compare: true, section: 'Footer', type: 'number' }
+        ]
+      },
+      {
+        docTypeId: 'FRT',
+        labels: [
+          { id: 'l-frt-1', name: 'Freight Invoice No', required: true, compare: true, section: 'Header', type: 'string' },
+          { id: 'l-frt-2', name: 'Carrier Name', required: false, compare: false, section: 'Header', type: 'string' },
+          { id: 'l-frt-3', name: 'Freight Amount', required: true, compare: true, section: 'Footer', type: 'number' }
+        ]
+      },
+      {
+        docTypeId: 'HS',
+        labels: [
+          { id: 'l-hs-1', name: 'HS Code', required: true, compare: true, section: 'Header', type: 'string' },
+          { id: 'l-hs-2', name: 'Product Description', required: false, compare: false, section: 'Description', type: 'string' }
+        ]
+      },
+      {
+        docTypeId: 'FTAD',
+        labels: [
+          { id: 'l-ftad-1', name: 'FTA Form No', required: true, compare: true, section: 'Header', type: 'string' },
+          { id: 'l-ftad-2', name: 'Origin Country', required: false, compare: true, section: 'Header', type: 'string' }
+        ]
+      },
+      {
+        docTypeId: 'FTAO',
+        labels: [
+          { id: 'l-ftao-1', name: 'FTA Form No', required: true, compare: true, section: 'Header', type: 'string' },
+          { id: 'l-ftao-2', name: 'Certificate Date', required: false, compare: false, section: 'Header', type: 'date' }
+        ]
+      },
+      {
+        docTypeId: 'INS',
+        labels: [
+          { id: 'l-ins-1', name: 'Policy No', required: true, compare: true, section: 'Header', type: 'string' },
+          { id: 'l-ins-2', name: 'Insured Value', required: false, compare: false, section: 'Footer', type: 'number' }
+        ]
+      },
+      {
+        docTypeId: 'LIC',
+        labels: [
+          { id: 'l-lic-1', name: 'License No', required: true, compare: true, section: 'Header', type: 'string' },
+          { id: 'l-lic-2', name: 'Issue Date', required: false, compare: false, section: 'Header', type: 'date' }
+        ]
+      },
+      {
+        docTypeId: 'LPI',
+        labels: [
+          { id: 'l-lpi-1', name: 'LPI No', required: true, compare: true, section: 'Header', type: 'string' }
+        ]
+      },
+      {
+        docTypeId: 'OTH',
+        labels: [
+          { id: 'l-oth-1', name: 'Document Title', required: false, compare: false, section: 'Header', type: 'string' }
+        ]
+      }
+    ]
   }
 ];
 
@@ -190,7 +264,7 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
   hideHeader = false
 }) => {
   const [schemas, setSchemas] = useState<LabelSchema[]>(() => {
-    const saved = typeof window !== 'undefined' ? localStorage.getItem('bizx_label_schemas_v3') : null;
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('bizx_label_schemas_v4') : null;
     if (saved) {
       try {
         return JSON.parse(saved);
@@ -203,7 +277,7 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('bizx_label_schemas_v3', JSON.stringify(schemas));
+      localStorage.setItem('bizx_label_schemas_v4', JSON.stringify(schemas));
     }
   }, [schemas]);
   const [searchQuery, setSearchQuery] = useState('');

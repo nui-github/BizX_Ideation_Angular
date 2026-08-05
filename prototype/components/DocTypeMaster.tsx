@@ -282,7 +282,7 @@ export const DocTypeMaster: React.FC<DocTypeMasterProps> = ({
     // Check if there are schemas linked to this docType
     let usingSchemas: LabelSchema[] = [];
     try {
-      const savedSchemas = typeof window !== 'undefined' ? localStorage.getItem('bizx_label_schemas_v3') : null;
+      const savedSchemas = typeof window !== 'undefined' ? localStorage.getItem('bizx_label_schemas_v4') : null;
       const schemas: LabelSchema[] = savedSchemas ? JSON.parse(savedSchemas) : DEFAULT_SCHEMAS;
       usingSchemas = schemas.filter(s => 
         s.docTypes && s.docTypes.some(id => 
