@@ -1453,7 +1453,7 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
 
                         <div className="p-4 bg-amber-50 border border-amber-100 text-xs text-amber-700 font-bold flex flex-col gap-1.5 leading-relaxed" style={{ borderRadius: '8px' }}>
                           <div>✓ {language === 'TH' ? 'ถ้าความคล้าย ≥ threshold → match' : 'If similarity ≥ threshold -> match'}</div>
-                          <div>✓ {language === 'TH' ? 'ถ้าความคล้าย < threshold → pending review' : 'If similarity < threshold -> pending review'}</div>
+                          <div>✓ {language === 'TH' ? 'ถ้าความคล้าย < threshold → Mismatched' : 'If similarity < threshold -> Mismatched'}</div>
                           <div className="text-slate-400 font-medium">{language === 'TH' ? '(threshold ต่ำ = หลวม/ยอมรับง่าย, threshold สูง = เข้มงวด/ต้องเหมือนเดิมมาก)' : '(lower threshold = looser match, higher threshold = stricter match)'}</div>
                         </div>
                       </div>
