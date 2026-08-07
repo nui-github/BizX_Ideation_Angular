@@ -383,6 +383,7 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({
             return acc;
           }, {} as Record<string, any>),
           assignee: assigneeValue || undefined,
+          assignedTeam: isPresetLocked ? selectedPreset?.workflows[i]?.assignedTeams?.[0] : undefined,
           workflowName: `${jobName} [${extractedPrefix}${finalSuffix}]`,
           progress: 0,
           totalDocs: docTypes.length,
