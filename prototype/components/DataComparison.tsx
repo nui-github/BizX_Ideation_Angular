@@ -4384,7 +4384,6 @@ const mockWorkflows: Workflow[] = [
                   <th className="px-8 py-4">{language === 'TH' ? 'ทีมที่รับผิดชอบ' : 'ASSIGNED TEAM'}</th>
                   <th className="px-8 py-4">{language === 'TH' ? 'ผู้รับผิดชอบล่าสุด' : 'CURRENT ASSIGNEE'}</th>
                   <th className="px-8 py-4">{language === 'TH' ? 'อัปเดตล่าสุด' : 'LAST UPDATE'}</th>
-                  <th className="px-8 py-4 text-center">{language === 'TH' ? 'จำนวนไฟล์' : 'FILES'}</th>
                   <th className="px-8 py-4 min-w-[170px]">{t.status}</th>
                   <th className="px-8 py-4 text-right"></th>
                 </tr>
@@ -4454,7 +4453,7 @@ const mockWorkflows: Workflow[] = [
                         </div>
                       </td>
                       <td className="px-8 py-5">
-                        <p className={`text-[13px] font-bold font-sans ${isBlocked ? 'text-slate-400' : 'text-slate-600'}`}>{job.workflowName || 'N/A'}</p>
+                        <p className={`text-[13px] font-bold font-sans ${isBlocked ? 'text-slate-400' : 'text-slate-600'}`}>{job.workflowName?.replace(/\s*\[[^\]]*\]\s*$/, '') || 'N/A'}</p>
                       </td>
                       <td className="px-8 py-5">
                         <span className={`text-[13px] font-bold font-sans ${isBlocked ? 'text-slate-300' : 'text-slate-500'}`}>{MOCK_TEAMS.find(team => team.value === job.assignedTeam)?.label || (language === 'TH' ? 'ยังไม่ได้กำหนด' : 'Unassigned')}</span>
@@ -4464,9 +4463,6 @@ const mockWorkflows: Workflow[] = [
                       </td>
                       <td className="px-8 py-5">
                         <p className={`text-[13px] font-bold font-sans ${isBlocked ? 'text-slate-400' : 'text-slate-600'}`}>{job.expiryDate ? formatDisplayDateWithTime(job.expiryDate) : 'N/A'}</p>
-                      </td>
-                      <td className="px-8 py-5 text-center">
-                        <p className={`text-[13px] font-black tabular-nums ${isBlocked ? 'text-slate-400' : 'text-slate-800'}`}>{job.foundDocs ?? Object.values(job.docs).filter(s => s !== ComparisonDocStatus.MISSING).length} / {job.totalDocs}</p>
                       </td>
                       <td className="px-8 py-5 min-w-[170px]">
                         {getStatusBadge(job, isBlocked)}
