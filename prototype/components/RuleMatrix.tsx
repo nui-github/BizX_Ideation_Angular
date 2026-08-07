@@ -932,9 +932,10 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                                           onChange={(e) => {
                                              const typeVal = e.target.value;
                                              const newValues = [...editFormData.values];
-                                             newValues[vIdx] = { 
-                                               ...newValues[vIdx], 
-                                               type: typeVal
+                                             newValues[vIdx] = {
+                                               ...newValues[vIdx],
+                                               type: typeVal,
+                                               ...(typeVal === 'FUZZY' && newValues[vIdx].threshold === undefined ? { threshold: 80 } : {})
                                              };
                                              setEditFormData({...editFormData, values: newValues});
                                              
