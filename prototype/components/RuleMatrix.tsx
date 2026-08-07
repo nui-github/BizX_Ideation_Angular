@@ -217,8 +217,8 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
       case 'NEARLY':
       case 'SYNONYM': 
         return 'Nearly (NEARLY)';
-      case 'FUZZY': 
-        return 'Fuzzy (FUZZY)';
+      case 'FUZZY':
+        return language === 'TH' ? 'ใกล้เคียงกัน (FUZZY)' : 'Fuzzy match (FUZZY)';
       case 'BILINGUAL':
         return language === 'TH' ? 'Bilingual (แปลความหมาย)' : 'Bilingual (BILINGUAL)';
       case 'NUMBER_WORD':
@@ -955,6 +955,7 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                                         >
                                           <option value="">{language === 'TH' ? 'เลือกวิธีการเปรียบเทียบ' : 'Select Style'}</option>
                                           <option value="EXACT">{language === 'TH' ? 'ตรงกัน (EXACT)' : 'Exact (EXACT)'}</option>
+                                          <option value="FUZZY">{language === 'TH' ? 'ใกล้เคียงกัน (FUZZY)' : 'Fuzzy match (FUZZY)'}</option>
                                           <option value="BILINGUAL">{language === 'TH' ? 'Bilingual (AI แปลความหมาย)' : 'Bilingual'}</option>
                                           <option value="NUMBER_WORD">{language === 'TH' ? 'ตัวเลข / คำอ่าน (NUMBER/WORD)' : 'Number / Word'}</option>
                                           <option value="EXISTENCE">{language === 'TH' ? 'ความมีอยู่ (EXISTENCE)' : 'Existence'}</option>
@@ -1361,9 +1362,104 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                       </div>
                     );
 
+                  case 'FUZZY':
+                    return (
+                      <div className="flex flex-col gap-4">
+                        <div className="bg-slate-50 p-4 border border-slate-200" style={{ borderRadius: '8px' }}>
+                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-wide block mb-1">
+                            {language === 'TH' ? 'จับคู่แบบใกล้เคียง (Fuzzy Match)' : 'Fuzzy Match Settings'}
+                          </span>
+                          <p className="text-xs text-slate-500 leading-relaxed mb-4">
+                            {language === 'TH'
+                              ? 'เทียบข้อความเป็นเปอร์เซ็นต์ความคล้าย ไม่ต้องตรงกันทุกตัวอักษร รองรับพิมพ์ผิด/สะกดคลาดเคลื่อนเล็กน้อย ยิ่งตั้ง threshold สูง ยิ่งต้องคล้ายกันมาก'
+                              : 'Compares text as a similarity percentage — doesn\'t need an exact character match, so small typos are tolerated. Higher threshold means the two values must be more alike.'}
+                          </p>
+
+                          <div className="flex items-center justify-between w-full mb-2">
+                            <span className="text-xs font-black text-slate-500 uppercase tracking-widest">
+                              {language === 'TH' ? 'ความถูกต้อง (Threshold)' : 'Threshold'}
+                            </span>
+                            <span className="text-sm font-black text-blue-600">
+                              {drawerVal.threshold !== undefined ? drawerVal.threshold : 80}%
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-3 w-full mb-4">
+                            <input
+                              type="range"
+                              min="0"
+                              max="100"
+                              step="5"
+                              className="flex-1 accent-blue-600 h-1.5 bg-slate-200 rounded-lg cursor-pointer"
+                              value={drawerVal.threshold !== undefined ? drawerVal.threshold : 80}
+                              onChange={(e) => {
+                                const valNum = parseInt(e.target.value) || 0;
+                                const newValues = [...editFormData.values];
+                                newValues[openDrawerInfo.colIdx] = {
+                                  ...newValues[openDrawerInfo.colIdx],
+                                  threshold: valNum
+                                };
+                                setEditFormData({...editFormData, values: newValues});
+                              }}
+                            />
+                            <input
+                              type="number"
+                              min="0"
+                              max="100"
+                              className="w-12 bg-white border border-slate-200 p-1 text-center text-xs font-black text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              style={{ borderRadius: '4px' }}
+                              value={drawerVal.threshold !== undefined ? drawerVal.threshold : 80}
+                              onChange={(e) => {
+                                let valNum = parseInt(e.target.value);
+                                if (isNaN(valNum)) valNum = 0;
+                                if (valNum < 0) valNum = 0;
+                                if (valNum > 100) valNum = 100;
+                                const newValues = [...editFormData.values];
+                                newValues[openDrawerInfo.colIdx] = {
+                                  ...newValues[openDrawerInfo.colIdx],
+                                  threshold: valNum
+                                };
+                                setEditFormData({...editFormData, values: newValues});
+                              }}
+                            />
+                          </div>
+
+                          <div className="flex gap-1.5 w-full justify-between mb-2">
+                            {[10, 30, 50, 80, 100].map((preset) => (
+                              <button
+                                key={preset}
+                                type="button"
+                                onClick={() => {
+                                  const newValues = [...editFormData.values];
+                                  newValues[openDrawerInfo.colIdx] = {
+                                    ...newValues[openDrawerInfo.colIdx],
+                                    threshold: preset
+                                  };
+                                  setEditFormData({...editFormData, values: newValues});
+                                }}
+                                className={`flex-1 py-1 rounded-[4px] text-xs font-bold border transition-all cursor-pointer ${
+                                  (drawerVal.threshold !== undefined ? drawerVal.threshold : 80) === preset
+                                    ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
+                                    : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
+                                }`}
+                                style={{ borderRadius: '4px' }}
+                              >
+                                {preset}%
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="p-4 bg-amber-50 border border-amber-100 text-xs text-amber-700 font-bold flex flex-col gap-1.5 leading-relaxed" style={{ borderRadius: '8px' }}>
+                          <div>✓ {language === 'TH' ? 'ถ้าความคล้าย ≥ threshold → match' : 'If similarity ≥ threshold -> match'}</div>
+                          <div>✓ {language === 'TH' ? 'ถ้าความคล้าย < threshold → pending review' : 'If similarity < threshold -> pending review'}</div>
+                          <div className="text-slate-400 font-medium">{language === 'TH' ? '(threshold ต่ำ = หลวม/ยอมรับง่าย, threshold สูง = เข้มงวด/ต้องเหมือนเดิมมาก)' : '(lower threshold = looser match, higher threshold = stricter match)'}</div>
+                        </div>
+                      </div>
+                    );
+
                   case 'BILINGUAL':
                   case 'NEARLY':
-                  case 'FUZZY':
                   case 'SYNONYM':
                     const isBilingual = type === 'BILINGUAL';
                     return (
