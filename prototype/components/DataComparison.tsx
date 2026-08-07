@@ -24,6 +24,7 @@ import {
 } from '../types';
 import { TRANSLATIONS } from '../translations';
 import { MOCK_PRESETS } from '../mock-data/preset.mock';
+import { MOCK_TEAMS } from '../mock-data/teams.mock';
 
 // Mirrors the "ทีม OPERATION" badge shown in the sidebar profile menu (Layout.tsx) —
 // there's no real auth/session concept yet, so the current user's team is fixed here.
@@ -1931,6 +1932,7 @@ const mockWorkflows: Workflow[] = [
       expiryDate: '25 APR 2026 14:20:05',
       createdAt: '20 APR 2026',
       workflowName: 'Invoice Processing',
+      assignedTeam: 'accounting',
       assignee: 'Kunawut W.',
       isLocked: true,
       status: JobStatus.DONE,
@@ -1956,6 +1958,7 @@ const mockWorkflows: Workflow[] = [
       expiryDate: '26 APR 2026 12:00:00',
       createdAt: '20 APR 2026',
       workflowName: 'Maritime Freight Checking',
+      assignedTeam: 'logistics',
       assignee: 'Kunawut W.',
       isLocked: true,
       status: JobStatus.READY,
@@ -1978,6 +1981,7 @@ const mockWorkflows: Workflow[] = [
       expiryDate: '27 APR 2026 17:30:00',
       createdAt: '20 APR 2026',
       workflowName: 'Customs Declaration Matching',
+      assignedTeam: 'customs',
       assignee: 'Somchai T.',
       status: JobStatus.NEW,
       totalFieldsCount: 80,
@@ -2001,6 +2005,7 @@ const mockWorkflows: Workflow[] = [
       expiryDate: '26 APR 2026 09:15:22',
       createdAt: '21 APR 2026',
       workflowName: 'Vietnam Road Freight Rules',
+      assignedTeam: 'logistics',
       assignee: 'Somchai T.',
       status: JobStatus.DONE,
       isLocked: true,
@@ -2024,6 +2029,7 @@ const mockWorkflows: Workflow[] = [
       expiryDate: '27 APR 2026 10:00:00',
       createdAt: '21 APR 2026',
       workflowName: 'LEO Billing',
+      assignedTeam: 'finance',
       assignee: 'Somchai T.',
       status: JobStatus.PROCESSING,
       totalFieldsCount: 120,
@@ -2045,6 +2051,7 @@ const mockWorkflows: Workflow[] = [
       expiryDate: '28 APR 2026 14:00:00',
       createdAt: '21 APR 2026',
       workflowName: 'Finance Approval',
+      assignedTeam: 'finance',
       assignee: 'Alice M.',
       status: JobStatus.REVIEW,
       totalFieldsCount: 30,
@@ -2068,6 +2075,7 @@ const mockWorkflows: Workflow[] = [
       expiryDate: '27 APR 2026 11:45:00',
       createdAt: '22 APR 2026',
       workflowName: 'Japan Air Freight High-Value',
+      assignedTeam: 'logistics',
       assignee: 'Kunawut W.',
       status: JobStatus.DONE,
       isLocked: true,
@@ -2090,6 +2098,7 @@ const mockWorkflows: Workflow[] = [
       expiryDate: '28 APR 2026 09:30:00',
       createdAt: '22 APR 2026',
       workflowName: 'HS Code Verification',
+      assignedTeam: 'customs',
       assignee: 'Kunawut W.',
       status: JobStatus.REVIEW,
       totalFieldsCount: 220,
@@ -2112,6 +2121,7 @@ const mockWorkflows: Workflow[] = [
       expiryDate: '29 APR 2026 15:00:00',
       createdAt: '22 APR 2026',
       workflowName: 'Customs Declaration Matching',
+      assignedTeam: 'customs',
       assignee: 'Somchai T.',
       status: JobStatus.PENDING,
       totalFieldsCount: 150,
@@ -2133,6 +2143,7 @@ const mockWorkflows: Workflow[] = [
       expiryDate: '30 APR 2026 11:00:00',
       createdAt: '22 APR 2026',
       workflowName: 'Legal Review',
+      assignedTeam: 'operation',
       assignee: 'Alice M.',
       status: JobStatus.PENDING,
       totalFieldsCount: 50,
@@ -2156,6 +2167,7 @@ const mockWorkflows: Workflow[] = [
       expiryDate: '30 APR 2026 16:30:22',
       createdAt: '23 APR 2026',
       workflowName: 'Korea Cosmetics Processing',
+      assignedTeam: 'operation',
       assignee: 'Nui P.',
       status: JobStatus.REJECTED,
       rejectionReason: 'เลขที่ CO ใน Invoice ไม่ตรงกับเอกสาร Compliance Check กรุณาตรวจสอบและแก้ไขใหม่',
@@ -2181,6 +2193,7 @@ const mockWorkflows: Workflow[] = [
       expiryDate: '01 MAY 2026 12:00:00',
       createdAt: '23 APR 2026',
       workflowName: 'Compliance Check',
+      assignedTeam: 'customs',
       assignee: 'Somchai T.',
       status: JobStatus.REVIEW,
       totalFieldsCount: 95,
@@ -2202,6 +2215,7 @@ const mockWorkflows: Workflow[] = [
       expiryDate: '02 MAY 2026 10:00:00',
       createdAt: '23 APR 2026',
       workflowName: 'Finance Approval',
+      assignedTeam: 'finance',
       assignee: 'Alice M.',
       status: JobStatus.PENDING,
       totalFieldsCount: 40,
@@ -2225,6 +2239,7 @@ const mockWorkflows: Workflow[] = [
       expiryDate: '01 MAY 2026 10:00:15',
       createdAt: '24 APR 2026',
       workflowName: 'Export Electronics Rules',
+      assignedTeam: 'customs',
       assignee: 'Alice M.',
       status: JobStatus.DONE,
       isLocked: true,
@@ -2247,6 +2262,7 @@ const mockWorkflows: Workflow[] = [
       expiryDate: '02 MAY 2026 11:00:00',
       createdAt: '24 APR 2026',
       workflowName: 'EU Tariff Compliance',
+      assignedTeam: 'customs',
       assignee: 'Alice M.',
       status: JobStatus.DONE,
       isLocked: true,
@@ -2269,6 +2285,7 @@ const mockWorkflows: Workflow[] = [
       expiryDate: '03 MAY 2026 14:00:00',
       createdAt: '24 APR 2026',
       workflowName: 'Purchase Order Matching',
+      assignedTeam: 'accounting',
       assignee: 'Kunawut W.',
       status: JobStatus.READY,
       totalFieldsCount: 90,
@@ -2292,6 +2309,7 @@ const mockWorkflows: Workflow[] = [
       expiryDate: '02 MAY 2026 13:40:44',
       createdAt: '24 APR 2026',
       workflowName: 'Invoice Processing',
+      assignedTeam: 'accounting',
       assignee: 'Nui P.',
       status: JobStatus.DONE,
       isLocked: true,
@@ -2314,6 +2332,7 @@ const mockWorkflows: Workflow[] = [
       expiryDate: '03 MAY 2026 09:00:00',
       createdAt: '24 APR 2026',
       workflowName: 'Maritime Freight Checking',
+      assignedTeam: 'logistics',
       assignee: 'Nui P.',
       status: JobStatus.DONE,
       isLocked: true,
@@ -2336,6 +2355,7 @@ const mockWorkflows: Workflow[] = [
       expiryDate: '04 MAY 2026 11:30:00',
       createdAt: '24 APR 2026',
       workflowName: 'Electronics Import Rules',
+      assignedTeam: 'customs',
       assignee: 'Kunawut W.',
       status: JobStatus.READY,
       totalFieldsCount: 75,
@@ -2359,6 +2379,7 @@ const mockWorkflows: Workflow[] = [
       expiryDate: '05 MAY 2026 11:20:00',
       createdAt: '25 APR 2026',
       workflowName: 'Invoice Processing',
+      assignedTeam: 'accounting',
       assignee: 'Somchai T.',
       status: JobStatus.DONE,
       isLocked: true,
@@ -2381,6 +2402,7 @@ const mockWorkflows: Workflow[] = [
       expiryDate: '06 MAY 2026 10:00:00',
       createdAt: '25 APR 2026',
       workflowName: 'Maritime Freight Checking',
+      assignedTeam: 'logistics',
       assignee: 'Somchai T.',
       status: JobStatus.DONE,
       isLocked: true,
@@ -2405,6 +2427,7 @@ const mockWorkflows: Workflow[] = [
       expiryDate: '07 MAY 2026 08:20:11',
       createdAt: '25 APR 2026',
       workflowName: 'Malaysia Boundary Cross',
+      assignedTeam: 'logistics',
       assignee: 'Kunawut W.',
       status: JobStatus.DONE,
       isLocked: true,
@@ -2427,6 +2450,7 @@ const mockWorkflows: Workflow[] = [
       expiryDate: '08 MAY 2026 09:00:00',
       createdAt: '25 APR 2026',
       workflowName: 'Road Waybill Matching',
+      assignedTeam: 'logistics',
       assignee: 'Kunawut W.',
       status: JobStatus.DONE,
       isLocked: true,
@@ -2449,6 +2473,7 @@ const mockWorkflows: Workflow[] = [
       expiryDate: '09 MAY 2026 13:00:00',
       createdAt: '25 APR 2026',
       workflowName: 'LEO Billing',
+      assignedTeam: 'finance',
       assignee: 'Kunawut W.',
       status: JobStatus.DONE,
       isLocked: true,
@@ -2473,6 +2498,7 @@ const mockWorkflows: Workflow[] = [
       expiryDate: '10 MAY 2026 14:00:00',
       createdAt: '26 APR 2026',
       workflowName: 'UK High Value Air Cargo',
+      assignedTeam: 'logistics',
       assignee: 'Somchai T.',
       status: JobStatus.NEW,
       totalFieldsCount: 160,
@@ -2494,6 +2520,7 @@ const mockWorkflows: Workflow[] = [
       expiryDate: '11 MAY 2026 11:00:00',
       createdAt: '26 APR 2026',
       workflowName: 'Air Waybill Checking',
+      assignedTeam: 'logistics',
       assignee: 'Somchai T.',
       status: JobStatus.PENDING,
       totalFieldsCount: 110,
@@ -2515,6 +2542,7 @@ const mockWorkflows: Workflow[] = [
       expiryDate: '12 MAY 2026 15:30:00',
       createdAt: '26 APR 2026',
       workflowName: 'Legal Review',
+      assignedTeam: 'operation',
       assignee: 'Alice M.',
       status: JobStatus.PENDING,
       totalFieldsCount: 45,
@@ -2538,6 +2566,7 @@ const mockWorkflows: Workflow[] = [
       expiryDate: '12 MAY 2026 09:45:30',
       createdAt: '27 APR 2026',
       workflowName: 'USA Tech Import Standards',
+      assignedTeam: 'customs',
       assignee: 'Somchai T.',
       status: JobStatus.REVIEW,
       totalFieldsCount: 240,
@@ -2559,6 +2588,7 @@ const mockWorkflows: Workflow[] = [
       expiryDate: '13 MAY 2026 10:00:00',
       createdAt: '27 APR 2026',
       workflowName: 'Customs Bond Verification',
+      assignedTeam: 'customs',
       assignee: 'Somchai T.',
       status: JobStatus.PENDING,
       totalFieldsCount: 120,
@@ -2580,6 +2610,7 @@ const mockWorkflows: Workflow[] = [
       expiryDate: '14 MAY 2026 14:00:00',
       createdAt: '27 APR 2026',
       workflowName: 'LEO Billing',
+      assignedTeam: 'finance',
       assignee: 'Kunawut W.',
       status: JobStatus.PENDING,
       totalFieldsCount: 80,
@@ -2603,6 +2634,7 @@ const mockWorkflows: Workflow[] = [
       expiryDate: '15 MAY 2026 11:30:00',
       createdAt: '28 APR 2026',
       workflowName: 'Australia Meat Import Control',
+      assignedTeam: 'customs',
       assignee: 'Somchai T.',
       status: JobStatus.NEW,
       totalFieldsCount: 190,
@@ -2626,6 +2658,7 @@ const mockWorkflows: Workflow[] = [
       expiryDate: '18 MAY 2026 16:15:00',
       createdAt: '29 APR 2026',
       workflowName: 'EU Fashion & Apparel Rules',
+      assignedTeam: 'customs',
       assignee: 'Somchai T.',
       status: JobStatus.NEW,
       totalFieldsCount: 310,
@@ -2647,6 +2680,7 @@ const mockWorkflows: Workflow[] = [
       expiryDate: '19 MAY 2026 10:00:00',
       createdAt: '29 APR 2026',
       workflowName: 'Customs Declaration Matching',
+      assignedTeam: 'customs',
       assignee: 'Somchai T.',
       status: JobStatus.PENDING,
       totalFieldsCount: 120,
@@ -4227,7 +4261,16 @@ const mockWorkflows: Workflow[] = [
 
   const renderShipmentJobList = () => {
     const shipmentJobs = jobs.filter(job => job.reference === selectedShipment);
-    
+
+    const shipmentCreatedAt = shipmentJobs.reduce((acc, job) => {
+      if (!acc) return job.createdAt;
+      try {
+        return parseDateValue(job.createdAt) < parseDateValue(acc) ? job.createdAt : acc;
+      } catch (e) {
+        return job.createdAt;
+      }
+    }, shipmentJobs[0]?.createdAt);
+
     const filteredJobs = shipmentJobs
       .filter(job => 
         job.reference.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -4322,7 +4365,12 @@ const mockWorkflows: Workflow[] = [
           >
             <ArrowLeft size={20} />
           </button>
-          <h3 className="text-xl md:text-2xl font-black text-[#010136] tracking-tight">{selectedShipment}</h3>
+          <div>
+            <h3 className="text-xl md:text-2xl font-black text-[#010136] tracking-tight">{selectedShipment}</h3>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">
+              {language === 'TH' ? 'สร้างเมื่อ: ' : 'CREATED: '} <span className="text-slate-500">{shipmentCreatedAt ? formatDisplayDate(shipmentCreatedAt) : 'N/A'}</span>
+            </p>
+          </div>
         </div>
 
         {/* Child Jobs Table */}
@@ -4332,8 +4380,8 @@ const mockWorkflows: Workflow[] = [
               <thead>
                 <tr className="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
                   <th className="px-8 py-4 w-[110px]">{language === 'TH' ? 'ลำดับงาน' : 'STEP'}</th>
-                  <th className="px-8 py-4">{t.jobNo}</th>
                   <th className="px-8 py-4">{language === 'TH' ? 'เวิร์กโฟลว์' : 'WORKFLOW'}</th>
+                  <th className="px-8 py-4">{language === 'TH' ? 'ทีมที่รับผิดชอบ' : 'ASSIGNED TEAM'}</th>
                   <th className="px-8 py-4">{language === 'TH' ? 'ผู้รับผิดชอบล่าสุด' : 'CURRENT ASSIGNEE'}</th>
                   <th className="px-8 py-4">{language === 'TH' ? 'อัปเดตล่าสุด' : 'LAST UPDATE'}</th>
                   <th className="px-8 py-4 text-center">{language === 'TH' ? 'จำนวนไฟล์' : 'FILES'}</th>
@@ -4406,17 +4454,10 @@ const mockWorkflows: Workflow[] = [
                         </div>
                       </td>
                       <td className="px-8 py-5">
-                        <div className="flex items-center gap-4">
-                          <div>
-                            <p className={`font-black text-[13px] tracking-tight mb-0.5 ${isBlocked ? 'text-slate-400' : 'text-[#010136]'}`}>{`JOB-${String(seqIndex + 1).padStart(4, '0')}`}</p>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                              {language === 'TH' ? 'สร้างเมื่อ: ' : 'CREATED: '} <span className="text-slate-500">{job.createdAt ? formatDisplayDate(job.createdAt) : 'N/A'}</span>
-                            </p>
-                          </div>
-                        </div>
+                        <p className={`text-[13px] font-bold font-sans ${isBlocked ? 'text-slate-400' : 'text-slate-600'}`}>{job.workflowName || 'N/A'}</p>
                       </td>
                       <td className="px-8 py-5">
-                        <p className={`text-[13px] font-bold font-sans ${isBlocked ? 'text-slate-400' : 'text-slate-600'}`}>{job.workflowName || 'N/A'}</p>
+                        <span className={`text-[13px] font-bold font-sans ${isBlocked ? 'text-slate-300' : 'text-slate-500'}`}>{MOCK_TEAMS.find(team => team.value === job.assignedTeam)?.label || (language === 'TH' ? 'ยังไม่ได้กำหนด' : 'Unassigned')}</span>
                       </td>
                       <td className="px-8 py-5">
                         <span className={`text-[13px] font-bold font-sans ${isBlocked ? 'text-slate-300' : 'text-slate-500'}`}>{job.assignee || (language === 'TH' ? 'ยังไม่ได้มอบหมาย' : 'Unassigned')}</span>

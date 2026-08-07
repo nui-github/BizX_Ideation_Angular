@@ -68,6 +68,7 @@ export interface ComparisonJob {
   expiryDate: string;
   createdAt?: string;
   workflowName?: string;
+  assignedTeam?: string;
   assignee?: string;
   isLocked?: boolean;
   status: JobStatus;
