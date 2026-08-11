@@ -31,6 +31,10 @@ import { MOCK_TEAMS } from '../mock-data/teams.mock';
 const CURRENT_USER_TEAM = 'operation';
 const CURRENT_USER_NAME = 'Kunawut W.';
 
+// Mock brand list for the per-file "Template" picker on Replace & Merge uploads —
+// template name is built as [Brand]_[Doctype], e.g. MARDI_Invoice.
+const REPLACE_FILE_TEMPLATE_BRANDS = ['MARDI', 'Elita', 'MINIMONO', 'ROENARI', 'SANRIO', 'WANTEX'];
+
 interface DocComment {
   id: string;
   user: string;
@@ -1617,6 +1621,7 @@ const mockWorkflows: Workflow[] = [
     type: string;
     pageMode: 'all' | 'custom';
     pageRange: string;
+    templateName: string;
   }[]>([]);
   const [replaceIsDragging, setReplaceIsDragging] = useState(false);
   const [replaceAutoStartOCR, setReplaceAutoStartOCR] = useState(true);
@@ -1654,7 +1659,8 @@ const mockWorkflows: Workflow[] = [
       size: f.size,
       type: f.type || 'application/pdf',
       pageMode: 'all' as const,
-      pageRange: ''
+      pageRange: '',
+      templateName: ''
     }));
     setReplaceUploadedFiles(prev => [...prev, ...newFiles]);
   };
@@ -1667,10 +1673,17 @@ const mockWorkflows: Workflow[] = [
   const setReplaceFilePageRange = (fileId: string, pageRange: string) => {
     setReplaceUploadedFiles(prev => prev.map(f => f.id === fileId ? { ...f, pageRange } : f));
   };
+  const setReplaceFileTemplateName = (fileId: string, templateName: string) => {
+    setReplaceUploadedFiles(prev => prev.map(f => f.id === fileId ? { ...f, templateName } : f));
+  };
   const handleConfirmReplace = () => {
     if (!selectedJob || !replaceTargetColumn) return;
     if (replaceUploadedFiles.length === 0) {
       alert(language === 'TH' ? 'กรุณาอัปโหลดอย่างน้อย 1 ไฟล์' : 'Please upload at least 1 file.');
+      return;
+    }
+    if (replaceUploadedFiles.some(f => !f.templateName)) {
+      alert(language === 'TH' ? 'กรุณาเลือก Template ให้ครบทุกไฟล์' : 'Please select a template for every file.');
       return;
     }
     assignJobToCurrentUser(selectedJob.id);
@@ -5502,6 +5515,24 @@ const mockWorkflows: Workflow[] = [
                           className="w-full text-xs px-3 py-2 rounded-[4px] border border-slate-200 text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300"
                         />
                       )}
+
+                      {/* Per-file template — required, [Brand]_[Doctype] built from the target column */}
+                      <div className="flex items-center gap-2 pl-1">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0">
+                          {language === 'TH' ? 'Template:' : 'Template:'}
+                        </span>
+                        <select
+                          value={file.templateName}
+                          onChange={(e) => setReplaceFileTemplateName(file.id, e.target.value)}
+                          className="flex-1 min-w-0 text-xs px-3 py-2 rounded-[4px] border border-slate-200 text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300"
+                        >
+                          <option value="">{language === 'TH' ? '-- เลือก Template --' : '-- Select Template --'}</option>
+                          {REPLACE_FILE_TEMPLATE_BRANDS.map(brand => {
+                            const templateName = `${brand}_${replaceTargetColumn || ''}`;
+                            return <option key={brand} value={templateName}>{templateName}</option>;
+                          })}
+                        </select>
+                      </div>
                     </div>
                   ))}
                   <div className="text-xs font-bold text-amber-600 bg-amber-50 p-2.5 rounded-lg flex items-center gap-2 mt-2">
@@ -5527,7 +5558,7 @@ const mockWorkflows: Workflow[] = [
                 <button
                   onClick={handleConfirmReplace}
                   className="w-full py-4 rounded-[4px] font-black text-xs uppercase tracking-widest transition-all text-white bg-[#1f5df9] hover:bg-[#104BE3] shadow-xl shadow-[#1f5df9]/20 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer disabled:bg-slate-300 disabled:shadow-none disabled:cursor-not-allowed"
-                  disabled={replaceUploadedFiles.length === 0 || replaceUploadedFiles.some(f => f.pageMode === 'custom' && !f.pageRange.trim())}
+                  disabled={replaceUploadedFiles.length === 0 || replaceUploadedFiles.some(f => (f.pageMode === 'custom' && !f.pageRange.trim()) || !f.templateName)}
                   id="submit-replace-import-btn"
                 >
                   {LOCAL_T[language].btnConfirmReplace}
