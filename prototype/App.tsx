@@ -499,6 +499,7 @@ if (typeof window !== 'undefined') {
   localStorage.removeItem('bizx_label_schemas_v3');
   localStorage.removeItem('bizx_label_schemas_v4');
   localStorage.removeItem('bizx_label_schemas_v5');
+  localStorage.removeItem('bizx_label_schemas_v6');
 }
 
 function App() {
