@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Language, DocType, Workflow } from '../types';
+import { MOCK_TEAMS } from '../mock-data/teams.mock';
 
 export interface SchemaLabel {
   id: string;
@@ -33,6 +34,7 @@ export interface LabelSchema {
   aiPrompt?: string;
   docTypes: string[]; // docType IDs
   workflowIds: string[]; // workflow IDs
+  assignedTeams: string[]; // team values (see MOCK_TEAMS)
   updatedAt: string;
   configs: DocTypeSchemaConfig[];
 }
@@ -55,6 +57,7 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     templateType: 'invoice-schema',
     docTypes: ['INV'],
     workflowIds: ['cwf-1', 'cwf-po-pi', 'cwf-shipping-doc', 'cwf-import-dec-1'],
+    assignedTeams: ['logistics', 'accounting', 'operation', 'customer_service', 'finance', 'customs', 'cds', 'pge', 'ssp', 'muj', 'omt', 'b2s', 'mps'],
     updatedAt: '2026-06-01T09:00:00Z',
     configs: [
       {
@@ -76,6 +79,7 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     templateType: 'bl-schema',
     docTypes: ['BL'],
     workflowIds: ['cwf-shipping-doc', 'cwf-import-dec-1'],
+    assignedTeams: ['logistics', 'accounting', 'operation', 'customer_service', 'finance', 'customs', 'cds', 'pge', 'ssp', 'muj', 'omt', 'b2s', 'mps'],
     updatedAt: '2026-06-02T09:00:00Z',
     configs: [
       {
@@ -97,6 +101,7 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     templateType: 'pl-schema',
     docTypes: ['PL'],
     workflowIds: ['cwf-1', 'cwf-shipping-doc', 'cwf-import-dec-1'],
+    assignedTeams: ['logistics', 'accounting', 'operation', 'customer_service', 'finance', 'customs', 'cds', 'pge', 'ssp', 'muj', 'omt', 'b2s', 'mps'],
     updatedAt: '2026-06-03T09:00:00Z',
     configs: [
       {
@@ -115,6 +120,7 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     templateType: 'po-schema',
     docTypes: ['PO'],
     workflowIds: ['cwf-2'],
+    assignedTeams: ['logistics', 'accounting', 'operation', 'customer_service', 'finance', 'customs', 'cds', 'pge', 'ssp', 'muj', 'omt', 'b2s', 'mps'],
     updatedAt: '2026-06-04T09:00:00Z',
     configs: [
       {
@@ -134,6 +140,7 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     templateType: 'co-schema',
     docTypes: ['CO'],
     workflowIds: ['cwf-2'],
+    assignedTeams: ['logistics', 'accounting', 'operation', 'customer_service', 'finance', 'customs', 'cds', 'pge', 'ssp', 'muj', 'omt', 'b2s', 'mps'],
     updatedAt: '2026-06-05T09:00:00Z',
     configs: [
       {
@@ -152,6 +159,7 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     templateType: 'do-schema',
     docTypes: ['DO'],
     workflowIds: [],
+    assignedTeams: ['logistics', 'accounting', 'operation', 'customer_service', 'finance', 'customs', 'cds', 'pge', 'ssp', 'muj', 'omt', 'b2s', 'mps'],
     updatedAt: '2026-06-06T09:00:00Z',
     configs: [
       {
@@ -171,6 +179,7 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     templateType: 'popi-schema',
     docTypes: ['POPI'],
     workflowIds: ['cwf-po-pi'],
+    assignedTeams: ['logistics', 'accounting', 'operation', 'customer_service', 'finance', 'customs', 'cds', 'pge', 'ssp', 'muj', 'omt', 'b2s', 'mps'],
     updatedAt: '2026-06-07T09:00:00Z',
     configs: [
       {
@@ -190,6 +199,7 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     templateType: 'frt-schema',
     docTypes: ['FRT'],
     workflowIds: ['cwf-shipping-doc', 'cwf-import-dec-1'],
+    assignedTeams: ['logistics', 'accounting', 'operation', 'customer_service', 'finance', 'customs', 'cds', 'pge', 'ssp', 'muj', 'omt', 'b2s', 'mps'],
     updatedAt: '2026-06-08T09:00:00Z',
     configs: [
       {
@@ -209,6 +219,7 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     templateType: 'hs-schema',
     docTypes: ['HS'],
     workflowIds: ['cwf-shipping-doc', 'cwf-import-dec-1'],
+    assignedTeams: ['logistics', 'accounting', 'operation', 'customer_service', 'finance', 'customs', 'cds', 'pge', 'ssp', 'muj', 'omt', 'b2s', 'mps'],
     updatedAt: '2026-06-09T09:00:00Z',
     configs: [
       {
@@ -227,6 +238,7 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     templateType: 'ftad-schema',
     docTypes: ['FTAD'],
     workflowIds: ['cwf-shipping-doc'],
+    assignedTeams: ['logistics', 'accounting', 'operation', 'customer_service', 'finance', 'customs', 'cds', 'pge', 'ssp', 'muj', 'omt', 'b2s', 'mps'],
     updatedAt: '2026-06-10T09:00:00Z',
     configs: [
       {
@@ -245,6 +257,7 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     templateType: 'ftao-schema',
     docTypes: ['FTAO'],
     workflowIds: [],
+    assignedTeams: ['logistics', 'accounting', 'operation', 'customer_service', 'finance', 'customs', 'cds', 'pge', 'ssp', 'muj', 'omt', 'b2s', 'mps'],
     updatedAt: '2026-06-11T09:00:00Z',
     configs: [
       {
@@ -263,6 +276,7 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     templateType: 'ins-schema',
     docTypes: ['INS'],
     workflowIds: ['cwf-import-dec-1'],
+    assignedTeams: ['logistics', 'accounting', 'operation', 'customer_service', 'finance', 'customs', 'cds', 'pge', 'ssp', 'muj', 'omt', 'b2s', 'mps'],
     updatedAt: '2026-06-12T09:00:00Z',
     configs: [
       {
@@ -281,6 +295,7 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     templateType: 'lic-schema',
     docTypes: ['LIC'],
     workflowIds: ['cwf-import-dec-2'],
+    assignedTeams: ['logistics', 'accounting', 'operation', 'customer_service', 'finance', 'customs', 'cds', 'pge', 'ssp', 'muj', 'omt', 'b2s', 'mps'],
     updatedAt: '2026-06-13T09:00:00Z',
     configs: [
       {
@@ -300,6 +315,7 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     templateType: 'lpi-schema',
     docTypes: ['LPI'],
     workflowIds: ['cwf-import-dec-2'],
+    assignedTeams: ['logistics', 'accounting', 'operation', 'customer_service', 'finance', 'customs', 'cds', 'pge', 'ssp', 'muj', 'omt', 'b2s', 'mps'],
     updatedAt: '2026-06-14T09:00:00Z',
     configs: [
       {
@@ -317,6 +333,7 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     templateType: 'oth-schema',
     docTypes: ['OTH'],
     workflowIds: ['cwf-import-dec-2'],
+    assignedTeams: ['logistics', 'accounting', 'operation', 'customer_service', 'finance', 'customs', 'cds', 'pge', 'ssp', 'muj', 'omt', 'b2s', 'mps'],
     updatedAt: '2026-06-15T09:00:00Z',
     configs: [
       {
@@ -339,7 +356,7 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
   hideHeader = false
 }) => {
   const [schemas, setSchemas] = useState<LabelSchema[]>(() => {
-    const saved = typeof window !== 'undefined' ? localStorage.getItem('bizx_label_schemas_v5') : null;
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('bizx_label_schemas_v6') : null;
     if (saved) {
       try {
         return JSON.parse(saved);
@@ -352,7 +369,7 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('bizx_label_schemas_v5', JSON.stringify(schemas));
+      localStorage.setItem('bizx_label_schemas_v6', JSON.stringify(schemas));
     }
   }, [schemas]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -367,6 +384,7 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
   const [formAiPrompt, setFormAiPrompt] = useState('');
   const [formDocTypes, setFormDocTypes] = useState<string[]>([]);
   const [formWorkflows, setFormWorkflows] = useState<string[]>([]);
+  const [formTeams, setFormTeams] = useState<string[]>(MOCK_TEAMS.map(team => team.value));
   const [formConfigs, setFormConfigs] = useState<DocTypeSchemaConfig[]>([]);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -414,6 +432,7 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
     setFormAiPrompt('');
     setFormDocTypes([]);
     setFormWorkflows([]);
+    setFormTeams(MOCK_TEAMS.map(team => team.value));
     setFormConfigs([]);
     setSelectedDocTypeToAdd(undefined);
     setExpandedDocTypes({});
@@ -429,6 +448,7 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
     setFormAiPrompt(schema.aiPrompt || '');
     setFormDocTypes(schema.docTypes);
     setFormWorkflows(schema.workflowIds);
+    setFormTeams(schema.assignedTeams && schema.assignedTeams.length > 0 ? schema.assignedTeams : MOCK_TEAMS.map(team => team.value));
     setFormConfigs(schema.configs ? JSON.parse(JSON.stringify(schema.configs)) : schema.docTypes.map(id => ({ docTypeId: id, labels: [] })));
     setSelectedDocTypeToAdd(undefined);
     setExpandedDocTypes({});
@@ -669,6 +689,12 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
       return;
     }
 
+    // Assigned teams validation (Required at least 1)
+    if (formTeams.length === 0) {
+      setErrorMsg(isTh ? 'กรุณาเลือกทีมที่จะใช้ Schema นี้อย่างน้อย 1 ทีม' : 'Please select at least 1 team');
+      return;
+    }
+
     // 3. Labels validation inside active doc types (Label name is required if rows exist)
     let hasEmptyLabelName = false;
     formConfigs.forEach(cfg => {
@@ -693,6 +719,7 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
       aiPrompt: formAiPrompt.trim(),
       docTypes: formDocTypes,
       workflowIds: formWorkflows,
+      assignedTeams: formTeams,
       updatedAt: timestamp,
       configs: formConfigs
     };
@@ -1266,6 +1293,25 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
                 placeholder={isTh ? 'สรุปรายละเอียดหรือจุดประสงค์ในการใช้สคีมานี้...' : 'Detail the use case or objective of this schema...'}
                 rows={2}
                 className="rounded-xl border-slate-200 font-semibold text-slate-800 hover:border-blue-300 focus:border-[#1f5df9] focus:shadow-sm shadow-2xs placeholder-slate-400"
+              />
+            </div>
+
+            {/* Assigned Teams */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-[#010136] uppercase tracking-wider flex items-center gap-1">
+                <span>{isTh ? 'ทีมที่ใช้ Schema นี้' : 'TEAMS USING THIS SCHEMA'}</span>
+                <span className="text-rose-500">*</span>
+              </label>
+              <Select
+                mode="multiple"
+                allowClear
+                className="w-full custom-select"
+                popupClassName="!z-[2100]"
+                placeholder={isTh ? 'เลือกทีม' : 'Select team'}
+                value={formTeams}
+                onChange={setFormTeams}
+                options={MOCK_TEAMS}
+                style={{ width: '100%' }}
               />
             </div>
           </div>
