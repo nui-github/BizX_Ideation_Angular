@@ -5621,21 +5621,28 @@ const mockWorkflows: Workflow[] = [
         return (
           <div className="fixed inset-0 z-[170] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white w-[90vw] max-w-5xl h-[88vh] rounded-2xl overflow-hidden shadow-2xl flex flex-col font-sans">
-              <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-4 shrink-0">
-                <div className="flex items-center gap-2 overflow-x-auto">
-                  {replaceUploadedFiles.map(f => (
-                    <button
-                      key={f.id}
-                      onClick={() => setReplacePreviewFileId(f.id)}
-                      className={`px-3 py-1.5 rounded-[4px] text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
-                        f.id === replacePreviewFileId
-                          ? 'bg-[#1f5df9] text-white shadow-sm'
-                          : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                      }`}
-                    >
-                      {f.name}
-                    </button>
-                  ))}
+              <div className="px-5 py-4 border-b border-slate-100 flex items-start justify-between gap-4 shrink-0">
+                <div className="flex flex-col gap-1.5 min-w-0">
+                  {replaceUploadedFiles.length > 1 && (
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                      {language === 'TH' ? 'สลับดูไฟล์:' : 'Switch file:'}
+                    </span>
+                  )}
+                  <div className="flex items-center gap-2 overflow-x-auto">
+                    {replaceUploadedFiles.map(f => (
+                      <button
+                        key={f.id}
+                        onClick={() => setReplacePreviewFileId(f.id)}
+                        className={`px-3 py-1.5 rounded-[4px] text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
+                          f.id === replacePreviewFileId
+                            ? 'bg-[#1f5df9] text-white shadow-sm'
+                            : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                        }`}
+                      >
+                        {f.name}
+                      </button>
+                    ))}
+                  </div>
                 </div>
                 <button
                   onClick={() => setReplacePreviewFileId(null)}
