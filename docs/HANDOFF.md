@@ -72,7 +72,7 @@ follow the `src/app/features/<area>/<name>.component.ts` convention already used
 | `components/RuleList.tsx` | `features/data-comparison/rules/rule-list` | Data Comparison → Compare rules |
 | `components/RuleMatrix.tsx` | `features/data-comparison/rules/rule-matrix` | Data Comparison → Compare rules |
 | `components/DocTypeMaster.tsx` | `features/settings/doc-type-master` | Settings |
-| `components/LabelSchemaSettings.tsx` | `features/settings/label-schema-settings` | Settings — `DEFAULT_SCHEMAS` reworked 2026-08-05 to strict 1 schema : 1 doc type (15 entries matching `App.tsx`'s `docTypes`, localStorage key `bizx_label_schemas_v5`); port must preserve that shape, not the old grouped-schema model |
+| `components/LabelSchemaSettings.tsx` | `features/settings/label-schema-settings` | Settings — `DEFAULT_SCHEMAS` reworked 2026-08-05 to strict 1 schema : 1 doc type (15 entries matching `App.tsx`'s `docTypes`); each schema also carries a required `assignedTeams: string[]` (multi-select, `'ALL'` sentinel collapses/disables the rest — added 2026-08-14), localStorage key now `bizx_label_schemas_v7`; port must preserve that shape, not the old grouped-schema model |
 | `components/MasterDataSettings.tsx` | `features/settings/master-data-settings` | Settings |
 | `components/JobPresetSettings.tsx` | `features/settings/job-preset-settings` | Settings |
 | `components/WorkflowList.tsx` | `features/exdoc/workflow-list` | ExDoc / generic workflow list |
