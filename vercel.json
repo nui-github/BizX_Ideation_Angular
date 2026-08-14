@@ -3,6 +3,6 @@
   "buildCommand": "cd prototype && npm run build",
   "outputDirectory": "prototype/dist",
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/((?!diagrams/).*)", "destination": "/index.html" }
   ]
 }
