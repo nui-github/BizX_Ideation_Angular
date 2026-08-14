@@ -228,7 +228,7 @@
       </div>
 
       <div class="board-scroll">
-        <div class="flow-canvas" style="width:3350px;height:430px">
+        <div class="flow-canvas" style="width:3350px;height:465px">
 
           <!-- Title -->
           <div class="bar-title" style="left:0;top:0;width:3350px;height:32px">🧭 สร้าง Shipment → อัปโหลด/เปรียบเทียบข้อมูล → ส่งออกรายงาน</div>
@@ -249,7 +249,7 @@
           <div class="bar-step" style="left:2990px;top:68px;width:320px;height:22px">เสร็จสิ้น (Exported)</div>
 
           <!-- Connectors (svg overlay) -->
-          <svg width="3350" height="430" style="position:absolute;left:0;top:0;pointer-events:none" viewBox="0 0 3350 430">
+          <svg width="3350" height="465" style="position:absolute;left:0;top:0;pointer-events:none" viewBox="0 0 3350 465">
             <defs>
               <marker id="uf-arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
                 <path d="M0,0 L10,5 L0,10 z" fill="var(--ink)" fill-opacity="0.5" />
@@ -273,9 +273,9 @@
             <!-- d1 -> warning circle (No) -->
             <line x1="805" y1="256" x2="805" y2="298" stroke="var(--bad)" stroke-opacity="0.7" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#uf-arrow-bad)" />
             <text x="825" y="277" font-size="10" font-weight="700" fill="var(--bad)">ไม่</text>
-            <circle cx="805" cy="330" r="29" fill="var(--surface)" stroke="var(--bad)" stroke-width="1.6" stroke-dasharray="3 3" />
-            <text x="805" y="327" text-anchor="middle" font-size="9" font-weight="800" fill="var(--bad)">กรอกไม่ครบ</text>
-            <text x="805" y="337" text-anchor="middle" font-size="9" font-weight="800" fill="var(--bad)">แจ้งเตือนในฟอร์ม</text>
+            <circle cx="805" cy="360" r="31" fill="var(--surface)" stroke="var(--bad)" stroke-width="1.6" stroke-dasharray="3 3" />
+            <text x="805" y="357" text-anchor="middle" font-size="9" font-weight="800" fill="var(--bad)">กรอกไม่ครบ</text>
+            <text x="805" y="367" text-anchor="middle" font-size="9" font-weight="800" fill="var(--bad)">แจ้งเตือนในฟอร์ม</text>
 
             <!-- c3 -> c4 -->
             <line x1="1250" y1="198" x2="1318" y2="198" stroke="var(--ink)" stroke-opacity="0.4" stroke-width="1.6" marker-end="url(#uf-arrow)" />
@@ -293,16 +293,16 @@
             <line x1="2533" y1="198" x2="2598" y2="198" stroke="var(--ink)" stroke-opacity="0.4" stroke-width="1.6" marker-end="url(#uf-arrow)" />
             <text x="2565" y="188" text-anchor="middle" font-size="10" font-weight="700" fill="var(--muted)">ใช่</text>
             <!-- d2 -> loop back to c5 (No) -->
-            <path d="M 2475 256 L 2475 375 L 1870 375 L 1870 297" fill="none" stroke="var(--bad)" stroke-opacity="0.7" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#uf-arrow-bad)" />
+            <path d="M 2475 256 L 2475 405 L 1870 405 L 1870 327" fill="none" stroke="var(--bad)" stroke-opacity="0.7" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#uf-arrow-bad)" />
             <text x="2495" y="272" text-anchor="middle" font-size="10" font-weight="700" fill="var(--bad)">ไม่</text>
-            <text x="2170" y="388" text-anchor="middle" font-size="10.5" font-weight="700" fill="var(--bad)">↺ แก้ไข field ที่ Mismatch แล้วอัปโหลดใหม่</text>
+            <text x="2170" y="418" text-anchor="middle" font-size="10.5" font-weight="700" fill="var(--bad)">↺ แก้ไข field ที่ Mismatch แล้วอัปโหลดใหม่</text>
 
             <!-- c7 -> c8 -->
             <line x1="2920" y1="198" x2="2988" y2="198" stroke="var(--ink)" stroke-opacity="0.4" stroke-width="1.6" marker-end="url(#uf-arrow)" />
           </svg>
 
           <!-- ===== Screen 1: Job List ===== -->
-          <div class="screen" style="left:40px;top:100px;width:320px;height:195px">
+          <div class="screen" style="left:40px;top:100px;width:320px;height:225px">
             <div class="screen-chrome"><span class="chrome-dot"></span><span class="chrome-dot"></span><span class="chrome-dot"></span></div>
             <div class="screen-body">
               <div style="width:26px;background:var(--navy);display:flex;flex-direction:column;align-items:center;gap:6px;padding-top:7px">
@@ -330,11 +330,19 @@
                   <div class="mstat"><b>2</b><span>งานของฉัน</span></div>
                   <div class="mstat"><b>4</b><span>เสร็จสิ้น</span></div>
                 </div>
+                <div style="display:flex;gap:3px;align-items:center">
+                  <span class="micon">🔍</span>
+                  <div style="flex:2;height:9px;background:var(--surface-2);border:1px solid var(--line);border-radius:2px;display:flex;align-items:center;padding:0 3px"><span class="mt2" style="opacity:.6;font-size:4.4px">ค้นหาเลขที่ Shipment...</span></div>
+                  <span class="micon">📅</span>
+                  <div style="flex:1;height:9px;background:var(--surface-2);border:1px solid var(--line);border-radius:2px"></div>
+                  <span class="mpill" style="background:var(--surface-2);color:var(--muted);border:1px solid var(--line)">สถานะ: ทั้งหมด ▾</span>
+                </div>
                 <div style="display:flex;gap:6px;padding:0 1px">
                   <span class="mth" style="flex:2">เลขที่ SHIPMENT</span>
                   <span class="mth" style="flex:2">ความคืบหน้า</span>
                   <span class="mth" style="flex:3">สถานะเวิร์กโฟลว์</span>
                   <span class="mth" style="flex:2">ผู้รับผิดชอบ</span>
+                  <span class="mth" style="flex:2;text-align:right">การจัดการ</span>
                 </div>
                 <div style="display:flex;flex-direction:column;gap:2px">
                   <div class="mfield">
@@ -342,26 +350,31 @@
                     <div class="mprogwrap" style="flex:2;margin:0 3px"><div class="mprog" style="width:0%"></div></div>
                     <span class="mpill" style="background:#e8f0ff;color:var(--accent);flex:3">EU Fashion Rules</span>
                     <span class="mt2" style="flex:2">Somchai T.</span>
+                    <span class="mbtn-outline" style="flex:2;text-align:center">ดูงานย่อย →</span>
                   </div>
                   <div class="mfield">
                     <span class="mono-mini" style="flex:2">AU-TH-2026-00223</span>
                     <div class="mprogwrap" style="flex:2;margin:0 3px"><div class="mprog" style="width:0%"></div></div>
                     <span class="mpill" style="background:var(--surface);color:var(--muted);flex:3">Australia Meat Ctrl</span>
                     <span class="mt2" style="flex:2">Somchai T.</span>
+                    <span class="mbtn-outline" style="flex:2;text-align:center">ดูงานย่อย →</span>
                   </div>
                   <div class="mfield">
                     <span class="mono-mini" style="flex:2">US-TH-2026-00445</span>
                     <div class="mprogwrap" style="flex:2;margin:0 3px"><div class="mprog" style="width:33%"></div></div>
                     <span class="mpill" style="background:var(--surface);color:var(--muted);flex:3">USA Tech Import</span>
                     <span class="mt2" style="flex:2">Somchai T.</span>
+                    <span class="mbtn-outline" style="flex:2;text-align:center">ดูงานย่อย →</span>
                   </div>
                 </div>
+                <div style="flex:1"></div>
+                <span class="mt2" style="text-align:center">แสดง 1-8 จาก 8 รายการ</span>
               </div>
             </div>
           </div>
 
           <!-- ===== Screen 2: Create Shipment Modal ===== -->
-          <div class="screen" style="left:430px;top:100px;width:320px;height:195px">
+          <div class="screen" style="left:430px;top:100px;width:320px;height:225px">
             <div class="screen-chrome"><span class="chrome-dot"></span><span class="chrome-dot"></span><span class="chrome-dot"></span></div>
             <div class="screen-body" style="background:rgba(0,0,0,0.05);align-items:center;justify-content:center;padding:9px">
               <div style="width:100%;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:8px;display:flex;flex-direction:column;gap:4px">
@@ -375,13 +388,31 @@
                 <div style="height:12px;background:var(--surface-2);border:1px solid var(--line);border-radius:3px;display:flex;align-items:center;padding:0 3px"><span class="mono-mini" style="font-size:5px">CDS shipment ▾</span></div>
                 <div style="background:#e8f0ff;border-radius:4px;padding:3px 5px;margin-top:1px;display:flex;flex-direction:column;gap:1px">
                   <span class="mt2" style="color:var(--accent);font-weight:800">✨ ใช้ Preset ที่เลือก: CDS SHIPMENT</span>
-                  <span class="mt2" style="font-size:4.6px">รายการย่อยด้านล่างถูกกำหนดไว้ล่วงหน้าและแก้ไขไม่ได้</span>
+                  <span class="mt2" style="font-size:4.6px;white-space:normal">รายการย่อยด้านล่างถูกกำหนดไว้ล่วงหน้าและแก้ไขไม่ได้ ระบุเพียงชื่อ Shipment แล้วกดสร้างรายการ</span>
                 </div>
-                <div style="display:flex;flex-direction:column;gap:2px;margin-top:1px">
-                  <div class="mfield"><span class="fname">1 · PO/PI Matching</span><span class="mt2">JOB-0001</span><span class="mpill" style="background:var(--surface);color:var(--muted);margin-left:3px">Operation</span></div>
-                  <div class="mfield"><span class="fname">2 · Shipping Doc Matching</span><span class="mt2">JOB-0002</span><span class="mpill" style="background:var(--surface);color:var(--muted);margin-left:3px">Operation</span></div>
-                  <div class="mfield"><span class="fname">3 · Import Declaration#1</span><span class="mt2">JOB-0003</span><span class="mpill" style="background:var(--surface);color:var(--muted);margin-left:3px">Customs</span></div>
+                <div style="display:flex;flex-direction:column;gap:0px;margin-top:1px">
+                  <div style="display:flex;align-items:center;gap:4px">
+                    <div style="display:flex;flex-direction:column;align-items:center;width:9px">
+                      <span style="width:9px;height:9px;border-radius:50%;background:var(--accent);color:#fff;font-size:4.6px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none">1</span>
+                      <span style="width:1.4px;flex:1;background:var(--line);min-height:6px"></span>
+                    </div>
+                    <div class="mfield" style="flex:1;margin:1px 0"><span class="fname">PO/PI Matching</span><span class="mt2">JOB-0001</span><span class="mpill" style="background:var(--surface);color:var(--muted);margin-left:3px">Operation</span></div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:4px">
+                    <div style="display:flex;flex-direction:column;align-items:center;width:9px">
+                      <span style="width:9px;height:9px;border-radius:50%;background:var(--accent);color:#fff;font-size:4.6px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none">2</span>
+                      <span style="width:1.4px;flex:1;background:var(--line);min-height:6px"></span>
+                    </div>
+                    <div class="mfield" style="flex:1;margin:1px 0"><span class="fname">Shipping Doc Matching</span><span class="mt2">JOB-0002</span><span class="mpill" style="background:var(--surface);color:var(--muted);margin-left:3px">Operation</span></div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:4px">
+                    <div style="display:flex;flex-direction:column;align-items:center;width:9px">
+                      <span style="width:9px;height:9px;border-radius:50%;background:var(--accent);color:#fff;font-size:4.6px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none">3</span>
+                    </div>
+                    <div class="mfield" style="flex:1;margin:1px 0"><span class="fname">Import Declaration#1</span><span class="mt2">JOB-0003</span><span class="mpill" style="background:var(--surface);color:var(--muted);margin-left:3px">Customs</span></div>
+                  </div>
                 </div>
+                <div style="flex:1"></div>
                 <div style="display:flex;justify-content:flex-end;gap:3px;margin-top:2px">
                   <span class="mbtn-outline">ยกเลิก</span>
                   <span class="mbtn" style="background:var(--accent)">สร้าง Shipment และรายการย่อย</span>
@@ -391,7 +422,7 @@
           </div>
 
           <!-- ===== Screen 3: Job List (created) ===== -->
-          <div class="screen" style="left:930px;top:100px;width:320px;height:195px">
+          <div class="screen" style="left:930px;top:100px;width:320px;height:225px">
             <div class="screen-chrome"><span class="chrome-dot"></span><span class="chrome-dot"></span><span class="chrome-dot"></span></div>
             <div class="screen-body">
               <div style="width:26px;background:var(--navy);display:flex;flex-direction:column;align-items:center;gap:6px;padding-top:7px">
@@ -409,29 +440,41 @@
                   <div class="mstat"><b>3</b><span>งานของฉัน</span></div>
                   <div class="mstat"><b>4</b><span>เสร็จสิ้น</span></div>
                 </div>
+                <div style="display:flex;gap:3px;align-items:center">
+                  <span class="micon">🔍</span>
+                  <div style="flex:2;height:9px;background:var(--surface-2);border:1px solid var(--line);border-radius:2px;display:flex;align-items:center;padding:0 3px"><span class="mt2" style="opacity:.6;font-size:4.4px">ค้นหาเลขที่ Shipment...</span></div>
+                  <span class="micon">📅</span>
+                  <div style="flex:1;height:9px;background:var(--surface-2);border:1px solid var(--line);border-radius:2px"></div>
+                  <span class="mpill" style="background:var(--surface-2);color:var(--muted);border:1px solid var(--line)">สถานะ: ทั้งหมด ▾</span>
+                </div>
                 <div style="display:flex;flex-direction:column;gap:2px;margin-top:1px">
                   <div class="mfield" style="background:#e8f0ff;border:1px solid var(--accent)">
                     <span class="mono-mini">CDS-TH-2026-00901</span>
                     <div class="mprogwrap" style="margin:0 4px"><div class="mprog" style="width:0%"></div></div>
                     <span class="mpill" style="background:var(--accent);color:#fff;margin-left:auto">NEW</span>
+                    <span class="mbtn-outline" style="margin-left:4px">ดูงานย่อย →</span>
                   </div>
                   <div class="mfield">
                     <span class="mono-mini">EU-TH-2026-00778</span>
                     <div class="mprogwrap" style="margin:0 4px"><div class="mprog" style="width:0%"></div></div>
                     <span class="mpill" style="background:var(--surface);color:var(--muted);margin-left:auto">EU Fashion</span>
+                    <span class="mbtn-outline" style="margin-left:4px">ดูงานย่อย →</span>
                   </div>
                   <div class="mfield">
                     <span class="mono-mini">AU-TH-2026-00223</span>
                     <div class="mprogwrap" style="margin:0 4px"><div class="mprog" style="width:0%"></div></div>
                     <span class="mpill" style="background:var(--surface);color:var(--muted);margin-left:auto">Australia Meat</span>
+                    <span class="mbtn-outline" style="margin-left:4px">ดูงานย่อย →</span>
                   </div>
                 </div>
+                <div style="flex:1"></div>
+                <span class="mt2" style="text-align:center">แสดง 1-8 จาก 8 รายการ</span>
               </div>
             </div>
           </div>
 
           <!-- ===== Screen 4: Compare workspace (empty) ===== -->
-          <div class="screen" style="left:1320px;top:100px;width:320px;height:195px">
+          <div class="screen" style="left:1320px;top:100px;width:320px;height:225px">
             <div class="screen-chrome"><span class="chrome-dot"></span><span class="chrome-dot"></span><span class="chrome-dot"></span></div>
             <div class="screen-body" style="flex-direction:column;padding:7px;gap:5px">
               <div style="display:flex;justify-content:space-between;align-items:center">
@@ -457,23 +500,25 @@
                 <span class="mt2" style="text-align:center;font-weight:800;color:var(--ink)">คลิกอ่านไฟล์เพื่อแสดงข้อมูลเปรียบเทียบ</span>
                 <span class="mt2" style="text-align:center;max-width:85%">ตารางจะเป็นค่าว่างจนกว่าจะมีการอัปโหลดสำเร็จอย่างน้อย 1 ไฟล์</span>
               </div>
-              <div style="display:flex;justify-content:space-between;align-items:center">
-                <div style="display:flex;gap:4px;align-items:center">
-                  <span class="mt2" style="display:flex;align-items:center;gap:1px"><span style="width:4px;height:4px;border-radius:50%;background:var(--ok);display:inline-block"></span>ตรงกัน</span>
-                  <span class="mt2" style="display:flex;align-items:center;gap:1px"><span style="width:4px;height:4px;border-radius:50%;background:var(--warn);display:inline-block"></span>บางส่วน</span>
-                  <span class="mt2" style="display:flex;align-items:center;gap:1px"><span style="width:4px;height:4px;border-radius:50%;background:var(--bad);display:inline-block"></span>ไม่ตรงกัน</span>
-                </div>
-                <span class="mpill" style="background:var(--surface-2);color:var(--ink)">Accuracy 0.0%</span>
+              <div style="display:flex;gap:4px;align-items:center">
+                <span class="mt2" style="display:flex;align-items:center;gap:1px"><span style="width:4px;height:4px;border-radius:50%;background:var(--ok);display:inline-block"></span>ตรงกัน</span>
+                <span class="mt2" style="display:flex;align-items:center;gap:1px"><span style="width:4px;height:4px;border-radius:50%;background:var(--warn);display:inline-block"></span>บางส่วน</span>
+                <span class="mt2" style="display:flex;align-items:center;gap:1px"><span style="width:4px;height:4px;border-radius:50%;background:var(--bad);display:inline-block"></span>ไม่ตรงกัน</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;background:var(--surface-2);border-radius:4px;padding:3px 6px">
+                <span class="mt2" style="font-weight:800;color:var(--ink)">AUDIT SUMMARY</span>
+                <span class="mt2">ผิดที่คนพบทีตรวจสอบ: 190</span>
+                <span class="mpill" style="background:var(--ink);color:var(--surface)">Accuracy 0.0%</span>
               </div>
             </div>
           </div>
 
           <!-- ===== Screen 5: Replace & Merge modal ===== -->
-          <div class="screen" style="left:1710px;top:100px;width:320px;height:195px">
+          <div class="screen" style="left:1710px;top:100px;width:320px;height:225px">
             <div class="screen-chrome"><span class="chrome-dot"></span><span class="chrome-dot"></span><span class="chrome-dot"></span></div>
             <div class="screen-body" style="flex-direction:column;padding:8px;gap:4px">
               <span class="mt">🔄 อัปโหลดไฟล์ทดแทน (Replace &amp; Merge)</span>
-              <span class="mt2" style="white-space:normal">แทนที่ไฟล์ในคอลัมน์ "HEALTH CERT" (ไฟล์ทั้งหมดจะถูกรวมเป็นคอลัมน์นี้เพียง 1 คอลัมน์)</span>
+              <span class="mt2" style="white-space:normal">อัปโหลดไฟล์ใหม่เพื่อมาแทนที่หรือเพิ่มในคอลัมน์ "HEALTH CERT" (จำนวนไฟล์จะถูกรวมเป็นคอลัมน์นี้เพียง 1 คอลัมน์โดยอัตโนมัติ)</span>
               <div style="height:22px;border:1.3px dashed var(--accent);border-radius:5px;background:#e8f0ff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px">
                 <span class="mt2" style="color:var(--accent);font-weight:800">ลากไฟล์มาวาง หรือคลิกเพื่อเลือกไฟล์</span>
                 <span class="mt2" style="font-size:4.3px">รองรับ PDF, Excel, XML</span>
@@ -498,14 +543,15 @@
                 <div style="width:6px;height:6px;border:1px solid var(--accent);border-radius:1px;background:var(--accent)"></div>
                 <span class="mt2">เริ่ม OCR ทันทีหลังนำเข้าสำเร็จ</span>
               </div>
+              <div style="flex:1"></div>
               <div style="display:flex;justify-content:flex-end;margin-top:1px">
-                <span class="mbtn" style="background:var(--accent)">ยืนยันการแทนที่และรอ OCR</span>
+                <span class="mbtn" style="background:var(--accent)">ยืนยันการแทนที่และรอ OCR (1 ไฟล์)</span>
               </div>
             </div>
           </div>
 
           <!-- ===== Screen 6: Compare result ===== -->
-          <div class="screen" style="left:2100px;top:100px;width:320px;height:195px">
+          <div class="screen" style="left:2100px;top:100px;width:320px;height:225px">
             <div class="screen-chrome"><span class="chrome-dot"></span><span class="chrome-dot"></span><span class="chrome-dot"></span></div>
             <div class="screen-body" style="flex-direction:column;padding:7px;gap:4px">
               <span class="mt2" style="color:var(--ink);font-weight:800">CDS-TH-2026-00901 · PO/PI Matching</span>
@@ -518,19 +564,26 @@
               <div class="mfield"><span class="mcheck" style="background:var(--ok)"></span><span class="fname">Invoice Date</span><span class="mt2">20 APR 2026</span><span style="color:var(--ok);font-size:6px">✓</span></div>
               <div class="mfield" style="background:#fdeaec"><span class="mcheck" style="background:var(--bad)"></span><span class="fname">B/L Number</span><span class="mt2">MAEU-88213X</span><span style="color:var(--bad);font-size:6px">✕</span></div>
               <div class="mfield"><span class="mcheck" style="background:var(--ok)"></span><span class="fname">Shipper Name</span><span class="mt2">Global Trading Inc.</span><span style="color:var(--ok);font-size:6px">✓</span></div>
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-top:auto">
-                <span class="mt2">Audit: พบ 1 จุดที่ไม่ตรง</span>
-                <span class="mpill" style="background:var(--surface-2);color:var(--ink)">Accuracy 87.5%</span>
+              <div style="flex:1"></div>
+              <div style="display:flex;gap:4px;align-items:center">
+                <span class="mt2" style="display:flex;align-items:center;gap:1px"><span style="width:4px;height:4px;border-radius:50%;background:var(--ok);display:inline-block"></span>ตรงกัน 3</span>
+                <span class="mt2" style="display:flex;align-items:center;gap:1px"><span style="width:4px;height:4px;border-radius:50%;background:var(--bad);display:inline-block"></span>ไม่ตรงกัน 1</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;background:var(--surface-2);border-radius:4px;padding:3px 6px">
+                <span class="mt2" style="font-weight:800;color:var(--ink)">AUDIT SUMMARY</span>
+                <span class="mt2">พบ 1 จุดที่ไม่ตรง</span>
+                <span class="mpill" style="background:var(--solid-emerald);color:#fff">Accuracy 87.5%</span>
               </div>
             </div>
           </div>
 
           <!-- ===== Screen 7: Export modal ===== -->
-          <div class="screen" style="left:2600px;top:100px;width:320px;height:195px">
+          <div class="screen" style="left:2600px;top:100px;width:320px;height:225px">
             <div class="screen-chrome"><span class="chrome-dot"></span><span class="chrome-dot"></span><span class="chrome-dot"></span></div>
             <div class="screen-body" style="background:rgba(0,0,0,0.05);align-items:center;justify-content:center;padding:9px">
               <div style="width:100%;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:8px;display:flex;flex-direction:column;gap:4px">
                 <span class="mt" style="color:var(--solid-emerald)">📤 ส่งออกรายงาน (Export)</span>
+                <span class="mt2">ในรายการงาน: CDS-TH-2026-00901-01</span>
                 <span class="mt2">เลือก Workflow</span>
                 <div style="height:12px;background:var(--surface-2);border:1px solid var(--line);border-radius:3px;display:flex;align-items:center;padding:0 3px"><span class="mono-mini" style="font-size:5px">PO/PI Matching ▾</span></div>
                 <span class="mt2">เลือกแพลตฟอร์มปลายทาง</span>
@@ -540,6 +593,7 @@
                   <span class="mpill" style="background:var(--surface-2);color:var(--muted);border:1px solid var(--line);padding:3px 7px">AS-15</span>
                 </div>
                 <span class="mt2" style="white-space:normal;font-size:4.6px">ระบบจะสร้างไฟล์รายงานตามรูปแบบที่แพลตฟอร์มปลายทางกำหนด</span>
+                <div style="flex:1"></div>
                 <div style="display:flex;justify-content:flex-end;gap:3px;margin-top:2px">
                   <span class="mbtn-outline">ยกเลิก</span>
                   <span class="mbtn" style="background:var(--solid-emerald)">ยืนยันส่งออก</span>
@@ -549,7 +603,7 @@
           </div>
 
           <!-- ===== Screen 8: Job done ===== -->
-          <div class="screen" style="left:2990px;top:100px;width:320px;height:195px">
+          <div class="screen" style="left:2990px;top:100px;width:320px;height:225px">
             <div class="screen-chrome"><span class="chrome-dot"></span><span class="chrome-dot"></span><span class="chrome-dot"></span></div>
             <div class="screen-body">
               <div style="width:26px;background:var(--navy);display:flex;flex-direction:column;align-items:center;gap:6px;padding-top:7px">
@@ -567,41 +621,53 @@
                   <div class="mstat"><b>2</b><span>งานของฉัน</span></div>
                   <div class="mstat"><b>5</b><span>เสร็จสิ้น</span></div>
                 </div>
+                <div style="display:flex;gap:3px;align-items:center">
+                  <span class="micon">🔍</span>
+                  <div style="flex:2;height:9px;background:var(--surface-2);border:1px solid var(--line);border-radius:2px;display:flex;align-items:center;padding:0 3px"><span class="mt2" style="opacity:.6;font-size:4.4px">ค้นหาเลขที่ Shipment...</span></div>
+                  <span class="micon">📅</span>
+                  <div style="flex:1;height:9px;background:var(--surface-2);border:1px solid var(--line);border-radius:2px"></div>
+                  <span class="mpill" style="background:var(--surface-2);color:var(--muted);border:1px solid var(--line)">สถานะ: ทั้งหมด ▾</span>
+                </div>
                 <div style="display:flex;flex-direction:column;gap:2px;margin-top:1px">
                   <div class="mfield" style="background:#e3f8ee;border:1px solid var(--solid-emerald)">
                     <span class="mono-mini">CDS-TH-2026-00901</span>
                     <div class="mprogwrap" style="margin:0 4px"><div class="mprog" style="width:100%;background:var(--solid-emerald)"></div></div>
                     <span class="mpill" style="background:var(--solid-emerald);color:#fff;margin-left:auto">✓ ส่งออกแล้ว</span>
+                    <span class="mbtn-outline" style="margin-left:4px">ดูงานย่อย →</span>
                   </div>
                   <div class="mfield">
                     <span class="mono-mini">EU-TH-2026-00778</span>
                     <div class="mprogwrap" style="margin:0 4px"><div class="mprog" style="width:0%"></div></div>
                     <span class="mpill" style="background:var(--surface);color:var(--muted);margin-left:auto">EU Fashion</span>
+                    <span class="mbtn-outline" style="margin-left:4px">ดูงานย่อย →</span>
                   </div>
                   <div class="mfield">
                     <span class="mono-mini">AU-TH-2026-00223</span>
                     <div class="mprogwrap" style="margin:0 4px"><div class="mprog" style="width:0%"></div></div>
                     <span class="mpill" style="background:var(--surface);color:var(--muted);margin-left:auto">Australia Meat</span>
+                    <span class="mbtn-outline" style="margin-left:4px">ดูงานย่อย →</span>
                   </div>
                 </div>
+                <div style="flex:1"></div>
+                <span class="mt2" style="text-align:center">แสดง 1-8 จาก 8 รายการ</span>
               </div>
             </div>
           </div>
 
           <!-- ===== Callouts ===== -->
-          <div class="callout" style="left:430px;top:303px;width:320px">
+          <div class="callout" style="left:430px;top:333px;width:320px">
             <b>ต้องกรอกก่อนสร้าง</b>
             <ul><li>ชื่อ Shipment</li><li>เลือก Preset หรือกำหนดเวิร์กโฟลว์เอง</li></ul>
           </div>
-          <div class="callout" style="left:1710px;top:303px;width:320px">
+          <div class="callout" style="left:1710px;top:333px;width:320px">
             <b>ตอนอัปโหลด</b>
             <ul><li>เลือกหน้าที่จะอ่าน (ทั้งหมด/เอง)</li><li>เลือก Template [Brand]_[Doctype]</li></ul>
           </div>
-          <div class="callout" style="left:2100px;top:303px;width:320px">
+          <div class="callout" style="left:2100px;top:333px;width:320px">
             <b>สถานะต่อฟิลด์</b>
             <ul><li>เขียว = Matched</li><li>แดง = Mismatched ต้องตรวจสอบ</li></ul>
           </div>
-          <div class="callout" style="left:2600px;top:303px;width:320px">
+          <div class="callout" style="left:2600px;top:333px;width:320px">
             <b>ก่อนส่งออก</b>
             <ul><li>เลือก Workflow / Platform</li><li>เช่น FTA</li></ul>
           </div>
