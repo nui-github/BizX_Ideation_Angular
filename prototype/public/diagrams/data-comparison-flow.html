@@ -102,6 +102,30 @@
     gap: 6px;
     padding-bottom: 18px;
     border-bottom: 1px solid var(--line);
+    position: relative;
+  }
+  .theme-toggle {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-ui);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 6px 12px 6px 10px;
+    cursor: pointer;
+  }
+  .theme-toggle:hover { color: var(--ink); border-color: var(--accent); }
+  .theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .theme-toggle .icon { font-size: 13px; line-height: 1; }
+  @media (max-width: 640px) {
+    .theme-toggle { position: static; align-self: flex-start; margin-top: 4px; }
   }
   .eyebrow {
     font-family: var(--font-mono);
@@ -272,6 +296,10 @@
 <div class="page">
 
   <header class="hero">
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="สลับโหมดมืด/สว่าง">
+      <span class="icon" id="themeIcon">🌙</span>
+      <span id="themeText">Dark mode</span>
+    </button>
     <span class="eyebrow">BizX · Data Comparison</span>
     <h1>Data Comparison Flow</h1>
     <p class="subtitle">
@@ -549,3 +577,47 @@
   </footer>
 
 </div>
+
+<script>
+  (function () {
+    var STORAGE_KEY = 'bizx-diagram-theme';
+    var root = document.documentElement;
+    var btn = document.getElementById('themeToggle');
+    var icon = document.getElementById('themeIcon');
+    var label = document.getElementById('themeText');
+
+    function systemPrefersDark() {
+      return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+
+    function isDark() {
+      var stamped = root.getAttribute('data-theme');
+      if (stamped === 'dark') return true;
+      if (stamped === 'light') return false;
+      return systemPrefersDark();
+    }
+
+    function render() {
+      if (isDark()) {
+        icon.textContent = '☀️';
+        label.textContent = 'Light mode';
+      } else {
+        icon.textContent = '🌙';
+        label.textContent = 'Dark mode';
+      }
+    }
+
+    var saved = localStorage.getItem(STORAGE_KEY);
+    if (saved === 'dark' || saved === 'light') {
+      root.setAttribute('data-theme', saved);
+    }
+    render();
+
+    btn.addEventListener('click', function () {
+      var next = isDark() ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      localStorage.setItem(STORAGE_KEY, next);
+      render();
+    });
+  })();
+</script>
