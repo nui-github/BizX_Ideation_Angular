@@ -1622,8 +1622,11 @@ const mockWorkflows: Workflow[] = [
     pageMode: 'all' | 'custom';
     pageRange: string;
     templateName: string;
+    file: File;
   }[]>([]);
   const [replaceIsDragging, setReplaceIsDragging] = useState(false);
+  const [replacePreviewFileId, setReplacePreviewFileId] = useState<string | null>(null);
+  const [replacePreviewUrl, setReplacePreviewUrl] = useState<string | null>(null);
   const [replaceAutoStartOCR, setReplaceAutoStartOCR] = useState(true);
   const [hiddenLockedDocs, setHiddenLockedDocs] = useState<string[]>([]);
   const [showColumnSelector, setShowColumnSelector] = useState(false);
@@ -1660,12 +1663,14 @@ const mockWorkflows: Workflow[] = [
       type: f.type || 'application/pdf',
       pageMode: 'all' as const,
       pageRange: '',
-      templateName: ''
+      templateName: '',
+      file: f
     }));
     setReplaceUploadedFiles(prev => [...prev, ...newFiles]);
   };
   const handleRemoveReplaceFile = (fileId: string) => {
     setReplaceUploadedFiles(prev => prev.filter(f => f.id !== fileId));
+    if (replacePreviewFileId === fileId) setReplacePreviewFileId(null);
   };
   const setReplaceFilePageMode = (fileId: string, pageMode: 'all' | 'custom') => {
     setReplaceUploadedFiles(prev => prev.map(f => f.id === fileId ? { ...f, pageMode } : f));
@@ -1676,6 +1681,24 @@ const mockWorkflows: Workflow[] = [
   const setReplaceFileTemplateName = (fileId: string, templateName: string) => {
     setReplaceUploadedFiles(prev => prev.map(f => f.id === fileId ? { ...f, templateName } : f));
   };
+
+  // Object URL for whichever uploaded file is currently open in the preview overlay —
+  // recreated on switch, revoked on switch/close/unmount so blobs don't leak.
+  useEffect(() => {
+    if (!replacePreviewFileId) {
+      setReplacePreviewUrl(null);
+      return;
+    }
+    const target = replaceUploadedFiles.find(f => f.id === replacePreviewFileId);
+    if (!target) {
+      setReplacePreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(target.file);
+    setReplacePreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [replacePreviewFileId]);
+
   const handleConfirmReplace = () => {
     if (!selectedJob || !replaceTargetColumn) return;
     if (replaceUploadedFiles.length === 0) {
@@ -1736,6 +1759,7 @@ const mockWorkflows: Workflow[] = [
     setShowReplaceModal(false);
     setReplaceTargetColumn(null);
     setReplaceUploadedFiles([]);
+    setReplacePreviewFileId(null);
   };
 
   // --- Custom Handlers for User File Upload & Grouping ---
@@ -5407,6 +5431,7 @@ const mockWorkflows: Workflow[] = [
                   setShowReplaceModal(false);
                   setReplaceTargetColumn(null);
                   setReplaceUploadedFiles([]);
+                  setReplacePreviewFileId(null);
                 }}
                 className="p-2 hover:bg-slate-100 rounded-[4px] text-slate-400 transition-colors"
                 id="close-replace-modal-btn"
@@ -5457,12 +5482,16 @@ const mockWorkflows: Workflow[] = [
                   {replaceUploadedFiles.map(file => (
                     <div key={file.id} className="p-3 rounded-xl border border-blue-100 bg-blue-50/30 flex flex-col gap-2.5 group/replaceFile" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3 min-w-0">
+                        <div
+                          className="flex items-center gap-3 min-w-0 cursor-pointer"
+                          onClick={() => setReplacePreviewFileId(file.id)}
+                          title={language === 'TH' ? 'คลิกเพื่อดูตัวอย่างไฟล์' : 'Click to preview file'}
+                        >
                           <div className="p-2 rounded-lg bg-white text-blue-500 border border-blue-100 shadow-sm shrink-0">
                             <FileIcon size={16} />
                           </div>
                           <div className="flex flex-col text-left min-w-0">
-                            <span className="text-sm font-bold text-blue-900 truncate max-w-[260px] leading-tight">
+                            <span className="text-sm font-bold text-blue-900 truncate max-w-[260px] leading-tight hover:underline">
                               {file.name}
                             </span>
                             <span className="text-[11px] font-mono text-slate-400 leading-none mt-1 font-bold">
@@ -5470,12 +5499,21 @@ const mockWorkflows: Workflow[] = [
                             </span>
                           </div>
                         </div>
-                        <button
-                          onClick={() => handleRemoveReplaceFile(file.id)}
-                          className="p-2 hover:bg-rose-50 rounded-[4px] text-slate-300 hover:text-rose-500 transition-colors shrink-0"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            onClick={() => setReplacePreviewFileId(file.id)}
+                            className="p-2 hover:bg-blue-50 rounded-[4px] text-slate-300 hover:text-blue-500 transition-colors"
+                            title={language === 'TH' ? 'ดูตัวอย่างไฟล์' : 'Preview file'}
+                          >
+                            <Eye size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleRemoveReplaceFile(file.id)}
+                            className="p-2 hover:bg-rose-50 rounded-[4px] text-slate-300 hover:text-rose-500 transition-colors"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </div>
 
                       {/* Per-file page selection — which pages of this file to run OCR on */}
@@ -5573,6 +5611,65 @@ const mockWorkflows: Workflow[] = [
           </div>
         </div>
       )}
+
+      {/* Preview overlay for files just picked in the Replace & Merge uploader —
+          switch between the uploaded files via the tab strip, PDFs render inline. */}
+      {replacePreviewFileId && (() => {
+        const previewFile = replaceUploadedFiles.find(f => f.id === replacePreviewFileId);
+        if (!previewFile) return null;
+        const isPdf = previewFile.type === 'application/pdf' || previewFile.name.toLowerCase().endsWith('.pdf');
+        return (
+          <div className="fixed inset-0 z-[170] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white w-[90vw] max-w-5xl h-[88vh] rounded-2xl overflow-hidden shadow-2xl flex flex-col font-sans">
+              <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-4 shrink-0">
+                <div className="flex items-center gap-2 overflow-x-auto">
+                  {replaceUploadedFiles.map(f => (
+                    <button
+                      key={f.id}
+                      onClick={() => setReplacePreviewFileId(f.id)}
+                      className={`px-3 py-1.5 rounded-[4px] text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
+                        f.id === replacePreviewFileId
+                          ? 'bg-[#1f5df9] text-white shadow-sm'
+                          : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                      }`}
+                    >
+                      {f.name}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setReplacePreviewFileId(null)}
+                  className="p-2 hover:bg-slate-100 rounded-[4px] text-slate-400 hover:text-slate-600 transition-colors shrink-0"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+              <div className="flex-1 bg-slate-100 min-h-0">
+                {isPdf && replacePreviewUrl ? (
+                  <iframe src={replacePreviewUrl} title={previewFile.name} className="w-full h-full border-0" />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center gap-3 text-slate-400">
+                    <FileIcon size={40} />
+                    <p className="text-sm font-bold">
+                      {language === 'TH' ? 'ไม่รองรับการแสดงตัวอย่างไฟล์ประเภทนี้' : 'Preview not supported for this file type'}
+                    </p>
+                    {replacePreviewUrl && (
+                      <a
+                        href={replacePreviewUrl}
+                        download={previewFile.name}
+                        className="flex items-center gap-2 px-4 py-2 rounded-[4px] bg-[#1f5df9] text-white text-xs font-bold hover:bg-[#104BE3] transition-colors"
+                      >
+                        <Download size={14} />
+                        {language === 'TH' ? 'ดาวน์โหลดไฟล์' : 'Download file'}
+                      </a>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* PDF View Overlay Side-by-side */}
       {pdfPreviewUrl && (
