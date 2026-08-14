@@ -1,0 +1,551 @@
+<meta charset="UTF-8">
+<title>Data Comparison Flow</title>
+<style>
+  :root {
+    --bg: #f4f6fb;
+    --surface: #ffffff;
+    --surface-2: #eef1f8;
+    --ink: #111629;
+    --muted: #5b6478;
+    --line: #e1e5f0;
+    --accent: #1f5df9;
+
+    --lane1: #7c5cff;   --lane1-tint: #efeaff;
+    --lane2: #1f5df9;   --lane2-tint: #e8f0ff;
+    --lane3: #0891b2;   --lane3-tint: #e3f6fa;
+    --lane4: #d97706;   --lane4-tint: #fdf1e0;
+    --lane5: #059669;   --lane5-tint: #e3f8ee;
+
+    --solid-violet: #6d4fe0;
+    --solid-blue: #1f5df9;
+    --solid-teal: #0891b2;
+    --solid-amber: #c2790a;
+    --solid-emerald: #059669;
+    --solid-rose: #e11d48;
+    --warn-fg: #241900;
+
+    --ok: #059669;
+    --warn: #d97706;
+    --bad: #e11d48;
+    --info: #1f5df9;
+
+    --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --font-mono: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0a0f1c;
+      --surface: #111a2d;
+      --surface-2: #16223a;
+      --ink: #e7ebf6;
+      --muted: #94a0bf;
+      --line: #233252;
+      --accent: #5b8bff;
+
+      --lane1: #a78bfa;   --lane1-tint: #1e1a3d;
+      --lane2: #5b8bff;   --lane2-tint: #141f38;
+      --lane3: #22b8cf;   --lane3-tint: #0e2530;
+      --lane4: #f0a838;   --lane4-tint: #2c210f;
+      --lane5: #34d399;   --lane5-tint: #0f2a20;
+
+      --ok: #34d399;
+      --warn: #f0a838;
+      --bad: #fb7185;
+      --info: #5b8bff;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #0a0f1c;
+    --surface: #111a2d;
+    --surface-2: #16223a;
+    --ink: #e7ebf6;
+    --muted: #94a0bf;
+    --line: #233252;
+    --accent: #5b8bff;
+
+    --lane1: #a78bfa;   --lane1-tint: #1e1a3d;
+    --lane2: #5b8bff;   --lane2-tint: #141f38;
+    --lane3: #22b8cf;   --lane3-tint: #0e2530;
+    --lane4: #f0a838;   --lane4-tint: #2c210f;
+    --lane5: #34d399;   --lane5-tint: #0f2a20;
+
+    --ok: #34d399;
+    --warn: #f0a838;
+    --bad: #fb7185;
+    --info: #5b8bff;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-ui);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 28px 24px 64px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  header.hero {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--line);
+  }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+  h1 {
+    margin: 2px 0 2px;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 14.5px;
+    max-width: 62ch;
+  }
+  .sources {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .source-chip {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 3px 8px;
+  }
+
+  /* ---- legend ---- */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 22px;
+    align-items: center;
+    padding: 12px 16px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    font-size: 12.5px;
+    color: var(--muted);
+  }
+  .legend-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .legend-title {
+    font-weight: 700;
+    color: var(--ink);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-right: 2px;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .swatch { width: 11px; height: 11px; border-radius: 3px; flex: none; }
+  .legend-divider { width: 1px; height: 18px; background: var(--line); }
+
+  /* ---- diagram ---- */
+  .diagram-wrap {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 8px;
+    overflow-x: auto;
+  }
+  .diagram-wrap svg { display: block; min-width: 1760px; width: 100%; height: auto; }
+  .scroll-hint {
+    text-align: center;
+    font-size: 11.5px;
+    color: var(--muted);
+    margin: 2px 0 0;
+  }
+
+  text { font-family: var(--font-ui); fill: var(--ink); }
+  .node-label { font-size: 12.5px; font-weight: 700; }
+  .node-caption { font-size: 10.3px; font-weight: 500; fill: var(--muted); }
+  .branch-label { font-size: 10.5px; font-weight: 700; fill: var(--muted); }
+  .pill-label { font-size: 11px; font-weight: 800; fill: #ffffff; }
+  .pill-label-dark { font-size: 11px; font-weight: 800; fill: var(--warn-fg); }
+  .lane-title { font-size: 13px; font-weight: 800; fill: #ffffff; }
+  .terminal-label { font-size: 11.5px; font-weight: 800; fill: #ffffff; }
+  .diamond-label { font-size: 11px; font-weight: 700; }
+
+  .lane-band { }
+  .box { fill: var(--surface); stroke-width: 1.6; }
+  .diamond { fill: var(--surface); stroke-width: 1.8; }
+  .flow-line { stroke: var(--ink); stroke-opacity: 0.42; stroke-width: 1.6; fill: none; }
+  .loop-line { stroke: var(--bad); stroke-opacity: 0.7; stroke-width: 1.6; stroke-dasharray: 5 4; fill: none; }
+
+  /* ---- glossary tables ---- */
+  .glossary-heading {
+    font-size: 18px;
+    font-weight: 800;
+    margin: 4px 0 2px;
+    letter-spacing: -0.01em;
+  }
+  .glossary-sub {
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
+  .glossary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px 16px 6px;
+    display: flex;
+    flex-direction: column;
+  }
+  .card h3 {
+    margin: 0 0 2px;
+    font-size: 14px;
+    font-weight: 800;
+  }
+  .card .card-sub {
+    font-size: 11.5px;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .row {
+    display: grid;
+    grid-template-columns: 20px 108px 1fr;
+    gap: 10px;
+    align-items: start;
+    padding: 9px 0;
+    border-top: 1px solid var(--line);
+    font-size: 12.5px;
+  }
+  .row:first-of-type { border-top: none; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 3px; flex: none; }
+  .code { font-family: var(--font-mono); font-size: 11.5px; font-weight: 700; white-space: nowrap; }
+  .meaning { color: var(--muted); }
+
+  footer {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    color: var(--muted);
+    font-size: 11.5px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+  }
+  footer .code { color: var(--muted); }
+
+  @media (max-width: 640px) {
+    h1 { font-size: 23px; }
+    .page { padding: 20px 14px 48px; }
+  }
+</style>
+
+<div class="page">
+
+  <header class="hero">
+    <span class="eyebrow">BizX · Data Comparison</span>
+    <h1>Data Comparison Flow</h1>
+    <p class="subtitle">
+      เส้นทางการทำงานตั้งแต่สร้าง Shipment จนถึงส่งออกรายงาน — สำหรับทีม Dev และ QA
+      ใช้อ้างอิงสถานะ, จุดตัดสินใจ และวิธีเปรียบเทียบข้อมูลที่ระบบใช้จริง
+    </p>
+    <div class="sources">
+      <span class="source-chip">components/DataComparison.tsx</span>
+      <span class="source-chip">components/RuleMatrix.tsx</span>
+      <span class="source-chip">components/CreateJobModal.tsx</span>
+      <span class="source-chip">types.ts</span>
+    </div>
+  </header>
+
+  <div class="legend">
+    <div class="legend-group">
+      <span class="legend-title">Lane</span>
+      <span class="legend-item"><span class="swatch" style="background:var(--lane1)"></span>ผู้ใช้งาน</span>
+      <span class="legend-item"><span class="swatch" style="background:var(--lane2)"></span>OCR &amp; Extraction</span>
+      <span class="legend-item"><span class="swatch" style="background:var(--lane3)"></span>Compare Engine</span>
+      <span class="legend-item"><span class="swatch" style="background:var(--lane4)"></span>ตรวจสอบ &amp; ลำดับงาน</span>
+      <span class="legend-item"><span class="swatch" style="background:var(--lane5)"></span>ส่งออก</span>
+    </div>
+    <div class="legend-divider"></div>
+    <div class="legend-group">
+      <span class="legend-title">รูปทรง</span>
+      <span class="legend-item">▭ ขั้นตอน (Action)</span>
+      <span class="legend-item">◇ จุดตัดสินใจ (Decision)</span>
+      <span class="legend-item">⬤ สถานะ (Status)</span>
+      <span class="legend-item">◯ เริ่ม / จบ</span>
+    </div>
+    <div class="legend-divider"></div>
+    <div class="legend-group">
+      <span class="legend-item" style="color:var(--bad)">┄┄▶ ย้อนกลับ / ตีกลับ (Reject)</span>
+    </div>
+  </div>
+
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 1860 920" role="img" aria-label="Swimlane flowchart of the BizX Data Comparison job pipeline, from shipment creation through OCR extraction, rule-based comparison, review and sequencing, to export.">
+      <defs>
+        <pattern id="dots" width="18" height="18" patternUnits="userSpaceOnUse">
+          <circle cx="1.4" cy="1.4" r="1.4" fill="var(--line)" />
+        </pattern>
+        <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--ink)" fill-opacity="0.55" />
+        </marker>
+        <marker id="arrowLoop" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--bad)" fill-opacity="0.85" />
+        </marker>
+      </defs>
+
+      <rect x="0" y="0" width="1860" height="920" fill="url(#dots)" />
+
+      <!-- ===== Lane bands ===== -->
+      <g>
+        <rect x="0" y="14"  width="1860" height="150" fill="var(--lane1-tint)" />
+        <rect x="0" y="172" width="1860" height="158" fill="var(--lane2-tint)" />
+        <rect x="0" y="338" width="1860" height="210" fill="var(--lane3-tint)" />
+        <rect x="0" y="556" width="1860" height="190" fill="var(--lane4-tint)" />
+        <rect x="0" y="754" width="1860" height="150" fill="var(--lane5-tint)" />
+      </g>
+
+      <!-- ===== Lane label chips ===== -->
+      <g>
+        <rect x="14" y="34"  width="160" height="110" rx="10" fill="var(--lane1)" />
+        <text class="lane-title" x="94" y="82" text-anchor="middle">ผู้ใช้งาน</text>
+        <text class="lane-title" x="94" y="100" text-anchor="middle" font-size="11">(Operation / Customs)</text>
+
+        <rect x="14" y="199" width="160" height="104" rx="10" fill="var(--lane2)" />
+        <text class="lane-title" x="94" y="243" text-anchor="middle">ระบบ</text>
+        <text class="lane-title" x="94" y="261" text-anchor="middle" font-size="11">OCR &amp; Extraction</text>
+
+        <rect x="14" y="388" width="160" height="110" rx="10" fill="var(--lane3)" />
+        <text class="lane-title" x="94" y="434" text-anchor="middle">Compare</text>
+        <text class="lane-title" x="94" y="452" text-anchor="middle" font-size="11">Engine (Rule Matrix)</text>
+
+        <rect x="14" y="596" width="160" height="110" rx="10" fill="var(--lane4)" />
+        <text class="lane-title" x="94" y="642" text-anchor="middle">ตรวจสอบ &amp;</text>
+        <text class="lane-title" x="94" y="660" text-anchor="middle" font-size="11">ลำดับงาน</text>
+
+        <rect x="14" y="774" width="160" height="110" rx="10" fill="var(--lane5)" />
+        <text class="lane-title" x="94" y="820" text-anchor="middle">ส่งออก</text>
+        <text class="lane-title" x="94" y="838" text-anchor="middle" font-size="11">(Export)</text>
+      </g>
+
+      <!-- ===== LANE 1 : User ===== -->
+      <g>
+        <circle cx="250" cy="89" r="30" fill="var(--solid-violet)" />
+        <text class="terminal-label" x="250" y="93" text-anchor="middle">เริ่ม</text>
+        <line class="flow-line" x1="280" y1="89" x2="368" y2="89" marker-end="url(#arrow)" />
+
+        <rect class="box" x="368" y="59" width="180" height="60" rx="12" fill="var(--surface)" stroke="var(--lane1)" />
+        <text class="node-label" x="458" y="85" text-anchor="middle">เลือก Preset</text>
+        <text class="node-label" x="458" y="101" text-anchor="middle">หรือกำหนดเอง</text>
+        <line class="flow-line" x1="548" y1="89" x2="636" y2="89" marker-end="url(#arrow)" />
+
+        <rect class="box" x="636" y="59" width="196" height="60" rx="12" fill="var(--surface)" stroke="var(--lane1)" />
+        <text class="node-label" x="734" y="85" text-anchor="middle">ตั้งชื่อ Shipment +</text>
+        <text class="node-label" x="734" y="101" text-anchor="middle">ลำดับ Job (Chain)</text>
+        <line class="flow-line" x1="832" y1="89" x2="920" y2="89" marker-end="url(#arrow)" />
+
+        <rect class="box" x="920" y="59" width="196" height="60" rx="12" fill="var(--surface)" stroke="var(--lane1)" />
+        <text class="node-label" x="1018" y="85" text-anchor="middle">อัปโหลดเอกสาร</text>
+        <text class="node-label" x="1018" y="101" text-anchor="middle">ตาม Doc Type (Column)</text>
+        <text class="node-caption" x="1018" y="136" text-anchor="middle">รองรับ Replace &amp; Merge + เลือก Template</text>
+        <text class="node-caption" x="1018" y="150" text-anchor="middle">ปลดล็อกเมื่อ Job ก่อนหน้า = DONE</text>
+      </g>
+
+      <!-- ===== LANE 2 : OCR ===== -->
+      <g>
+        <line class="flow-line" x1="1018" y1="119" x2="1018" y2="198" marker-end="url(#arrow)" />
+
+        <rect class="box" x="928" y="198" width="180" height="56" rx="12" fill="var(--surface)" stroke="var(--lane2)" />
+        <text class="node-label" x="1018" y="222" text-anchor="middle">รับไฟล์ →</text>
+        <text class="node-label" x="1018" y="238" text-anchor="middle">RECEIVED</text>
+        <line class="flow-line" x1="1108" y1="226" x2="1214" y2="226" marker-end="url(#arrow)" />
+
+        <rect class="box" x="1214" y="198" width="216" height="56" rx="12" fill="var(--surface)" stroke="var(--lane2)" />
+        <text class="node-label" x="1322" y="222" text-anchor="middle">OCR Extraction →</text>
+        <text class="node-label" x="1322" y="238" text-anchor="middle">EXTRACTING</text>
+        <text class="node-caption" x="1322" y="284" text-anchor="middle">ดึงข้อมูลตาม Label Schema (SchemaLabel)</text>
+      </g>
+
+      <!-- ===== LANE 3 : Compare Engine ===== -->
+      <g>
+        <line class="flow-line" x1="1322" y1="254" x2="1322" y2="350" marker-end="url(#arrow)" />
+
+        <rect class="box" x="1207" y="350" width="230" height="60" rx="12" fill="var(--surface)" stroke="var(--lane3)" />
+        <text class="node-label" x="1322" y="376" text-anchor="middle">รันกฎเปรียบเทียบ</text>
+        <text class="node-label" x="1322" y="392" text-anchor="middle">(Compare Method ต่อ Field)</text>
+        <text class="node-caption" x="1322" y="426" text-anchor="middle" font-style="italic">→ ดู 8 วิธีเปรียบเทียบในตารางด้านล่าง</text>
+
+        <line class="flow-line" x1="1322" y1="410" x2="1322" y2="440" marker-end="url(#arrow)" />
+
+        <polygon class="diamond" points="1322,440 1378,494 1322,548 1266,494" stroke="var(--lane3)" />
+        <text class="diamond-label" x="1322" y="490" text-anchor="middle">ผ่านเกณฑ์ /</text>
+        <text class="diamond-label" x="1322" y="504" text-anchor="middle">threshold?</text>
+
+        <line class="flow-line" x1="1378" y1="494" x2="1450" y2="494" marker-end="url(#arrow)" />
+        <text class="branch-label" x="1408" y="484" text-anchor="middle">ใช่</text>
+        <rect x="1450" y="474" width="118" height="34" rx="17" fill="var(--solid-emerald)" />
+        <text class="pill-label" x="1509" y="495" text-anchor="middle">MATCHED</text>
+
+        <line class="flow-line" x1="1266" y1="494" x2="1194" y2="494" marker-end="url(#arrow)" />
+        <text class="branch-label" x="1234" y="484" text-anchor="middle">ไม่</text>
+        <rect x="1076" y="474" width="118" height="34" rx="17" fill="var(--solid-rose)" />
+        <text class="pill-label" x="1135" y="489" text-anchor="middle">MISMATCHED /</text>
+        <text class="pill-label" x="1135" y="501" text-anchor="middle">PENDING</text>
+      </g>
+
+      <!-- ===== LANE 4 : Review & Sequencing ===== -->
+      <g>
+        <line class="flow-line" x1="1509" y1="508" x2="1509" y2="556" fill="none" />
+        <line class="flow-line" x1="1509" y1="556" x2="1322" y2="586" marker-end="url(#arrow)" />
+        <line class="flow-line" x1="1135" y1="508" x2="1135" y2="556" fill="none" />
+        <line class="flow-line" x1="1135" y1="556" x2="1322" y2="586" marker-end="url(#arrow)" />
+
+        <polygon class="diamond" points="1322,586 1382,644 1322,702 1262,644" stroke="var(--lane4)" />
+        <text class="diamond-label" x="1322" y="640" text-anchor="middle">ทุกเอกสารตรงกัน</text>
+        <text class="diamond-label" x="1322" y="654" text-anchor="middle">หมดหรือไม่?</text>
+
+        <!-- No -> fix box -->
+        <line class="flow-line" x1="1262" y1="644" x2="1176" y2="644" marker-end="url(#arrow)" />
+        <text class="branch-label" x="1219" y="634" text-anchor="middle">ไม่</text>
+        <rect class="box" x="986" y="614" width="190" height="60" rx="12" fill="var(--surface)" stroke="var(--bad)" />
+        <text class="node-label" x="1081" y="640" text-anchor="middle">แก้ไข field ที่ Mismatch /</text>
+        <text class="node-label" x="1081" y="656" text-anchor="middle">อัปโหลดใหม่</text>
+
+        <!-- Yes -> ready pill -->
+        <line class="flow-line" x1="1382" y1="644" x2="1470" y2="644" marker-end="url(#arrow)" />
+        <text class="branch-label" x="1426" y="634" text-anchor="middle">ใช่</text>
+        <rect x="1470" y="627" width="180" height="34" rx="17" fill="var(--solid-emerald)" />
+        <text class="pill-label" x="1560" y="648" text-anchor="middle">Job Status: READY</text>
+
+        <!-- reject note -->
+        <rect x="1470" y="574" width="200" height="40" rx="10" fill="none" stroke="var(--bad)" stroke-dasharray="4 3" stroke-width="1.3" />
+        <text class="node-caption" x="1570" y="589" text-anchor="middle" fill="var(--bad)">⤺ Job ถัดไปตีกลับได้ →</text>
+        <text class="node-caption" x="1570" y="602" text-anchor="middle" fill="var(--bad)">Status: REJECTED</text>
+
+        <!-- ready -> next-job diamond -->
+        <line class="flow-line" x1="1560" y1="661" x2="1560" y2="690" marker-end="url(#arrow)" />
+        <polygon class="diamond" points="1720,644 1780,702 1720,760 1660,702" stroke="var(--lane4)" />
+        <line class="flow-line" x1="1560" y1="690" x2="1660" y2="702" marker-end="url(#arrow)" />
+        <text class="diamond-label" x="1720" y="698" text-anchor="middle">มี Job ถัดไป</text>
+        <text class="diamond-label" x="1720" y="712" text-anchor="middle">ในลำดับ?</text>
+
+        <!-- next-job yes -> unblock pill -->
+        <text class="branch-label" x="1720" y="632" text-anchor="middle">ใช่</text>
+        <line class="flow-line" x1="1720" y1="644" x2="1720" y2="612" marker-end="url(#arrow)" />
+        <rect x="1620" y="580" width="200" height="32" rx="16" fill="var(--solid-amber)" />
+        <text class="pill-label-dark" x="1720" y="601" text-anchor="middle">ปลดล็อก Job ถัดไป</text>
+        <text class="node-caption" x="1720" y="568" text-anchor="middle">เริ่ม Job นี้ใหม่จาก Lane 1 (อัปโหลดเอกสาร)</text>
+      </g>
+
+      <!-- ===== return bus (far left, above lane bands) ===== -->
+      <g>
+        <path class="loop-line" d="M 986 644 L 196 644 L 196 24 L 1018 24 L 1018 57" fill="none" marker-end="url(#arrowLoop)" />
+        <text class="branch-label" x="196" y="330" text-anchor="middle" fill="var(--bad)" transform="rotate(-90 196 330)">↺ แก้ไขแล้วกลับไปอัปโหลดใหม่ (Lane 1)</text>
+      </g>
+
+      <!-- ===== LANE 5 : Export ===== -->
+      <g>
+        <text class="branch-label" x="1720" y="738" text-anchor="middle">ไม่ (ครบทุก Job)</text>
+        <line class="flow-line" x1="1720" y1="760" x2="1720" y2="784" marker-end="url(#arrow)" />
+
+        <rect class="box" x="1610" y="784" width="220" height="60" rx="12" fill="var(--surface)" stroke="var(--lane5)" />
+        <text class="node-label" x="1720" y="810" text-anchor="middle">กด Export →</text>
+        <text class="node-label" x="1720" y="826" text-anchor="middle">เลือก Workflow / Platform</text>
+        <text class="node-caption" x="1720" y="860" text-anchor="middle">ระบบสร้างรายงาน/ไฟล์ส่งออก เช่น FTA</text>
+
+        <line class="flow-line" x1="1610" y1="814" x2="1120" y2="814" marker-end="url(#arrow)" />
+
+        <circle cx="1060" cy="814" r="34" fill="var(--solid-emerald)" />
+        <circle cx="1060" cy="814" r="27" fill="none" stroke="#ffffff" stroke-opacity="0.55" stroke-width="1.3" />
+        <text class="terminal-label" x="1060" y="811" text-anchor="middle">DONE</text>
+        <text class="terminal-label" x="1060" y="824" text-anchor="middle" font-size="9">EXPORTED</text>
+      </g>
+
+    </svg>
+    <p class="scroll-hint">เลื่อนซ้าย–ขวาเพื่อดู flow เต็ม</p>
+  </div>
+
+  <!-- ===== Glossaries ===== -->
+  <section>
+    <h2 class="glossary-heading">Glossary สำหรับ Dev &amp; QA</h2>
+    <p class="glossary-sub">ชื่อ enum และวิธีเปรียบเทียบตรงตามโค้ดจริง — ใช้เทียบตอนเขียนเทสต์หรือ debug สถานะ</p>
+
+    <div class="glossary-grid">
+
+      <div class="card">
+        <h3>Job Status</h3>
+        <p class="card-sub"><span class="code">JobStatus</span> — สถานะภาพรวมของงาน 1 job</p>
+
+        <div class="row"><span class="dot" style="background:#94a3b8"></span><span class="code">NEW</span><span class="meaning">รอไฟล์ครบ (Pending Files)</span></div>
+        <div class="row"><span class="dot" style="background:var(--info)"></span><span class="code">PENDING</span><span class="meaning">รอดำเนินการ</span></div>
+        <div class="row"><span class="dot" style="background:var(--info)"></span><span class="code">PROCESSING</span><span class="meaning">กำลังเปรียบเทียบข้อมูล</span></div>
+        <div class="row"><span class="dot" style="background:var(--warn)"></span><span class="code">REVIEW</span><span class="meaning">รอตรวจสอบ</span></div>
+        <div class="row"><span class="dot" style="background:var(--ok)"></span><span class="code">READY</span><span class="meaning">เสร็จสมบูรณ์ พร้อมส่งออก</span></div>
+        <div class="row"><span class="dot" style="background:var(--lane5)"></span><span class="code">DONE</span><span class="meaning">ส่งออกแล้ว (Exported)</span></div>
+        <div class="row"><span class="dot" style="background:var(--bad)"></span><span class="code">REJECTED</span><span class="meaning">ถูกตีกลับจาก Job ถัดไป</span></div>
+      </div>
+
+      <div class="card">
+        <h3>Document Status</h3>
+        <p class="card-sub"><span class="code">ComparisonDocStatus</span> — สถานะของไฟล์แต่ละ column</p>
+
+        <div class="row"><span class="dot" style="background:#94a3b8"></span><span class="code">MISSING</span><span class="meaning">ยังไม่มีไฟล์อัปโหลด</span></div>
+        <div class="row"><span class="dot" style="background:var(--info)"></span><span class="code">RECEIVED</span><span class="meaning">อัปโหลดแล้ว รอ OCR</span></div>
+        <div class="row"><span class="dot" style="background:var(--info)"></span><span class="code">EXTRACTING</span><span class="meaning">OCR กำลังสกัดข้อมูล</span></div>
+        <div class="row"><span class="dot" style="background:var(--ok)"></span><span class="code">MATCHED</span><span class="meaning">ข้อมูลตรงกันตามกฎเปรียบเทียบ</span></div>
+        <div class="row"><span class="dot" style="background:var(--bad)"></span><span class="code">MISMATCHED</span><span class="meaning">ข้อมูลไม่ตรงกัน ต้องตรวจสอบ</span></div>
+        <div class="row"><span class="dot" style="background:#475569"></span><span class="code">LOCKED</span><span class="meaning">ล็อกแล้ว แก้ไขไม่ได้ (เช่นหลัง Export)</span></div>
+      </div>
+
+      <div class="card">
+        <h3>Compare Methods</h3>
+        <p class="card-sub">วิธีเปรียบเทียบใน Rule Matrix ต่อ field</p>
+
+        <div class="row"><span class="dot" style="background:var(--ok)"></span><span class="code">EXACT</span><span class="meaning">ตรงกันทุกตัวอักษร (normalize + trim + case-insensitive)</span></div>
+        <div class="row"><span class="dot" style="background:#a855f7"></span><span class="code">FUZZY</span><span class="meaning">เทียบความคล้ายเป็น % — threshold ปรับได้ 0–100</span></div>
+        <div class="row"><span class="dot" style="background:#6366f1"></span><span class="code">BILINGUAL</span><span class="meaning">แปลความหมายด้วย AI ก่อนเทียบ ข้ามภาษาได้</span></div>
+        <div class="row"><span class="dot" style="background:#0ea5e9"></span><span class="code">NUMBER_WORD</span><span class="meaning">แปลงเป็นตัวเลขก่อนเทียบ รองรับเลขไทย/comma</span></div>
+        <div class="row"><span class="dot" style="background:#f97316"></span><span class="code">EXISTENCE</span><span class="meaning">เช็คว่ามีข้อมูลอยู่หรือไม่ ไม่เทียบค่า</span></div>
+        <div class="row"><span class="dot" style="background:var(--bad)"></span><span class="code">MASTER_LOOKUP</span><span class="meaning">ค้นหาความถูกต้องจาก Master Data / Doc Type อื่น</span></div>
+        <div class="row"><span class="dot" style="background:#ec4899"></span><span class="code">CONDITIONAL</span><span class="meaning">เทียบแบบมีเงื่อนไข ขึ้นกับค่า field อื่นก่อน</span></div>
+        <div class="row"><span class="dot" style="background:var(--warn)"></span><span class="code">DATE_NORMALIZATION</span><span class="meaning">ปรับรูปแบบวันที่ให้ตรงกัน (พ.ศ. / ค.ศ.)</span></div>
+      </div>
+
+    </div>
+  </section>
+
+  <footer>
+    <span>BizX Design Ideation — Data Comparison module</span>
+    <span class="code">อ้างอิงจาก prototype/components/DataComparison.tsx, RuleMatrix.tsx, CreateJobModal.tsx</span>
+  </footer>
+
+</div>
