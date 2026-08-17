@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { diffChars } from 'diff';
 import { 
-  FileText, Upload, ArrowRight, Check, AlertCircle, 
+  FileText, Upload, ArrowRight, Check, AlertCircle,
   Search, Download, Columns, ChevronLeft, ChevronRight,
-  Plus, Trash2, ArrowLeftRight, FileSpreadsheet, File as FileIcon,
+  Plus, Trash2, ArrowLeftRight, FileSpreadsheet, File as FileIcon, FileCode,
   CheckCircle2, XCircle, Info, Eye, Send, Filter, ListFilter, ArrowLeft, Save, RotateCcw,
   LayoutGrid, List, ScanEye, Bot, ChevronDown, Lock, Unlock, HelpCircle, X, Loader2, ShieldCheck, ArrowUpRight, ScanSearch, History, Edit3, UploadCloud, AlertTriangle,
   Printer, RotateCw, ZoomIn, ZoomOut, Menu, Copy, Star, CheckCheck, StickyNote, SkipForward, Undo2,
@@ -34,6 +34,17 @@ const CURRENT_USER_NAME = 'Kunawut W.';
 // Mock brand list for the per-file "Template" picker on Replace & Merge uploads —
 // template name is built as [Brand]_[Doctype], e.g. MARDI_Invoice.
 const REPLACE_FILE_TEMPLATE_BRANDS = ['MARDI', 'Elita', 'MINIMONO', 'ROENARI', 'SANRIO', 'WANTEX'];
+
+// Picks which preview mockup to render for a document based on its real file extension
+// when one is present (real uploaded filenames), falling back to 'pdf' for the many
+// places pdfPreviewUrl only holds a doc-type display name like "PO/PI" with no extension.
+type PreviewFileFormat = 'pdf' | 'excel' | 'xml';
+const detectFileFormat = (nameOrLabel: string | null | undefined): PreviewFileFormat => {
+  const lower = (nameOrLabel || '').toLowerCase();
+  if (/\.(xlsx|xls|csv)$/.test(lower)) return 'excel';
+  if (/\.xml$/.test(lower)) return 'xml';
+  return 'pdf';
+};
 
 interface DocComment {
   id: string;
@@ -5618,6 +5629,7 @@ const mockWorkflows: Workflow[] = [
         const previewFile = replaceUploadedFiles.find(f => f.id === replacePreviewFileId);
         if (!previewFile) return null;
         const isPdf = previewFile.type === 'application/pdf' || previewFile.name.toLowerCase().endsWith('.pdf');
+        const previewFormat = detectFileFormat(previewFile.name);
         return (
           <div className="fixed inset-0 z-[170] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white w-[90vw] max-w-5xl h-[88vh] rounded-2xl overflow-hidden shadow-2xl flex flex-col font-sans">
@@ -5654,6 +5666,42 @@ const mockWorkflows: Workflow[] = [
               <div className="flex-1 bg-slate-100 min-h-0">
                 {isPdf && replacePreviewUrl ? (
                   <iframe src={replacePreviewUrl} title={previewFile.name} className="w-full h-full border-0" />
+                ) : previewFormat === 'excel' ? (
+                  <div className="w-full h-full flex flex-col items-center justify-center gap-3 text-[#0f5c31] bg-[#f3f6f3]">
+                    <div className="w-16 h-16 rounded-2xl bg-[#107C41] flex items-center justify-center text-white shadow-lg">
+                      <FileSpreadsheet size={28} />
+                    </div>
+                    <p className="text-sm font-black">{previewFile.name}</p>
+                    <p className="text-xs font-bold text-[#0f5c31]/60">{language === 'TH' ? 'ไฟล์ Excel' : 'Excel file'}</p>
+                    {replacePreviewUrl && (
+                      <a
+                        href={replacePreviewUrl}
+                        download={previewFile.name}
+                        className="flex items-center gap-2 px-4 py-2 rounded-[4px] bg-[#107C41] text-white text-xs font-bold hover:bg-[#0d6836] transition-colors mt-1"
+                      >
+                        <Download size={14} />
+                        {language === 'TH' ? 'ดาวน์โหลดไฟล์' : 'Download file'}
+                      </a>
+                    )}
+                  </div>
+                ) : previewFormat === 'xml' ? (
+                  <div className="w-full h-full flex flex-col items-center justify-center gap-3 text-slate-200 bg-[#1e1e1e]">
+                    <div className="w-16 h-16 rounded-2xl bg-sky-500/20 border border-sky-400/30 flex items-center justify-center text-sky-400">
+                      <FileCode size={28} />
+                    </div>
+                    <p className="text-sm font-black font-mono">{previewFile.name}</p>
+                    <p className="text-xs font-bold text-slate-400">{language === 'TH' ? 'ไฟล์ XML' : 'XML file'}</p>
+                    {replacePreviewUrl && (
+                      <a
+                        href={replacePreviewUrl}
+                        download={previewFile.name}
+                        className="flex items-center gap-2 px-4 py-2 rounded-[4px] bg-sky-500 text-white text-xs font-bold hover:bg-sky-600 transition-colors mt-1"
+                      >
+                        <Download size={14} />
+                        {language === 'TH' ? 'ดาวน์โหลดไฟล์' : 'Download file'}
+                      </a>
+                    )}
+                  </div>
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center gap-3 text-slate-400">
                     <FileIcon size={40} />
@@ -5809,14 +5857,19 @@ const mockWorkflows: Workflow[] = [
                         <Menu size={16} />
                       </button>
                       <span className="text-[11px] font-mono font-bold tracking-tight text-slate-300 max-w-[150px] truncate">
-                        {pdfPreviewUrl.toUpperCase().replace(/\s/g, '_')}.pdf
+                        {pdfPreviewUrl.toUpperCase().replace(/\s/g, '_')}
+                        {detectFileFormat(pdfPreviewUrl) === 'excel' ? '.xlsx' : detectFileFormat(pdfPreviewUrl) === 'xml' ? '.xml' : '.pdf'}
                       </span>
                     </div>
 
                     {/* Middle: Page Indicator for Continuous View */}
                     <div className="flex items-center gap-2 text-slate-300">
                       <span className="text-xs font-sans font-black px-3 py-1 bg-slate-700/60 rounded-[4px] select-none tracking-wider font-mono">
-                        {language === 'TH' ? 'หน้า 1 - 3 (ต่อเนื่อง)' : 'PAGES 1 - 3 (CONTINUOUS)'}
+                        {detectFileFormat(pdfPreviewUrl) === 'excel'
+                          ? (language === 'TH' ? 'ชีต 1 จาก 1' : 'SHEET 1 OF 1')
+                          : detectFileFormat(pdfPreviewUrl) === 'xml'
+                          ? (language === 'TH' ? 'เอกสาร XML' : 'XML DOCUMENT')
+                          : (language === 'TH' ? 'หน้า 1 - 3 (ต่อเนื่อง)' : 'PAGES 1 - 3 (CONTINUOUS)')}
                       </span>
 
                       <div className="w-px h-5 bg-slate-700/80 mx-2"></div>
@@ -5859,10 +5912,12 @@ const mockWorkflows: Workflow[] = [
                       </button>
                       <button 
                         onClick={() => {
+                          const format = detectFileFormat(pdfPreviewUrl);
+                          const ext = format === 'excel' ? 'xlsx' : format === 'xml' ? 'xml' : 'pdf';
                           const element = document.createElement("a");
-                          const file = new Blob(["Simulated Local PDF Download"], { type: 'text/plain' });
+                          const file = new Blob([`Simulated Local ${ext.toUpperCase()} Download`], { type: 'text/plain' });
                           element.href = URL.createObjectURL(file);
-                          element.download = `${pdfPreviewUrl.toLowerCase().replace(/\s/g, '_')}.pdf`;
+                          element.download = `${pdfPreviewUrl.toLowerCase().replace(/\s/g, '_')}.${ext}`;
                           document.body.appendChild(element);
                           element.click();
                           document.body.removeChild(element);
@@ -5888,7 +5943,74 @@ const mockWorkflows: Workflow[] = [
                       {/* Document render page based on filename */}
                       {(() => {
                         const docUpper = pdfPreviewUrl?.toUpperCase() || '';
-                        
+                        const fileFormat = detectFileFormat(pdfPreviewUrl);
+                        const fields = Object.entries(tempOCRData);
+
+                        if (fileFormat === 'excel') {
+                          const colLetters = ['A', 'B', 'C', 'D'];
+                          return (
+                            <div className="w-[820px] bg-white shadow-xl font-sans text-slate-800 overflow-hidden rounded-sm">
+                              <div className="bg-[#107C41] text-white px-4 py-2.5 flex items-center gap-2">
+                                <FileSpreadsheet size={16} />
+                                <span className="text-xs font-black tracking-tight">{pdfPreviewUrl}</span>
+                              </div>
+                              <div className="grid" style={{ gridTemplateColumns: '36px repeat(4, 1fr)' }}>
+                                <div className="bg-[#e8f0e9] border-b border-r border-[#c7d6c9] h-6" />
+                                {colLetters.map(c => (
+                                  <div key={c} className="bg-[#e8f0e9] border-b border-r border-[#c7d6c9] h-6 flex items-center justify-center text-[10px] font-black text-slate-500">{c}</div>
+                                ))}
+                                <div className="bg-[#f3f6f3] border-b border-r border-[#c7d6c9] h-7 flex items-center justify-center text-[10px] font-bold text-slate-400">1</div>
+                                <div className="col-span-2 bg-[#dceee0] border-b border-r border-[#c7d6c9] h-7 flex items-center px-2 text-[10px] font-black uppercase tracking-wide text-[#0f5c31]">{language === 'TH' ? 'ชื่อฟิลด์' : 'Field'}</div>
+                                <div className="col-span-2 bg-[#dceee0] border-b border-r border-[#c7d6c9] h-7 flex items-center px-2 text-[10px] font-black uppercase tracking-wide text-[#0f5c31]">{language === 'TH' ? 'ค่า' : 'Value'}</div>
+                                {fields.length > 0 ? fields.map(([field, value], i) => (
+                                  <React.Fragment key={field}>
+                                    <div className="bg-[#f3f6f3] border-b border-r border-[#c7d6c9] h-7 flex items-center justify-center text-[10px] font-bold text-slate-400">{i + 2}</div>
+                                    <div className={`col-span-2 border-b border-r border-[#e3e8e4] h-7 flex items-center px-2 text-[11px] font-semibold text-slate-700 truncate ${isFieldHighlightedByName(field) ? 'bg-amber-100/70' : ''}`}>{field}</div>
+                                    <div className={`col-span-2 border-b border-r border-[#e3e8e4] h-7 flex items-center px-2 text-[11px] text-slate-600 truncate ${isFieldHighlightedByName(field) ? 'bg-amber-100/70' : ''}`}>{String(value)}</div>
+                                  </React.Fragment>
+                                )) : (
+                                  <div className="col-span-5 h-24 flex items-center justify-center text-xs text-slate-300 font-bold">{language === 'TH' ? 'ไม่มีข้อมูล' : 'No data'}</div>
+                                )}
+                              </div>
+                              <div className="bg-[#f3f6f3] border-t border-[#c7d6c9] px-3 py-1.5 flex items-center gap-2">
+                                <div className="bg-white border border-[#c7d6c9] rounded-t px-3 py-1 text-[10px] font-bold text-[#0f5c31]">Sheet1</div>
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        if (fileFormat === 'xml') {
+                          const rootTag = (docUpper.replace(/[^A-Z0-9]+/g, '') || 'DOCUMENT');
+                          return (
+                            <div className="w-[720px] bg-[#1e1e1e] shadow-xl font-mono text-[12px] rounded-sm overflow-hidden">
+                              <div className="bg-[#252526] text-slate-300 px-4 py-2 flex items-center gap-2 border-b border-black/40">
+                                <FileCode size={14} className="text-sky-400" />
+                                <span className="text-xs font-bold tracking-tight">{pdfPreviewUrl}</span>
+                              </div>
+                              <div className="p-4 leading-relaxed overflow-x-auto">
+                                <div className="flex"><span className="w-6 text-right pr-3 text-slate-600 select-none">1</span><span><span className="text-slate-500">{'<?xml version="1.0" encoding="UTF-8"?>'}</span></span></div>
+                                <div className="flex"><span className="w-6 text-right pr-3 text-slate-600 select-none">2</span><span><span className="text-sky-400">{'<'}{rootTag}</span> <span className="text-emerald-400">source</span>=<span className="text-orange-300">"{selectedJob?.type || 'STANDARD_VERIFICATION'}"</span><span className="text-sky-400">{'>'}</span></span></div>
+                                {fields.length > 0 ? fields.map(([field, value], i) => {
+                                  const tag = field.replace(/[^A-Za-z0-9]+/g, '');
+                                  return (
+                                    <div key={field} className={`flex ${isFieldHighlightedByName(field) ? 'bg-amber-500/10' : ''}`}>
+                                      <span className="w-6 text-right pr-3 text-slate-600 select-none">{i + 3}</span>
+                                      <span className="pl-4">
+                                        <span className="text-sky-400">{'<'}{tag}{'>'}</span>
+                                        <span className="text-slate-200">{String(value)}</span>
+                                        <span className="text-sky-400">{'</'}{tag}{'>'}</span>
+                                      </span>
+                                    </div>
+                                  );
+                                }) : (
+                                  <div className="flex"><span className="w-6 text-right pr-3 text-slate-600 select-none">3</span><span className="pl-4 text-slate-500">{language === 'TH' ? '// ไม่มีข้อมูล' : '// no data'}</span></div>
+                                )}
+                                <div className="flex"><span className="w-6 text-right pr-3 text-slate-600 select-none">{fields.length + 3}</span><span><span className="text-sky-400">{'</'}{rootTag}{'>'}</span></span></div>
+                              </div>
+                            </div>
+                          );
+                        }
+
                         // Watermark block
                         const renderWatermark = (text: string) => (
                           <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-[1] overflow-hidden">
