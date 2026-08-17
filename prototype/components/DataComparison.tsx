@@ -8323,18 +8323,16 @@ const mockWorkflows: Workflow[] = [
                                     return (
                                       <td key={docName} className={`p-0 border-r border-r-slate-100 border-t border-t-slate-200 transition-all ${
                                          isUserConfirmed ? 'bg-emerald-50/10' :
-                                         target.status === 'MATCH' ? 'bg-white' :
+                                         (target.status === 'MATCH' || target.status === 'SYNONYM') ? 'bg-emerald-50/40' :
                                          target.status === 'WAITING' ? 'bg-white' :
                                          target.status === 'MISMATCH' ? 'bg-rose-50/30' :
-                                         target.status === 'SYNONYM' ? 'bg-amber-50/30' :
                                          'bg-slate-50/10 opacity-50'
                                       }`}>
                                          <div className={`px-4 py-4 text-[11px] font-black text-center min-h-full flex flex-col items-center justify-center gap-1.5 group/cell relative overflow-visible ${
                                             isUserConfirmed ? 'text-emerald-700' :
-                                            target.status === 'MATCH' ? 'text-slate-600' :
+                                            (target.status === 'MATCH' || target.status === 'SYNONYM') ? 'text-slate-600' :
                                             target.status === 'WAITING' ? 'text-slate-500' :
                                             target.status === 'MISMATCH' ? 'text-rose-600' :
-                                            target.status === 'SYNONYM' ? 'text-slate-600' :
                                             'text-slate-300'
                                          }`}>
                                             <div className="flex items-center gap-2">
@@ -8359,7 +8357,7 @@ const mockWorkflows: Workflow[] = [
                                                 </span>
                                                 {target.status === 'MATCH' && (
                                                    <Tooltip content="ตรงกัน">
-                                                     <Check size={12} className="text-emerald-500 shrink-0 cursor-help" strokeWidth={4} />
+                                                     <CheckCircle2 size={14} className="text-emerald-500 shrink-0 cursor-help" />
                                                    </Tooltip>
                                                 )}
                                                 {target.status === 'MISMATCH' && (
@@ -8381,7 +8379,7 @@ const mockWorkflows: Workflow[] = [
                                                )}
                                                {target.status === 'SYNONYM' && (
                                                   <Tooltip content={target.ruleTitle ? `${language === 'TH' ? 'ตรงตามเงื่อนไข:' : 'Matched Condition:'} ${target.ruleTitle}` : "ตรงตามเงื่อนไข"}>
-                                                    <CheckCircle2 size={14} className="text-amber-500 shrink-0 cursor-help" />
+                                                    <CheckCircle2 size={14} className="text-emerald-500 shrink-0 cursor-help" />
                                                   </Tooltip>
                                                 )}
                                             </div>
@@ -8392,25 +8390,9 @@ const mockWorkflows: Workflow[] = [
 
                                             {target.status === 'MISMATCH' && (
                                               <div className="flex flex-col items-center">
-                                                <div className="mt-1 text-[11px] font-black text-rose-400 uppercase tracking-tight shrink-0">
-                                                  {t.master}:{' '}
-                                                  {target.value && res.sourceValue ? (
-                                                    diffChars(String(target.value), String(res.sourceValue)).map((part, index) => {
-                                                      if (part.added) {
-                                                        return <span key={index} className="bg-rose-100 text-rose-600 rounded-[2px] font-bold px-0.5">{part.value}</span>;
-                                                      }
-                                                      if (part.removed) {
-                                                        return null;
-                                                      }
-                                                      return <span key={index}>{part.value}</span>;
-                                                    })
-                                                  ) : (
-                                                    res.sourceValue
-                                                  )}
-                                                </div>
                                                 <button
                                                   onClick={() => toggleConfirmMismatch(docName, res.fieldName)}
-                                                  className="mt-2 px-2.5 py-0.5 rounded bg-rose-500 hover:bg-rose-600 text-white font-extrabold text-[9px] uppercase tracking-wider shadow-sm transition-all flex items-center gap-1 cursor-pointer"
+                                                  className="mt-2 px-2.5 py-0.5 rounded bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-[9px] uppercase tracking-wider shadow-sm transition-all flex items-center gap-1 cursor-pointer"
                                                 >
                                                   <Check size={9} strokeWidth={4} />
                                                   <span>{language === 'TH' ? 'ยืนยันใช้ค่านี้' : 'Confirm value'}</span>
@@ -8434,8 +8416,8 @@ const mockWorkflows: Workflow[] = [
                                             )}
 
                                             {target.status === 'SYNONYM' && target.ruleTitle && target.ruleTitle !== 'Master lookup (ฐานข้อมูล)' && target.ruleTitle !== 'ยืนยันโดยผู้ใช้' && target.ruleTitle !== 'Confirmed by User' && target.ruleTitle !== 'ผ่านการตรวจสอบแล้ว' && target.ruleTitle !== 'Verified' && (
-                                              <div className="mt-1 px-2 py-1 bg-amber-50 text-amber-700 border border-amber-200/60 rounded-[4px] text-[11px] font-black tracking-tight shrink-0 shadow-sm flex items-center gap-1.5 w-fit max-w-full">
-                                                <ListFilter size={12} className="text-amber-600 shrink-0" strokeWidth={3} />
+                                              <div className="mt-1 px-2 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200/60 rounded-[4px] text-[11px] font-black tracking-tight shrink-0 shadow-sm flex items-center gap-1.5 w-fit max-w-full">
+                                                <ListFilter size={12} className="text-emerald-600 shrink-0" strokeWidth={3} />
                                                 <span className="truncate max-w-[200px] leading-tight">{target.ruleTitle}</span>
                                               </div>
                                             )}
