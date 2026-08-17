@@ -45,6 +45,27 @@ const detectFileFormat = (nameOrLabel: string | null | undefined): PreviewFileFo
   if (/\.xml$/.test(lower)) return 'xml';
   return 'pdf';
 };
+// pdfPreviewUrl is sometimes a bare doc-type name ("PACKING LIST") and sometimes already
+// a real filename with its own extension — only append one when it doesn't already have it,
+// so the toolbar never shows a doubled-up "FILE.XLSX.xlsx".
+const withPreviewExtension = (nameOrLabel: string, upper: boolean): string => {
+  const hasExt = /\.(pdf|xlsx|xls|csv|xml)$/i.test(nameOrLabel);
+  const base = upper ? nameOrLabel.toUpperCase().replace(/\s/g, '_') : nameOrLabel.toLowerCase().replace(/\s/g, '_');
+  if (hasExt) return base;
+  const format = detectFileFormat(nameOrLabel);
+  const ext = format === 'excel' ? 'xlsx' : format === 'xml' ? 'xml' : 'pdf';
+  return `${base}.${ext}`;
+};
+
+// Demo-only preview filename overrides so a specific mock job can showcase the Excel/XML
+// preview mockups without changing the real doc-type keys other logic (schema/rule matching,
+// OCR simulation) relies on. Keyed by job id, then by the doc-type column name.
+const DEMO_PREVIEW_FILENAME_OVERRIDES: Record<string, Record<string, string>> = {
+  'job-demo-xlsx-xml': {
+    'PACKING LIST': 'Packing_List_Demo.xlsx',
+    'HS CODE MASTER FILE': 'HS_Code_Master_Demo.xml',
+  },
+};
 
 interface DocComment {
   id: string;
@@ -2741,6 +2762,31 @@ const mockWorkflows: Workflow[] = [
       progress: 0,
       totalDocs: 3,
       foundDocs: 0,
+      matchedCount: 0,
+      mismatchedCount: 0
+    },
+
+    // --- Shipment 13: DEMO-XLSX-XML-0001 — sample job for previewing the Excel/XML
+    // document mockups (see DEMO_PREVIEW_FILENAME_OVERRIDES above). Read either doc
+    // then click its column header to open the preview. ---
+    {
+      id: 'job-demo-xlsx-xml',
+      reference: 'DEMO-XLSX-XML-0001',
+      expiryDate: '30 MAY 2026 16:00:00',
+      createdAt: '17 AUG 2026',
+      workflowName: 'Preview Format Demo (Excel/XML)',
+      assignedTeam: 'operation',
+      assignee: 'Somchai T.',
+      status: JobStatus.NEW,
+      totalFieldsCount: 26,
+      accuracyScore: 0.0,
+      docs: {
+        'PACKING LIST': ComparisonDocStatus.RECEIVED,
+        'HS CODE MASTER FILE': ComparisonDocStatus.RECEIVED
+      },
+      progress: 20,
+      totalDocs: 2,
+      foundDocs: 2,
       matchedCount: 0,
       mismatchedCount: 0
     }
@@ -5857,8 +5903,7 @@ const mockWorkflows: Workflow[] = [
                         <Menu size={16} />
                       </button>
                       <span className="text-[11px] font-mono font-bold tracking-tight text-slate-300 max-w-[150px] truncate">
-                        {pdfPreviewUrl.toUpperCase().replace(/\s/g, '_')}
-                        {detectFileFormat(pdfPreviewUrl) === 'excel' ? '.xlsx' : detectFileFormat(pdfPreviewUrl) === 'xml' ? '.xml' : '.pdf'}
+                        {withPreviewExtension(pdfPreviewUrl, true)}
                       </span>
                     </div>
 
@@ -5913,11 +5958,10 @@ const mockWorkflows: Workflow[] = [
                       <button 
                         onClick={() => {
                           const format = detectFileFormat(pdfPreviewUrl);
-                          const ext = format === 'excel' ? 'xlsx' : format === 'xml' ? 'xml' : 'pdf';
                           const element = document.createElement("a");
-                          const file = new Blob([`Simulated Local ${ext.toUpperCase()} Download`], { type: 'text/plain' });
+                          const file = new Blob([`Simulated Local ${format.toUpperCase()} Download`], { type: 'text/plain' });
                           element.href = URL.createObjectURL(file);
-                          element.download = `${pdfPreviewUrl.toLowerCase().replace(/\s/g, '_')}.${ext}`;
+                          element.download = withPreviewExtension(pdfPreviewUrl, false);
                           document.body.appendChild(element);
                           element.click();
                           document.body.removeChild(element);
@@ -7636,7 +7680,7 @@ const mockWorkflows: Workflow[] = [
                                    : docStatus;
                                  
                                  return (
-                                   <th key={docName} className="bg-slate-50 border-b border-slate-200 px-2 py-1.5 min-w-[180px] text-center group cursor-pointer hover:bg-slate-100 transition-all border-r border-slate-100 h-[82px] z-30 relative" onClick={() => isReady && setPdfPreviewUrl(docName)}>
+                                   <th key={docName} className="bg-slate-50 border-b border-slate-200 px-2 py-1.5 min-w-[180px] text-center group cursor-pointer hover:bg-slate-100 transition-all border-r border-slate-100 h-[82px] z-30 relative" onClick={() => isReady && setPdfPreviewUrl(DEMO_PREVIEW_FILENAME_OVERRIDES[selectedJob.id]?.[docName] || docName)}>
                                        {(docStatus === ComparisonDocStatus.RECEIVED || docStatus === ComparisonDocStatus.MISSING) && (
                                          <div className="absolute inset-0 z-50 bg-white/95 backdrop-blur-[1px] flex flex-col items-center justify-between p-1.5 border-x border-slate-100 shadow-inner">
                                             <div className="flex items-center justify-between w-full gap-1 px-1 py-0.5">
