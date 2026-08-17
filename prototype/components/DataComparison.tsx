@@ -7809,6 +7809,44 @@ const mockWorkflows: Workflow[] = [
               </div>
             </div>
 
+            {/* Flow stepper — shows which job in this shipment's sequence is currently open.
+                Read-only (navigation between steps is already gated in the shipment job list). */}
+            {(() => {
+              const shipmentSteps = jobs.filter(j => j.reference === selectedJob.reference);
+              return (
+                <div className="px-6 py-3 bg-slate-50/60 border-b border-slate-200 flex items-center gap-1.5 overflow-x-auto shrink-0">
+                  {shipmentSteps.map((step, idx) => {
+                    const isActive = step.id === selectedJob.id;
+                    const teamLabel = MOCK_TEAMS.find(team => team.value === step.assignedTeam)?.label || (language === 'TH' ? 'ยังไม่ได้กำหนด' : 'Unassigned');
+                    return (
+                      <React.Fragment key={step.id}>
+                        {idx > 0 && <ChevronRight size={14} className="text-slate-300 shrink-0" />}
+                        <div
+                          className={`flex items-center gap-2.5 px-3 py-1.5 rounded-lg border transition-all shrink-0 ${
+                            isActive ? 'bg-blue-50 border-blue-300 shadow-sm' : 'bg-white border-slate-200'
+                          }`}
+                        >
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black shrink-0 ${
+                            isActive ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-400'
+                          }`}>
+                            {idx + 1}
+                          </div>
+                          <div className="flex flex-col items-start leading-tight">
+                            <span className={`text-[11px] font-black whitespace-nowrap ${isActive ? 'text-blue-900' : 'text-slate-500'}`}>
+                              {step.workflowName?.replace(/\s*\[[^\]]*\]\s*$/, '') || 'N/A'}
+                            </span>
+                            <span className={`text-[9px] font-bold uppercase tracking-wide whitespace-nowrap ${isActive ? 'text-blue-400' : 'text-slate-300'}`}>
+                              {teamLabel}
+                            </span>
+                          </div>
+                        </div>
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+
             <div className="flex-1 flex overflow-hidden relative">
                {/* Main Content Area: Comparison Matrix Grid */}
                <div className="flex-1 overflow-hidden flex flex-col bg-white">
