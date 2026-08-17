@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { diffChars } from 'diff';
+import * as XLSX from 'xlsx';
 import { 
   FileText, Upload, ArrowRight, Check, AlertCircle,
   Search, Download, Columns, ChevronLeft, ChevronRight,
@@ -55,6 +56,42 @@ const withPreviewExtension = (nameOrLabel: string, upper: boolean): string => {
   const format = detectFileFormat(nameOrLabel);
   const ext = format === 'excel' ? 'xlsx' : format === 'xml' ? 'xml' : 'pdf';
   return `${base}.${ext}`;
+};
+
+// Re-indents minified/single-line XML so the real-file preview reads like formatted code.
+// Standard "insert newline between adjacent tags, then indent by nesting depth" approach.
+const formatXmlForPreview = (xml: string): string[] => {
+  const withBreaks = xml.trim().replace(/>\s*</g, '>\n<');
+  let depth = 0;
+  return withBreaks.split('\n').map(line => {
+    const trimmed = line.trim();
+    const isClosingTag = /^<\//.test(trimmed);
+    const isSelfClosing = /\/>$/.test(trimmed) || /^<\?/.test(trimmed) || /^<!--.*-->$/.test(trimmed);
+    const isOpeningTag = /^<[^/!?]/.test(trimmed) && !isSelfClosing;
+    if (isClosingTag) depth = Math.max(0, depth - 1);
+    const indented = '  '.repeat(depth) + trimmed;
+    if (isOpeningTag) depth += 1;
+    return indented;
+  });
+};
+
+// Lightweight, safe (no dangerouslySetInnerHTML) token-based XML syntax highlighter for a
+// single already-indented line, matching the color scheme used elsewhere for XML previews.
+const XML_TOKEN_RE = /(<\/?[A-Za-z][\w:.-]*)|(\s[A-Za-z][\w:.-]*=)|("[^"]*")|(\/?>)|([^<]+)/g;
+const renderXmlLineTokens = (line: string): React.ReactNode[] => {
+  const nodes: React.ReactNode[] = [];
+  let match: RegExpExecArray | null;
+  let i = 0;
+  XML_TOKEN_RE.lastIndex = 0;
+  while ((match = XML_TOKEN_RE.exec(line)) !== null) {
+    const [, tagOpen, attrName, attrVal, close, text] = match;
+    if (tagOpen) nodes.push(<span key={i++} className="text-sky-400">{tagOpen}</span>);
+    else if (attrName) nodes.push(<span key={i++} className="text-emerald-400">{attrName}</span>);
+    else if (attrVal) nodes.push(<span key={i++} className="text-orange-300">{attrVal}</span>);
+    else if (close) nodes.push(<span key={i++} className="text-sky-400">{close}</span>);
+    else if (text) nodes.push(<span key={i++} className="text-slate-200">{text}</span>);
+  }
+  return nodes;
 };
 
 // Demo-only preview filename overrides so a specific mock job can showcase the Excel/XML
@@ -1659,6 +1696,13 @@ const mockWorkflows: Workflow[] = [
   const [replaceIsDragging, setReplaceIsDragging] = useState(false);
   const [replacePreviewFileId, setReplacePreviewFileId] = useState<string | null>(null);
   const [replacePreviewUrl, setReplacePreviewUrl] = useState<string | null>(null);
+  // Real parsed content for the Excel/XML preview overlay (actual uploaded bytes, not a mock).
+  const [replacePreviewParsed, setReplacePreviewParsed] = useState<
+    | { kind: 'excel'; rows: any[][]; truncatedRows: boolean; truncatedCols: boolean }
+    | { kind: 'xml'; lines: string[]; truncated: boolean }
+    | { kind: 'error' }
+    | null
+  >(null);
   const [replaceAutoStartOCR, setReplaceAutoStartOCR] = useState(true);
   const [hiddenLockedDocs, setHiddenLockedDocs] = useState<string[]>([]);
   const [showColumnSelector, setShowColumnSelector] = useState(false);
@@ -1729,6 +1773,46 @@ const mockWorkflows: Workflow[] = [
     const url = URL.createObjectURL(target.file);
     setReplacePreviewUrl(url);
     return () => URL.revokeObjectURL(url);
+  }, [replacePreviewFileId]);
+
+  // Parses the real uploaded bytes for Excel/XML files so the preview overlay shows actual
+  // sheet data / document content instead of a generic placeholder card.
+  useEffect(() => {
+    setReplacePreviewParsed(null);
+    if (!replacePreviewFileId) return;
+    const target = replaceUploadedFiles.find(f => f.id === replacePreviewFileId);
+    if (!target) return;
+    const format = detectFileFormat(target.file.name);
+    let cancelled = false;
+
+    if (format === 'excel') {
+      target.file.arrayBuffer()
+        .then(buffer => {
+          if (cancelled) return;
+          const workbook = XLSX.read(buffer, { type: 'array' });
+          const sheet = workbook.Sheets[workbook.SheetNames[0]];
+          const allRows: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1, blankrows: false });
+          const MAX_ROWS = 100;
+          const MAX_COLS = 15;
+          const truncatedRows = allRows.length > MAX_ROWS;
+          const truncatedCols = allRows.some(r => r.length > MAX_COLS);
+          const rows = allRows.slice(0, MAX_ROWS).map(r => r.slice(0, MAX_COLS));
+          setReplacePreviewParsed({ kind: 'excel', rows, truncatedRows, truncatedCols });
+        })
+        .catch(() => { if (!cancelled) setReplacePreviewParsed({ kind: 'error' }); });
+    } else if (format === 'xml') {
+      target.file.text()
+        .then(text => {
+          if (cancelled) return;
+          const MAX_LINES = 400;
+          const formatted = formatXmlForPreview(text);
+          const truncated = formatted.length > MAX_LINES;
+          setReplacePreviewParsed({ kind: 'xml', lines: formatted.slice(0, MAX_LINES), truncated });
+        })
+        .catch(() => { if (!cancelled) setReplacePreviewParsed({ kind: 'error' }); });
+    }
+
+    return () => { cancelled = true; };
   }, [replacePreviewFileId]);
 
   const handleConfirmReplace = () => {
@@ -5713,41 +5797,114 @@ const mockWorkflows: Workflow[] = [
                 {isPdf && replacePreviewUrl ? (
                   <iframe src={replacePreviewUrl} title={previewFile.name} className="w-full h-full border-0" />
                 ) : previewFormat === 'excel' ? (
-                  <div className="w-full h-full flex flex-col items-center justify-center gap-3 text-[#0f5c31] bg-[#f3f6f3]">
-                    <div className="w-16 h-16 rounded-2xl bg-[#107C41] flex items-center justify-center text-white shadow-lg">
-                      <FileSpreadsheet size={28} />
+                  !replacePreviewParsed || replacePreviewParsed.kind !== 'excel' && replacePreviewParsed.kind !== 'error' ? (
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-3 text-[#0f5c31] bg-[#f3f6f3]">
+                      <Loader2 size={28} className="animate-spin" />
+                      <p className="text-xs font-bold text-[#0f5c31]/60">{language === 'TH' ? 'กำลังอ่านไฟล์ Excel...' : 'Reading Excel file...'}</p>
                     </div>
-                    <p className="text-sm font-black">{previewFile.name}</p>
-                    <p className="text-xs font-bold text-[#0f5c31]/60">{language === 'TH' ? 'ไฟล์ Excel' : 'Excel file'}</p>
-                    {replacePreviewUrl && (
-                      <a
-                        href={replacePreviewUrl}
-                        download={previewFile.name}
-                        className="flex items-center gap-2 px-4 py-2 rounded-[4px] bg-[#107C41] text-white text-xs font-bold hover:bg-[#0d6836] transition-colors mt-1"
-                      >
-                        <Download size={14} />
-                        {language === 'TH' ? 'ดาวน์โหลดไฟล์' : 'Download file'}
-                      </a>
-                    )}
-                  </div>
+                  ) : replacePreviewParsed.kind === 'error' ? (
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-3 text-[#0f5c31] bg-[#f3f6f3]">
+                      <div className="w-16 h-16 rounded-2xl bg-[#107C41] flex items-center justify-center text-white shadow-lg">
+                        <FileSpreadsheet size={28} />
+                      </div>
+                      <p className="text-sm font-black">{previewFile.name}</p>
+                      <p className="text-xs font-bold text-[#0f5c31]/60">{language === 'TH' ? 'ไม่สามารถอ่านไฟล์นี้ได้' : 'Could not read this file'}</p>
+                      {replacePreviewUrl && (
+                        <a
+                          href={replacePreviewUrl}
+                          download={previewFile.name}
+                          className="flex items-center gap-2 px-4 py-2 rounded-[4px] bg-[#107C41] text-white text-xs font-bold hover:bg-[#0d6836] transition-colors mt-1"
+                        >
+                          <Download size={14} />
+                          {language === 'TH' ? 'ดาวน์โหลดไฟล์' : 'Download file'}
+                        </a>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="w-full h-full overflow-auto bg-white">
+                      <div className="bg-[#107C41] text-white px-4 py-2 flex items-center gap-2 sticky top-0 z-10">
+                        <FileSpreadsheet size={15} />
+                        <span className="text-xs font-black tracking-tight truncate">{previewFile.name}</span>
+                        {(replacePreviewParsed.truncatedRows || replacePreviewParsed.truncatedCols) && (
+                          <span className="text-[10px] font-bold text-white/70 ml-auto shrink-0">
+                            {language === 'TH' ? 'แสดงบางส่วน' : 'Showing partial data'}
+                          </span>
+                        )}
+                      </div>
+                      <table className="border-collapse text-[11px] font-sans">
+                        <thead>
+                          <tr>
+                            <th className="sticky left-0 bg-[#e8f0e9] border-b border-r border-[#c7d6c9] w-9 h-6 z-10" />
+                            {(replacePreviewParsed.rows[0] || []).map((_, colIdx) => (
+                              <th key={colIdx} className="bg-[#e8f0e9] border-b border-r border-[#c7d6c9] min-w-[110px] h-6 text-[10px] font-black text-slate-500">
+                                {String.fromCharCode(65 + (colIdx % 26))}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {replacePreviewParsed.rows.map((row, rowIdx) => (
+                            <tr key={rowIdx}>
+                              <td className="sticky left-0 bg-[#f3f6f3] border-b border-r border-[#c7d6c9] text-center text-[10px] font-bold text-slate-400">{rowIdx + 1}</td>
+                              {row.map((cell, colIdx) => (
+                                <td key={colIdx} className="border-b border-r border-[#e3e8e4] px-2 py-1 text-slate-700 truncate max-w-[220px]">
+                                  {cell === null || cell === undefined ? '' : String(cell)}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                          {replacePreviewParsed.rows.length === 0 && (
+                            <tr><td className="p-6 text-center text-slate-300 font-bold text-xs" colSpan={1}>{language === 'TH' ? 'ไม่มีข้อมูลในชีตแรก' : 'No data in the first sheet'}</td></tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  )
                 ) : previewFormat === 'xml' ? (
-                  <div className="w-full h-full flex flex-col items-center justify-center gap-3 text-slate-200 bg-[#1e1e1e]">
-                    <div className="w-16 h-16 rounded-2xl bg-sky-500/20 border border-sky-400/30 flex items-center justify-center text-sky-400">
-                      <FileCode size={28} />
+                  !replacePreviewParsed || replacePreviewParsed.kind !== 'xml' && replacePreviewParsed.kind !== 'error' ? (
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-3 text-slate-200 bg-[#1e1e1e]">
+                      <Loader2 size={28} className="animate-spin text-sky-400" />
+                      <p className="text-xs font-bold text-slate-400">{language === 'TH' ? 'กำลังอ่านไฟล์ XML...' : 'Reading XML file...'}</p>
                     </div>
-                    <p className="text-sm font-black font-mono">{previewFile.name}</p>
-                    <p className="text-xs font-bold text-slate-400">{language === 'TH' ? 'ไฟล์ XML' : 'XML file'}</p>
-                    {replacePreviewUrl && (
-                      <a
-                        href={replacePreviewUrl}
-                        download={previewFile.name}
-                        className="flex items-center gap-2 px-4 py-2 rounded-[4px] bg-sky-500 text-white text-xs font-bold hover:bg-sky-600 transition-colors mt-1"
-                      >
-                        <Download size={14} />
-                        {language === 'TH' ? 'ดาวน์โหลดไฟล์' : 'Download file'}
-                      </a>
-                    )}
-                  </div>
+                  ) : replacePreviewParsed.kind === 'error' ? (
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-3 text-slate-200 bg-[#1e1e1e]">
+                      <div className="w-16 h-16 rounded-2xl bg-sky-500/20 border border-sky-400/30 flex items-center justify-center text-sky-400">
+                        <FileCode size={28} />
+                      </div>
+                      <p className="text-sm font-black font-mono">{previewFile.name}</p>
+                      <p className="text-xs font-bold text-slate-400">{language === 'TH' ? 'ไม่สามารถอ่านไฟล์นี้ได้' : 'Could not read this file'}</p>
+                      {replacePreviewUrl && (
+                        <a
+                          href={replacePreviewUrl}
+                          download={previewFile.name}
+                          className="flex items-center gap-2 px-4 py-2 rounded-[4px] bg-sky-500 text-white text-xs font-bold hover:bg-sky-600 transition-colors mt-1"
+                        >
+                          <Download size={14} />
+                          {language === 'TH' ? 'ดาวน์โหลดไฟล์' : 'Download file'}
+                        </a>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="w-full h-full overflow-auto bg-[#1e1e1e]">
+                      <div className="bg-[#252526] text-slate-300 px-4 py-2 flex items-center gap-2 border-b border-black/40 sticky top-0 z-10">
+                        <FileCode size={15} className="text-sky-400" />
+                        <span className="text-xs font-bold tracking-tight truncate">{previewFile.name}</span>
+                        {replacePreviewParsed.truncated && (
+                          <span className="text-[10px] font-bold text-slate-500 ml-auto shrink-0">
+                            {language === 'TH' ? 'แสดงบางส่วน' : 'Showing partial content'}
+                          </span>
+                        )}
+                      </div>
+                      <div className="p-4 leading-relaxed font-mono text-[12px]">
+                        {replacePreviewParsed.lines.map((line, idx) => (
+                          <div key={idx} className="flex">
+                            <span className="w-8 text-right pr-3 text-slate-600 select-none shrink-0">{idx + 1}</span>
+                            <span className="whitespace-pre">{renderXmlLineTokens(line)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center gap-3 text-slate-400">
                     <FileIcon size={40} />
