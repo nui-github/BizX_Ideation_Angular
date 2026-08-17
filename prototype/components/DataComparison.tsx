@@ -105,6 +105,14 @@ const NO_RULE_CANDIDATE_FIELDS = {
   Footer: ['Total Quantity', 'Total Volume (CBM)', 'Total Net Weight (KGS)', 'Total Gross Weight (KGS)', 'Vessel / Flight', 'Voyage No.', 'Country of Origin', 'Freight Charges'],
 };
 const noRuleCellKey = (fieldName: string, docName: string) => `${fieldName}::${docName}`;
+
+// Deterministic per-item barcode shown under each Description-part field label — same shape as
+// a real EAN-13 (e.g. "8809894049155"), varies by item so every "Item N" group gets its own.
+const generateItemBarcode = (group: string | undefined): string => {
+  const idx = parseInt((group || '').replace(/\D/g, ''), 10) || 0;
+  const variable = (4049100 + idx * 137) % 9999999;
+  return `880989${String(variable).padStart(7, '0')}`.slice(0, 13);
+};
 // Picks `count` random (field, doc) cell keys out of candidateFields x docNames, no duplicates.
 const pickRandomNoRuleCells = (candidateFields: string[], docNames: string[], count: number): string[] => {
   if (candidateFields.length === 0 || docNames.length === 0) return [];
@@ -8321,7 +8329,11 @@ const mockWorkflows: Workflow[] = [
                                                   {group !== 'no-group' && <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-slate-100"></div>}
                                                   <div className="flex flex-col ml-1">
                                                      <span className="text-[11px] tracking-wide">{res.fieldName}</span>
-                                                     {res.targets.some((t: any) => t.status === 'MISMATCH') && <span className="text-[9px] font-bold text-rose-500 mt-1 uppercase leading-none tracking-wider bg-rose-50 w-fit px-1.5 py-0.5 rounded">{language === 'TH' ? 'ต้องตรวจสอบอย่างละเอียด' : 'Needs verification'}</span>}
+                                                     {res.part === 'Description' && (
+                                                       <span className="text-[9px] font-bold text-slate-600 mt-1 tracking-wider bg-slate-100 w-fit px-1.5 py-0.5 rounded font-mono">
+                                                         {generateItemBarcode(res.group)}
+                                                       </span>
+                                                     )}
                                                   </div>
                                                </td>
 
