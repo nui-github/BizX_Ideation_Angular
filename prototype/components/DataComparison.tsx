@@ -94,21 +94,24 @@ const renderXmlLineTokens = (line: string): React.ReactNode[] => {
   return nodes;
 };
 
-// Fields with no compare rule configured in Rule Matrix render as a blank cell instead of a
+// Individual cells with no compare rule configured in Rule Matrix render blank instead of a
 // match/mismatch result — there's nothing to actually compare against. DataComparison.tsx has
 // no real link to RuleMatrix's rule data (no job -> rule id, no shared field-naming contract),
-// so which fields count as "no rule" is mocked here: a random 2-4 fields per part (Header/
-// Description/Footer), re-rolled per job whenever its docs get (re)read, so the demo shows the
-// blank-cell treatment landing in different places each time rather than one fixed field.
+// so which (field, doc) cells count as "no rule" is mocked here: a random 2-3 cells per part
+// (Header/Description/Footer), re-rolled per job whenever its docs get (re)read.
 const NO_RULE_CANDIDATE_FIELDS = {
   Header: ['Consignee Name', 'Consignee TAX ID', 'Incoterm', 'Port of Loading', 'Port of Discharge'],
   Description: ['Product Description', 'Item No. / Model No. (SKU)', "Q'ty by line", 'UOM', 'Price / Unit', 'Invoice Amount', 'HS Code'],
   Footer: ['Total Quantity', 'Total Volume (CBM)', 'Total Net Weight (KGS)', 'Total Gross Weight (KGS)', 'Vessel / Flight', 'Voyage No.', 'Country of Origin', 'Freight Charges'],
 };
-const pickRandomNoRuleFields = (candidates: string[], min: number, max: number): string[] => {
-  const count = Math.min(candidates.length, min + Math.floor(Math.random() * (max - min + 1)));
-  const shuffled = [...candidates].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, count);
+const noRuleCellKey = (fieldName: string, docName: string) => `${fieldName}::${docName}`;
+// Picks `count` random (field, doc) cell keys out of candidateFields x docNames, no duplicates.
+const pickRandomNoRuleCells = (candidateFields: string[], docNames: string[], count: number): string[] => {
+  if (candidateFields.length === 0 || docNames.length === 0) return [];
+  const allPairs: string[] = [];
+  candidateFields.forEach(field => docNames.forEach(doc => allPairs.push(noRuleCellKey(field, doc))));
+  const shuffled = allPairs.sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, Math.min(count, shuffled.length));
 };
 
 // Demo-only preview filename overrides so a specific mock job can showcase the Excel/XML
@@ -3272,15 +3275,16 @@ const mockWorkflows: Workflow[] = [
     }));
   };
 
-  // Which fields count as "no compare rule configured" per job — picked once and cached here,
-  // re-rolled (see handleOCRFiles) whenever that job's docs get (re)read.
+  // Which (field, doc) cells count as "no compare rule configured" per job — picked once and
+  // cached here, re-rolled (see handleOCRFiles) whenever that job's docs get (re)read.
   const noRuleFieldsRef = useRef<Record<string, string[]>>({});
-  const getNoRuleFieldsForJob = (jobId: string): Set<string> => {
+  const getNoRuleCellsForJob = (jobId: string, docNames: string[]): Set<string> => {
     if (!noRuleFieldsRef.current[jobId]) {
+      const count = 2 + Math.floor(Math.random() * 2); // 2-3
       noRuleFieldsRef.current[jobId] = [
-        ...pickRandomNoRuleFields(NO_RULE_CANDIDATE_FIELDS.Header, 2, 4),
-        ...pickRandomNoRuleFields(NO_RULE_CANDIDATE_FIELDS.Description, 2, 4),
-        ...pickRandomNoRuleFields(NO_RULE_CANDIDATE_FIELDS.Footer, 2, 4),
+        ...pickRandomNoRuleCells(NO_RULE_CANDIDATE_FIELDS.Header, docNames, count),
+        ...pickRandomNoRuleCells(NO_RULE_CANDIDATE_FIELDS.Description, docNames, count),
+        ...pickRandomNoRuleCells(NO_RULE_CANDIDATE_FIELDS.Footer, docNames, count),
       ];
     }
     return new Set(noRuleFieldsRef.current[jobId]);
@@ -8323,7 +8327,7 @@ const mockWorkflows: Workflow[] = [
 
                                  {comparedDocs.map(docName => {
                                     const target = res.targets.find(t => t.fileName === docName);
-                                    if (selectedJob && getNoRuleFieldsForJob(selectedJob.id).has(res.fieldName)) {
+                                    if (selectedJob && getNoRuleCellsForJob(selectedJob.id, comparedDocs).has(noRuleCellKey(res.fieldName, docName))) {
                                       return (
                                         <td key={docName} className="p-0 border-r border-r-slate-100 border-t border-t-slate-200 bg-slate-100/60">
                                           <div className="min-h-full py-4" />
