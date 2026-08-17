@@ -8513,9 +8513,9 @@ const mockWorkflows: Workflow[] = [
                               );
                            })
                       )}
-                  </div>
 
-                  {/* Matrix Footer / Summary Bar */}
+                  {/* Matrix Footer / Summary Bar — lives inside the scrollable area now, so it
+                      trails after the table content instead of staying pinned to the viewport. */}
                   <div className="px-6 py-3 bg-slate-50/50 border-t border-slate-100 flex items-center justify-end">
                      <div className="flex items-center gap-6">
                         <div className="flex flex-col items-end leading-none">
@@ -8571,6 +8571,7 @@ const mockWorkflows: Workflow[] = [
                            );
                          })()}
                      </div>
+                  </div>
                   </div>
                </div>
             </div>
