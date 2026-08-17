@@ -1734,6 +1734,9 @@ const mockWorkflows: Workflow[] = [
   const [replaceAutoStartOCR, setReplaceAutoStartOCR] = useState(true);
   const [hiddenLockedDocs, setHiddenLockedDocs] = useState<string[]>([]);
   const [showColumnSelector, setShowColumnSelector] = useState(false);
+  // Collapses the flow stepper once the matrix table is scrolled, to free up table height —
+  // reappears once scrolled back to the top.
+  const [tableScrolledPastTop, setTableScrolledPastTop] = useState(false);
   const [showDeleteColumnConfirmModal, setShowDeleteColumnConfirmModal] = useState(false);
   const [deleteColumnTargetDocName, setDeleteColumnTargetDocName] = useState<string | null>(null);
   const [confirmAllMismatchesTargetDocName, setConfirmAllMismatchesTargetDocName] = useState<string | null>(null);
@@ -2931,6 +2934,7 @@ const mockWorkflows: Workflow[] = [
     setHiddenLockedDocs([]);
     setPdfPreviewUrl(null);
     setShowColumnSelector(false);
+    setTableScrolledPastTop(false);
   }, [selectedJob?.id]);
 
   const areAllFilesLocked = React.useMemo(() => {
@@ -7856,11 +7860,14 @@ const mockWorkflows: Workflow[] = [
             </div>
 
             {/* Flow stepper — shows which job in this shipment's sequence is currently open.
-                Read-only (navigation between steps is already gated in the shipment job list). */}
+                Read-only (navigation between steps is already gated in the shipment job list).
+                Collapses once the matrix table below is scrolled, to free up table height, and
+                reappears once scrolled back to the top. */}
             {(() => {
               const shipmentSteps = jobs.filter(j => j.reference === selectedJob.reference);
               return (
-                <div className="px-6 py-3 bg-slate-50/60 border-b border-slate-200 flex items-center gap-1.5 overflow-x-auto shrink-0">
+                <div className={`overflow-hidden shrink-0 transition-[max-height] duration-300 ease-in-out ${tableScrolledPastTop ? 'max-h-0' : 'max-h-24'}`}>
+                <div className="px-6 py-3 bg-slate-50/60 border-b border-slate-200 flex items-center gap-1.5 overflow-x-auto">
                   {shipmentSteps.map((step, idx) => {
                     const isActive = step.id === selectedJob.id;
                     const teamLabel = MOCK_TEAMS.find(team => team.value === step.assignedTeam)?.label || (language === 'TH' ? 'ยังไม่ได้กำหนด' : 'Unassigned');
@@ -7890,6 +7897,7 @@ const mockWorkflows: Workflow[] = [
                     );
                   })}
                 </div>
+                </div>
               );
             })()}
 
@@ -7911,7 +7919,10 @@ const mockWorkflows: Workflow[] = [
                         <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{language === 'TH' ? 'ไม่ต้องเปรียบเทียบ' : 'Not compared'}</span>
                      </div>
                   </div>
-                  <div className="flex-1 overflow-auto custom-scrollbar relative">
+                  <div
+                    className="flex-1 overflow-auto custom-scrollbar relative"
+                    onScroll={(e) => setTableScrolledPastTop(e.currentTarget.scrollTop > 8)}
+                  >
                      <table className="w-full border-separate border-spacing-0 sticky top-0 z-40 bg-white" style={{ tableLayout: 'fixed' }}>
                         <colgroup>
                            <col className="w-[180px]" style={{ minWidth: '180px' }} />
