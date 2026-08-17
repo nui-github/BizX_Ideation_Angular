@@ -94,6 +94,12 @@ const renderXmlLineTokens = (line: string): React.ReactNode[] => {
   return nodes;
 };
 
+// Fields with no compare rule configured in Rule Matrix render as a blank cell instead of a
+// match/mismatch result — there's nothing to actually compare against. DataComparison.tsx has
+// no real link to RuleMatrix's rule data (no job -> rule id, no shared field-naming contract),
+// so this stays a small local mock list rather than a real cross-component lookup.
+const NO_RULE_FIELDS = new Set(['Internal Remarks']);
+
 // Demo-only preview filename overrides so a specific mock job can showcase the Excel/XML
 // preview mockups without changing the real doc-type keys other logic (schema/rule matching,
 // OCR simulation) relies on. Keyed by job id, then by the doc-type column name.
@@ -3288,6 +3294,7 @@ const mockWorkflows: Workflow[] = [
       { name: 'Voyage No.', source: 'V.034S', type: 'string', part: 'Footer' },
       { name: 'Country of Origin', source: 'CHINA', type: 'string', part: 'Footer' },
       { name: 'Freight Charges', source: 'PREPAID', type: 'string', part: 'Footer' },
+      { name: 'Internal Remarks', source: '-', type: 'string', part: 'Footer' },
     ];
     
     const fields = [...headerFields, ...descriptionFields, ...footerFields];
@@ -8289,6 +8296,13 @@ const mockWorkflows: Workflow[] = [
 
                                  {comparedDocs.map(docName => {
                                     const target = res.targets.find(t => t.fileName === docName);
+                                    if (NO_RULE_FIELDS.has(res.fieldName)) {
+                                      return (
+                                        <td key={docName} className="p-0 border-r border-r-slate-100 border-t border-t-slate-200 bg-slate-100/60">
+                                          <div className="min-h-full py-4" />
+                                        </td>
+                                      );
+                                    }
                                     const isMissing = selectedJob && selectedJob.docs[docName] === ComparisonDocStatus.MISSING;
                                     if (isMissing) {
                                       return (
