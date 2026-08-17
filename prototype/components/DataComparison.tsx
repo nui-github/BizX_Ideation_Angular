@@ -7896,6 +7896,21 @@ const mockWorkflows: Workflow[] = [
             <div className="flex-1 flex overflow-hidden relative">
                {/* Main Content Area: Comparison Matrix Grid */}
                <div className="flex-1 overflow-hidden flex flex-col bg-white">
+                  {/* Legend — matches the icon/cell colors used in the matrix below */}
+                  <div className="px-4 py-1.5 border-b border-slate-100 bg-slate-50/40 flex items-center gap-4 shrink-0">
+                     <div className="flex items-center gap-1.5">
+                        <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{language === 'TH' ? 'ตรงกัน' : 'Matched'}</span>
+                     </div>
+                     <div className="flex items-center gap-1.5">
+                        <div className="w-2 h-2 rounded-full bg-rose-500"></div>
+                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{language === 'TH' ? 'ไม่ตรงกัน' : 'Mismatched'}</span>
+                     </div>
+                     <div className="flex items-center gap-1.5">
+                        <div className="w-2 h-2 rounded-full bg-slate-300"></div>
+                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{language === 'TH' ? 'ไม่ต้องเปรียบเทียบ' : 'Not compared'}</span>
+                     </div>
+                  </div>
                   <div className="flex-1 overflow-auto custom-scrollbar relative">
                      <table className="w-full border-separate border-spacing-0 sticky top-0 z-40 bg-white" style={{ tableLayout: 'fixed' }}>
                         <colgroup>
@@ -8501,22 +8516,7 @@ const mockWorkflows: Workflow[] = [
                   </div>
 
                   {/* Matrix Footer / Summary Bar */}
-                  <div className="px-6 py-3 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between">
-                     <div className="flex items-center gap-6">
-                         <div className="flex items-center gap-2 group">
-                            <div className="w-2 h-2 rounded-full bg-emerald-500 group-hover:scale-125 transition-transform"></div>
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest group-hover:text-slate-600 transition-colors">ตรงกัน</span>
-                         </div>
-                         <div className="flex items-center gap-2 group">
-                            <div className="w-2 h-2 rounded-full bg-amber-500 group-hover:scale-125 transition-transform"></div>
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest group-hover:text-slate-600 transition-colors">ตรงตามเงื่อนไข</span>
-                         </div>
-                         <div className="flex items-center gap-2 group">
-                            <div className="w-2 h-2 rounded-full bg-rose-500 group-hover:scale-125 transition-transform"></div>
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest group-hover:text-slate-600 transition-colors">ไม่ตรงกัน</span>
-                         </div>
-                     </div>
-
+                  <div className="px-6 py-3 bg-slate-50/50 border-t border-slate-100 flex items-center justify-end">
                      <div className="flex items-center gap-6">
                         <div className="flex flex-col items-end leading-none">
                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5 opacity-70 italic shadow-sm">Audit Summary</span>
