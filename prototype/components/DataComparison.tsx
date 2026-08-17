@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { diffChars } from 'diff';
 import * as XLSX from 'xlsx';
 import { 
@@ -97,8 +97,19 @@ const renderXmlLineTokens = (line: string): React.ReactNode[] => {
 // Fields with no compare rule configured in Rule Matrix render as a blank cell instead of a
 // match/mismatch result — there's nothing to actually compare against. DataComparison.tsx has
 // no real link to RuleMatrix's rule data (no job -> rule id, no shared field-naming contract),
-// so this stays a small local mock list rather than a real cross-component lookup.
-const NO_RULE_FIELDS = new Set(['Internal Remarks']);
+// so which fields count as "no rule" is mocked here: a random 2-4 fields per part (Header/
+// Description/Footer), re-rolled per job whenever its docs get (re)read, so the demo shows the
+// blank-cell treatment landing in different places each time rather than one fixed field.
+const NO_RULE_CANDIDATE_FIELDS = {
+  Header: ['Consignee Name', 'Consignee TAX ID', 'Incoterm', 'Port of Loading', 'Port of Discharge'],
+  Description: ['Product Description', 'Item No. / Model No. (SKU)', "Q'ty by line", 'UOM', 'Price / Unit', 'Invoice Amount', 'HS Code'],
+  Footer: ['Total Quantity', 'Total Volume (CBM)', 'Total Net Weight (KGS)', 'Total Gross Weight (KGS)', 'Vessel / Flight', 'Voyage No.', 'Country of Origin', 'Freight Charges'],
+};
+const pickRandomNoRuleFields = (candidates: string[], min: number, max: number): string[] => {
+  const count = Math.min(candidates.length, min + Math.floor(Math.random() * (max - min + 1)));
+  const shuffled = [...candidates].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, count);
+};
 
 // Demo-only preview filename overrides so a specific mock job can showcase the Excel/XML
 // preview mockups without changing the real doc-type keys other logic (schema/rule matching,
@@ -3016,6 +3027,9 @@ const mockWorkflows: Workflow[] = [
   };
 
   const handleOCRFiles = (jobId: string, docNames: string[]) => {
+    // Re-roll which fields show as "no compare rule" for this job on every (re)read, so
+    // repeat demo runs land the blank-cell treatment on different fields each time.
+    delete noRuleFieldsRef.current[jobId];
     assignJobToCurrentUser(jobId);
     // 1. Move specified docs to EXTRACTING
     setJobs(prev => prev.map(job => {
@@ -3258,6 +3272,20 @@ const mockWorkflows: Workflow[] = [
     }));
   };
 
+  // Which fields count as "no compare rule configured" per job — picked once and cached here,
+  // re-rolled (see handleOCRFiles) whenever that job's docs get (re)read.
+  const noRuleFieldsRef = useRef<Record<string, string[]>>({});
+  const getNoRuleFieldsForJob = (jobId: string): Set<string> => {
+    if (!noRuleFieldsRef.current[jobId]) {
+      noRuleFieldsRef.current[jobId] = [
+        ...pickRandomNoRuleFields(NO_RULE_CANDIDATE_FIELDS.Header, 2, 4),
+        ...pickRandomNoRuleFields(NO_RULE_CANDIDATE_FIELDS.Description, 2, 4),
+        ...pickRandomNoRuleFields(NO_RULE_CANDIDATE_FIELDS.Footer, 2, 4),
+      ];
+    }
+    return new Set(noRuleFieldsRef.current[jobId]);
+  };
+
   // Mock data generator for comparison - Logistics specific fields
   const getMockComparisonResults = (job: ComparisonJob) => {
     // Generate realistic logistics data
@@ -3294,7 +3322,6 @@ const mockWorkflows: Workflow[] = [
       { name: 'Voyage No.', source: 'V.034S', type: 'string', part: 'Footer' },
       { name: 'Country of Origin', source: 'CHINA', type: 'string', part: 'Footer' },
       { name: 'Freight Charges', source: 'PREPAID', type: 'string', part: 'Footer' },
-      { name: 'Internal Remarks', source: '-', type: 'string', part: 'Footer' },
     ];
     
     const fields = [...headerFields, ...descriptionFields, ...footerFields];
@@ -8296,7 +8323,7 @@ const mockWorkflows: Workflow[] = [
 
                                  {comparedDocs.map(docName => {
                                     const target = res.targets.find(t => t.fileName === docName);
-                                    if (NO_RULE_FIELDS.has(res.fieldName)) {
+                                    if (selectedJob && getNoRuleFieldsForJob(selectedJob.id).has(res.fieldName)) {
                                       return (
                                         <td key={docName} className="p-0 border-r border-r-slate-100 border-t border-t-slate-200 bg-slate-100/60">
                                           <div className="min-h-full py-4" />
