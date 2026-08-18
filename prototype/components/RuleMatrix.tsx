@@ -233,8 +233,7 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
         return language === 'TH' ? 'ปรับรูปแบบวันที่ (DATE)' : 'Date (DATE_NORMALIZATION)';
       case 'CROSS_FLOW_CARRY':
         return language === 'TH' ? 'ส่งผ่านค่า (CROSS-FLOW CARRY)' : 'Cross-flow carry (CROSS_FLOW_CARRY)';
-      case 'NONE': 
-        return language === 'TH' ? 'ไม่เปรียบเทียบ (NONE)' : 'None (NONE)';
+      case 'NONE':
       case '':
       case undefined:
         return language === 'TH' ? 'ยังไม่ได้เลือก' : 'Not Selected';
@@ -954,7 +953,8 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                                              }
                                           }}
                                         >
-                                          <option value="">{language === 'TH' ? 'เลือกวิธีการเปรียบเทียบ' : 'Select Style'}</option>
+                                          <option value="" disabled hidden>{language === 'TH' ? 'เลือกวิธีการเปรียบเทียบ' : 'Select Style'}</option>
+                                          <option value="NONE">{language === 'TH' ? 'ไม่ต้องเปรียบเทียบ' : 'No Comparison'}</option>
                                           <option value="EXACT">{language === 'TH' ? 'ตรงกัน (EXACT)' : 'Exact (EXACT)'}</option>
                                           <option value="FUZZY">{language === 'TH' ? 'ใกล้เคียงกัน (FUZZY)' : 'Fuzzy match (FUZZY)'}</option>
                                           <option value="BILINGUAL">{language === 'TH' ? 'Bilingual (AI แปลความหมาย)' : 'Bilingual'}</option>
@@ -1042,6 +1042,7 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                                       val?.type === 'CONDITIONAL' ? 'bg-pink-50 text-pink-700 border-pink-200' :
                                       val?.type === 'DATE_NORMALIZATION' ? 'bg-amber-50 text-amber-700 border-amber-200' :
                                       val?.type === 'CROSS_FLOW_CARRY' ? 'bg-teal-50 text-teal-700 border-teal-200' :
+                                      val?.type === 'NONE' ? 'bg-slate-100 text-slate-500 border-slate-300' :
                                       'bg-slate-50 text-slate-400 border-slate-200'
                                     } border`}>
                                       {getTypeLabel(val?.type ?? '')}
