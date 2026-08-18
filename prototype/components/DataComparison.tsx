@@ -7921,7 +7921,7 @@ const mockWorkflows: Workflow[] = [
                   <div className="px-4 py-1.5 border-b border-slate-100 bg-slate-50/40 flex items-center gap-4 shrink-0">
                      <div className="flex items-center gap-1.5">
                         <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{language === 'TH' ? 'เอกสารหลัก' : 'Main Doc'}</span>
+                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{language === 'TH' ? 'ชุดข้อมูลหลัก' : 'Main Doc'}</span>
                      </div>
                      <div className="flex items-center gap-1.5">
                         <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
@@ -8418,9 +8418,9 @@ const mockWorkflows: Workflow[] = [
                                     const showSubFileBreakdown = subFileRows.length > 1 && subFileMatchCount < subFileRows.length;
                                     return (
                                       <td key={docName} className={`p-0 border-r border-r-slate-100 border-t border-t-slate-200 transition-all ${
-                                         (target as any).isPrimary ? 'bg-blue-50/40' :
+                                         (target as any).isPrimary ? 'bg-blue-50' :
                                          isUserConfirmed ? 'bg-emerald-50/10' :
-                                         (target.status === 'MATCH' || target.status === 'SYNONYM') ? 'bg-emerald-50/40' :
+                                         (target.status === 'MATCH' || target.status === 'SYNONYM') ? 'bg-emerald-50' :
                                          target.status === 'WAITING' ? 'bg-white' :
                                          target.status === 'MISMATCH' ? 'bg-rose-50/30' :
                                          'bg-slate-50/10 opacity-50'
@@ -8521,7 +8521,7 @@ const mockWorkflows: Workflow[] = [
 
                                             {(target as any).isPrimary && res.targets.find((t: any) => t.isPrimary) === target && (
                                               <div className="mt-1 px-2 py-1 bg-blue-50 text-blue-600 border border-blue-200/60 rounded-[4px] text-[11px] font-black uppercase tracking-wider shrink-0 shadow-sm flex items-center gap-1.5">
-                                                {language === 'TH' ? 'เอกสารหลัก' : 'PRIMARY DOC'}
+                                                {language === 'TH' ? 'ชุดข้อมูลหลัก' : 'PRIMARY DOC'}
                                               </div>
                                             )}
                                          </div>
