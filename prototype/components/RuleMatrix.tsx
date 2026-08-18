@@ -234,6 +234,7 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
       case 'CROSS_FLOW_CARRY':
         return language === 'TH' ? 'ส่งผ่านค่า (CROSS-FLOW CARRY)' : 'Cross-flow carry (CROSS_FLOW_CARRY)';
       case 'NONE':
+        return language === 'TH' ? 'ไม่ต้องเปรียบเทียบ' : 'No Comparison';
       case '':
       case undefined:
         return language === 'TH' ? 'ยังไม่ได้เลือก' : 'Not Selected';
