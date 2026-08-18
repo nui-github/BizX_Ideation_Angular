@@ -1041,16 +1041,11 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                                       )
                                     )}
                                     {val?.isMain ? (
-                                      <>
-                                        <div className="inline-flex items-center justify-center w-full min-w-[100px] px-2 py-1.5 rounded bg-blue-50 text-blue-700 border border-blue-200 text-[9px] font-black tracking-tight uppercase shadow-sm">
-                                          {language === 'TH' ? 'เอกสารหลัก' : 'MAIN DOC'}
+                                      isArrayField(val?.schemaField) && (
+                                        <div className="bg-blue-50 border border-blue-200 text-[#1f5df9] text-[8.5px] font-bold px-2 py-1 rounded-full text-center tracking-tight shadow-sm">
+                                          Key: {Array.isArray(val?.arrayMatchingKey) ? val.arrayMatchingKey.join(', ') : (val?.arrayMatchingKey || 'itemId')} • {val?.fallbackToIndex !== false ? '1 fallback' : 'no fallback'}
                                         </div>
-                                        {isArrayField(val?.schemaField) && (
-                                          <div className="bg-blue-50 border border-blue-200 text-[#1f5df9] text-[8.5px] font-bold px-2 py-1 rounded-full text-center tracking-tight shadow-sm mt-1.5">
-                                            Key: {Array.isArray(val?.arrayMatchingKey) ? val.arrayMatchingKey.join(', ') : (val?.arrayMatchingKey || 'itemId')} • {val?.fallbackToIndex !== false ? '1 fallback' : 'no fallback'}
-                                          </div>
-                                        )}
-                                      </>
+                                      )
                                     ) : (
                                       <div className={`inline-flex items-center justify-center w-full min-w-[100px] px-2 py-1.5 rounded-md text-[9px] font-bold tracking-tight uppercase ${
                                       val?.type === 'EXACT' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 
