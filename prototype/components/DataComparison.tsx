@@ -7920,6 +7920,10 @@ const mockWorkflows: Workflow[] = [
                   {/* Legend — matches the icon/cell colors used in the matrix below */}
                   <div className="px-4 py-1.5 border-b border-slate-100 bg-slate-50/40 flex items-center gap-4 shrink-0">
                      <div className="flex items-center gap-1.5">
+                        <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{language === 'TH' ? 'เอกสารหลัก' : 'Main Doc'}</span>
+                     </div>
+                     <div className="flex items-center gap-1.5">
                         <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
                         <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{language === 'TH' ? 'ตรงกัน' : 'Matched'}</span>
                      </div>
