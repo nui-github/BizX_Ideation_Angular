@@ -8432,6 +8432,11 @@ const mockWorkflows: Workflow[] = [
                                             target.status === 'MISMATCH' ? 'text-rose-600' :
                                             'text-slate-300'
                                          }`}>
+                                            {(target as any).isPrimary && res.targets.find((t: any) => t.isPrimary) === target && (
+                                              <div className="px-2.5 py-1 bg-blue-100 text-blue-700 border border-blue-200 rounded-full text-[10px] font-black uppercase tracking-wider shrink-0 shadow-sm flex items-center gap-1.5 w-fit">
+                                                {language === 'TH' ? 'ชุดข้อมูลหลัก' : 'PRIMARY DOC'}
+                                              </div>
+                                            )}
                                             <div className="flex items-center gap-2">
                                                <span className="break-all">
                                                    {target.status === 'MISMATCH' && target.value && res.sourceValue ? (
@@ -8519,11 +8524,6 @@ const mockWorkflows: Workflow[] = [
                                               </div>
                                             )}
 
-                                            {(target as any).isPrimary && res.targets.find((t: any) => t.isPrimary) === target && (
-                                              <div className="mt-1 px-2 py-1 bg-blue-600 text-white border border-blue-600 rounded-[4px] text-[11px] font-black uppercase tracking-wider shrink-0 shadow-sm flex items-center gap-1.5">
-                                                {language === 'TH' ? 'ชุดข้อมูลหลัก' : 'PRIMARY DOC'}
-                                              </div>
-                                            )}
                                          </div>
                                       </td>
                                     );
