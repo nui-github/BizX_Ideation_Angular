@@ -132,6 +132,19 @@ const DEMO_PREVIEW_FILENAME_OVERRIDES: Record<string, Record<string, string>> = 
   },
 };
 
+// Comparison targets are keyed by the real doc-type name (e.g. 'PACKING LIST'), but the
+// preview toolbar/canvas shows the overridden display filename. Reverse-map back to the
+// real doc-type name so field lookups against `target.fileName` still resolve.
+const resolveDocNameFromPreviewUrl = (url: string | null | undefined, jobId: string | undefined): string | null => {
+  if (!url) return null;
+  const overrides = jobId ? DEMO_PREVIEW_FILENAME_OVERRIDES[jobId] : undefined;
+  if (overrides) {
+    const match = Object.entries(overrides).find(([, override]) => override === url);
+    if (match) return match[0];
+  }
+  return url;
+};
+
 interface DocComment {
   id: string;
   user: string;
@@ -2091,7 +2104,7 @@ const mockWorkflows: Workflow[] = [
         if (overriddenValues[overrideKey] !== undefined) {
           initialData[res.fieldName] = overriddenValues[overrideKey];
         } else {
-          const target = res.targets.find(t => t.fileName === pdfPreviewUrl);
+          const target = res.targets.find(t => t.fileName === resolveDocNameFromPreviewUrl(pdfPreviewUrl, selectedJob?.id));
           if (target && target.status !== 'NA') {
             initialData[res.fieldName] = getSubFileFieldValue(res.fieldName, activeSubFileId, target.value);
           }
@@ -6745,7 +6758,7 @@ const mockWorkflows: Workflow[] = [
                           <span>{language === 'TH' ? 'ข้อมูลที่สกัด' : 'VALUE'}</span>
                           {(() => {
                             const hasMismatch = allComparisonResults.some(res => {
-                              const target = res.targets.find((t: any) => t.fileName === pdfPreviewUrl);
+                              const target = res.targets.find((t: any) => t.fileName === resolveDocNameFromPreviewUrl(pdfPreviewUrl, selectedJob?.id));
                               return target && target.status === 'MISMATCH';
                             });
                             if (!hasMismatch) return null;
@@ -6773,13 +6786,13 @@ const mockWorkflows: Workflow[] = [
                       <div className="flex-1 overflow-auto divide-y divide-slate-100 px-4 custom-scrollbar">
                         {(() => {
                           let filteredResults = allComparisonResults.filter(res => {
-                            const target = res.targets.find(t => t.fileName === pdfPreviewUrl);
+                            const target = res.targets.find(t => t.fileName === resolveDocNameFromPreviewUrl(pdfPreviewUrl, selectedJob?.id));
                             return target && target.status !== 'NA';
                           });
 
                           if (showOnlyMismatchedFields) {
                             filteredResults = filteredResults.filter(res => {
-                              const target = res.targets.find((t: any) => t.fileName === pdfPreviewUrl);
+                              const target = res.targets.find((t: any) => t.fileName === resolveDocNameFromPreviewUrl(pdfPreviewUrl, selectedJob?.id));
                               return target && target.status === 'MISMATCH';
                             });
                           }
@@ -6822,7 +6835,7 @@ const mockWorkflows: Workflow[] = [
                                   {items.map((res: any, i: number) => {
                                     const fieldId = `input-field-${groupName.replace(/\s/g, '-')}-${i}`;
                                     const isDisabled = isUnassigned || selectedJob?.status === JobStatus.DONE;
-                                    const target = res.targets.find((t: any) => t.fileName === pdfPreviewUrl);
+                                    const target = res.targets.find((t: any) => t.fileName === resolveDocNameFromPreviewUrl(pdfPreviewUrl, selectedJob?.id));
                                     const isMismatch = target && target.status === 'MISMATCH';
                                     const fieldKey = `${res.group || 'no-group'}::${res.fieldName}`;
                                     const isSelected = selectedFieldKey === fieldKey;
