@@ -8433,7 +8433,7 @@ const mockWorkflows: Workflow[] = [
                                             'text-slate-300'
                                          }`}>
                                             {(target as any).isPrimary && res.targets.find((t: any) => t.isPrimary) === target && (
-                                              <div className="px-2.5 py-1 bg-blue-100 text-blue-700 border border-blue-200 rounded-full text-[10px] font-black uppercase tracking-wider shrink-0 shadow-sm flex items-center gap-1.5 w-fit">
+                                              <div className="px-2.5 py-1 bg-blue-100 text-blue-700 border border-blue-200 rounded-[4px] text-[10px] font-black uppercase tracking-wider shrink-0 shadow-sm flex items-center gap-1.5 w-fit">
                                                 {language === 'TH' ? 'ชุดข้อมูลหลัก' : 'PRIMARY DOC'}
                                               </div>
                                             )}
