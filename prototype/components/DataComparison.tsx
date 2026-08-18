@@ -8422,6 +8422,7 @@ const mockWorkflows: Workflow[] = [
                                     const showSubFileBreakdown = subFileRows.length > 1 && subFileMatchCount < subFileRows.length;
                                     return (
                                       <td key={docName} className={`p-0 border-r border-r-slate-100 border-t border-t-slate-200 transition-all ${
+                                         (target as any).isPrimary ? 'bg-blue-50/40' :
                                          isUserConfirmed ? 'bg-emerald-50/10' :
                                          (target.status === 'MATCH' || target.status === 'SYNONYM') ? 'bg-emerald-50/40' :
                                          target.status === 'WAITING' ? 'bg-white' :
