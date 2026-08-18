@@ -490,6 +490,26 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
         </div>
       </div>
 
+      {/* Compare Type Legend */}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 -mt-4 -mb-2 px-1">
+        {[
+          { color: 'bg-emerald-500', label: language === 'TH' ? 'ตรงกัน' : 'Exact' },
+          { color: 'bg-purple-500', label: language === 'TH' ? 'ใกล้เคียงกัน' : 'Fuzzy' },
+          { color: 'bg-indigo-500', label: 'Bilingual' },
+          { color: 'bg-sky-500', label: language === 'TH' ? 'เลข/คำอ่าน' : 'Number/Word' },
+          { color: 'bg-orange-500', label: language === 'TH' ? 'ความมีอยู่' : 'Existence' },
+          { color: 'bg-rose-500', label: 'Master Lookup' },
+          { color: 'bg-pink-500', label: language === 'TH' ? 'ตามเงื่อนไข' : 'Conditional' },
+          { color: 'bg-amber-500', label: language === 'TH' ? 'วันที่' : 'Date' },
+          { color: 'bg-slate-400', label: language === 'TH' ? 'ไม่ต้องเปรียบเทียบ' : 'No Comparison' },
+        ].map((item, idx) => (
+          <div key={idx} className="flex items-center gap-1">
+            <span className={`w-2 h-2 rounded-full shrink-0 ${item.color}`}></span>
+            <span className="text-[10px] font-bold text-slate-500 whitespace-nowrap">{item.label}</span>
+          </div>
+        ))}
+      </div>
+
       <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
         <div className="overflow-auto relative pb-32 max-h-[75vh]"> {/* Added padding for dropdowns and max-height for sticky to work */}
           <table className="w-full text-left border-collapse" style={{ minWidth: `${180 + activeRule.docTypes.length * colWidth}px`}}>
