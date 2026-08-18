@@ -7931,10 +7931,6 @@ const mockWorkflows: Workflow[] = [
                         <div className="w-2 h-2 rounded-full bg-rose-500"></div>
                         <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{language === 'TH' ? 'ไม่ตรงกัน' : 'Mismatched'}</span>
                      </div>
-                     <div className="flex items-center gap-1.5">
-                        <div className="w-2 h-2 rounded-full bg-slate-300"></div>
-                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{language === 'TH' ? 'ไม่ต้องเปรียบเทียบ' : 'Not compared'}</span>
-                     </div>
                   </div>
                   <div
                     className="flex-1 overflow-auto custom-scrollbar relative"
