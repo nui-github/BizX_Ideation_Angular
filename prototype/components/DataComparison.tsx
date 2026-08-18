@@ -8520,7 +8520,7 @@ const mockWorkflows: Workflow[] = [
                                             )}
 
                                             {(target as any).isPrimary && res.targets.find((t: any) => t.isPrimary) === target && (
-                                              <div className="mt-1 px-2 py-1 bg-blue-50 text-blue-600 border border-blue-200/60 rounded-[4px] text-[11px] font-black uppercase tracking-wider shrink-0 shadow-sm flex items-center gap-1.5">
+                                              <div className="mt-1 px-2 py-1 bg-blue-600 text-white border border-blue-600 rounded-[4px] text-[11px] font-black uppercase tracking-wider shrink-0 shadow-sm flex items-center gap-1.5">
                                                 {language === 'TH' ? 'ชุดข้อมูลหลัก' : 'PRIMARY DOC'}
                                               </div>
                                             )}
