@@ -8264,7 +8264,7 @@ const mockWorkflows: Workflow[] = [
                                          <col key={`col-${docName}`} className="w-[180px]" style={{ minWidth: '180px' }} />
                                       ))}
                                    </colgroup>
-                                   <thead className="sticky top-[82px] z-[25] bg-slate-50 shadow-[0_1px_4px_rgba(0,0,0,0.02)]">
+                                   <thead className={`sticky z-[25] bg-slate-50 shadow-[0_1px_4px_rgba(0,0,0,0.02)] transition-all duration-300 ${tableScrolledPastTop ? 'top-[48px]' : 'top-[82px]'}`}>
                                      <tr className="group cursor-pointer hover:bg-slate-100 transition-all" onClick={() => togglePart(part)}>
                                        <th 
                                          colSpan={comparedDocs.length + 1} 
@@ -8322,7 +8322,7 @@ const mockWorkflows: Workflow[] = [
                                            <tbody key={group}>
                                              {group !== 'no-group' && (
                                                 <tr className="bg-slate-100/80 group/itemheader hover:bg-slate-200/50 cursor-pointer transition-colors" onClick={(e) => toggleGroup(e, group as string)}>
-                                                   <td colSpan={comparedDocs.length + 1} className="sticky top-[114px] z-[24] p-0 border-y-2 border-slate-200/80 bg-slate-100/90 shadow-sm relative">
+                                                   <td colSpan={comparedDocs.length + 1} className={`sticky z-[24] p-0 border-y-2 border-slate-200/80 bg-slate-100/90 shadow-sm relative transition-all duration-300 ${tableScrolledPastTop ? 'top-[80px]' : 'top-[114px]'}`}>
                                                       <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#1f5df9]"></div>
                                                       <div className="flex items-center gap-3 sticky left-0 pl-8 pr-6 py-2.5 z-[26] w-fit">
                                                          <div className="w-5 h-5 rounded bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-500 group-hover/itemheader:text-blue-600 group-hover/itemheader:border-blue-200 transition-all">
