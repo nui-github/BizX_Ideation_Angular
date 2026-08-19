@@ -7945,7 +7945,7 @@ const mockWorkflows: Workflow[] = [
                         </colgroup>
                         <thead>
                            <tr>
-                              <th className="bg-slate-50 border-b border-r border-slate-200 px-4 py-1.5 min-w-[180px] flex items-center justify-center uppercase tracking-tighter shadow-[2px_0_5px_rgba(0,0,0,0.02)] h-[82px] sticky left-0 z-40">
+                              <th className={`bg-slate-50 border-b border-r border-slate-200 px-4 py-1.5 min-w-[180px] flex items-center justify-center uppercase tracking-tighter shadow-[2px_0_5px_rgba(0,0,0,0.02)] sticky left-0 z-40 transition-all duration-300 ${tableScrolledPastTop ? 'h-[48px]' : 'h-[82px]'}`}>
                                  <h3 className="text-[10px] font-black text-slate-700 uppercase tracking-widest leading-none text-center">{t.masterVsDocs}</h3>
                               </th>
 
@@ -7960,7 +7960,7 @@ const mockWorkflows: Workflow[] = [
                                    : docStatus;
                                  
                                  return (
-                                   <th key={docName} className="bg-slate-50 border-b border-slate-200 px-2 py-1.5 min-w-[180px] text-center group cursor-pointer hover:bg-slate-100 transition-all border-r border-slate-100 h-[82px] z-30 relative" onClick={() => isReady && setPdfPreviewUrl(DEMO_PREVIEW_FILENAME_OVERRIDES[selectedJob.id]?.[docName] || docName)}>
+                                   <th key={docName} className={`bg-slate-50 border-b border-slate-200 px-2 py-1.5 min-w-[180px] text-center group cursor-pointer hover:bg-slate-100 transition-all duration-300 border-r border-slate-100 z-30 relative ${tableScrolledPastTop ? 'h-[48px]' : 'h-[82px]'}`} onClick={() => isReady && setPdfPreviewUrl(DEMO_PREVIEW_FILENAME_OVERRIDES[selectedJob.id]?.[docName] || docName)}>
                                        {(docStatus === ComparisonDocStatus.RECEIVED || docStatus === ComparisonDocStatus.MISSING) && (
                                          <div className="absolute inset-0 z-50 bg-white/95 backdrop-blur-[1px] flex flex-col items-center justify-between p-1.5 border-x border-slate-100 shadow-inner">
                                             <div className="flex items-center justify-between w-full gap-1 px-1 py-0.5">
@@ -8030,10 +8030,10 @@ const mockWorkflows: Workflow[] = [
                                             `}</style>
                                          </div>
                                        )}
-                                      <div className="flex flex-col gap-3 items-center">
+                                      <div className={`flex flex-col items-center transition-all duration-300 ${tableScrolledPastTop ? 'gap-0.5' : 'gap-3'}`}>
                                          {/* Status and Action Buttons */}
                                          <div className="flex items-center justify-between w-full px-1">
-                                            <div className={`flex items-center gap-1.5 scale-100 origin-left ${
+                                            <div className={`flex items-center gap-1.5 origin-left transition-transform duration-300 ${tableScrolledPastTop ? 'scale-90' : 'scale-100'} ${
                                               displayStatus === ComparisonDocStatus.MATCHED || displayStatus === ComparisonDocStatus.LOCKED ? 'px-2.5 py-0.5 bg-emerald-50 text-emerald-600 border border-emerald-200/60 rounded-[4px] shadow-sm' :
                                               displayStatus === ComparisonDocStatus.OCR_DONE ? 'px-2.5 py-0.5 bg-amber-50 text-amber-600 border border-amber-200/60 rounded-[4px] shadow-sm' :
                                               displayStatus === ComparisonDocStatus.ERROR || displayStatus === ComparisonDocStatus.MISMATCHED ? 'px-2.5 py-0.5 bg-rose-50 text-rose-600 border border-rose-200/60 rounded-[4px] shadow-sm' :
@@ -8067,7 +8067,7 @@ const mockWorkflows: Workflow[] = [
                                             </div>
 
                                             
-                                             <div className="flex items-center gap-1 scale-100 origin-right">
+                                             <div className={`flex items-center gap-1 origin-right transition-transform duration-300 ${tableScrolledPastTop ? 'scale-90' : 'scale-100'}`}>
                                                {displayStatus === ComparisonDocStatus.MISMATCHED && (
                                                     <Tooltip content={language === 'TH' ? 'ยืนยันใช้ค่านี้ทั้งเอกสาร' : 'Confirm all mismatches in this document'}>
                                                       <button
@@ -8152,7 +8152,7 @@ const mockWorkflows: Workflow[] = [
                                          </div>
 
                                          <div className="flex flex-col items-center gap-0">
-                                            <span className={`text-[11px] font-black tracking-tight flex items-center gap-1 uppercase ${displayStatus === ComparisonDocStatus.MISMATCHED ? 'text-rose-500' : 'text-slate-800'}`}>
+                                            <span className={`font-black tracking-tight flex items-center gap-1 uppercase transition-all duration-300 ${tableScrolledPastTop ? 'text-[10px]' : 'text-[11px]'} ${displayStatus === ComparisonDocStatus.MISMATCHED ? 'text-rose-500' : 'text-slate-800'}`}>
                                                {docName.length > 14 ? (
                                                  <Tooltip content={docName}>
                                                    <span className="cursor-help hover:text-indigo-600 transition-colors">{docName.slice(0, 14) + '...'}</span>
