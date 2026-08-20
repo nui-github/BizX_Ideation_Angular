@@ -3230,8 +3230,8 @@ const mockWorkflows: Workflow[] = [
                     <div className="px-1">
                       <h4 className="text-sm font-black text-slate-800 leading-snug mb-3">{g.desc}</h4>
                       <div className="p-4 bg-slate-50/80 rounded-2xl border border-slate-100 shadow-sm">
-                        <p className="text-[11px] font-bold text-slate-500 leading-relaxed flex items-start gap-2">
-                           <span className="text-blue-600 font-black uppercase tracking-wider text-[9px] shrink-0 mt-0.5">{language === 'TH' ? 'การดำเนินการ:' : 'Action:'}</span>
+                        <p className="text-[11px] font-bold text-slate-500 leading-relaxed flex flex-col gap-1">
+                           <span className="text-blue-600 font-black uppercase tracking-wider text-[9px] shrink-0">{language === 'TH' ? 'การดำเนินการ:' : 'Action:'}</span>
                            <span>{g.action}</span>
                         </p>
                       </div>
