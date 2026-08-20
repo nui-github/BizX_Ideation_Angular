@@ -7669,12 +7669,12 @@ const mockWorkflows: Workflow[] = [
                       disabled={isUnassigned}
                       onClick={() => setShowOnlyDiff(!showOnlyDiff)}
                       className={`p-2.5 rounded-[4px] transition-all border flex items-center justify-center cursor-pointer shadow-sm disabled:opacity-30 disabled:cursor-not-allowed ${
-                        showOnlyDiff 
-                          ? 'bg-rose-50 text-rose-600 border-rose-200 hover:bg-rose-100 shadow-[0_2px_8px_rgba(244,63,94,0.15)]' 
+                        showOnlyDiff
+                          ? 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 shadow-[0_2px_8px_rgba(31,93,249,0.15)]'
                           : 'bg-white text-slate-500 border-slate-200/60 hover:bg-slate-50'
                       }`}
                     >
-                      <ListFilter size={15} strokeWidth={2.5} className={showOnlyDiff ? 'text-rose-500' : 'text-slate-400'} />
+                      <ListFilter size={15} strokeWidth={2.5} className={showOnlyDiff ? 'text-blue-500' : 'text-slate-400'} />
                     </button>
                   </Tooltip>
 
