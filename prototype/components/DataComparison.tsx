@@ -3163,13 +3163,6 @@ const mockWorkflows: Workflow[] = [
         action: language === 'TH' ? 'ตรวจสอบรายการในหน้า Detail และทำการแก้ไขให้ถูกต้อง' : 'Check Matrix Grid in Detail view and correct errors'
       },
       {
-        status: JobStatus.READY,
-        color: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-        label: language === 'TH' ? 'เสร็จสมบูรณ์' : 'READY',
-        desc: language === 'TH' ? 'เอกสารทั้งหมดได้รับการเปรียบเทียบและถูกต้องตรงกัน (Matched)' : 'All documents are successfully matched',
-        action: language === 'TH' ? 'รายการพร้อมสำหรับการส่งออกข้อมูล (Export)' : 'Job is ready for Export'
-      },
-      {
         status: 'DOC_UPDATED',
         color: 'bg-blue-50 border-blue-200 text-blue-600',
         label: 'UPDATED BADGE',
@@ -3182,6 +3175,13 @@ const mockWorkflows: Workflow[] = [
         label: language === 'TH' ? 'ส่งออกแล้ว (EXPORTED)' : 'EXPORTED',
         desc: language === 'TH' ? 'รายการตรวจสอบได้รับการส่งออกข้อมูลเรียบร้อยแล้ว' : 'Comparison task was successfully exported',
         action: language === 'TH' ? 'ข้อมูลจะคงอยู่บนรายการงาน (Job) เพื่อความโปร่งใส โดยปุ่มทำงานต่างๆ จะถูกแสดงในรูปแบบอ่านอย่างเดียว (Read-only) เพื่อความปลอดภัยสูงสุด' : 'The job persists in the list for transparency while locking any action buttons to ensure data safety via a read-only layout.'
+      },
+      {
+        status: JobStatus.READY,
+        color: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+        label: language === 'TH' ? 'เสร็จสมบูรณ์' : 'READY',
+        desc: language === 'TH' ? 'เอกสารทั้งหมดได้รับการเปรียบเทียบและถูกต้องตรงกัน (Matched)' : 'All documents are successfully matched',
+        action: language === 'TH' ? 'รายการพร้อมสำหรับการส่งออกข้อมูล (Export)' : 'Job is ready for Export'
       }
     ];
 
