@@ -503,8 +503,8 @@ if (typeof window !== 'undefined') {
 }
 
 function App() {
-  // New State: Tracking View is default, EXTRACTION is new
-  const [currentView, setCurrentView] = useState<'TRACKING' | 'AGENT_LIST' | 'AGENT_FORM' | 'EXTRACTION' | 'UPLOAD' | 'WORKFLOW_LIST' | 'WORKFLOW_BUILDER' | 'DATA_COMPARISON_JOBS' | 'DATA_COMPARISON_WORKFLOW' | 'DATA_COMPARISON_RULE' | 'DATA_COMPARISON_WORKFLOW_BUILDER' | 'SETTINGS_DOC_TYPE_MASTER' | 'SETTINGS_LABEL_SCHEMA' | 'SETTINGS_MASTER_DATA' | 'SETTINGS_JOB_PRESET'>('TRACKING');
+  // Default view: Data Comparison job list (รายการงาน (Job))
+  const [currentView, setCurrentView] = useState<'TRACKING' | 'AGENT_LIST' | 'AGENT_FORM' | 'EXTRACTION' | 'UPLOAD' | 'WORKFLOW_LIST' | 'WORKFLOW_BUILDER' | 'DATA_COMPARISON_JOBS' | 'DATA_COMPARISON_WORKFLOW' | 'DATA_COMPARISON_RULE' | 'DATA_COMPARISON_WORKFLOW_BUILDER' | 'SETTINGS_DOC_TYPE_MASTER' | 'SETTINGS_LABEL_SCHEMA' | 'SETTINGS_MASTER_DATA' | 'SETTINGS_JOB_PRESET'>('DATA_COMPARISON_JOBS');
   const [docTypes, setDocTypes] = useState<DocType[]>([
     { 
       id: 'INV', 
