@@ -3151,14 +3151,14 @@ const mockWorkflows: Workflow[] = [
       {
         status: JobStatus.PROCESSING,
         color: 'bg-blue-600 text-white',
-        label: 'COMPARING',
+        label: language === 'TH' ? 'กำลังเปรียบเทียบข้อมูล' : 'COMPARING',
         desc: language === 'TH' ? 'ระบบ AI กำลังดำเนินการเปรียบเทียบข้อมูล' : 'AI system is currently extracting/comparing data',
         action: language === 'TH' ? 'รอระบบทำงาน (อัปเดตสถานะอัตโนมัติเมื่อเสร็จสิ้น)' : 'Wait for system (auto-updates when finished)'
       },
       {
         status: JobStatus.REVIEW,
         color: 'bg-amber-50 border-amber-200 text-amber-700',
-        label: 'REVIEW',
+        label: language === 'TH' ? 'รอตรวจสอบ' : 'REVIEW',
         desc: language === 'TH' ? 'พบความไม่ตรงกันของข้อมูล (Mismatch) ที่ต้องให้ผู้ใช้ตรวจสอบ' : 'Found data mismatch requiring manual review',
         action: language === 'TH' ? 'ตรวจสอบรายการในหน้า Detail และทำการแก้ไขให้ถูกต้อง' : 'Check Matrix Grid in Detail view and correct errors'
       },
