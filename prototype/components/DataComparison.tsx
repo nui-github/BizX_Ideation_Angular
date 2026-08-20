@@ -3166,15 +3166,15 @@ const mockWorkflows: Workflow[] = [
         status: JobStatus.DONE,
         color: 'bg-teal-50 border-teal-200 text-teal-700',
         label: language === 'TH' ? 'ส่งออกแล้ว (EXPORTED)' : 'EXPORTED',
-        desc: language === 'TH' ? 'รายการตรวจสอบได้รับการส่งออกข้อมูลเรียบร้อยแล้ว' : 'Comparison task was successfully exported',
-        action: language === 'TH' ? 'ข้อมูลจะคงอยู่บนรายการงาน (Job) เพื่อความโปร่งใส โดยปุ่มทำงานต่างๆ จะถูกแสดงในรูปแบบอ่านอย่างเดียว (Read-only) เพื่อความปลอดภัยสูงสุด' : 'The job persists in the list for transparency while locking any action buttons to ensure data safety via a read-only layout.'
+        desc: language === 'TH' ? 'รายการย่อยนี้ถูกส่งออกข้อมูลเรียบร้อยแล้ว' : 'This sub-job\'s data has already been exported',
+        action: language === 'TH' ? 'ไม่ต้องดำเนินการเพิ่มเติม รายการยังคงแสดงอยู่ในรายการงาน (Job) เพื่อความโปร่งใส แต่ปุ่มทำงานทั้งหมดจะถูกล็อกเป็นแบบอ่านอย่างเดียว (Read-only)' : 'No further action needed. The job stays visible in the list for transparency, but every action button is locked to read-only.'
       },
       {
         status: JobStatus.READY,
         color: 'bg-emerald-50 text-emerald-700 border-emerald-200',
         label: language === 'TH' ? 'เสร็จสมบูรณ์' : 'READY',
         desc: language === 'TH' ? 'เอกสารทั้งหมดในรายการย่อยนี้ได้รับการเปรียบเทียบและตรงกันครบถ้วน (Matched) ถ้าเป็นรายการย่อยสุดท้ายของ shipment สถานะนี้จะหมายความว่ารายการย่อยทุกรายการใน shipment เสร็จสมบูรณ์แล้ว' : 'All documents in this sub-job are compared and fully Matched. If this is the last sub-job in the shipment, it means every sub-job in the shipment is now complete',
-        action: language === 'TH' ? 'กด "ส่งออกข้อมูล" เพื่อส่งต่อไปยังรายการย่อยถัดไป หรือถ้าเป็นรายการย่อยสุดท้ายแล้ว ไม่ต้องดำเนินการเพิ่มเติม (สิ้นสุดกระบวนการ)' : 'Click "Export Data" to move to the next sub-job — or if this is the last one, no further action is needed (end of process)'
+        action: language === 'TH' ? 'ยังต้องกด "ส่งออกข้อมูล" เพื่อส่งต่อไปยังรายการย่อยถัดไป (ถ้าเป็นรายการย่อยสุดท้าย ปุ่มนี้จะถูกปิดไว้เพราะไม่มีขั้นตอนถัดไปแล้ว)' : 'Still needs a click on "Export Data" to move to the next sub-job — if this is the last one, the button stays disabled since there\'s no next step'
       },
       {
         status: 'DOC_UPDATED',
