@@ -4619,7 +4619,7 @@ const mockWorkflows: Workflow[] = [
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse table-auto font-sans text-sm">
               <thead>
-                <tr className="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                <tr className="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 whitespace-nowrap">
                   <th className="px-8 py-4 w-[110px]">{language === 'TH' ? 'ลำดับงาน' : 'STEP'}</th>
                   <th className="px-8 py-4">{language === 'TH' ? 'เวิร์กโฟลว์' : 'WORKFLOW'}</th>
                   <th className="px-8 py-4">{language === 'TH' ? 'ทีมที่รับผิดชอบ' : 'ASSIGNED TEAM'}</th>
