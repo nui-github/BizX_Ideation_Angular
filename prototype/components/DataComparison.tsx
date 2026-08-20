@@ -3173,8 +3173,8 @@ const mockWorkflows: Workflow[] = [
         status: JobStatus.READY,
         color: 'bg-emerald-50 text-emerald-700 border-emerald-200',
         label: language === 'TH' ? 'เสร็จสมบูรณ์' : 'READY',
-        desc: language === 'TH' ? 'เอกสารทั้งหมดได้รับการเปรียบเทียบและถูกต้องตรงกัน (Matched)' : 'All documents are successfully matched',
-        action: language === 'TH' ? 'รายการพร้อมสำหรับการส่งออกข้อมูล (Export)' : 'Job is ready for Export'
+        desc: language === 'TH' ? 'เอกสารทั้งหมดในรายการย่อยนี้ได้รับการเปรียบเทียบและตรงกันครบถ้วน (Matched) ถ้าเป็นรายการย่อยสุดท้ายของ shipment สถานะนี้จะหมายความว่ารายการย่อยทุกรายการใน shipment เสร็จสมบูรณ์แล้ว' : 'All documents in this sub-job are compared and fully Matched. If this is the last sub-job in the shipment, it means every sub-job in the shipment is now complete',
+        action: language === 'TH' ? 'กด "ส่งออกข้อมูล" เพื่อส่งต่อไปยังรายการย่อยถัดไป หรือถ้าเป็นรายการย่อยสุดท้ายแล้ว ไม่ต้องดำเนินการเพิ่มเติม (สิ้นสุดกระบวนการ)' : 'Click "Export Data" to move to the next sub-job — or if this is the last one, no further action is needed (end of process)'
       },
       {
         status: 'DOC_UPDATED',
