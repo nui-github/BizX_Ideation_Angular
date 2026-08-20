@@ -3156,6 +3156,13 @@ const mockWorkflows: Workflow[] = [
         action: language === 'TH' ? 'ตรวจสอบรายการในหน้า Detail และทำการแก้ไขให้ถูกต้อง' : 'Check Matrix Grid in Detail view and correct errors'
       },
       {
+        status: JobStatus.REJECTED,
+        color: 'bg-rose-50 border-rose-200 text-rose-700',
+        label: language === 'TH' ? 'ถูกตีกลับ' : 'REJECTED',
+        desc: language === 'TH' ? 'ขั้นตอนถัดไปในชิปเมนต์เดียวกันตรวจพบปัญหา และกด "ตีกลับ" มายังรายการย่อยนี้พร้อมระบุเหตุผล ทำให้ทุกขั้นตอนถัดไปในชิปเมนต์นี้ถูกบล็อกไว้จนกว่าจะแก้ไขและดำเนินการให้เสร็จสมบูรณ์อีกครั้ง' : 'A later job in the same shipment found an issue and rejected it back to this sub-job with a reason, blocking every job after it in the shipment until this one is corrected and completed again.',
+        action: language === 'TH' ? 'ตรวจสอบเหตุผลที่ถูกตีกลับ แก้ไขข้อมูล/เอกสารให้ถูกต้อง แล้วดำเนินการต่อจนสถานะเปลี่ยนเป็นเสร็จสมบูรณ์อีกครั้ง' : 'Check the rejection reason, fix the data/documents, then complete the job again'
+      },
+      {
         status: JobStatus.DONE,
         color: 'bg-teal-50 border-teal-200 text-teal-700',
         label: language === 'TH' ? 'ส่งออกแล้ว (EXPORTED)' : 'EXPORTED',
