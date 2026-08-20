@@ -3135,18 +3135,11 @@ const mockWorkflows: Workflow[] = [
   const renderStatusGuide = () => {
     const guides = [
       {
-        status: JobStatus.NEW,
-        color: 'bg-slate-50 border-slate-200 text-slate-500',
-        label: language === 'TH' ? 'รอไฟล์ครบ' : 'NEW (WAITING FILES)',
-        desc: language === 'TH' ? 'รายการที่มีเอกสารบางไฟล์ยังไม่ได้อัปโหลดเข้าสู่ระบบ' : 'Jobs with some documents still missing (waiting to be uploaded)',
-        action: language === 'TH' ? 'อัปโหลดไฟล์ที่ยังขาดอยู่ให้ครบถ้วน' : 'Upload all missing documents'
-      },
-      {
         status: JobStatus.PENDING,
         color: 'bg-blue-50 border-blue-200 text-blue-700',
         label: language === 'TH' ? 'รอดำเนินการ' : 'PENDING',
-        desc: language === 'TH' ? 'เอกสารทั้งหมดถูกอัปโหลดแล้ว แต่ยังไม่ได้เริ่มกระบวนการอ่านไฟล์ หรือเปรียบเทียบข้อมูล' : 'All files uploaded, but not yet extracted or compared',
-        action: language === 'TH' ? 'กด "อ่านไฟล์" บนการ์ดเอกสารเพื่อเริ่มกระบวนการ' : 'Click "Read File" on doc cards to start extraction'
+        desc: language === 'TH' ? 'เป็น status เริ่มต้นของรายการย่อยที่เพิ่งเปิด ยังไม่มีการอัปโหลดไฟล์ หรืออัปโหลดไฟล์ยังไม่ครบทุกไฟล์ในรายการย่อย' : 'The default status for a newly opened sub-job — no files uploaded yet, or not all files in the sub-job have been uploaded',
+        action: language === 'TH' ? 'อัปโหลดไฟล์ให้ครบ แล้วกด "อ่านไฟล์" บนการ์ดเอกสารเพื่อเริ่มกระบวนการ' : 'Upload all files, then click "Read File" on doc cards to start extraction'
       },
       {
         status: JobStatus.PROCESSING,
