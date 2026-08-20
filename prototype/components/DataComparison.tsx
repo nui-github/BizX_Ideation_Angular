@@ -3138,7 +3138,7 @@ const mockWorkflows: Workflow[] = [
         status: JobStatus.PENDING,
         color: 'bg-blue-50 border-blue-200 text-blue-700',
         label: language === 'TH' ? 'รอดำเนินการ' : 'PENDING',
-        desc: language === 'TH' ? 'เป็น status เริ่มต้นของรายการย่อยที่เพิ่งเปิด ยังไม่มีการอัปโหลดไฟล์ หรืออัปโหลดไฟล์ยังไม่ครบทุกไฟล์ในรายการย่อย' : 'The default status for a newly opened sub-job — no files uploaded yet, or not all files in the sub-job have been uploaded',
+        desc: language === 'TH' ? 'เป็น status เริ่มต้นของรายการย่อยที่เพิ่งเปิด ยังไม่มีการอัปโหลดไฟล์ หรืออัปโหลดไฟล์ยังไม่ครบทุกไฟล์ในรายการย่อย และไฟล์ในรายการยังไม่มีการเปรียบเทียบข้อมูล จึงยังไม่มีไฟล์ที่มีสถานะเป็น Matched หรือ Mismatched' : 'The default status for a newly opened sub-job — no files uploaded yet, or not all files in the sub-job have been uploaded, and none of the files have been compared yet, so none are Matched or Mismatched',
         action: language === 'TH' ? 'อัปโหลดไฟล์ให้ครบ แล้วกด "อ่านไฟล์" บนการ์ดเอกสารเพื่อเริ่มกระบวนการ' : 'Upload all files, then click "Read File" on doc cards to start extraction'
       },
       {
