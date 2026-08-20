@@ -18,10 +18,11 @@ The central business logic revolves around verifying extracted AI document data 
     - `PENDING`: All files uploaded but not yet extracted (รอดำเนินการ)
     - `PROCESSING`: AI is currently extracting/comparing data (กำลังเปรียบเทียบข้อมูล)
     - `REVIEW`: AI found mismatches requiring manual review (รอตรวจสอบ)
-    - `READY`: All documents are matched (เสร็จสมบูรณ์)
+    - `READY`: All documents in this job are matched (เสร็จสมบูรณ์) — becomes the shipment's terminal state once it lands on the shipment's last job
     - `DONE`: Data fully exported to the next system (ส่งออกแล้ว)
+    - `REJECTED`: A later job in the same shipment kicked this one back with a reason (ถูกตีกลับ) — blocks every job after it in the shipment until this one is corrected and completed again
 - **Documents:** Individual files (Invoice, Packing List, B/L, etc.).
-  - *Statuses:* `MISSING` -> `RECEIVED` -> `EXTRACTING` (AI OCR) -> `OCR_DONE` -> (`MATCHED` / `MISMATCHED`).
+  - *Statuses:* `MISSING` -> `RECEIVED` -> `EXTRACTING` (AI OCR) -> `OCR_DONE` -> (`MATCHED` / `MISMATCHED`), with `SKIPPED` when a job is skipped before comparison runs (data extracted but unverified) and `LOCKED` for a doc confirmed via manual override.
 
 ### 3.2 State Transitions & Business Logic
 - **Automatic Status Calculation:** Job status is automatically derived from the collective statuses of its documents. No manual "Lock" button is required; `MATCHED` documents are automatically considered verified.

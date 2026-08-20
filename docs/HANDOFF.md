@@ -49,7 +49,7 @@ after every prototype commit) to track drift.
 | `src/app/core/services/workflow.service.ts` | ✅ Ported | Wraps `mock-data/workflows.mock.ts` |
 | `src/app/features/dashboard` | ✅ Ported, standalone, routed at `/data-comparison/jobs` | Clean — no Tailwind, mock data wired |
 | `src/app/features/exdoc/workflow-builder` | ✅ Ported, standalone, routed at `/exdoc/workflow-builder` | This is the **generic** builder (`WorkflowBuilder.tsx`) — not the Data Comparison one, see below |
-| `src/app/layout/shell` | ⚠️ Partial | Sidebar/header structure only — nav tree, permissions, and language toggle from `Layout.tsx` not yet ported |
+| `src/app/layout/shell` | ⚠️ Partial | Sidebar/header structure only — nav tree, permissions, and language toggle from `Layout.tsx` not yet ported. Note: `App.tsx`'s default landing view was changed 2026-08-20 from ExDoc tracking to the Data Comparison job list (`currentView` initial state `DATA_COMPARISON_JOBS`; `Layout.tsx`'s own `activeMenu` default was updated to match, `'comparison_jobs'`) — carry this default into the ported shell/router rather than defaulting to tracking. |
 
 ## What still needs porting
 
