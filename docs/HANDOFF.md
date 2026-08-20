@@ -43,7 +43,7 @@ after every prototype commit) to track drift.
 
 | Angular path (repo root) | Status | Notes |
 |---|---|---|
-| `src/app/core/models/types.model.ts` | ✅ Ported | Matches `DATA_MODELS.md` |
+| `src/app/core/models/types.model.ts` | ⚠️ Drifted | Missing `JobStatus.REJECTED`, `ComparisonDocStatus.SKIPPED`, and `ComparisonJob`'s `assignedTeam`/`tags`/`rejectionReason`/`rejectedAt`/`rejectedBy` fields — added to the prototype's `types.ts` and now reflected in `DATA_MODELS.md`, but not yet ported here |
 | `src/app/core/services/agent.service.ts` | ✅ Ported | Wraps `mock-data/agents.mock.ts` |
 | `src/app/core/services/tracking.service.ts` | ✅ Ported | Wraps `mock-data/tracking.mock.ts` |
 | `src/app/core/services/workflow.service.ts` | ✅ Ported | Wraps `mock-data/workflows.mock.ts` |
