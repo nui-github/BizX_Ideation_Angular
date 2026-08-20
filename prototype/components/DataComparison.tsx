@@ -3163,13 +3163,6 @@ const mockWorkflows: Workflow[] = [
         action: language === 'TH' ? 'ตรวจสอบรายการในหน้า Detail และทำการแก้ไขให้ถูกต้อง' : 'Check Matrix Grid in Detail view and correct errors'
       },
       {
-        status: 'DOC_UPDATED',
-        color: 'bg-blue-50 border-blue-200 text-blue-600',
-        label: 'UPDATED BADGE',
-        desc: language === 'TH' ? 'ไฟล์มีการอัปเดตเวอร์ชันใหม่ และเตรียมเข้าสู่กระบวนการอ่านไฟล์ใหม่' : 'File version has been updated and is ready to enter the re-reading process',
-        action: language === 'TH' ? 'แสดงคู่กับสถานะ "กำลังอ่านไฟล์" และจะหายไปเมื่อไฟล์ถูกลบออกจากคอลัมน์เปรียบเทียบ' : 'Displayed with "Reading File" and disappears when the file is deleted from the comparison column'
-      },
-      {
         status: JobStatus.DONE,
         color: 'bg-teal-50 border-teal-200 text-teal-700',
         label: language === 'TH' ? 'ส่งออกแล้ว (EXPORTED)' : 'EXPORTED',
@@ -3182,6 +3175,13 @@ const mockWorkflows: Workflow[] = [
         label: language === 'TH' ? 'เสร็จสมบูรณ์' : 'READY',
         desc: language === 'TH' ? 'เอกสารทั้งหมดได้รับการเปรียบเทียบและถูกต้องตรงกัน (Matched)' : 'All documents are successfully matched',
         action: language === 'TH' ? 'รายการพร้อมสำหรับการส่งออกข้อมูล (Export)' : 'Job is ready for Export'
+      },
+      {
+        status: 'DOC_UPDATED',
+        color: 'bg-blue-50 border-blue-200 text-blue-600',
+        label: 'UPDATED BADGE',
+        desc: language === 'TH' ? 'ไฟล์มีการอัปเดตเวอร์ชันใหม่ และเตรียมเข้าสู่กระบวนการอ่านไฟล์ใหม่' : 'File version has been updated and is ready to enter the re-reading process',
+        action: language === 'TH' ? 'แสดงเฉพาะใน Modal ดูข้อมูลที่สกัดได้ (OCR) ของไฟล์เท่านั้น' : 'Only shown in the modal that displays the file\'s extracted (OCR) data'
       }
     ];
 
