@@ -8542,7 +8542,10 @@ const mockWorkflows: Workflow[] = [
                   {/* Matrix Footer / Summary Bar — lives inside the scrollable area (scrolls
                       away vertically with the table), but its content stays pinned to the right
                       edge of the viewport instead of trailing off with horizontal column scroll. */}
-                  <div className="px-6 py-3 bg-slate-50/50 border-t border-slate-100 flex items-center justify-end">
+                  <div
+                    className="px-6 py-3 bg-slate-50/50 border-t border-slate-100 flex items-center justify-end"
+                    style={{ minWidth: `${180 * (comparedDocs.length + 1)}px` }}
+                  >
                      <div className="flex items-center gap-6 sticky right-6">
                         <div className="flex flex-col items-end leading-none">
                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5 opacity-70 italic shadow-sm">Audit Summary</span>
