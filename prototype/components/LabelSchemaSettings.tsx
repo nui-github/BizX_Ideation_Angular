@@ -1522,7 +1522,7 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
                                                     <option value="number">{isTh ? 'ตัวเลข (Number)' : 'Number'}</option>
                                                     <option value="boolean">{isTh ? 'ใช่/ไม่ใช่ (Yes/No)' : 'Yes/No (boolean)'}</option>
                                                     <option value="date">{isTh ? 'วันที่ (Date)' : 'Date'}</option>
-                                                    <option value="array">{isTh ? 'ตาราง/กลุ่มรายการ (Array)' : 'Table/List (array)'}</option>
+                                                    <option value="array">{isTh ? 'ชุดข้อมูล (Array)' : 'Table/List (array)'}</option>
                                                   </select>
                                                   <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-400">
                                                     <ChevronDown size={14} />
