@@ -1274,12 +1274,16 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
                 <span>{isTh ? 'ชื่อ SCHEMA' : 'SCHEMA NAME'}</span>
                 <span className="text-rose-500">*</span>
               </label>
-              <Input 
-                value={formName} 
+              <Input
+                value={formName}
                 onChange={(e) => setFormName(e.target.value)}
-                placeholder={isTh ? 'เช่น Import standard v2' : 'e.g. Import standard v2'} 
+                placeholder={isTh ? 'เช่น Import standard v2' : 'e.g. Import standard v2'}
                 className="py-2.5 rounded-xl border-slate-200 font-semibold text-slate-800 hover:border-blue-300 focus:border-[#1f5df9] focus:shadow-sm shadow-2xs placeholder-slate-400"
+                maxLength={512}
               />
+              <div className="flex justify-end">
+                <span className="text-[10px] font-bold text-slate-400">{formName.length} / 512</span>
+              </div>
             </div>
 
             {/* Schema Description */}
