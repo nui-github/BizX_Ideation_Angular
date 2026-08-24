@@ -825,6 +825,8 @@ export const DocTypeMaster: React.FC<DocTypeMasterProps> = ({
                       placeholder={text.labelNamePlaceholder}
                       value={formName}
                       onChange={(e) => setFormName(e.target.value)}
+                      maxLength={512}
+                      showCount
                     />
                   </div>
 
