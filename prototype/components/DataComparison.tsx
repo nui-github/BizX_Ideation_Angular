@@ -4749,22 +4749,6 @@ const mockWorkflows: Workflow[] = [
                               <Eye size={20} />
                             </button>
                           </Tooltip>
-
-                          <Tooltip content={getLastSubItemExportTooltip(job, t.ttExportNotify)}>
-                            <button 
-                              disabled={job.status !== JobStatus.READY || isProcessing || isBlocked || isLastSubItemWithAllDocsMatched(job)}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setExportJob(job);
-                                setExportOption('workflow');
-                                setSelectedExportWorkflow(job.workflowName || '');
-                                setSelectedExportPlatform('FTA');
-                              }}
-                              className={`p-2.5 transition-all rounded-[4px] ${(job.status === JobStatus.READY && !isProcessing && !isBlocked && !isLastSubItemWithAllDocsMatched(job)) ? 'text-[#1f5df9] hover:bg-blue-50 cursor-pointer' : 'text-slate-200 cursor-not-allowed'}`}
-                            >
-                              <Send size={20} />
-                            </button>
-                          </Tooltip>
                         </div>
                       </td>
                     </tr>
