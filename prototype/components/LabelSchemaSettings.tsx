@@ -26,7 +26,8 @@ export interface DocTypeSchemaConfig {
   labels: SchemaLabel[];
   extractionMethod?: 'ai' | 'xml' | 'excel'; // how the AI extracts values for this doc type — default 'ai'
   aiExtractionPrompt?: string; // free-text hint used only when extractionMethod === 'ai'
-  sampleFileName?: string; // sample XML/Excel file name used to map field positions
+  xmlSampleFileName?: string; // sample XML file used to map field positions
+  excelSampleFileName?: string; // sample Excel file used to map field positions
 }
 
 export interface LabelSchema {
@@ -596,13 +597,13 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
 
   // Open a native file picker and store the chosen file's name as the sample file for
   // XML/Excel field-position mapping. Prototype-only — no real parsing, just remembers the name.
-  const handlePickSampleFile = (docTypeId: string, accept: string) => {
+  const handlePickSampleFile = (docTypeId: string, method: 'xml' | 'excel') => {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = accept;
+    input.accept = method === 'xml' ? '.xml' : '.xlsx,.xls,.csv';
     input.onchange = (e: any) => {
       const file = e.target.files?.[0];
-      if (file) handleUpdateDocTypeConfig(docTypeId, { sampleFileName: file.name });
+      if (file) handleUpdateDocTypeConfig(docTypeId, method === 'xml' ? { xmlSampleFileName: file.name } : { excelSampleFileName: file.name });
     };
     input.click();
   };
@@ -1572,37 +1573,41 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
                                   />
                                 )}
 
-                                {(config.extractionMethod === 'xml' || config.extractionMethod === 'excel') && (
-                                  <>
-                                    <p className="text-[11px] font-semibold text-slate-400">
-                                      {config.extractionMethod === 'xml'
-                                        ? (isTh ? 'ระบุ path ของแต่ละฟิลด์ในไฟล์ XML — ไม่ใช้คำอธิบาย' : 'Specify each field\'s path in the XML file — no description needed')
-                                        : (isTh ? 'คลิกเซลล์ในไฟล์ตัวอย่างเพื่อกำหนดตำแหน่งของแต่ละฟิลด์ — ไม่ใช้คำอธิบาย' : 'Click a cell in the sample file to set each field\'s position — no description needed')}
-                                    </p>
-                                    <div
-                                      onClick={() => handlePickSampleFile(config.docTypeId, config.extractionMethod === 'xml' ? '.xml' : '.xlsx,.xls,.csv')}
-                                      className="border-2 border-dashed border-slate-200 rounded-[8px] px-4 py-3 flex items-center justify-between gap-3 hover:border-blue-300 hover:bg-blue-50/20 transition-colors cursor-pointer"
-                                    >
-                                      <span className="text-xs font-black text-[#1f5df9] shrink-0">
-                                        {config.sampleFileName
-                                          ? (isTh ? 'เปลี่ยนไฟล์ตัวอย่าง' : 'Change sample file')
-                                          : (config.extractionMethod === 'xml'
-                                              ? (isTh ? 'เลือกไฟล์ XML ตัวอย่าง' : 'Choose sample XML file')
-                                              : (isTh ? 'เลือกไฟล์ Excel ตัวอย่าง' : 'Choose sample Excel file'))}
-                                      </span>
-                                      {config.sampleFileName ? (
-                                        <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 min-w-0">
-                                          <Check size={14} className="shrink-0" />
-                                          <span className="truncate">{config.sampleFileName}</span>
+                                {(config.extractionMethod === 'xml' || config.extractionMethod === 'excel') && (() => {
+                                  const method = config.extractionMethod as 'xml' | 'excel';
+                                  const sampleFileName = method === 'xml' ? config.xmlSampleFileName : config.excelSampleFileName;
+                                  return (
+                                    <>
+                                      <p className="text-[11px] font-semibold text-slate-400">
+                                        {method === 'xml'
+                                          ? (isTh ? 'ระบุ path ของแต่ละฟิลด์ในไฟล์ XML — ไม่ใช้คำอธิบาย' : 'Specify each field\'s path in the XML file — no description needed')
+                                          : (isTh ? 'คลิกเซลล์ในไฟล์ตัวอย่างเพื่อกำหนดตำแหน่งของแต่ละฟิลด์ — ไม่ใช้คำอธิบาย' : 'Click a cell in the sample file to set each field\'s position — no description needed')}
+                                      </p>
+                                      <div
+                                        onClick={() => handlePickSampleFile(config.docTypeId, method)}
+                                        className="border-2 border-dashed border-slate-200 rounded-[8px] px-4 py-3 flex items-center justify-between gap-3 hover:border-blue-300 hover:bg-blue-50/20 transition-colors cursor-pointer"
+                                      >
+                                        <span className="text-xs font-black text-[#1f5df9] shrink-0">
+                                          {sampleFileName
+                                            ? (isTh ? 'เปลี่ยนไฟล์ตัวอย่าง' : 'Change sample file')
+                                            : (method === 'xml'
+                                                ? (isTh ? 'เลือกไฟล์ XML ตัวอย่าง' : 'Choose sample XML file')
+                                                : (isTh ? 'เลือกไฟล์ Excel ตัวอย่าง' : 'Choose sample Excel file'))}
                                         </span>
-                                      ) : (
-                                        <span className="text-[11px] font-semibold text-slate-400 text-right">
-                                          {isTh ? 'โหลดไฟล์ตัวอย่างก่อน จึงจะคลิกเลือกเซลล์ได้' : 'Upload a sample file first to start mapping'}
-                                        </span>
-                                      )}
-                                    </div>
-                                  </>
-                                )}
+                                        {sampleFileName ? (
+                                          <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 min-w-0">
+                                            <Check size={14} className="shrink-0" />
+                                            <span className="truncate">{sampleFileName}</span>
+                                          </span>
+                                        ) : (
+                                          <span className="text-[11px] font-semibold text-slate-400 text-right">
+                                            {isTh ? 'โหลดไฟล์ตัวอย่างก่อน จึงจะคลิกเลือกเซลล์ได้' : 'Upload a sample file first to start mapping'}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </>
+                                  );
+                                })()}
                               </div>
                             </div>
 
