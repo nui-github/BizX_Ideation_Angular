@@ -1631,37 +1631,6 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
                                 );
                               })}
                             </div>
-
-                              {/* JSON PREVIEW card matching layout of reference image */}
-                              <div className="mx-4 mb-4 mt-6 pt-4 border-t border-slate-100">
-                                <div className="text-xs font-black text-[#010136]/60 uppercase tracking-wider mb-2.5">
-                                  {isTh ? 'JSON Preview' : 'JSON Preview'}
-                                </div>
-                                <div className="bg-slate-50/50 rounded-xl border border-slate-200 p-4 font-mono text-[13px] text-slate-700 max-h-[220px] overflow-y-auto shadow-2xs leading-relaxed">
-                                  <pre className="whitespace-pre-wrap font-mono text-[13px]">
-                                    {(() => {
-                                      const serializeLabelRec = (l: SchemaLabel): any => {
-                                        const res: any = {
-                                          name: l.name,
-                                          type: l.type || 'string'
-                                        };
-                                        if (l.aiPrompt) {
-                                          res.aiPrompt = l.aiPrompt;
-                                        }
-                                        if (l.type === 'array') {
-                                          res.items = (l.subLabels || []).map(serializeLabelRec);
-                                        }
-                                        return res;
-                                      };
-                                      return JSON.stringify(
-                                        config.labels.map(serializeLabelRec), 
-                                        null, 
-                                        2
-                                      );
-                                    })()}
-                                  </pre>
-                                </div>
-                              </div>
                           </motion.div>
                         )}
                       </AnimatePresence>
