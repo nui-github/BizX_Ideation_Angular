@@ -145,6 +145,18 @@ const resolveDocNameFromPreviewUrl = (url: string | null | undefined, jobId: str
   return url;
 };
 
+// Mock "เลขที่งาน" prefix — real workflow nodes don't have a configurable prefix field yet,
+// so derive a short one from the step's workflow name (e.g. "Invoice Processing" -> "IP").
+const getWorkflowPrefix = (workflowName?: string): string => {
+  if (!workflowName) return 'JOB';
+  const cleaned = workflowName
+    .replace(/\s*\[[^\]]*\]\s*$/, '')
+    .replace(/\s*\([^)]*\)\s*$/, '')
+    .trim();
+  const initials = cleaned.split(/\s+/).filter(Boolean).map(w => w[0]).join('').toUpperCase();
+  return (initials || 'JOB').slice(0, 4);
+};
+
 interface DocComment {
   id: string;
   user: string;
@@ -4621,6 +4633,7 @@ const mockWorkflows: Workflow[] = [
               <thead>
                 <tr className="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 whitespace-nowrap">
                   <th className="px-8 py-4 w-[110px]">{language === 'TH' ? 'ลำดับงาน' : 'STEP'}</th>
+                  <th className="px-8 py-4">{language === 'TH' ? 'เลขที่งาน' : 'JOB NO.'}</th>
                   <th className="px-8 py-4">{language === 'TH' ? 'เวิร์กโฟลว์' : 'WORKFLOW'}</th>
                   <th className="px-8 py-4">{language === 'TH' ? 'ทีมที่รับผิดชอบ' : 'ASSIGNED TEAM'}</th>
                   <th className="px-8 py-4">{language === 'TH' ? 'ผู้รับผิดชอบล่าสุด' : 'CURRENT ASSIGNEE'}</th>
@@ -4692,6 +4705,11 @@ const mockWorkflows: Workflow[] = [
                             {seqIndex + 1}
                           </span>
                         </div>
+                      </td>
+                      <td className="px-8 py-5">
+                        <span className={`text-[13px] font-black font-mono tracking-tight ${isBlocked ? 'text-slate-300' : 'text-slate-500'}`}>
+                          {getWorkflowPrefix(job.workflowName)}-{String(seqIndex + 1).padStart(4, '0')}
+                        </span>
                       </td>
                       <td className="px-8 py-5">
                         <p className={`text-[13px] font-bold font-sans ${isBlocked ? 'text-slate-400' : 'text-slate-600'}`}>{job.workflowName?.replace(/\s*\[[^\]]*\]\s*$/, '') || 'N/A'}</p>
