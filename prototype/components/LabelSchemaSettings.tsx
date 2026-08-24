@@ -25,7 +25,6 @@ export interface DocTypeSchemaConfig {
   docTypeId: string;
   labels: SchemaLabel[];
   extractionMethod?: 'ai' | 'xml' | 'excel'; // how the AI extracts values for this doc type — default 'ai'
-  aiExtractionPrompt?: string; // free-text hint used only when extractionMethod === 'ai'
   xmlSampleFileName?: string; // sample XML file used to map field positions
   excelSampleFileName?: string; // sample Excel file used to map field positions
 }
@@ -1563,14 +1562,11 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
 
                                 {/* Method-specific content */}
                                 {(config.extractionMethod || 'ai') === 'ai' && (
-                                  <Input.TextArea
-                                    value={config.aiExtractionPrompt || ''}
-                                    onChange={(e) => handleUpdateDocTypeConfig(config.docTypeId, { aiExtractionPrompt: e.target.value })}
-                                    placeholder={isTh ? 'เขียนคำอธิบายให้โมเดลอ่าน เช่น "The INVOICE # of the invoice"' : 'Describe what the model should read, e.g. "The INVOICE # of the invoice"'}
-                                    rows={2}
-                                    style={{ borderRadius: 4 }}
-                                    className="w-full text-xs font-semibold px-4 py-2.5 resize-none font-sans border-slate-200 hover:border-blue-300 focus:border-[#1f5df9]"
-                                  />
+                                  <p className="text-[11px] font-semibold text-slate-400">
+                                    {isTh
+                                      ? 'AI จะอ่านเอกสารและดึงค่าของแต่ละฟิลด์ให้อัตโนมัติ โดยอ้างอิงจากชื่อฟิลด์และคำอธิบาย (Hint) ที่ตั้งไว้ในแต่ละฟิลด์ด้านล่าง'
+                                      : 'The AI reads the document and extracts each field automatically, based on the field name and the hint set on each field below.'}
+                                  </p>
                                 )}
 
                                 {(config.extractionMethod === 'xml' || config.extractionMethod === 'excel') && (() => {
