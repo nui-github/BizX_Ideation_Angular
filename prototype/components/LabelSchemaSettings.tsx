@@ -24,6 +24,9 @@ export interface SchemaLabel {
 export interface DocTypeSchemaConfig {
   docTypeId: string;
   labels: SchemaLabel[];
+  extractionMethod?: 'ai' | 'xml' | 'excel'; // how the AI extracts values for this doc type — default 'ai'
+  aiExtractionPrompt?: string; // free-text hint used only when extractionMethod === 'ai'
+  sampleFileName?: string; // sample XML/Excel file name used to map field positions
 }
 
 export interface LabelSchema {
@@ -513,7 +516,7 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
     setFormDocTypes(schema.docTypes);
     setFormWorkflows(schema.workflowIds);
     setFormTeams(schema.assignedTeams && schema.assignedTeams.length > 0 ? schema.assignedTeams : ['ALL']);
-    setFormConfigs(schema.configs ? JSON.parse(JSON.stringify(schema.configs)) : schema.docTypes.map(id => ({ docTypeId: id, labels: [] })));
+    setFormConfigs(schema.configs ? JSON.parse(JSON.stringify(schema.configs)) : schema.docTypes.map(id => ({ docTypeId: id, labels: [], extractionMethod: 'ai' as const })));
     setSelectedDocTypeToAdd(undefined);
     setExpandedDocTypes({});
     setErrorMsg('');
@@ -566,7 +569,7 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
     if (!docTypeId) return;
     if (!formDocTypes.includes(docTypeId)) {
       setFormDocTypes([...formDocTypes, docTypeId]);
-      setFormConfigs([...formConfigs, { docTypeId, labels: [] }]);
+      setFormConfigs([...formConfigs, { docTypeId, labels: [], extractionMethod: 'ai' }]);
       setExpandedDocTypes(prev => ({ ...prev, [docTypeId]: true }));
     }
   };
@@ -582,6 +585,26 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
   const handleRemoveDocTypeConfig = (docTypeId: string) => {
     setFormDocTypes(formDocTypes.filter(id => id !== docTypeId));
     setFormConfigs(formConfigs.filter(cfg => cfg.docTypeId !== docTypeId));
+  };
+
+  // Update doc-type-level config (extraction method, AI prompt, sample file name)
+  const handleUpdateDocTypeConfig = (docTypeId: string, updates: Partial<DocTypeSchemaConfig>) => {
+    setFormConfigs(prevConfigs =>
+      prevConfigs.map(cfg => (cfg.docTypeId === docTypeId ? { ...cfg, ...updates } : cfg))
+    );
+  };
+
+  // Open a native file picker and store the chosen file's name as the sample file for
+  // XML/Excel field-position mapping. Prototype-only — no real parsing, just remembers the name.
+  const handlePickSampleFile = (docTypeId: string, accept: string) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = accept;
+    input.onchange = (e: any) => {
+      const file = e.target.files?.[0];
+      if (file) handleUpdateDocTypeConfig(docTypeId, { sampleFileName: file.name });
+    };
+    input.click();
   };
 
   // Add Label to a specific docType configuration table
@@ -1505,6 +1528,84 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
                             transition={{ duration: 0.25, ease: [0.04, 0.62, 0.23, 0.98] }}
                             className="overflow-hidden"
                           >
+                            {/* Extraction Method */}
+                            <div className="px-4 pt-4">
+                              <div className="border border-slate-200 rounded-[8px] p-4 bg-white space-y-3 shadow-3xs">
+                                <h5 className="text-xs font-black text-slate-800 tracking-tight uppercase mb-0">
+                                  {isTh ? 'วิธีดึงข้อมูล' : 'Extraction Method'}
+                                </h5>
+
+                                {/* 3-way segmented toggle */}
+                                <div className="inline-flex items-center gap-1 p-1 bg-slate-50 border border-slate-200 rounded-[8px]">
+                                  {([
+                                    { key: 'ai' as const, labelTh: 'AI อ่านเอกสาร (LLM)', labelEn: 'AI reads document (LLM)' },
+                                    { key: 'xml' as const, labelTh: 'อ่านจากไฟล์ XML', labelEn: 'Read from XML file' },
+                                    { key: 'excel' as const, labelTh: 'อ่านจากไฟล์ Excel', labelEn: 'Read from Excel file' },
+                                  ]).map((opt) => {
+                                    const active = (config.extractionMethod || 'ai') === opt.key;
+                                    return (
+                                      <button
+                                        key={opt.key}
+                                        type="button"
+                                        onClick={() => handleUpdateDocTypeConfig(config.docTypeId, { extractionMethod: opt.key })}
+                                        className={`px-3 py-1.5 text-xs font-bold rounded-[4px] transition-all cursor-pointer whitespace-nowrap ${
+                                          active
+                                            ? 'bg-[#1f5df9] text-white shadow-sm'
+                                            : 'text-slate-500 hover:bg-white hover:text-slate-700'
+                                        }`}
+                                      >
+                                        {isTh ? opt.labelTh : opt.labelEn}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+
+                                {/* Method-specific content */}
+                                {(config.extractionMethod || 'ai') === 'ai' && (
+                                  <Input.TextArea
+                                    value={config.aiExtractionPrompt || ''}
+                                    onChange={(e) => handleUpdateDocTypeConfig(config.docTypeId, { aiExtractionPrompt: e.target.value })}
+                                    placeholder={isTh ? 'เขียนคำอธิบายให้โมเดลอ่าน เช่น "The INVOICE # of the invoice"' : 'Describe what the model should read, e.g. "The INVOICE # of the invoice"'}
+                                    rows={2}
+                                    style={{ borderRadius: 4 }}
+                                    className="w-full text-xs font-semibold px-4 py-2.5 resize-none font-sans border-slate-200 hover:border-blue-300 focus:border-[#1f5df9]"
+                                  />
+                                )}
+
+                                {(config.extractionMethod === 'xml' || config.extractionMethod === 'excel') && (
+                                  <>
+                                    <p className="text-[11px] font-semibold text-slate-400">
+                                      {config.extractionMethod === 'xml'
+                                        ? (isTh ? 'ระบุ path ของแต่ละฟิลด์ในไฟล์ XML — ไม่ใช้คำอธิบาย' : 'Specify each field\'s path in the XML file — no description needed')
+                                        : (isTh ? 'คลิกเซลล์ในไฟล์ตัวอย่างเพื่อกำหนดตำแหน่งของแต่ละฟิลด์ — ไม่ใช้คำอธิบาย' : 'Click a cell in the sample file to set each field\'s position — no description needed')}
+                                    </p>
+                                    <div
+                                      onClick={() => handlePickSampleFile(config.docTypeId, config.extractionMethod === 'xml' ? '.xml' : '.xlsx,.xls,.csv')}
+                                      className="border-2 border-dashed border-slate-200 rounded-[8px] px-4 py-3 flex items-center justify-between gap-3 hover:border-blue-300 hover:bg-blue-50/20 transition-colors cursor-pointer"
+                                    >
+                                      <span className="text-xs font-black text-[#1f5df9] shrink-0">
+                                        {config.sampleFileName
+                                          ? (isTh ? 'เปลี่ยนไฟล์ตัวอย่าง' : 'Change sample file')
+                                          : (config.extractionMethod === 'xml'
+                                              ? (isTh ? 'เลือกไฟล์ XML ตัวอย่าง' : 'Choose sample XML file')
+                                              : (isTh ? 'เลือกไฟล์ Excel ตัวอย่าง' : 'Choose sample Excel file'))}
+                                      </span>
+                                      {config.sampleFileName ? (
+                                        <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 min-w-0">
+                                          <Check size={14} className="shrink-0" />
+                                          <span className="truncate">{config.sampleFileName}</span>
+                                        </span>
+                                      ) : (
+                                        <span className="text-[11px] font-semibold text-slate-400 text-right">
+                                          {isTh ? 'โหลดไฟล์ตัวอย่างก่อน จึงจะคลิกเลือกเซลล์ได้' : 'Upload a sample file first to start mapping'}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+
                             {/* 3 Sections (Header, Description, Footer) */}
                             <div className="p-4 pt-2 space-y-6">
                               {[
