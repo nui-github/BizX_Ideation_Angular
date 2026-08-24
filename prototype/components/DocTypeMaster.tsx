@@ -826,8 +826,10 @@ export const DocTypeMaster: React.FC<DocTypeMasterProps> = ({
                       value={formName}
                       onChange={(e) => setFormName(e.target.value)}
                       maxLength={512}
-                      showCount
                     />
+                    <div className="flex justify-end">
+                      <span className="text-[10px] font-bold text-slate-400">{formName.length} / 512</span>
+                    </div>
                   </div>
 
                   {/* AI Classifier Hint Input */}
