@@ -8225,7 +8225,6 @@ const mockWorkflows: Workflow[] = [
                               if (partResults.length === 0) return null;
 
                               let displayMatchCount = 0;
-                              let displaySynonymCount = 0;
                               let displayMismatchCount = 0;
                               let totalLabel = originalPartResults.length;
 
@@ -8244,16 +8243,13 @@ const mockWorkflows: Workflow[] = [
                                 groups.forEach(groupName => {
                                   const groupFields = originalPartResults.filter(r => r.group === groupName);
                                   const hasMismatch = groupFields.some(r => r.targets.some(t => t.status === 'MISMATCH'));
-                                  const hasSynonym = !hasMismatch && groupFields.some(r => r.targets.some(t => t.status === 'SYNONYM'));
-                                  
+
                                   if (hasMismatch) displayMismatchCount++;
-                                  else if (hasSynonym) displaySynonymCount++;
                                   else displayMatchCount++;
                                 });
                               } else {
                                 displayMismatchCount = originalPartResults.filter(r => r.targets.some((t: any) => t.status === 'MISMATCH')).length;
-                                displaySynonymCount = originalPartResults.filter(r => !r.targets.some((t: any) => t.status === 'MISMATCH') && r.targets.some((t: any) => t.status === 'SYNONYM')).length;
-                                displayMatchCount = originalPartResults.length - displayMismatchCount - displaySynonymCount;
+                                displayMatchCount = originalPartResults.length - displayMismatchCount;
                               }
 
                               return (
@@ -8292,13 +8288,6 @@ const mockWorkflows: Workflow[] = [
                                                    <span>{displayMatchCount}</span>
                                                  </div>
                                                  </Tooltip>
-                                                 {displaySynonymCount > 0 && (
-                                                  <Tooltip content={t.ttSynonymCount}><div className={`flex items-center gap-1 px-1.5 py-0.5 rounded border text-[9px] font-black tracking-tight ${showOnlyDiff ? 'bg-slate-50 text-slate-400 border-slate-200 shadow-none opacity-60' : 'bg-amber-50 text-amber-600 border-amber-100/50 shadow-sm'}`}>
-                                                    <CheckCircle2 size={9} strokeWidth={2.5} />
-                                                    <span>{displaySynonymCount}</span>
-                                                  </div>
-                                                  </Tooltip>
-                                                 )}
                                                  {displayMismatchCount > 0 && (
                                                    <Tooltip content={part === 'Description' ? t.ttMismatchedCountDesc : t.ttMismatchedCount}><div className="flex items-center gap-1 px-1.5 py-0.5 rounded border bg-rose-50 text-rose-600 border-rose-100/50 shadow-sm text-[9px] font-black tracking-tight">
                                                      <AlertCircle size={9} strokeWidth={2.5} />
@@ -8334,19 +8323,13 @@ const mockWorkflows: Workflow[] = [
                                                               const groupFields = originalPartResults.filter(r => (r.group || 'no-group') === group);
                                                               const hasUncompared = groupFields.some(r => r.targets.some(t => t.status === 'WAITING' || t.status === 'NA'));
                                                               const mismatchF = groupFields.filter(r => r.targets.some(t => t.status === 'MISMATCH')).length;
-                                                              const synonymF = groupFields.filter(r => !r.targets.some(t => t.status === 'MISMATCH') && r.targets.some(t => t.status === 'SYNONYM')).length;
-                                                              const matchF = groupFields.length - mismatchF - synonymF;
-                                                              
+                                                              const matchF = groupFields.length - mismatchF;
+
                                                               return (
                                                                 <>
                                                                   {!hasUncompared && matchF > 0 && (
                                                                     <Tooltip content={part === 'Description' ? t.ttMatchedCountDesc : t.ttMatchedCount}>
                                                                       <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 px-2 py-1 rounded border border-emerald-200/60 text-[9px] font-black leading-none shadow-sm"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>{matchF} {language === 'TH' ? 'ตรงกัน' : 'Matched'}</div>
-                                                                    </Tooltip>
-                                                                  )}
-                                                                  {!hasUncompared && synonymF > 0 && (
-                                                                    <Tooltip content={t.ttSynonymCount}>
-                                                                      <div className="flex items-center gap-1.5 bg-amber-50 text-amber-700 px-2 py-1 rounded border border-amber-200/60 text-[9px] font-black leading-none shadow-sm"><div className="w-1.5 h-1.5 rounded-full bg-amber-500"></div>{synonymF} {language === 'TH' ? 'คล้ายคลึง' : 'Synonym'}</div>
                                                                     </Tooltip>
                                                                   )}
                                                                   {!hasUncompared && mismatchF > 0 && (
