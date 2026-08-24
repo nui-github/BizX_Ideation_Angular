@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, Select, Input, Empty, Button, Tooltip, Tag, Popconfirm, Checkbox, Switch, message, Drawer } from 'antd';
+import { Modal, Select, Input, Empty, Button, Tooltip, Tag, Popconfirm, Checkbox, Switch, message, Drawer, Popover } from 'antd';
 import { 
   FileText, Plus, Trash2, Pencil, Copy, AlertCircle, ArrowLeft,
   Settings, Check, Search, Calendar, ChevronRight, Workflow as WorkflowIcon,
@@ -345,6 +345,70 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     ]
   }
 ];
+
+const FIELD_TYPE_INFO: { type: string; nameTh: string; nameEn: string; descTh: string; descEn: string }[] = [
+  {
+    type: 'string',
+    nameTh: 'ข้อความ (Text)',
+    nameEn: 'Text',
+    descTh: 'เก็บตัวอักษรหรือข้อความทั่วไป เช่น ชื่อบริษัท, เลขที่เอกสาร',
+    descEn: 'Stores plain text, e.g. a company name or a document number.',
+  },
+  {
+    type: 'number',
+    nameTh: 'ตัวเลข (Number)',
+    nameEn: 'Number',
+    descTh: 'เก็บค่าที่เป็นตัวเลขล้วนๆ เช่น จำนวนเงิน, น้ำหนัก ใช้เปรียบเทียบหรือคำนวณตัวเลขได้',
+    descEn: 'Stores numeric values only, e.g. an amount or a weight — lets the system compare or calculate with it.',
+  },
+  {
+    type: 'boolean',
+    nameTh: 'ใช่/ไม่ใช่ (Yes/No)',
+    nameEn: 'Yes/No',
+    descTh: 'เก็บค่าจริงหรือเท็จอย่างใดอย่างหนึ่ง เช่น มีการชำระเงินแล้วหรือยัง',
+    descEn: 'Stores a true/false answer, e.g. whether payment has been made.',
+  },
+  {
+    type: 'date',
+    nameTh: 'วันที่ (Date)',
+    nameEn: 'Date',
+    descTh: 'เก็บวันที่โดยเฉพาะ ระบบจะช่วยตรวจและแปลงรูปแบบวันที่ให้ถูกต้องอัตโนมัติ',
+    descEn: 'Stores a date specifically — the system checks and normalizes the date format automatically.',
+  },
+  {
+    type: 'array',
+    nameTh: 'ชุดข้อมูล (Array)',
+    nameEn: 'Array',
+    descTh: 'ใช้เมื่อฟิลด์นี้มีข้อมูลซ้ำเป็นหลายรายการในเอกสารเดียว เช่น รายการสินค้าในใบสั่งของที่มีหลายบรรทัด (จะมีฟิลด์ย่อยให้ตั้งค่าเพิ่มด้านใน)',
+    descEn: 'Use when this field repeats as multiple rows within one document, e.g. line items on a purchase order (lets you define sub-fields inside it).',
+  },
+];
+
+const FieldTypeInfoButton: React.FC<{ isTh: boolean }> = ({ isTh }) => (
+  <Popover
+    trigger="click"
+    placement="bottomLeft"
+    title={isTh ? 'ประเภทฟิลด์แต่ละแบบคืออะไร' : 'What each field type means'}
+    content={
+      <div className="max-w-[280px] text-xs text-slate-600 leading-relaxed space-y-3 py-0.5">
+        {FIELD_TYPE_INFO.map((info) => (
+          <div key={info.type}>
+            <span className="font-black text-slate-800">{isTh ? info.nameTh : info.nameEn}</span>
+            <p className="mt-0.5">{isTh ? info.descTh : info.descEn}</p>
+          </div>
+        ))}
+      </div>
+    }
+  >
+    <button
+      type="button"
+      className="shrink-0 w-[40px] h-[40px] flex items-center justify-center text-slate-400 hover:text-[#1f5df9] hover:bg-blue-50 border border-transparent hover:border-blue-100 rounded-[4px] transition-all cursor-pointer"
+      title={isTh ? 'ดูคำอธิบายประเภทฟิลด์' : 'View field type descriptions'}
+    >
+      <Info size={16} />
+    </button>
+  </Popover>
+);
 
 export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
   language,
@@ -1532,6 +1596,8 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
                                                     <ChevronDown size={14} />
                                                   </div>
                                                 </div>
+
+                                                <FieldTypeInfoButton isTh={isTh} />
 
                                                 {/* Dangerously delete label field */}
                                                 <button
