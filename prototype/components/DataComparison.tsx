@@ -8,7 +8,7 @@ import {
   CheckCircle2, XCircle, Info, Eye, Send, Filter, ListFilter, ArrowLeft, Save, RotateCcw,
   LayoutGrid, List, ScanEye, Bot, ChevronDown, Lock, Unlock, HelpCircle, X, Loader2, ShieldCheck, ArrowUpRight, ScanSearch, History, Edit3, UploadCloud, AlertTriangle,
   Printer, RotateCw, ZoomIn, ZoomOut, Menu, Copy, Star, CheckCheck, StickyNote, SkipForward, Undo2,
-  FileBarChart2, Layers, Package, Maximize2, Minimize2
+  FileBarChart2, Layers, Maximize2, Minimize2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Tabs, Tag, Badge, Empty, Button, message, DatePicker } from 'antd';
@@ -7585,15 +7585,13 @@ const mockWorkflows: Workflow[] = [
                       </div>
                       <div className="flex items-center gap-2 flex-wrap">
                          <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-blue-50 border border-blue-200 text-[#1f5df9] text-[9px] font-black uppercase tracking-widest">
-                           <Package size={9} />
                            {selectedJob.reference}
                          </span>
                          <div className="w-1 h-1 bg-slate-200 rounded-full"></div>
                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{selectedJob.createdAt ? formatDisplayDate(selectedJob.createdAt) : 'N/A'}</p>
                          <div className="w-1 h-1 bg-slate-200 rounded-full"></div>
                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
-                           <User size={9} className="text-[#1f5df9]" />
-                           <span className="text-slate-400 text-[8px]">{language === 'TH' ? 'ผู้รับผิดชอบ:' : 'USER:'}</span>
+                           <span className="text-slate-400 text-[8px]">{language === 'TH' ? 'ผู้รับผิดชอบล่าสุด:' : 'LATEST ASSIGNEE:'}</span>
                            <span className="text-[#010136] font-extrabold font-mono text-[9px]">
                              {selectedJob.assignee || (language === 'TH' ? 'ยังไม่ได้มอบหมาย' : 'Unassigned')}
                            </span>
