@@ -3144,7 +3144,7 @@ const mockWorkflows: Workflow[] = [
       {
         status: ComparisonDocStatus.MISMATCHED,
         color: 'bg-rose-50 border-rose-200 text-rose-700',
-        label: language === 'TH' ? 'ไม่ตรงกัน (Mismatched)' : 'Mismatched',
+        label: language === 'TH' ? 'ไม่ตรงกัน (Unmatched)' : 'Unmatched',
         desc: language === 'TH' ? 'ได้เมื่อเปรียบเทียบแล้วรายการไม่ตรงตามเงื่อนไข (Compare Rule) ที่ตั้งค่าไว้' : 'Set once this document is compared and the data does not satisfy the configured compare rule',
         action: language === 'TH' ? 'ตรวจสอบความไม่ตรงกันในหน้า Detail แล้วแก้ไขข้อมูล หรือกดยืนยันใช้ค่านี้หากถูกต้องแล้ว' : 'Check the mismatch in the Detail view, then correct the data or confirm the value if it\'s actually correct'
       },
@@ -6014,6 +6014,7 @@ const mockWorkflows: Workflow[] = [
                               (displayStatus === ComparisonDocStatus.RECEIVED || displayStatus === ComparisonDocStatus.EXTRACTING) ? t.statusReceived :
                               displayStatus === ComparisonDocStatus.OCR_DONE ? t.statusOcrDone :
                               displayStatus === ComparisonDocStatus.SKIPPED ? t.statusSkipped :
+                              displayStatus === ComparisonDocStatus.MISMATCHED ? 'UNMATCHED' :
                               displayStatus
                             }
                           </span>
@@ -7984,6 +7985,7 @@ const mockWorkflows: Workflow[] = [
                                                      (displayStatus === ComparisonDocStatus.RECEIVED || displayStatus === ComparisonDocStatus.EXTRACTING) ? t.statusReceived :
                                                      displayStatus === ComparisonDocStatus.OCR_DONE ? t.statusOcrDone :
                                                      displayStatus === ComparisonDocStatus.SKIPPED ? t.statusSkipped :
+                                                     displayStatus === ComparisonDocStatus.MISMATCHED ? 'UNMATCHED' :
                                                      displayStatus
                                                    }
                                                </span>
