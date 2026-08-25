@@ -7591,7 +7591,11 @@ const mockWorkflows: Workflow[] = [
                    <div>
                       <div className="flex items-center gap-2 mb-0.5">
                         <h2 className="text-xl font-black text-slate-800 tracking-tighter leading-none uppercase">
-                          {selectedJob.reference}
+                          {(() => {
+                            const shipmentJobs = jobs.filter(j => j.reference === selectedJob.reference);
+                            const seqIndex = shipmentJobs.findIndex(j => j.id === selectedJob.id);
+                            return `${getWorkflowPrefix(selectedJob.workflowName)}-${String(seqIndex + 1).padStart(4, '0')}`;
+                          })()}
                         </h2>
                         {(() => {
                            const status = getJobStatus(selectedJob);
@@ -8454,7 +8458,7 @@ const mockWorkflows: Workflow[] = [
                                             </div>
 
                                             {(target as any).isPrimary && res.targets.find((t: any) => t.isPrimary) === target && (
-                                              <div className="px-2.5 py-1 bg-blue-100 text-blue-700 border border-blue-200 rounded-[4px] text-[10px] font-black uppercase tracking-wider shrink-0 shadow-sm flex items-center gap-1.5 w-fit">
+                                              <div className="px-1.5 py-0.5 bg-blue-100 text-blue-700 border border-blue-200 rounded-[4px] text-[8px] font-black uppercase tracking-wider shrink-0 shadow-sm flex items-center gap-1.5 w-fit">
                                                 Main
                                               </div>
                                             )}
