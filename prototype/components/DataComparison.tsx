@@ -7663,7 +7663,7 @@ const mockWorkflows: Workflow[] = [
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 bg-slate-50 border border-slate-200/80 p-1.5 rounded-xl shadow-sm">
+              <div className="flex items-center gap-2 p-1.5">
 
                   {/* 1. Show only differences Filter */}
                   <Tooltip content={showOnlyDiff ? (language === 'TH' ? 'แสดงทั้งหมด' : 'Show All') : (language === 'TH' ? 'ดูเฉพาะที่ต่าง' : 'Show Only Differences')}>
