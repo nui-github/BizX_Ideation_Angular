@@ -8,7 +8,7 @@ import {
   CheckCircle2, XCircle, Info, Eye, Send, Filter, ListFilter, ArrowLeft, Save, RotateCcw,
   LayoutGrid, List, ScanEye, Bot, ChevronDown, Lock, Unlock, HelpCircle, X, Loader2, ShieldCheck, ArrowUpRight, ScanSearch, History, Edit3, UploadCloud, AlertTriangle,
   Printer, RotateCw, ZoomIn, ZoomOut, Menu, Copy, Star, CheckCheck, StickyNote, SkipForward, Undo2,
-  FileBarChart2, Layers, Package
+  FileBarChart2, Layers, Package, Maximize2, Minimize2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Tabs, Tag, Badge, Empty, Button, message, DatePicker } from 'antd';
@@ -178,7 +178,7 @@ const LOCAL_T = {
     uploadManageTitle: "อัปโหลดและสะสมกลุ่มเอกสาร (Upload & Multi-File Grouping)",
     uploadManageSubtitle: "อัปโหลดไฟล์เอกสาร PDF/รูปภาพเพิ่มเติม และเลือกจับกลุ่มเพื่อเชื่อมข้อมูลเป็น 1 คอลัมน์สำหรับ OCR และเปรียบเทียบข้อมูลร่วมกัน",
     dropzonePlaceholder: "ลากไฟล์มาวางที่นี่ หรือ คลิกเพื่อเลือกไฟล์",
-    dropzoneSub: "รองรับ PDF, Excel, XML (เลือกหรือลากพร้อมกันได้หลายไฟล์)",
+    dropzoneSub: "รองรับ PDF, Excel, XML, JPG, PNG (เลือกหรือลากพร้อมกันได้หลายไฟล์)",
     newUploadedHeader: "ไฟล์ที่เพิ่งอัปโหลดใหม่ (%count% ไฟล์)",
     noFilesUploaded: "ยังไม่มีไฟล์ที่อัปโหลด ดรอปไฟล์ที่นี่เพื่อเริ่มใช้งาน",
     groupHeading: "การจัดกลุ่มเอกสารที่จะ Merge (Grouping Columns)",
@@ -205,7 +205,7 @@ const LOCAL_T = {
     uploadManageTitle: "Upload & Multi-File Grouping Workspace",
     uploadManageSubtitle: "Upload additional PDF/Image source files and select to group them as a unified column for joint OCR and comparison.",
     dropzonePlaceholder: "Drag & drop files here, or click to browse",
-    dropzoneSub: "Supports PDF, Excel, XML (multiple files allowed)",
+    dropzoneSub: "Supports PDF, Excel, XML, JPG, PNG (multiple files allowed)",
     newUploadedHeader: "Newly Uploaded Files (%count% files)",
     noFilesUploaded: "No files uploaded yet. Drag & drop files here to begin.",
     groupHeading: "Document Grouping Option (Merge to Column)",
@@ -1716,6 +1716,17 @@ const mockWorkflows: Workflow[] = [
   const [replaceAutoStartOCR, setReplaceAutoStartOCR] = useState(true);
   const [hiddenLockedDocs, setHiddenLockedDocs] = useState<string[]>([]);
   const [showColumnSelector, setShowColumnSelector] = useState(false);
+  // Expands the job header + compare table card to fill the viewport, for reviewing wide
+  // tables without the surrounding page chrome getting in the way.
+  const [isJobPanelFullscreen, setIsJobPanelFullscreen] = useState(false);
+  useEffect(() => {
+    if (!isJobPanelFullscreen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsJobPanelFullscreen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isJobPanelFullscreen]);
   // Collapses the flow stepper once the matrix table is scrolled, to free up table height —
   // reappears once scrolled back to the top.
   const [tableScrolledPastTop, setTableScrolledPastTop] = useState(false);
@@ -2036,11 +2047,11 @@ const mockWorkflows: Workflow[] = [
     const updates: Record<string, string> = { ...overriddenValues };
     
     // Check if any fields were actually changed to record a meaningful log
-    const changedFields: string[] = [];
+    const changedFields: { field: string; from: string; to: string }[] = [];
     Object.entries(tempOCRData).forEach(([field, value]) => {
       updates[`${activeSubFileId}_${field}`] = value as string;
       if (originalOCRData[field] !== value) {
-        changedFields.push(field);
+        changedFields.push({ field, from: String(originalOCRData[field] ?? ''), to: String(value ?? '') });
       }
     });
 
@@ -2048,6 +2059,9 @@ const mockWorkflows: Workflow[] = [
       if (selectedJob) assignJobToCurrentUser(selectedJob.id);
       const activeSubObj = getSubFilesForDoc(pdfPreviewUrl).find(s => s.id === activeSubFileId);
       const subLabel = activeSubObj ? activeSubObj.label : activeSubFileId;
+      const changeSummary = changedFields
+        .map(c => `${c.field} (${c.from || (language === 'TH' ? 'ว่าง' : 'empty')} → ${c.to || (language === 'TH' ? 'ว่าง' : 'empty')})`)
+        .join(', ');
       const newLog = {
         id: Math.random().toString(36).substr(2, 9),
         jobId: selectedJob?.id || '',
@@ -2055,8 +2069,8 @@ const mockWorkflows: Workflow[] = [
         timestamp: new Date().toISOString(),
         action: 'EDIT_DATA',
         details: language === 'TH'
-          ? `แก้ไขฟิลด์ในใบย่อย (${subLabel}): ${changedFields.join(', ')}`
-          : `Edited fields in sub-file (${subLabel}): ${changedFields.join(', ')}`,
+          ? `แก้ไขฟิลด์ในใบย่อย (${subLabel}): ${changeSummary}`
+          : `Edited fields in sub-file (${subLabel}): ${changeSummary}`,
         version: selectedJob?.updatedDocs?.includes(pdfPreviewUrl) ? 2 : 1,
         user: 'Kunawut W.'
       };
@@ -5341,7 +5355,7 @@ const mockWorkflows: Workflow[] = [
                     type="file"
                     id="local-file-uploader"
                     multiple
-                    accept=".pdf,.xlsx,.xls,.xml"
+                    accept=".pdf,.xlsx,.xls,.xml,.jpg,.jpeg,.png"
                     className="hidden"
                     onChange={handleFileInputChange}
                   />
@@ -5636,7 +5650,7 @@ const mockWorkflows: Workflow[] = [
                   type="file"
                   id="replace-file-uploader"
                   multiple
-                  accept=".pdf,.xlsx,.xls,.xml"
+                  accept=".pdf,.xlsx,.xls,.xml,.jpg,.jpeg,.png"
                   className="hidden"
                   onChange={handleReplaceFileInputChange}
                 />
@@ -5753,7 +5767,7 @@ const mockWorkflows: Workflow[] = [
                   ))}
                   <div className="text-xs font-bold text-amber-600 bg-amber-50 p-2.5 rounded-lg flex items-center gap-2 mt-2">
                     <Info size={14} />
-                    {language === 'TH' ? 'ไฟล์ทั้งหมดด้านบนนี้จะถูกคลุกรวม (Merge) ให้อยู่ในคอลัมน์เดียว' : 'All files above will be merged into this single column'}
+                    {language === 'TH' ? 'ไฟล์ทั้งหมดที่อัปโหลดด้านบน ข้อมูลที่สกัดออกมาได้จะถูกนำมารวมกันและแสดงอยู่ในคอลัมน์เดียวกัน' : 'The data extracted from all the files uploaded above will be combined and shown in the same column'}
                   </div>
                 </div>
               )}
@@ -5796,6 +5810,7 @@ const mockWorkflows: Workflow[] = [
         const previewFile = replaceUploadedFiles.find(f => f.id === replacePreviewFileId);
         if (!previewFile) return null;
         const isPdf = previewFile.type === 'application/pdf' || previewFile.name.toLowerCase().endsWith('.pdf');
+        const isImage = previewFile.type.startsWith('image/') || /\.(jpe?g|png)$/i.test(previewFile.name);
         const previewFormat = detectFileFormat(previewFile.name);
         return (
           <div className="fixed inset-0 z-[170] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
@@ -5833,6 +5848,10 @@ const mockWorkflows: Workflow[] = [
               <div className="flex-1 bg-slate-100 min-h-0">
                 {isPdf && replacePreviewUrl ? (
                   <iframe src={replacePreviewUrl} title={previewFile.name} className="w-full h-full border-0" />
+                ) : isImage && replacePreviewUrl ? (
+                  <div className="w-full h-full flex items-center justify-center p-6 bg-slate-900/5">
+                    <img src={replacePreviewUrl} alt={previewFile.name} className="max-w-full max-h-full object-contain rounded-lg shadow-lg" />
+                  </div>
                 ) : previewFormat === 'excel' ? (
                   !replacePreviewParsed || replacePreviewParsed.kind !== 'excel' && replacePreviewParsed.kind !== 'error' ? (
                     <div className="w-full h-full flex flex-col items-center justify-center gap-3 text-[#0f5c31] bg-[#f3f6f3]">
@@ -7550,14 +7569,19 @@ const mockWorkflows: Workflow[] = [
       )}
 
       {step === 1 && selectedJob && (
-        <div className="animate-in fade-in slide-in-from-right-4 duration-500 flex flex-col h-full overflow-hidden bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-200/50">
+        <div className={
+          isJobPanelFullscreen
+            ? "fixed inset-0 z-[500] flex flex-col overflow-hidden bg-white animate-in fade-in duration-200"
+            : "animate-in fade-in slide-in-from-right-4 duration-500 flex flex-col h-full overflow-hidden bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-200/50"
+        }>
           {/* Compact Header Section */}
           <div className="px-6 py-4 bg-white border-b border-slate-200 flex items-center justify-between z-[60] shadow-sm">
             <div className="flex items-center gap-4">
-              <button 
+              <button
                   onClick={() => {
                     setStep(0);
                     setSelectedJob(null);
+                    setIsJobPanelFullscreen(false);
                   }}
                   className="p-2.5 bg-white border border-slate-200 text-slate-400 hover:text-slate-600 rounded-[4px] shadow-sm hover:shadow transition-all flex items-center justify-center group"
                 >
@@ -7655,25 +7679,6 @@ const mockWorkflows: Workflow[] = [
                     </button>
                   </Tooltip>
 
-                  {/* Manual Compare — re-run comparison on demand, e.g. after editing compare rules.
-                      Independent of the automatic compare trigger, which still fires as-is after OCR. */}
-                  {selectedJob && selectedJob.status !== JobStatus.DONE && (
-                    <Tooltip content={language === 'TH' ? 'เปรียบเทียบข้อมูลใหม่อีกครั้ง' : 'Re-run comparison now'}>
-                      <button
-                        disabled={isUnassigned || selectedJob.status === JobStatus.PROCESSING || !Object.values(selectedJob.docs).some(s =>
-                          s !== ComparisonDocStatus.MISSING &&
-                          s !== ComparisonDocStatus.RECEIVED &&
-                          s !== ComparisonDocStatus.EXTRACTING &&
-                          s !== ComparisonDocStatus.ERROR
-                        )}
-                        onClick={() => handleStartComparison(selectedJob.id)}
-                        className="p-2.5 rounded-[4px] transition-all border flex items-center justify-center cursor-pointer shadow-sm disabled:opacity-30 disabled:cursor-not-allowed bg-white text-slate-500 border-slate-200/60 hover:bg-slate-50"
-                      >
-                        <Bot size={15} strokeWidth={2.5} className={`text-slate-400 ${selectedJob.status === JobStatus.PROCESSING ? 'animate-pulse' : ''}`} />
-                      </button>
-                    </Tooltip>
-                  )}
-
                   {/* Activity Logs for this job — who on the team did what, on which document/field */}
                   <Tooltip content={language === 'TH' ? 'ดูประวัติกิจกรรมของรายการนี้' : 'View activity logs for this job'}>
                     <button
@@ -7681,6 +7686,23 @@ const mockWorkflows: Workflow[] = [
                       className="p-2.5 rounded-[4px] transition-all border flex items-center justify-center cursor-pointer shadow-sm bg-white text-slate-500 border-slate-200/60 hover:bg-slate-50"
                     >
                       <History size={15} strokeWidth={2.5} className="text-slate-400" />
+                    </button>
+                  </Tooltip>
+
+                  {/* Fullscreen — expands this job header + compare table card to fill the
+                      viewport, for reviewing wide tables without the page chrome around it. */}
+                  <Tooltip content={isJobPanelFullscreen ? (language === 'TH' ? 'ออกจากเต็มหน้าจอ' : 'Exit Fullscreen') : (language === 'TH' ? 'ขยายเต็มหน้าจอ' : 'Fullscreen')}>
+                    <button
+                      onClick={() => setIsJobPanelFullscreen(!isJobPanelFullscreen)}
+                      className={`p-2.5 rounded-[4px] transition-all border flex items-center justify-center cursor-pointer shadow-sm ${
+                        isJobPanelFullscreen
+                          ? 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 shadow-[0_2px_8px_rgba(31,93,249,0.15)]'
+                          : 'bg-white text-slate-500 border-slate-200/60 hover:bg-slate-50'
+                      }`}
+                    >
+                      {isJobPanelFullscreen
+                        ? <Minimize2 size={15} strokeWidth={2.5} className="text-blue-500" />
+                        : <Maximize2 size={15} strokeWidth={2.5} className="text-slate-400" />}
                     </button>
                   </Tooltip>
 
