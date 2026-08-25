@@ -1383,8 +1383,20 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
                 onChange={(e) => setFormDesc(e.target.value)}
                 placeholder={isTh ? 'สรุปรายละเอียดหรือจุดประสงค์ในการใช้สคีมานี้...' : 'Detail the use case or objective of this schema...'}
                 rows={2}
+                maxLength={512}
                 className="rounded-xl border-slate-200 font-semibold text-slate-800 hover:border-blue-300 focus:border-[#1f5df9] focus:shadow-sm shadow-2xs placeholder-slate-400"
               />
+              <div className="flex justify-end">
+                <span className="text-[10px] font-bold text-slate-400">{formDesc.length} / 512</span>
+              </div>
+              <div className="flex items-start gap-2.5 p-3.5 bg-blue-50 border border-blue-100 rounded-[8px]">
+                <Info className="text-[#1f5df9] shrink-0" size={16} />
+                <span className="text-xs text-blue-800/80 font-bold leading-relaxed">
+                  {isTh
+                    ? 'ความแม่นยำของการสกัดข้อมูลขึ้นอยู่กับ "คำอธิบาย" ของแต่ละฟิลด์ด้านล่าง กรุณาเขียนให้ตรงกับข้อความที่ปรากฏบนเอกสารจริง เช่น "The INVOICE # of the invoice" จะได้ผลดีกว่า "number"'
+                    : 'Extraction accuracy depends on the "description" of each field below. Write it to match the exact wording on the real document — e.g. "The INVOICE # of the invoice" works better than "number".'}
+                </span>
+              </div>
             </div>
 
             {/* Assigned Teams */}
@@ -1659,10 +1671,10 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
                                           {sectionLabels.map((label) => (
                                             <div 
                                               key={label.id} 
-                                              className={`pt-4 ${label.type === 'array' ? 'pb-0' : 'pb-4'} px-0 bg-slate-50/50 rounded-[8px] border border-slate-200/50 ${label.type === 'array' ? 'space-y-3.5' : ''} transition-all`}
+                                              className={`p-2 bg-slate-50/50 rounded-[8px] border border-slate-200/50 ${label.type === 'array' ? 'space-y-3.5' : ''} transition-all`}
                                             >
                                               {/* Main Row */}
-                                              <div className="flex gap-4 items-center w-full px-4">
+                                              <div className="flex gap-4 items-center w-full">
                                                 {/* Field Name Input */}
                                                 <div className="flex-1 min-w-0">
                                                   <input 
@@ -1712,9 +1724,20 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
                                                 </button>
                                               </div>
 
+                                              {/* Field Description Input */}
+                                              <div className="mt-2">
+                                                <input
+                                                  type="text"
+                                                  value={label.aiPrompt || ''}
+                                                  onChange={(e) => handleUpdateLabelRow(config.docTypeId, label.id, { aiPrompt: e.target.value })}
+                                                  placeholder={isTh ? `คำอธิบายสำหรับ OCR เช่น "The INVOICE # of the invoice"` : `Description for OCR, e.g. "The INVOICE # of the invoice"`}
+                                                  className="w-full px-3.5 py-2 bg-white/70 text-slate-600 italic border border-slate-200/70 rounded-[4px] focus:outline-none focus:ring-2 focus:ring-[#1f5df9]/10 text-xs h-[34px] transition-all hover:border-slate-300 focus:border-[#1f5df9] focus:not-italic placeholder:not-italic placeholder:text-slate-400"
+                                                />
+                                              </div>
+
                                               {/* Sub-fields block for array type */}
                                               {label.type === 'array' && (
-                                                <div className="mx-4 mb-4 pl-6 border-l-2 border-dashed border-[#1f5df9]/40 space-y-3 pt-1">
+                                                <div className="mb-2 pl-6 border-l-2 border-dashed border-[#1f5df9]/40 space-y-3 pt-1">
                                                   <div className="flex items-center justify-between">
                                                     <span className="text-[11px] font-black text-[#010136]/75 uppercase tracking-wider flex items-center gap-1.5 label-section-title">
                                                       <span className="w-1.5 h-1.5 rounded-full bg-[#16EA9E]" />
@@ -1770,6 +1793,13 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
                                                               <Trash2 size={13} />
                                                             </button>
                                                           </div>
+                                                          <input
+                                                            type="text"
+                                                            value={subLabel.aiPrompt || ''}
+                                                            onChange={(e) => handleUpdateSubLabelRow(config.docTypeId, label.id, subLabel.id, { aiPrompt: e.target.value })}
+                                                            placeholder={isTh ? `คำอธิบายคอลัมน์ เช่น "Column DESCRIPTION OF GOODS"` : `Column description, e.g. "Column DESCRIPTION OF GOODS"`}
+                                                            className="w-full px-3 py-1.5 bg-white/70 text-slate-600 italic border border-slate-200/70 rounded-[4px] focus:outline-none focus:ring-2 focus:ring-[#1f5df9]/10 text-xs h-[30px] transition-all hover:border-slate-300 focus:border-[#1f5df9] focus:not-italic placeholder:not-italic placeholder:text-slate-400"
+                                                          />
                                                         </div>
                                                       ))}
                                                     </div>

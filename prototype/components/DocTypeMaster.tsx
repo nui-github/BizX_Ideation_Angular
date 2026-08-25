@@ -847,7 +847,11 @@ export const DocTypeMaster: React.FC<DocTypeMasterProps> = ({
                       placeholder={text.labelHintPlaceholder}
                       value={formHint}
                       onChange={(e) => setFormHint(e.target.value)}
+                      maxLength={512}
                     />
+                    <div className="flex justify-end">
+                      <span className="text-[10px] font-bold text-slate-400">{formHint.length} / 512</span>
+                    </div>
                   </div>
 
                   {/* Filename patterns tag input */}
