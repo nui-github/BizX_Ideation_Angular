@@ -3131,6 +3131,32 @@ const mockWorkflows: Workflow[] = [
       }
     ];
 
+    // Per-document (DocType) status shown inside the compare table's column headers — distinct
+    // from the overall job status above, which rolls all documents in the sub-job up into one.
+    const docTypeGuides = [
+      {
+        status: ComparisonDocStatus.MATCHED,
+        color: 'bg-emerald-50 border-emerald-200 text-emerald-700',
+        label: language === 'TH' ? 'ตรงกัน (Matched)' : 'Matched',
+        desc: language === 'TH' ? 'ได้เมื่อเปรียบเทียบกับไฟล์อื่นในรายการแล้ว ข้อมูลตรงตามเงื่อนไข (Compare Rule) ที่ตั้งค่าไว้' : 'Set once this document is compared against the others in the job and the data satisfies the configured compare rule',
+        action: language === 'TH' ? 'ไม่ต้องดำเนินการเพิ่มเติม' : 'No further action needed'
+      },
+      {
+        status: ComparisonDocStatus.MISMATCHED,
+        color: 'bg-rose-50 border-rose-200 text-rose-700',
+        label: language === 'TH' ? 'ไม่ตรงกัน (Mismatched)' : 'Mismatched',
+        desc: language === 'TH' ? 'ได้เมื่อเปรียบเทียบแล้วรายการไม่ตรงตามเงื่อนไข (Compare Rule) ที่ตั้งค่าไว้' : 'Set once this document is compared and the data does not satisfy the configured compare rule',
+        action: language === 'TH' ? 'ตรวจสอบความไม่ตรงกันในหน้า Detail แล้วแก้ไขข้อมูล หรือกดยืนยันใช้ค่านี้หากถูกต้องแล้ว' : 'Check the mismatch in the Detail view, then correct the data or confirm the value if it\'s actually correct'
+      },
+      {
+        status: ComparisonDocStatus.OCR_DONE,
+        color: 'bg-amber-50 border-amber-200 text-amber-600',
+        label: language === 'TH' ? 'รอเปรียบเทียบข้อมูล' : 'Waiting for Comparison',
+        desc: language === 'TH' ? 'ได้ในจังหวะหลังอ่านไฟล์ (OCR) เสร็จแล้ว แต่ยังไม่ได้เปรียบเทียบข้อมูล กำลังรอการเปรียบเทียบอยู่' : 'Set right after this document finishes OCR extraction but before it has been compared — waiting for the comparison to run',
+        action: language === 'TH' ? 'รอระบบเปรียบเทียบข้อมูลอัตโนมัติ' : 'Wait for the system to run the comparison automatically'
+      }
+    ];
+
     return (
       <AnimatePresence>
         {showStatusGuide && (
@@ -3167,6 +3193,40 @@ const mockWorkflows: Workflow[] = [
               <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
                 {guides.map((g, i) => (
                   <div key={i} className="space-y-4">
+                    <div className="flex items-center gap-4">
+                      <span className={`px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-tighter shadow-sm border ${g.color}`}>
+                        {g.label}
+                      </span>
+                      <div className="flex-1 h-px bg-slate-100"></div>
+                    </div>
+                    <div className="px-1">
+                      <h4 className="text-sm font-black text-slate-800 leading-snug mb-3">{g.desc}</h4>
+                      <div className="p-4 bg-slate-50/80 rounded-2xl border border-slate-100 shadow-sm">
+                        <p className="text-[11px] font-bold text-slate-500 leading-relaxed flex flex-col gap-1">
+                           <span className="text-blue-600 font-black uppercase tracking-wider text-[9px] shrink-0">{language === 'TH' ? 'การดำเนินการ:' : 'Action:'}</span>
+                           <span>{g.action}</span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                <div className="pt-2">
+                  <div className="flex items-center gap-3 mb-1">
+                    <FileText size={14} className="text-slate-400 shrink-0" />
+                    <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest">
+                      {language === 'TH' ? 'สถานะเอกสาร (Doc Type)' : 'Doc Type Status'}
+                    </h3>
+                  </div>
+                  <p className="text-[10px] font-bold text-slate-400 leading-relaxed">
+                    {language === 'TH'
+                      ? 'สถานะของเอกสารแต่ละไฟล์ในตาราง Compare — ต่างจากสถานะรายการย่อยด้านบนซึ่งสรุปรวมทุกไฟล์'
+                      : 'The status of each individual document in the compare table — separate from the sub-job status above, which rolls every file up into one.'}
+                  </p>
+                </div>
+
+                {docTypeGuides.map((g, i) => (
+                  <div key={`doctype-${i}`} className="space-y-4">
                     <div className="flex items-center gap-4">
                       <span className={`px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-tighter shadow-sm border ${g.color}`}>
                         {g.label}
