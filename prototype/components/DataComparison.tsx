@@ -8,7 +8,7 @@ import {
   CheckCircle2, XCircle, Info, Eye, Send, Filter, ListFilter, ArrowLeft, Save, RotateCcw,
   LayoutGrid, List, ScanEye, Bot, ChevronDown, Lock, Unlock, HelpCircle, X, Loader2, ShieldCheck, ArrowUpRight, ScanSearch, History, Edit3, UploadCloud, AlertTriangle,
   Printer, RotateCw, ZoomIn, ZoomOut, Menu, Copy, Star, CheckCheck, StickyNote, SkipForward, Undo2,
-  FileBarChart2, Layers
+  FileBarChart2, Layers, Package
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Tabs, Tag, Badge, Empty, Button, message, DatePicker } from 'antd';
@@ -368,48 +368,6 @@ const getDetailedDiffExplanation = (targetVal: string, masterVal: string, lang: 
   return lang === 'TH' ? 'ค่าต่างกันบางส่วน' : 'Partially different value';
 };
 
-// Compact hotspot badge for a compare-table cell whose doc type has multiple sub-files
-// (e.g. 3 B/L pages, one per container). Only rendered when the sub-files disagree on this
-// field — when they all agree there's nothing to flag, so the cell stays exactly as-is and
-// the table doesn't get noisier than it needs to be.
-const SubFileValueBreakdown: React.FC<{
-  language: Language;
-  matchCount: number;
-  rows: { label: string; value: string; isMatch: boolean }[];
-}> = ({ language, matchCount, rows }) => {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="relative">
-      <button
-        onClick={(e) => { e.stopPropagation(); setOpen(o => !o); }}
-        onBlur={() => setTimeout(() => setOpen(false), 200)}
-        className="flex items-center gap-1 px-1.5 py-0.5 rounded border bg-amber-50 text-amber-700 border-amber-200/60 hover:bg-amber-100 text-[9px] font-black tracking-tight transition-colors cursor-pointer"
-      >
-        <Layers size={9} strokeWidth={2.5} />
-        <span>{matchCount}/{rows.length} {language === 'TH' ? 'ใบตรงกัน' : 'files match'}</span>
-        <ChevronDown size={9} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
-      </button>
-
-      {open && (
-        <div className="absolute z-[300] top-full left-1/2 -translate-x-1/2 mt-1 w-56 bg-white rounded-lg shadow-lg border border-slate-200 py-1 text-left animate-in fade-in zoom-in-95 duration-100">
-          <div className="px-3 py-1.5 border-b border-slate-100 text-[9px] font-black uppercase tracking-wider text-slate-400">
-            {language === 'TH' ? 'ค่าตามใบย่อย' : 'Value per sub-file'}
-          </div>
-          {rows.map((r, i) => (
-            <div key={i} className="px-3 py-1.5 flex items-center justify-between gap-2 border-b border-slate-50 last:border-b-0">
-              <span className="text-[10px] font-bold text-slate-500 truncate">{r.label}</span>
-              <span className={`text-[10px] font-black flex items-center gap-1 shrink-0 ${r.isMatch ? 'text-emerald-600' : 'text-rose-600'}`}>
-                {r.isMatch ? <Check size={10} strokeWidth={4} /> : <AlertCircle size={10} />}
-                <span className="truncate max-w-[90px]">{r.value}</span>
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
 export const DataComparison: React.FC<DataComparisonProps> = ({ language, trackingItems, role = UserRole.USER, targetJobId, onConsumeTargetJobId }) => {
   const t = TRANSLATIONS[language];
   
@@ -578,8 +536,7 @@ export const DataComparison: React.FC<DataComparisonProps> = ({ language, tracki
 
   // Sub-files of the same doc type (e.g. 3 separate B/L pages for 3 containers) can each be
   // OCR'd to slightly different values for a handful of fields — mirrors the variation already
-  // simulated in the sub-file PDF preview drawer so the compare table's per-subfile breakdown
-  // (see SubFileValueBreakdown) stays consistent with what the drawer shows.
+  // simulated in the sub-file PDF preview drawer.
   const getSubFileFieldValue = (fieldName: string, subFileId: string, baseValue: any) => {
     if (subFileId.endsWith('_sub_2')) {
       if (fieldName === 'Consignee TAX ID') return '0105562000002';
@@ -7662,11 +7619,14 @@ const mockWorkflows: Workflow[] = [
                         )}
                       </div>
                       <div className="flex items-center gap-2 flex-wrap">
-                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{selectedJob.workflowName}</p>
+                         <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-blue-50 border border-blue-200 text-[#1f5df9] text-[9px] font-black uppercase tracking-widest">
+                           <Package size={9} />
+                           {selectedJob.reference}
+                         </span>
                          <div className="w-1 h-1 bg-slate-200 rounded-full"></div>
                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{selectedJob.createdAt ? formatDisplayDate(selectedJob.createdAt) : 'N/A'}</p>
                          <div className="w-1 h-1 bg-slate-200 rounded-full"></div>
-                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5 bg-slate-50 border border-slate-100 rounded-lg px-1.5 py-0.5 shadow-sm">
+                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
                            <User size={9} className="text-[#1f5df9]" />
                            <span className="text-slate-400 text-[8px]">{language === 'TH' ? 'ผู้รับผิดชอบ:' : 'USER:'}</span>
                            <span className="text-[#010136] font-extrabold font-mono text-[9px]">
@@ -8406,16 +8366,6 @@ const mockWorkflows: Workflow[] = [
                                       );
                                     }
                                     const isUserConfirmed = target && (target.ruleTitle === 'ยืนยันโดยผู้ใช้' || target.ruleTitle === 'Confirmed by User' || target.ruleTitle === 'ผ่านการตรวจสอบแล้ว' || target.ruleTitle === 'Verified');
-                                    const cellSubFiles = getSubFilesForDoc(docName);
-                                    const subFileRows = cellSubFiles.length > 1 ? cellSubFiles.map(sf => {
-                                      const variedValue = getSubFileFieldValue(res.fieldName, sf.id, target.value);
-                                      const isMatch = variedValue === target.value
-                                        ? (target.status === 'MATCH' || target.status === 'SYNONYM')
-                                        : String(variedValue ?? '').trim().toUpperCase() === String(res.sourceValue ?? '').trim().toUpperCase();
-                                      return { label: sf.label, value: String(variedValue ?? ''), isMatch };
-                                    }) : [];
-                                    const subFileMatchCount = subFileRows.filter(r => r.isMatch).length;
-                                    const showSubFileBreakdown = subFileRows.length > 1 && subFileMatchCount < subFileRows.length;
                                     return (
                                       <td key={docName} className={`p-0 border-r border-r-slate-100 border-t border-t-slate-200 transition-all ${
                                          (target as any).isPrimary ? 'bg-blue-50' :
@@ -8432,11 +8382,6 @@ const mockWorkflows: Workflow[] = [
                                             target.status === 'MISMATCH' ? 'text-rose-600' :
                                             'text-slate-300'
                                          }`}>
-                                            {(target as any).isPrimary && res.targets.find((t: any) => t.isPrimary) === target && (
-                                              <div className="px-2.5 py-1 bg-blue-100 text-blue-700 border border-blue-200 rounded-[4px] text-[10px] font-black uppercase tracking-wider shrink-0 shadow-sm flex items-center gap-1.5 w-fit">
-                                                {language === 'TH' ? 'ชุดข้อมูลหลัก' : 'PRIMARY DOC'}
-                                              </div>
-                                            )}
                                             <div className="flex items-center gap-2">
                                                <span className="break-all">
                                                    {target.status === 'MISMATCH' && target.value && res.sourceValue ? (
@@ -8486,8 +8431,10 @@ const mockWorkflows: Workflow[] = [
                                                 )}
                                             </div>
 
-                                            {showSubFileBreakdown && (
-                                              <SubFileValueBreakdown language={language} matchCount={subFileMatchCount} rows={subFileRows} />
+                                            {(target as any).isPrimary && res.targets.find((t: any) => t.isPrimary) === target && (
+                                              <div className="px-2.5 py-1 bg-blue-100 text-blue-700 border border-blue-200 rounded-[4px] text-[10px] font-black uppercase tracking-wider shrink-0 shadow-sm flex items-center gap-1.5 w-fit">
+                                                Main
+                                              </div>
                                             )}
 
                                             {target.status === 'MISMATCH' && (
