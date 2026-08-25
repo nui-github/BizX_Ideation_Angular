@@ -4553,8 +4553,8 @@ const mockWorkflows: Workflow[] = [
     const getStatusBadge = (job: ComparisonJob, isBlocked: boolean = false) => {
       if (isBlocked) {
         return (
-          <span className="bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-tighter inline-flex items-center gap-1.5 font-sans whitespace-nowrap">
-            <Lock size={10} className="text-rose-500" />
+          <span className="bg-slate-100 text-slate-500 border border-slate-200 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-tighter inline-flex items-center gap-1.5 font-sans whitespace-nowrap">
+            <Lock size={10} className="text-slate-400" />
             {language === 'TH' ? 'ยังเริ่มไม่ได้' : 'CANNOT START'}
           </span>
         );
