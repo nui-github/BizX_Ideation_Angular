@@ -1762,6 +1762,21 @@ const mockWorkflows: Workflow[] = [
   // Collapses the flow stepper once the matrix table is scrolled, to free up table height —
   // reappears once scrolled back to the top.
   const [tableScrolledPastTop, setTableScrolledPastTop] = useState(false);
+  // rAF-throttled so the collapse state flips at most once per frame instead of once per wheel
+  // tick, and a hysteresis gap (24px vs 4px) stops it flapping back and forth near the threshold —
+  // both were causing the header collapse animation to stutter mid-scroll.
+  const tableScrollRafRef = useRef<number | null>(null);
+  const handleTableScroll = (scrollTop: number) => {
+    if (tableScrollRafRef.current !== null) return;
+    tableScrollRafRef.current = requestAnimationFrame(() => {
+      tableScrollRafRef.current = null;
+      setTableScrolledPastTop(prev => {
+        if (!prev && scrollTop > 24) return true;
+        if (prev && scrollTop < 4) return false;
+        return prev;
+      });
+    });
+  };
   const [showDeleteColumnConfirmModal, setShowDeleteColumnConfirmModal] = useState(false);
   const [deleteColumnTargetDocName, setDeleteColumnTargetDocName] = useState<string | null>(null);
   const [confirmAllMismatchesTargetDocName, setConfirmAllMismatchesTargetDocName] = useState<string | null>(null);
@@ -7881,7 +7896,7 @@ const mockWorkflows: Workflow[] = [
             {(() => {
               const shipmentSteps = jobs.filter(j => j.reference === selectedJob.reference);
               return (
-                <div className={`overflow-hidden shrink-0 transition-[max-height] duration-300 ease-in-out ${tableScrolledPastTop ? 'max-h-0' : 'max-h-24'}`}>
+                <div className={`overflow-hidden shrink-0 transition-[max-height] duration-300 ease-in-out will-change-[max-height] ${tableScrolledPastTop ? 'max-h-0' : 'max-h-24'}`}>
                 <div className="px-6 py-3 bg-slate-50/60 border-b border-slate-200 flex items-center gap-1.5 overflow-x-auto">
                   {shipmentSteps.map((step, idx) => {
                     const isActive = step.id === selectedJob.id;
@@ -7936,7 +7951,7 @@ const mockWorkflows: Workflow[] = [
                   </div>
                   <div
                     className="flex-1 overflow-auto custom-scrollbar relative"
-                    onScroll={(e) => setTableScrolledPastTop(e.currentTarget.scrollTop > 8)}
+                    onScroll={(e) => handleTableScroll(e.currentTarget.scrollTop)}
                   >
                      <table className="w-full border-separate border-spacing-0 sticky top-0 z-40 bg-white" style={{ tableLayout: 'fixed' }}>
                         <colgroup>
@@ -7947,7 +7962,7 @@ const mockWorkflows: Workflow[] = [
                         </colgroup>
                         <thead>
                            <tr>
-                              <th className={`bg-slate-50 border-b border-r border-slate-200 px-4 py-1.5 min-w-[180px] flex items-center justify-center uppercase tracking-tighter shadow-[2px_0_5px_rgba(0,0,0,0.02)] sticky left-0 z-40 transition-all duration-300 ${tableScrolledPastTop ? 'h-[48px]' : 'h-[82px]'}`}>
+                              <th className={`bg-slate-50 border-b border-r border-slate-200 px-4 py-1.5 min-w-[180px] flex items-center justify-center uppercase tracking-tighter shadow-[2px_0_5px_rgba(0,0,0,0.02)] sticky left-0 z-40 transition-[height] duration-300 will-change-[height] ${tableScrolledPastTop ? 'h-[48px]' : 'h-[82px]'}`}>
                                  <h3 className="text-[10px] font-black text-slate-700 uppercase tracking-widest leading-none text-center">{t.masterVsDocs}</h3>
                               </th>
 
@@ -7962,7 +7977,7 @@ const mockWorkflows: Workflow[] = [
                                    : docStatus;
                                  
                                  return (
-                                   <th key={docName} className={`bg-slate-50 border-b border-slate-200 px-2 py-1.5 min-w-[180px] text-center group cursor-pointer hover:bg-slate-100 transition-all duration-300 border-r border-slate-100 z-30 relative ${tableScrolledPastTop ? 'h-[48px]' : 'h-[82px]'}`} onClick={() => isReady && setPdfPreviewUrl(DEMO_PREVIEW_FILENAME_OVERRIDES[selectedJob.id]?.[docName] || docName)}>
+                                   <th key={docName} className={`bg-slate-50 border-b border-slate-200 px-2 py-1.5 min-w-[180px] text-center group cursor-pointer hover:bg-slate-100 transition-[height,background-color] duration-300 will-change-[height] border-r border-slate-100 z-30 relative ${tableScrolledPastTop ? 'h-[48px]' : 'h-[82px]'}`} onClick={() => isReady && setPdfPreviewUrl(DEMO_PREVIEW_FILENAME_OVERRIDES[selectedJob.id]?.[docName] || docName)}>
                                        {(docStatus === ComparisonDocStatus.RECEIVED || docStatus === ComparisonDocStatus.MISSING) && (
                                          <div className="absolute inset-0 z-50 bg-white/95 backdrop-blur-[1px] flex flex-col items-center justify-between p-1.5 border-x border-slate-100 shadow-inner">
                                             <div className="flex items-center justify-between w-full gap-1 px-1 py-0.5">
@@ -8032,10 +8047,10 @@ const mockWorkflows: Workflow[] = [
                                             `}</style>
                                          </div>
                                        )}
-                                      <div className={`flex flex-col items-center transition-all duration-300 ${tableScrolledPastTop ? 'gap-0.5' : 'gap-3'}`}>
+                                      <div className={`flex flex-col items-center transition-[gap] duration-300 ${tableScrolledPastTop ? 'gap-0.5' : 'gap-3'}`}>
                                          {/* Status and Action Buttons */}
                                          <div className="flex items-center justify-between w-full px-1">
-                                            <div className={`flex items-center gap-1.5 origin-left transition-transform duration-300 ${tableScrolledPastTop ? 'scale-90' : 'scale-100'} ${
+                                            <div className={`flex items-center gap-1.5 origin-left transition-transform duration-300 will-change-transform ${tableScrolledPastTop ? 'scale-90' : 'scale-100'} ${
                                               displayStatus === ComparisonDocStatus.MATCHED || displayStatus === ComparisonDocStatus.LOCKED ? 'px-2.5 py-0.5 bg-emerald-50 text-emerald-600 border border-emerald-200/60 rounded-[4px] shadow-sm' :
                                               displayStatus === ComparisonDocStatus.OCR_DONE ? 'px-2.5 py-0.5 bg-amber-50 text-amber-600 border border-amber-200/60 rounded-[4px] shadow-sm' :
                                               displayStatus === ComparisonDocStatus.ERROR || displayStatus === ComparisonDocStatus.MISMATCHED ? 'px-2.5 py-0.5 bg-rose-50 text-rose-600 border border-rose-200/60 rounded-[4px] shadow-sm' :
@@ -8069,7 +8084,7 @@ const mockWorkflows: Workflow[] = [
                                             </div>
 
                                             
-                                             <div className={`flex items-center gap-1 origin-right transition-transform duration-300 ${tableScrolledPastTop ? 'scale-90' : 'scale-100'}`}>
+                                             <div className={`flex items-center gap-1 origin-right transition-transform duration-300 will-change-transform ${tableScrolledPastTop ? 'scale-90' : 'scale-100'}`}>
                                                {displayStatus === ComparisonDocStatus.MISMATCHED && (
                                                     <Tooltip content={language === 'TH' ? 'ยืนยันใช้ค่านี้ทั้งเอกสาร' : 'Confirm all mismatches in this document'}>
                                                       <button
@@ -8154,7 +8169,7 @@ const mockWorkflows: Workflow[] = [
                                          </div>
 
                                          <div className="flex flex-col items-center gap-0">
-                                            <span className={`font-black tracking-tight flex items-center gap-1 uppercase transition-all duration-300 ${tableScrolledPastTop ? 'text-[10px]' : 'text-[11px]'} ${displayStatus === ComparisonDocStatus.MISMATCHED ? 'text-rose-500' : 'text-slate-800'}`}>
+                                            <span className={`font-black tracking-tight flex items-center gap-1 uppercase transition-[font-size] duration-300 ${tableScrolledPastTop ? 'text-[10px]' : 'text-[11px]'} ${displayStatus === ComparisonDocStatus.MISMATCHED ? 'text-rose-500' : 'text-slate-800'}`}>
                                                {docName.length > 14 ? (
                                                  <Tooltip content={docName}>
                                                    <span className="cursor-help hover:text-indigo-600 transition-colors">{docName.slice(0, 14) + '...'}</span>
@@ -8262,7 +8277,7 @@ const mockWorkflows: Workflow[] = [
                                          <col key={`col-${docName}`} className="w-[180px]" style={{ minWidth: '180px' }} />
                                       ))}
                                    </colgroup>
-                                   <thead className={`sticky z-[25] bg-slate-50 shadow-[0_1px_4px_rgba(0,0,0,0.02)] transition-all duration-300 ${tableScrolledPastTop ? 'top-[48px]' : 'top-[82px]'}`}>
+                                   <thead className={`sticky z-[25] bg-slate-50 shadow-[0_1px_4px_rgba(0,0,0,0.02)] transition-[top] duration-300 will-change-[top] ${tableScrolledPastTop ? 'top-[48px]' : 'top-[82px]'}`}>
                                      <tr className="group cursor-pointer hover:bg-slate-100 transition-all" onClick={() => togglePart(part)}>
                                        <th 
                                          colSpan={comparedDocs.length + 1} 
@@ -8313,7 +8328,7 @@ const mockWorkflows: Workflow[] = [
                                            <tbody key={group}>
                                              {group !== 'no-group' && (
                                                 <tr className="bg-slate-100/80 group/itemheader hover:bg-slate-200/50 cursor-pointer transition-colors" onClick={(e) => toggleGroup(e, group as string)}>
-                                                   <td colSpan={comparedDocs.length + 1} className={`sticky z-[24] p-0 border-y-2 border-slate-200/80 bg-slate-100/90 shadow-sm relative transition-all duration-300 ${tableScrolledPastTop ? 'top-[80px]' : 'top-[114px]'}`}>
+                                                   <td colSpan={comparedDocs.length + 1} className={`sticky z-[24] p-0 border-y-2 border-slate-200/80 bg-slate-100/90 shadow-sm relative transition-[top] duration-300 will-change-[top] ${tableScrolledPastTop ? 'top-[80px]' : 'top-[114px]'}`}>
                                                       <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#1f5df9]"></div>
                                                       <div className="flex items-center gap-3 sticky left-0 pl-8 pr-6 py-2.5 z-[26] w-fit">
                                                          <div className="w-5 h-5 rounded bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-500 group-hover/itemheader:text-blue-600 group-hover/itemheader:border-blue-200 transition-all">
