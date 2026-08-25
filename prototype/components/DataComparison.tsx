@@ -4299,7 +4299,7 @@ const mockWorkflows: Workflow[] = [
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <input
                 type="text"
-                placeholder={language === 'TH' ? 'ค้นหาเลขที่ Shipment...' : 'Search Shipment Reference...'}
+                placeholder={language === 'TH' ? 'ค้นหาชื่อ Shipment' : 'Search by shipment name'}
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
