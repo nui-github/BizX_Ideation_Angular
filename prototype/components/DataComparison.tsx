@@ -1212,48 +1212,6 @@ const mockWorkflows: Workflow[] = [
     setExportJob(null);
   };
 
-  // Some flows only need their documents OCR'd — not compared against a master document at
-  // all — before moving on. Skipping marks every extracted doc SKIPPED (data present, never
-  // verified) rather than MATCHED/MISMATCHED, and advances the shipment exactly like a normal
-  // export: the next job still gets this job's already-extracted data carried forward.
-  const handleSkipFlow = (jobToSkip: ComparisonJob) => {
-    const updatedDocs = { ...jobToSkip.docs };
-    Object.keys(updatedDocs).forEach(docName => {
-      const s = updatedDocs[docName];
-      if (s === ComparisonDocStatus.MISSING || s === ComparisonDocStatus.RECEIVED || s === ComparisonDocStatus.EXTRACTING || s === ComparisonDocStatus.ERROR) return;
-      updatedDocs[docName] = ComparisonDocStatus.SKIPPED;
-    });
-    const skippedJob: ComparisonJob = { ...jobToSkip, docs: updatedDocs, status: JobStatus.DONE };
-
-    setJobs(prevJobs => prevJobs.map(j => j.id === jobToSkip.id ? skippedJob : j));
-
-    setOcrLogs(prev => [
-      {
-        id: `log-skip-${Date.now()}`,
-        jobId: jobToSkip.id,
-        docName: Object.keys(jobToSkip.docs).join(', '),
-        timestamp: new Date().toISOString(),
-        action: 'SKIP_FLOW',
-        details: language === 'TH'
-          ? 'ข้ามการเปรียบเทียบข้อมูลของรายการย่อยนี้ และส่งต่อไปยังรายการย่อยถัดไป'
-          : 'Skipped comparison for this job and advanced to the next job',
-        version: 1,
-        user: CURRENT_USER_NAME
-      },
-      ...prev
-    ]);
-
-    advanceToNextJob(skippedJob);
-
-    message.success(
-      language === 'TH'
-        ? `ข้ามการเปรียบเทียบของ "${jobToSkip.workflowName}" เรียบร้อยแล้ว`
-        : `Skipped comparison for "${jobToSkip.workflowName}"`
-    );
-
-    setShowSkipFlowConfirm(false);
-  };
-
   // Lets a reviewer on job N send a previous job (N-1) in the same shipment back for correction
   // — e.g. they spot that an earlier job's document is still wrong while reviewing this one.
   // The previous job is marked REJECTED (not DONE), which re-blocks every job after it in the
@@ -1748,7 +1706,6 @@ const mockWorkflows: Workflow[] = [
   const [showDeleteColumnConfirmModal, setShowDeleteColumnConfirmModal] = useState(false);
   const [deleteColumnTargetDocName, setDeleteColumnTargetDocName] = useState<string | null>(null);
   const [confirmAllMismatchesTargetDocName, setConfirmAllMismatchesTargetDocName] = useState<string | null>(null);
-  const [showSkipFlowConfirm, setShowSkipFlowConfirm] = useState(false);
   const [showRejectFlowConfirm, setShowRejectFlowConfirm] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectionReasonModal, setShowRejectionReasonModal] = useState(false);
@@ -3740,14 +3697,6 @@ const mockWorkflows: Workflow[] = [
     return isLastJob && isAllDocsMatched(job);
   };
 
-  const isLastJobInShipment = (job: ComparisonJob) => {
-    if (!job) return false;
-    const shipmentJobs = jobs.filter(j => j.reference === job.reference);
-    if (shipmentJobs.length === 0) return false;
-    const seqIndex = shipmentJobs.findIndex(j => j.id === job.id);
-    return seqIndex === shipmentJobs.length - 1;
-  };
-
   // Rejecting only makes sense from the second job in a shipment onward — there's no earlier
   // step to kick a first job back to.
   const canRejectToPreviousJob = (job: ComparisonJob) => {
@@ -3763,17 +3712,6 @@ const mockWorkflows: Workflow[] = [
     const shipmentJobs = jobs.filter(j => j.reference === job.reference);
     const seqIndex = shipmentJobs.findIndex(j => j.id === job.id);
     return seqIndex > 0 ? shipmentJobs[seqIndex - 1] : null;
-  };
-
-  // Every doc has finished OCR extraction (whatever the comparison verdict, if any) — the
-  // point at which a flow that doesn't need comparison can be skipped forward.
-  const isReadyToSkipFlow = (job: ComparisonJob) => {
-    return Object.values(job.docs).every(s =>
-      s !== ComparisonDocStatus.MISSING &&
-      s !== ComparisonDocStatus.RECEIVED &&
-      s !== ComparisonDocStatus.EXTRACTING &&
-      s !== ComparisonDocStatus.ERROR
-    );
   };
 
   const getLastSubItemExportTooltip = (job: ComparisonJob, defaultText: string) => {
@@ -7136,44 +7074,6 @@ const mockWorkflows: Workflow[] = [
         );
       })()}
 
-      {/* Skip Flow Confirm Modal */}
-      {showSkipFlowConfirm && selectedJob && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300 font-sans">
-          <div className="bg-white p-10 rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 text-center flex flex-col items-center gap-6 animate-in zoom-in-95 duration-300">
-            <div className="text-amber-500 flex items-center justify-center mb-2">
-              <SkipForward size={44} strokeWidth={2} />
-            </div>
-            <div>
-              <h3 className="text-xl font-black text-[#010136] tracking-tight mb-3 font-sans">
-                {language === 'TH' ? 'ข้ามการเปรียบเทียบข้อมูล' : 'Skip Data Comparison'}
-              </h3>
-              <p className="text-slate-500 font-medium text-[13px] leading-relaxed font-sans max-w-sm mx-auto">
-                {language === 'TH'
-                  ? `เอกสารทั้งหมดในรายการย่อยนี้ถูกอ่านไฟล์ (OCR) แล้ว แต่จะไม่ถูกเปรียบเทียบกับเอกสารหลัก ระบบจะทำเครื่องหมายว่า "ข้ามการเปรียบเทียบ" และส่งต่อข้อมูลที่สกัดได้ไปยังรายการย่อยถัดไปทันที`
-                  : `Every document in this job has been OCR'd, but none will be compared against a master document. They'll be marked "Skipped" and their extracted data handed off to the next job immediately.`}
-              </p>
-            </div>
-            <div className="flex gap-4 w-full mt-4">
-              <Button
-                size="large"
-                className="flex-1 rounded-[4px] h-14 font-black uppercase tracking-widest text-[11px] border-slate-200 text-slate-600 hover:bg-slate-50 font-sans"
-                onClick={() => setShowSkipFlowConfirm(false)}
-              >
-                {language === 'TH' ? 'ยกเลิก' : 'CANCEL'}
-              </Button>
-              <Button
-                type="primary"
-                size="large"
-                className="flex-1 rounded-[4px] h-14 font-black uppercase tracking-widest text-[11px] bg-[#1f5df9] border-none shadow-lg shadow-[#1f5df9]/20 hover:!bg-[#104BE3] font-sans"
-                onClick={() => handleSkipFlow(selectedJob)}
-              >
-                {language === 'TH' ? 'ข้ามและไปต่อ' : 'SKIP & CONTINUE'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Rejection Reason Popup — full reason text behind the icon button next to the REJECTED pill */}
       {showRejectionReasonModal && selectedJob?.rejectionReason && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300 font-sans">
@@ -7819,25 +7719,6 @@ const mockWorkflows: Workflow[] = [
                     </Tooltip>
                   )}
 
-                  {/* Skip Flow — for jobs that only need OCR, not comparison, before moving on */}
-                  {selectedJob.status !== JobStatus.DONE && (
-                    <Tooltip content={
-                      isLastJobInShipment(selectedJob)
-                        ? (language === 'TH' ? 'เป็นรายการย่อยสุดท้ายของ shipment แล้ว ไม่มีขั้นตอนถัดไปให้ข้ามไป' : 'This is the last job in the shipment — no next step to skip to')
-                        : isReadyToSkipFlow(selectedJob)
-                        ? (language === 'TH' ? 'ข้ามการเปรียบเทียบและไปยังรายการย่อยถัดไปทันที' : 'Skip comparison and move straight to the next job')
-                        : (language === 'TH' ? 'ต้องอ่านไฟล์ (OCR) ให้ครบทุกเอกสารก่อนจึงจะข้ามได้' : 'All documents must finish OCR before you can skip')
-                    }>
-                      <button
-                        disabled={isUnassigned || !isReadyToSkipFlow(selectedJob) || isLastJobInShipment(selectedJob)}
-                        onClick={() => setShowSkipFlowConfirm(true)}
-                        className="p-2.5 rounded-[4px] transition-all flex items-center justify-center border disabled:opacity-30 disabled:cursor-not-allowed bg-white border-slate-200/60 text-slate-500 hover:bg-slate-50 hover:text-[#1f5df9] hover:border-blue-200"
-                      >
-                        <SkipForward size={15} strokeWidth={2.5} />
-                      </button>
-                    </Tooltip>
-                  )}
-
                   {/* Reject Flow — from the 2nd job in a shipment onward, send the previous job
                       back for correction (e.g. a reviewer here spots the earlier job's document
                       is still wrong). */}
@@ -7853,9 +7734,9 @@ const mockWorkflows: Workflow[] = [
                     </Tooltip>
                   )}
 
-                  {/* 6. Export Data Button */}
+                  {/* 6. Finish / Export Data Button */}
                   <Tooltip content={getLastSubItemExportTooltip(selectedJob, t.exportData)}>
-                      <button 
+                      <button
                       disabled={isUnassigned || selectedJob.status !== JobStatus.READY || !isAllDocsMatched(selectedJob) || isLastSubItemWithAllDocsMatched(selectedJob)}
                       onClick={() => {
                         setExportJob(selectedJob);
@@ -7863,13 +7744,16 @@ const mockWorkflows: Workflow[] = [
                         setSelectedExportWorkflow(selectedJob.workflowName || '');
                         setSelectedExportPlatform('FTA');
                       }}
-                      className={`p-2.5 rounded-[4px] transition-all flex items-center justify-center border disabled:opacity-30 disabled:cursor-not-allowed ${
+                      className={`px-3.5 py-2.5 rounded-[4px] transition-all flex items-center justify-center gap-1.5 border disabled:opacity-30 disabled:cursor-not-allowed ${
                         (selectedJob.status === JobStatus.READY && isAllDocsMatched(selectedJob) && !isLastSubItemWithAllDocsMatched(selectedJob))
-                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-blue-700/20 hover:from-blue-700 hover:to-indigo-700 shadow-md shadow-blue-500/10' 
+                          ? 'bg-[#1f5df9] text-white border-[#1f5df9] hover:bg-[#104BE3] shadow-md shadow-blue-500/10'
                           : 'bg-white border-slate-200/60 text-slate-400 opacity-50 cursor-not-allowed'
                       }`}
                     >
                       <Send size={15} strokeWidth={2.5} />
+                      <span className="text-xs font-black uppercase tracking-wider whitespace-nowrap">
+                        {language === 'TH' ? 'เสร็จสิ้น' : 'Done'}
+                      </span>
                     </button>
                   </Tooltip>
               </div>
@@ -8735,7 +8619,6 @@ const mockWorkflows: Workflow[] = [
                                     : log.action === 'APPROVE' ? <Send size={14} className="text-teal-500 shrink-0" />
                                     : log.action === 'CONFIRM_DATA' ? <CheckCircle2 size={14} className="text-rose-500 shrink-0" />
                                     : log.action === 'UNCONFIRM_DATA' ? <XCircle size={14} className="text-slate-400 shrink-0" />
-                                    : log.action === 'SKIP_FLOW' ? <SkipForward size={14} className="text-amber-500 shrink-0" />
                                     : (log.action === 'REJECT_FLOW' || log.action === 'REJECTED') ? <Undo2 size={14} className="text-rose-500 shrink-0" />
                                     : <UploadCloud size={14} className="text-emerald-500 shrink-0" />}
                                   <span className="text-xs font-bold text-slate-700 truncate">
@@ -8744,7 +8627,6 @@ const mockWorkflows: Workflow[] = [
                                       : log.action === 'APPROVE' ? (language === 'TH' ? 'ส่งออกข้อมูล' : 'Exported Data')
                                       : log.action === 'CONFIRM_DATA' ? (language === 'TH' ? 'กดยืนยันใช้ค่านี้' : 'Confirmed Value')
                                       : log.action === 'UNCONFIRM_DATA' ? (language === 'TH' ? 'กดยกเลิกการยืนยัน' : 'Unconfirmed Value')
-                                      : log.action === 'SKIP_FLOW' ? (language === 'TH' ? 'ข้ามการเปรียบเทียบ' : 'Skipped Comparison')
                                       : log.action === 'REJECT_FLOW' ? (language === 'TH' ? 'ตีกลับไปขั้นตอนก่อนหน้า' : 'Rejected to Previous Job')
                                       : log.action === 'REJECTED' ? (language === 'TH' ? 'ถูกตีกลับ' : 'Rejected Back')
                                       : (language === 'TH' ? 'อัปโหลดเวอร์ชันใหม่' : 'Uploaded New Version')}
