@@ -40,10 +40,9 @@ export enum JobStatus {
   PENDING = 'PENDING',
   REVIEW = 'REVIEW',
   READY = 'READY',
-  DONE = 'DONE',
   PROCESSING = 'PROCESSING',
   // A later job in the shipment was kicked back to this one for corrections — distinct from
-  // DONE so the shipment list re-blocks every job after this one until it's redone.
+  // READY so the shipment list re-blocks every job after this one until it's redone.
   REJECTED = 'REJECTED'
 }
 

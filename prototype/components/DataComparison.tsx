@@ -668,12 +668,12 @@ export const DataComparison: React.FC<DataComparisonProps> = ({ language, tracki
     });
 
     return Object.entries(grouped).map(([reference, shipmentJobs]) => {
-      const unfinishedJobs = shipmentJobs.filter(j => j.status !== JobStatus.DONE);
+      const unfinishedJobs = shipmentJobs.filter(j => j.status !== JobStatus.READY);
       const activeJob = unfinishedJobs[0] || shipmentJobs[shipmentJobs.length - 1];
       const currentAssignee = activeJob ? activeJob.assignee : 'N/A';
       const currentPhase = activeJob ? activeJob.workflowName : (language === 'TH' ? 'เสร็จสิ้นทั้งหมด' : 'All Completed');
 
-      const completedCount = shipmentJobs.filter(j => j.status === JobStatus.DONE || j.status === JobStatus.READY).length;
+      const completedCount = shipmentJobs.filter(j => j.status === JobStatus.READY).length;
       const totalCount = shipmentJobs.length;
 
       const createdAt = shipmentJobs.reduce((acc, job) => {
@@ -694,8 +694,8 @@ export const DataComparison: React.FC<DataComparisonProps> = ({ language, tracki
         }
       }, shipmentJobs[0]?.expiryDate);
 
-      const isUnfinished = shipmentJobs.some(j => j.status !== JobStatus.DONE && j.status !== JobStatus.READY);
-      const isMyPending = shipmentJobs.some(j => j.assignee === 'Kunawut W.' && j.status !== JobStatus.DONE && j.status !== JobStatus.READY);
+      const isUnfinished = shipmentJobs.some(j => j.status !== JobStatus.READY);
+      const isMyPending = shipmentJobs.some(j => j.assignee === 'Kunawut W.' && j.status !== JobStatus.READY);
 
       return {
         reference,
@@ -1160,7 +1160,7 @@ const mockWorkflows: Workflow[] = [
       if (carriedNextJob) {
         setSelectedJob(carriedNextJob);
       } else {
-        setSelectedJob(prev => prev ? { ...prev, status: JobStatus.DONE } : null);
+        setSelectedJob(prev => prev ? { ...prev, status: JobStatus.READY } : null);
       }
     }
 
@@ -1191,16 +1191,16 @@ const mockWorkflows: Workflow[] = [
       ...prev
     ]);
 
-    // 2. Transition status of the job in jobs state to DONE
+    // 2. Transition status of the job in jobs state to READY (complete)
     setJobs(prevJobs =>
       prevJobs.map(j =>
         j.id === jobToExport.id
-          ? { ...j, status: JobStatus.DONE }
+          ? { ...j, status: JobStatus.READY }
           : j
       )
     );
 
-    advanceToNextJob({ ...jobToExport, status: JobStatus.DONE });
+    advanceToNextJob({ ...jobToExport, status: JobStatus.READY });
 
     // 4. Reset modal state and show success message
     message.success(
@@ -2087,7 +2087,7 @@ const mockWorkflows: Workflow[] = [
       assignedTeam: 'accounting',
       assignee: 'Kunawut W.',
       isLocked: true,
-      status: JobStatus.DONE,
+      status: JobStatus.READY,
       totalFieldsCount: 363,
       accuracyScore: 100.0,
       docs: {
@@ -2159,7 +2159,7 @@ const mockWorkflows: Workflow[] = [
       workflowName: 'Vietnam Road Freight Rules',
       assignedTeam: 'logistics',
       assignee: 'Somchai T.',
-      status: JobStatus.DONE,
+      status: JobStatus.READY,
       isLocked: true,
       totalFieldsCount: 45,
       accuracyScore: 100.0,
@@ -2229,7 +2229,7 @@ const mockWorkflows: Workflow[] = [
       workflowName: 'Japan Air Freight High-Value',
       assignedTeam: 'logistics',
       assignee: 'Kunawut W.',
-      status: JobStatus.DONE,
+      status: JobStatus.READY,
       isLocked: true,
       totalFieldsCount: 363,
       accuracyScore: 100.0,
@@ -2393,7 +2393,7 @@ const mockWorkflows: Workflow[] = [
       workflowName: 'Export Electronics Rules',
       assignedTeam: 'customs',
       assignee: 'Alice M.',
-      status: JobStatus.DONE,
+      status: JobStatus.READY,
       isLocked: true,
       totalFieldsCount: 180,
       accuracyScore: 100.0,
@@ -2416,7 +2416,7 @@ const mockWorkflows: Workflow[] = [
       workflowName: 'EU Tariff Compliance',
       assignedTeam: 'customs',
       assignee: 'Alice M.',
-      status: JobStatus.DONE,
+      status: JobStatus.READY,
       isLocked: true,
       totalFieldsCount: 130,
       accuracyScore: 100.0,
@@ -2463,7 +2463,7 @@ const mockWorkflows: Workflow[] = [
       workflowName: 'Invoice Processing',
       assignedTeam: 'accounting',
       assignee: 'Nui P.',
-      status: JobStatus.DONE,
+      status: JobStatus.READY,
       isLocked: true,
       totalFieldsCount: 150,
       accuracyScore: 100.0,
@@ -2486,7 +2486,7 @@ const mockWorkflows: Workflow[] = [
       workflowName: 'Maritime Freight Checking',
       assignedTeam: 'logistics',
       assignee: 'Nui P.',
-      status: JobStatus.DONE,
+      status: JobStatus.READY,
       isLocked: true,
       totalFieldsCount: 110,
       accuracyScore: 100.0,
@@ -2533,7 +2533,7 @@ const mockWorkflows: Workflow[] = [
       workflowName: 'Invoice Processing',
       assignedTeam: 'accounting',
       assignee: 'Somchai T.',
-      status: JobStatus.DONE,
+      status: JobStatus.READY,
       isLocked: true,
       totalFieldsCount: 220,
       accuracyScore: 100.0,
@@ -2556,7 +2556,7 @@ const mockWorkflows: Workflow[] = [
       workflowName: 'Maritime Freight Checking',
       assignedTeam: 'logistics',
       assignee: 'Somchai T.',
-      status: JobStatus.DONE,
+      status: JobStatus.READY,
       isLocked: true,
       totalFieldsCount: 140,
       accuracyScore: 100.0,
@@ -2581,7 +2581,7 @@ const mockWorkflows: Workflow[] = [
       workflowName: 'Malaysia Boundary Cross',
       assignedTeam: 'logistics',
       assignee: 'Kunawut W.',
-      status: JobStatus.DONE,
+      status: JobStatus.READY,
       isLocked: true,
       totalFieldsCount: 130,
       accuracyScore: 100.0,
@@ -2604,7 +2604,7 @@ const mockWorkflows: Workflow[] = [
       workflowName: 'Road Waybill Matching',
       assignedTeam: 'logistics',
       assignee: 'Kunawut W.',
-      status: JobStatus.DONE,
+      status: JobStatus.READY,
       isLocked: true,
       totalFieldsCount: 105,
       accuracyScore: 100.0,
@@ -2627,7 +2627,7 @@ const mockWorkflows: Workflow[] = [
       workflowName: 'LEO Billing',
       assignedTeam: 'finance',
       assignee: 'Kunawut W.',
-      status: JobStatus.DONE,
+      status: JobStatus.READY,
       isLocked: true,
       totalFieldsCount: 60,
       accuracyScore: 100.0,
@@ -2974,14 +2974,12 @@ const mockWorkflows: Workflow[] = [
             
             const allDocsProcessed = Object.values(updatedDocs).every(s => s !== ComparisonDocStatus.EXTRACTING);
             let newStatus = job.status;
-            
+
             if (allDocsProcessed) {
-              if (mismatched > 0) {
-                newStatus = JobStatus.REVIEW;
-              } else {
-                // Rule: NEW -> READY on first success bypassing lock
-                newStatus = JobStatus.READY;
-              }
+              // A mismatch needs review; a clean match goes back to PENDING — the job only
+              // becomes READY once the user explicitly clicks "เสร็จสิ้น" (Done), whether or
+              // not it's the last job in its shipment.
+              newStatus = mismatched > 0 ? JobStatus.REVIEW : JobStatus.PENDING;
             }
 
             const finalJob = { 
@@ -3093,14 +3091,14 @@ const mockWorkflows: Workflow[] = [
         status: JobStatus.PENDING,
         color: 'bg-blue-50 border-blue-200 text-blue-700',
         label: language === 'TH' ? 'รอดำเนินการ' : 'PENDING',
-        desc: language === 'TH' ? 'เป็น status เริ่มต้นของรายการย่อยที่เพิ่งเปิด ยังไม่มีการอัปโหลดไฟล์ หรืออัปโหลดไฟล์ยังไม่ครบทุกไฟล์ในรายการย่อย และไฟล์ในรายการยังไม่มีการเปรียบเทียบข้อมูล จึงยังไม่มีไฟล์ที่มีสถานะเป็น Matched หรือ Mismatched' : 'The default status for a newly opened sub-job — no files uploaded yet, or not all files in the sub-job have been uploaded, and none of the files have been compared yet, so none are Matched or Mismatched',
+        desc: language === 'TH' ? 'รายการย่อยที่เพิ่งเปิด หรือรายการย่อยถัดไปที่เพิ่งเปิดขึ้นมา — อาจมีการอัปโหลดไฟล์แล้วหรือยังไม่อัปโหลดก็ได้ แต่ยังไม่มีไฟล์ไหนถูกเปรียบเทียบข้อมูลเลย รวมถึงกรณีที่เปรียบเทียบแล้วตรงกันครบทุกไฟล์แต่ยังไม่ได้กด "เสร็จสิ้น" ก็จะกลับมาเป็นสถานะนี้เช่นกัน' : 'A sub-job that was just opened, or the next one that just became active — files may or may not be uploaded yet, but none have been compared. A sub-job whose files all matched but hasn\'t had "เสร็จสิ้น" (Done) clicked yet also shows this status.',
         action: language === 'TH' ? 'อัปโหลดไฟล์ให้ครบ แล้วกด "อ่านไฟล์" บนการ์ดเอกสารเพื่อเริ่มกระบวนการ' : 'Upload all files, then click "Read File" on doc cards to start extraction'
       },
       {
         status: JobStatus.PROCESSING,
         color: 'bg-blue-600 text-white',
         label: language === 'TH' ? 'กำลังเปรียบเทียบข้อมูล' : 'COMPARING',
-        desc: language === 'TH' ? 'ระบบ AI กำลังดำเนินการเปรียบเทียบข้อมูล' : 'AI system is currently extracting/comparing data',
+        desc: language === 'TH' ? 'จังหวะที่ระบบ AI กำลังเปรียบเทียบเอกสาร เมื่อเสร็จแล้วสถานะจะเปลี่ยนไปตามผล: ถ้าพบข้อมูลไม่ตรงกัน (Mismatch) จะเป็น "รอตรวจสอบ" แต่ถ้าตรงกันครบทุกไฟล์จะกลับไปเป็น "รอดำเนินการ" (รอให้กด "เสร็จสิ้น")' : 'The system is actively comparing documents. Once finished, the status changes based on the result: any mismatch moves it to "รอตรวจสอบ" (Review); a clean match across every file goes back to "รอดำเนินการ" (Pending "เสร็จสิ้น"/Done)',
         action: language === 'TH' ? 'รอระบบทำงาน (อัปเดตสถานะอัตโนมัติเมื่อเสร็จสิ้น)' : 'Wait for system (auto-updates when finished)'
       },
       {
@@ -3118,18 +3116,11 @@ const mockWorkflows: Workflow[] = [
         action: language === 'TH' ? 'ตรวจสอบเหตุผลที่ถูกตีกลับ แก้ไขข้อมูล/เอกสารให้ถูกต้อง แล้วดำเนินการต่อจนสถานะเปลี่ยนเป็นเสร็จสมบูรณ์อีกครั้ง' : 'Check the rejection reason, fix the data/documents, then complete the job again'
       },
       {
-        status: JobStatus.DONE,
-        color: 'bg-teal-50 border-teal-200 text-teal-700',
-        label: language === 'TH' ? 'ส่งออกแล้ว (EXPORTED)' : 'EXPORTED',
-        desc: language === 'TH' ? 'รายการย่อยนี้ถูกส่งออกข้อมูลเรียบร้อยแล้ว' : 'This sub-job\'s data has already been exported',
-        action: language === 'TH' ? 'ไม่ต้องดำเนินการเพิ่มเติม รายการยังคงแสดงอยู่ในรายการงาน (Job) เพื่อความโปร่งใส แต่ปุ่มทำงานทั้งหมดจะถูกล็อกเป็นแบบอ่านอย่างเดียว (Read-only)' : 'No further action needed. The job stays visible in the list for transparency, but every action button is locked to read-only.'
-      },
-      {
         status: JobStatus.READY,
         color: 'bg-emerald-50 text-emerald-700 border-emerald-200',
         label: language === 'TH' ? 'เสร็จสมบูรณ์' : 'READY',
-        desc: language === 'TH' ? 'เอกสารทั้งหมดในรายการย่อยนี้ได้รับการเปรียบเทียบและตรงกันครบถ้วน (Matched) ถ้าเป็นรายการย่อยสุดท้ายของ shipment สถานะนี้จะหมายความว่ารายการย่อยทุกรายการใน shipment เสร็จสมบูรณ์แล้ว' : 'All documents in this sub-job are compared and fully Matched. If this is the last sub-job in the shipment, it means every sub-job in the shipment is now complete',
-        action: language === 'TH' ? 'ถ้าเป็นรายการย่อยสุดท้ายของ shipment ไม่ต้องดำเนินการเพิ่มเติม ถือว่า shipment นี้เสร็จสมบูรณ์แล้ว แต่ถ้ายังมีรายการย่อยถัดไป ให้กด "ส่งออกข้อมูล" เพื่อส่งต่อ' : 'If this is the last sub-job in the shipment, no further action is needed — the shipment is complete. Otherwise, click "Export Data" to move on to the next sub-job'
+        desc: language === 'TH' ? 'เกิดขึ้นเมื่อกดปุ่ม "เสร็จสิ้น" เท่านั้น (ไฟล์ตรงกันครบทุกไฟล์อย่างเดียวยังไม่พอ) กดแล้วจะส่งข้อมูลต่อไปยังรายการย่อยถัดไปในชิปเมนต์ หรือถ้าเป็นรายการย่อยสุดท้าย ก็จะได้สถานะนี้เช่นกันและถือว่า shipment เสร็จสมบูรณ์แล้ว' : 'Reached only by clicking "เสร็จสิ้น" (Done) — matching files alone isn\'t enough. Clicking it hands the data off to the next sub-job in the shipment; if it\'s the last sub-job, it also becomes READY and the shipment is considered complete.',
+        action: language === 'TH' ? 'ไม่ต้องดำเนินการเพิ่มเติม ปุ่มทำงานทั้งหมดของรายการนี้จะถูกล็อกเป็นแบบอ่านอย่างเดียว (Read-only)' : 'No further action needed — every action button on this job is locked to read-only'
       },
       {
         status: 'DOC_UPDATED',
@@ -3636,10 +3627,12 @@ const mockWorkflows: Workflow[] = [
   };
 
   const getJobStatus = (job: ComparisonJob): JobStatus => {
-    if (job.status === JobStatus.DONE) return JobStatus.DONE;
     // A rejected job stays REJECTED until the reviewer redoes and re-completes it — don't let
     // the doc-derived status below (which may already read READY/REVIEW again) mask that.
     if (job.status === JobStatus.REJECTED) return JobStatus.REJECTED;
+    // READY is only ever set explicitly (clicking "เสร็จสิ้น"/Done) — sticky once reached,
+    // regardless of doc state, since it's a terminal/locked status.
+    if (job.status === JobStatus.READY) return JobStatus.READY;
     // A manual re-compare sets job.status to PROCESSING directly, without necessarily putting
     // any individual doc into EXTRACTING — reflect that immediately rather than falling through
     // to the doc-derived status below, which would otherwise still show the stale REVIEW/READY
@@ -3648,12 +3641,11 @@ const mockWorkflows: Workflow[] = [
     const docs = Object.entries(job.docs).map(([docName, s]) =>
       getEffectiveDocStatus(job, docName, s)
     );
-    if (docs.some(s => s === ComparisonDocStatus.MISSING)) return JobStatus.NEW;
-    if (docs.some(s => s === ComparisonDocStatus.RECEIVED)) return JobStatus.PENDING;
     if (docs.some(s => s === ComparisonDocStatus.EXTRACTING)) return JobStatus.PROCESSING;
     if (docs.some(s => s === ComparisonDocStatus.MISMATCHED)) return JobStatus.REVIEW;
-    if (docs.every(s => s === ComparisonDocStatus.MATCHED || s === ComparisonDocStatus.LOCKED)) return JobStatus.READY;
-    return job.status;
+    // Everything else — no files uploaded, files uploaded but not all, or every doc already
+    // matched but "เสร็จสิ้น" (Done) hasn't been clicked yet — reads as PENDING.
+    return JobStatus.PENDING;
   };
 
   const areAllFilesMatched = React.useMemo(() => {
@@ -3662,21 +3654,14 @@ const mockWorkflows: Workflow[] = [
     return results.every(r => r.targets.every(t => (t.status as string) === 'MATCH' || (t.status as string) === 'SYNONYM' || (t.status as string) === 'NA'));
   }, [selectedJob, overriddenValues, confirmedMismatches]); // added overriddenValues and confirmedMismatches
 
+  // Keeps job.status in sync with the live-computed status (e.g. resolving the last mismatch
+  // flips REVIEW back to PENDING) so other views reading the raw field stay consistent. READY
+  // itself is never written here — it's sticky and only ever set by the "เสร็จสิ้น" (Done) flow.
   useEffect(() => {
     if (selectedJob) {
       const currentStatus = getJobStatus(selectedJob);
       if (selectedJob.status !== currentStatus) {
-        setJobs(prev => prev.map(job => {
-          if (job.id === selectedJob.id) {
-            const isNowReady = currentStatus === JobStatus.READY;
-            return { 
-              ...job, 
-              status: currentStatus, 
-              isLocked: isNowReady ? true : job.isLocked 
-            };
-          }
-          return job;
-        }));
+        setJobs(prev => prev.map(job => job.id === selectedJob.id ? { ...job, status: currentStatus } : job));
       }
     }
   }, [selectedJob?.id, confirmedMismatches, overriddenValues]);
@@ -3720,14 +3705,14 @@ const mockWorkflows: Workflow[] = [
     }
     return (
       <div className="flex flex-col gap-1 p-0.5 text-left min-w-[220px]">
-        <div className="font-black text-amber-400 text-[11px] uppercase tracking-wider flex items-center gap-1">
-          <AlertCircle size={12} />
-          <span>{language === 'TH' ? 'สิ้นสุดกระบวนการ' : 'End of Process'}</span>
+        <div className="font-black text-emerald-400 text-[11px] uppercase tracking-wider flex items-center gap-1">
+          <CheckCircle2 size={12} />
+          <span>{language === 'TH' ? 'รายการย่อยสุดท้าย' : 'Last Sub-Job'}</span>
         </div>
         <div className="text-white font-bold text-[10px] leading-relaxed">
-          {language === 'TH' 
-            ? 'จับคู่สำเร็จครบทุกไฟล์แล้ว และไม่มีขั้นตอนหรือรายการย่อยถัดไป' 
-            : 'All documents matched successfully. No subsequent steps exist.'}
+          {language === 'TH'
+            ? 'จับคู่สำเร็จครบทุกไฟล์แล้ว กดเพื่อทำเครื่องหมายว่ารายการย่อยนี้ (และ shipment นี้) เสร็จสมบูรณ์'
+            : 'All documents matched successfully. Click to mark this job — and the shipment — complete.'}
         </div>
       </div>
     );
@@ -4503,8 +4488,6 @@ const mockWorkflows: Workflow[] = [
       switch (status) {
         case JobStatus.READY:
           return <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter inline-flex items-center gap-1.5 font-sans whitespace-nowrap"><div className="w-1 h-1 rounded-full bg-emerald-500"></div>{language === 'TH' ? 'เสร็จสมบูรณ์' : 'READY'}</span>;
-        case JobStatus.DONE:
-          return <span className="bg-teal-50 text-teal-700 border border-teal-200 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter inline-flex items-center gap-1.5 font-sans whitespace-nowrap"><div className="w-1.5 h-1.5 rounded-full bg-teal-500"></div>{language === 'TH' ? 'ส่งออกแล้ว' : 'EXPORTED'}</span>;
         case JobStatus.PENDING:
           return <span className="bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter inline-flex items-center gap-1.5 font-sans whitespace-nowrap"><div className="w-1 h-1 rounded-full bg-blue-500"></div>{language === 'TH' ? 'รอดำเนินการ' : 'PENDING'}</span>;
         case JobStatus.NEW:
@@ -4570,10 +4553,10 @@ const mockWorkflows: Workflow[] = [
                 {filteredJobs.map((job) => {
                   const isProcessing = job.status === JobStatus.PROCESSING;
                   const seqIndex = shipmentJobs.findIndex(j => j.id === job.id);
-                  // READY only means "all data matched, ready to export" — the job hasn't actually
-                  // moved forward until it's exported (DONE), so the next sub-item must stay blocked
-                  // until then rather than opening up as soon as data matches.
-                  const isWorkflowCompleted = (j: ComparisonJob) => j.status === JobStatus.DONE;
+                  // A job only reaches READY once the user explicitly clicks "เสร็จสิ้น" (Done) —
+                  // all docs matching isn't enough on its own (that's still PENDING) — so the next
+                  // sub-item stays blocked until this one is actually READY.
+                  const isWorkflowCompleted = (j: ComparisonJob) => j.status === JobStatus.READY;
                   const isBlocked = seqIndex > 0 && shipmentJobs.slice(0, seqIndex).some(prevJob => !isWorkflowCompleted(prevJob));
                   
                   return (
@@ -4728,8 +4711,6 @@ const mockWorkflows: Workflow[] = [
       switch (status) {
         case JobStatus.READY:
           return <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter inline-flex items-center gap-1.5 font-sans whitespace-nowrap"><div className="w-1 h-1 rounded-full bg-emerald-500"></div>{language === 'TH' ? 'เสร็จสมบูรณ์' : 'READY'}</span>;
-        case JobStatus.DONE:
-          return <span className="bg-teal-50 text-teal-700 border border-teal-200 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter inline-flex items-center gap-1.5 font-sans whitespace-nowrap"><div className="w-1.5 h-1.5 rounded-full bg-teal-500"></div>{language === 'TH' ? 'ส่งออกแล้ว' : 'EXPORTED'}</span>;
         case JobStatus.PENDING:
           return <span className="bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter inline-flex items-center gap-1.5 font-sans whitespace-nowrap"><div className="w-1 h-1 rounded-full bg-blue-500"></div>{language === 'TH' ? 'รอดำเนินการ' : 'PENDING'}</span>;
         case JobStatus.NEW:
@@ -4760,7 +4741,6 @@ const mockWorkflows: Workflow[] = [
     const getProgressColor = (status: JobStatus) => {
       switch (status) {
         case JobStatus.READY: return 'bg-emerald-500';
-        case JobStatus.DONE: return 'bg-teal-500';
         case JobStatus.PENDING: return 'bg-blue-500';
         case JobStatus.PROCESSING: return 'bg-blue-600 animate-pulse';
         case JobStatus.REVIEW: return 'bg-amber-500';
@@ -4947,9 +4927,8 @@ const mockWorkflows: Workflow[] = [
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-4">
                         <div className={`w-2.5 h-2.5 rounded-full shadow-sm ${
-                          job.status === JobStatus.READY ? 'bg-emerald-500 shadow-emerald-200' : 
-                          job.status === JobStatus.DONE ? 'bg-teal-500 shadow-teal-200' : 
-                          job.status === JobStatus.PENDING ? 'bg-[#1f5df9] shadow-blue-200' : 
+                          job.status === JobStatus.READY ? 'bg-emerald-500 shadow-emerald-200' :
+                          job.status === JobStatus.PENDING ? 'bg-[#1f5df9] shadow-blue-200' :
                           job.status === JobStatus.REVIEW ? 'bg-amber-500 shadow-amber-200' : 
                           job.status === JobStatus.PROCESSING ? 'bg-blue-600 animate-pulse' : 
                           'bg-slate-300'
@@ -4993,8 +4972,8 @@ const mockWorkflows: Workflow[] = [
 
 
                         <Tooltip content={getLastSubItemExportTooltip(job, t.ttExportNotify)}>
-                          <button 
-                            disabled={job.status !== JobStatus.READY || isProcessing || isLastSubItemWithAllDocsMatched(job)}
+                          <button
+                            disabled={job.status === JobStatus.READY || job.status === JobStatus.REJECTED || !isAllDocsMatched(job)}
                             onClick={(e) => {
                               e.stopPropagation();
                               setExportJob(job);
@@ -5002,7 +4981,7 @@ const mockWorkflows: Workflow[] = [
                               setSelectedExportWorkflow(job.workflowName || '');
                               setSelectedExportPlatform('FTA');
                             }}
-                            className={`p-2.5 transition-all rounded-[4px] ${(job.status === JobStatus.READY && !isProcessing && !isLastSubItemWithAllDocsMatched(job)) ? 'text-[#1f5df9] hover:bg-blue-50 cursor-pointer' : 'text-slate-200 cursor-not-allowed'}`}
+                            className={`p-2.5 transition-all rounded-[4px] ${(job.status !== JobStatus.READY && job.status !== JobStatus.REJECTED && isAllDocsMatched(job)) ? 'text-[#1f5df9] hover:bg-blue-50 cursor-pointer' : 'text-slate-200 cursor-not-allowed'}`}
                           >
                             <Send size={20} />
                           </button>
@@ -6765,7 +6744,7 @@ const mockWorkflows: Workflow[] = [
                                 <div className="divide-y divide-slate-100 bg-white animate-in slide-in-from-top-1 fade-in duration-200">
                                   {items.map((res: any, i: number) => {
                                     const fieldId = `input-field-${groupName.replace(/\s/g, '-')}-${i}`;
-                                    const isDisabled = isUnassigned || selectedJob?.status === JobStatus.DONE;
+                                    const isDisabled = isUnassigned || selectedJob?.status === JobStatus.READY;
                                     const target = res.targets.find((t: any) => t.fileName === resolveDocNameFromPreviewUrl(pdfPreviewUrl, selectedJob?.id));
                                     const isMismatch = target && target.status === 'MISMATCH';
                                     const fieldKey = `${res.group || 'no-group'}::${res.fieldName}`;
@@ -6800,7 +6779,7 @@ const mockWorkflows: Workflow[] = [
                                               className={`w-full p-2 pr-8 rounded-md text-[#010136] text-[13px] font-bold font-sans transition-all outline-none border ${
                                                 isMismatch ? 'border-rose-200' : 'border-transparent'
                                               } hover:border-slate-200 hover:bg-slate-50 focus:bg-white focus:border-[#1f5df9] focus:ring-2 focus:ring-[#1f5df9]/20 ${
-                                                selectedJob?.status === JobStatus.DONE
+                                                selectedJob?.status === JobStatus.READY
                                                   ? 'bg-transparent text-slate-500 cursor-not-allowed shadow-none font-semibold hover:border-transparent hover:bg-transparent'
                                                   : 'bg-transparent'
                                               }`}
@@ -6899,9 +6878,9 @@ const mockWorkflows: Workflow[] = [
                   <div className="p-5 border-t border-slate-100 bg-white shrink-0">
                     <button 
                       onClick={handleSaveOCR}
-                      disabled={isUnassigned || !hasOCRChanges || selectedJob?.status === JobStatus.DONE}
+                      disabled={isUnassigned || !hasOCRChanges || selectedJob?.status === JobStatus.READY}
                       className={`w-full py-4 rounded-[4px] font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 group cursor-pointer ${
-                        (!isUnassigned && hasOCRChanges) && selectedJob?.status !== JobStatus.DONE
+                        (!isUnassigned && hasOCRChanges) && selectedJob?.status !== JobStatus.READY
                           ? 'bg-[#1f5df9] text-white shadow-lg shadow-blue-500/25 hover:bg-[#104BE3]' 
                           : 'bg-slate-100 text-slate-400 cursor-not-allowed opacity-70 border border-slate-200/50 shadow-none'
                       }`}
@@ -7501,8 +7480,7 @@ const mockWorkflows: Workflow[] = [
                            const status = getJobStatus(selectedJob);
                            return (
                              <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider group/status cursor-help relative border ${
-                                status === JobStatus.READY ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 
-                                status === JobStatus.DONE ? 'bg-teal-50 border-teal-200 text-teal-700' : 
+                                status === JobStatus.READY ? 'bg-emerald-50 border-emerald-200 text-emerald-700' :
                                 status === JobStatus.PENDING ? 'bg-blue-50 border-blue-200 text-blue-700' :
                                 status === JobStatus.NEW ? 'bg-slate-50 border-slate-200 text-slate-500' :
                                 status === JobStatus.REVIEW ? 'bg-amber-50 border-amber-200 text-amber-600' :
@@ -7518,8 +7496,6 @@ const mockWorkflows: Workflow[] = [
                                 {status === JobStatus.REJECTED && <Undo2 size={10} className="text-rose-500" />}
                                 {status === JobStatus.READY
                                     ? (language === 'TH' ? 'เสร็จสมบูรณ์' : 'READY')
-                                    : status === JobStatus.DONE
-                                    ? (language === 'TH' ? 'ส่งออกแล้ว' : 'EXPORTED')
                                     : status === JobStatus.PENDING
                                     ? (language === 'TH' ? 'รอดำเนินการ' : 'PENDING')
                                     : status === JobStatus.NEW
@@ -7702,7 +7678,7 @@ const mockWorkflows: Workflow[] = [
                   <div className="w-px h-6 bg-slate-200 mx-0.5"></div>
 
                   {/* 3. Bulk OCR - Read All files (only visible conditionally) */}
-                  {selectedJob.status !== JobStatus.DONE && Object.values(selectedJob.docs).some(s => s === ComparisonDocStatus.RECEIVED) && (
+                  {selectedJob.status !== JobStatus.READY && Object.values(selectedJob.docs).some(s => s === ComparisonDocStatus.RECEIVED) && (
                     <Tooltip content={t.btnBulkOCR}>
                       <button 
                         disabled={isUnassigned}
@@ -7737,7 +7713,7 @@ const mockWorkflows: Workflow[] = [
                   {/* 6. Finish / Export Data Button */}
                   <Tooltip content={getLastSubItemExportTooltip(selectedJob, t.exportData)}>
                       <button
-                      disabled={isUnassigned || selectedJob.status !== JobStatus.READY || !isAllDocsMatched(selectedJob) || isLastSubItemWithAllDocsMatched(selectedJob)}
+                      disabled={isUnassigned || selectedJob.status === JobStatus.READY || selectedJob.status === JobStatus.REJECTED || !isAllDocsMatched(selectedJob)}
                       onClick={() => {
                         setExportJob(selectedJob);
                         setExportOption('workflow');
@@ -7745,7 +7721,7 @@ const mockWorkflows: Workflow[] = [
                         setSelectedExportPlatform('FTA');
                       }}
                       className={`px-3.5 py-2.5 rounded-[4px] transition-all flex items-center justify-center gap-1.5 border disabled:opacity-30 disabled:cursor-not-allowed ${
-                        (selectedJob.status === JobStatus.READY && isAllDocsMatched(selectedJob) && !isLastSubItemWithAllDocsMatched(selectedJob))
+                        (selectedJob.status !== JobStatus.READY && selectedJob.status !== JobStatus.REJECTED && isAllDocsMatched(selectedJob))
                           ? 'bg-[#1f5df9] text-white border-[#1f5df9] hover:bg-[#104BE3] shadow-md shadow-blue-500/10'
                           : 'bg-white border-slate-200/60 text-slate-400 opacity-50 cursor-not-allowed'
                       }`}
@@ -7864,7 +7840,7 @@ const mockWorkflows: Workflow[] = [
                                               </div>
                                             </div>
                                             <button
-                                             disabled={isUnassigned || selectedJob.status === JobStatus.DONE}
+                                             disabled={isUnassigned || selectedJob.status === JobStatus.READY}
                                              onClick={(e) => {
                                                e.stopPropagation();
                                                if (docStatus === ComparisonDocStatus.MISSING) {
@@ -7958,13 +7934,13 @@ const mockWorkflows: Workflow[] = [
                                                {displayStatus === ComparisonDocStatus.MISMATCHED && (
                                                     <Tooltip content={language === 'TH' ? 'ยืนยันใช้ค่านี้ทั้งเอกสาร' : 'Confirm all mismatches in this document'}>
                                                       <button
-                                                        disabled={isUnassigned || selectedJob.status === JobStatus.DONE}
+                                                        disabled={isUnassigned || selectedJob.status === JobStatus.READY}
                                                         onClick={(e) => {
                                                           e.stopPropagation();
                                                           setConfirmAllMismatchesTargetDocName(docName);
                                                         }}
                                                         className={`h-[18px] w-[18px] flex items-center justify-center rounded-[4px] bg-white border border-slate-200 transition-all ${
-                                                          (isUnassigned || selectedJob.status === JobStatus.DONE)
+                                                          (isUnassigned || selectedJob.status === JobStatus.READY)
                                                           ? 'text-slate-200 cursor-not-allowed opacity-50'
                                                           : 'text-rose-400 hover:bg-rose-500 hover:text-white hover:border-rose-500 hover:shadow-lg shadow-sm cursor-pointer'
                                                         }`}
@@ -7976,13 +7952,13 @@ const mockWorkflows: Workflow[] = [
                                                {docStatus === ComparisonDocStatus.MISMATCHED && displayStatus === ComparisonDocStatus.MATCHED && (
                                                     <Tooltip content={language === 'TH' ? 'ยกเลิกการยืนยันทั้งเอกสาร (กลับไปเป็นไม่ตรงกัน)' : 'Undo confirm-all (revert to mismatched)'}>
                                                       <button
-                                                        disabled={isUnassigned || selectedJob.status === JobStatus.DONE}
+                                                        disabled={isUnassigned || selectedJob.status === JobStatus.READY}
                                                         onClick={(e) => {
                                                           e.stopPropagation();
                                                           unconfirmAllMismatchesInDoc(docName);
                                                         }}
                                                         className={`h-[18px] w-[18px] flex items-center justify-center rounded-[4px] bg-white border border-slate-200 transition-all ${
-                                                          (isUnassigned || selectedJob.status === JobStatus.DONE)
+                                                          (isUnassigned || selectedJob.status === JobStatus.READY)
                                                           ? 'text-slate-200 cursor-not-allowed opacity-50'
                                                           : 'text-slate-400 hover:bg-slate-500 hover:text-white hover:border-slate-500 hover:shadow-lg shadow-sm cursor-pointer'
                                                         }`}
@@ -8019,14 +7995,14 @@ const mockWorkflows: Workflow[] = [
                                                {(displayStatus === ComparisonDocStatus.MISMATCHED || displayStatus === ComparisonDocStatus.MATCHED) && (
                                                     <Tooltip content={language === 'TH' ? 'อัปโหลดไฟล์ใหม่ (Replace)' : 'Replace File'}>
                                                       <button
-                                                        disabled={isUnassigned || selectedJob.status === JobStatus.DONE}
+                                                        disabled={isUnassigned || selectedJob.status === JobStatus.READY}
                                                         onClick={(e) => {
                                                           e.stopPropagation();
                                                           setReplaceTargetColumn(docName);
                                                           setShowReplaceModal(true);
                                                         }}
                                                         className={`h-[18px] w-[18px] flex items-center justify-center rounded-[4px] bg-white border border-slate-200 transition-all ${
-                                                          (isUnassigned || selectedJob.status === JobStatus.DONE)
+                                                          (isUnassigned || selectedJob.status === JobStatus.READY)
                                                           ? 'text-slate-200 cursor-not-allowed opacity-50'
                                                           : 'text-indigo-400 hover:bg-indigo-500 hover:text-white hover:border-indigo-500 hover:shadow-lg shadow-sm cursor-pointer'
                                                         }`}
@@ -8554,7 +8530,7 @@ const mockWorkflows: Workflow[] = [
                           user: actor
                         });
                       });
-                      if (selectedJob.status === JobStatus.DONE || selectedJob.status === JobStatus.READY || selectedJob.isLocked) {
+                      if (selectedJob.status === JobStatus.READY || selectedJob.isLocked) {
                         synthetic.push({
                           id: `synthetic-${selectedJob.id}-export`,
                           jobId: selectedJob.id,
@@ -8769,7 +8745,7 @@ const mockWorkflows: Workflow[] = [
                         // sync it forward to every later job in the shipment that shares this
                         // doc type too, not just whichever job happened to be active at export
                         // time, so it still reaches wherever the document is being worked now.
-                        if (selectedJob.status === JobStatus.DONE && noteEditorDocName) {
+                        if (selectedJob.status === JobStatus.READY && noteEditorDocName) {
                           const shipmentJobs = jobs.filter(j => j.reference === selectedJob.reference);
                           const seqIndex = shipmentJobs.findIndex(j => j.id === selectedJob.id);
                           shipmentJobs.slice(seqIndex + 1).forEach(laterJob => {
