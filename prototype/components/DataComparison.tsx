@@ -197,7 +197,7 @@ const LOCAL_T = {
     btnOpenWorkspace: "อัปโหลด / จัดกลุ่มไฟล์",
     btnOpenWorkspaceDesc: "เพิ่มคอลัมน์ OCR ใหม่ผ่าน Drag & Drop",
     replaceModalTitle: "อัปโหลดไฟล์ทดแทน (Replace & Merge)",
-    replaceModalSubtitle: "อัปโหลดไฟล์ใหม่เพื่อมาแทนที่หรือเพิ่มในคอลัมน์ \"%column%\" (จำนวนกี่ไฟล์ก็จะถูกรวมเป็นคอลัมน์นี้เพียง 1 คอลัมน์โดยอัตโนมัติอัตโนมัติ)",
+    replaceModalSubtitle: "อัปโหลดไฟล์ใหม่เพื่อแทนที่หรือเพิ่มในคอลัมน์ \"%column%\" อัปโหลดกี่ไฟล์ก็ได้ ระบบจะรวมให้เป็นคอลัมน์เดียวให้เอง",
     btnConfirmReplace: "ยืนยันการแทนที่และรอ OCR",
     btnGenerateReport: "สร้างรายงาน"
   },
@@ -224,7 +224,7 @@ const LOCAL_T = {
     btnOpenWorkspace: "Upload & Group Docs",
     btnOpenWorkspaceDesc: "Create new OCR columns via drag & drop",
     replaceModalTitle: "Replace Files (Merge to Column)",
-    replaceModalSubtitle: "Upload new files to replace or merge into \"%column%\" (all files will be grouped).",
+    replaceModalSubtitle: "Upload new files to replace or add to the \"%column%\" column. Upload as many as you like — we'll combine them into one column automatically.",
     btnConfirmReplace: "Confirm Replace & Wait for OCR",
     btnGenerateReport: "Generate Report"
   }
