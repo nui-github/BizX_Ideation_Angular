@@ -3166,7 +3166,7 @@ const mockWorkflows: Workflow[] = [
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowStatusGuide(false)}
-              className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-[200]"
+              className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-[700]"
             />
             <motion.div 
               initial={{ x: '100%' }}
@@ -5279,7 +5279,7 @@ const mockWorkflows: Workflow[] = [
 
       {/* Upload and Multi-File Grouping Modal Panel */}
       {showUploadModal && (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-[650] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
           <div className="bg-white w-full max-w-5xl h-[85vh] rounded-3xl overflow-hidden shadow-2xl flex flex-col border border-slate-100 font-sans">
             {/* Header */}
             <div className="p-6 border-b border-slate-100 bg-white sticky top-0 z-10 flex items-center justify-between">
@@ -5579,7 +5579,7 @@ const mockWorkflows: Workflow[] = [
 
       {/* Replace Column File Modal */}
       {showReplaceModal && (
-        <div className="fixed inset-0 z-[160] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-[660] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
           <div className="bg-white w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl flex flex-col border border-slate-100 font-sans">
             <div className="p-6 border-b border-slate-100 flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -5790,7 +5790,7 @@ const mockWorkflows: Workflow[] = [
         const isImage = previewFile.type.startsWith('image/') || /\.(jpe?g|png)$/i.test(previewFile.name);
         const previewFormat = detectFileFormat(previewFile.name);
         return (
-          <div className="fixed inset-0 z-[170] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="fixed inset-0 z-[670] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white w-[90vw] max-w-5xl h-[88vh] rounded-2xl overflow-hidden shadow-2xl flex flex-col font-sans">
               <div className="px-5 py-4 border-b border-slate-100 flex items-start justify-between gap-4 shrink-0">
                 <div className="flex flex-col gap-1.5 min-w-0">
@@ -5964,7 +5964,7 @@ const mockWorkflows: Workflow[] = [
 
       {/* PDF View Overlay Side-by-side */}
       {pdfPreviewUrl && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
           <div className="bg-white w-[96vw] max-w-7xl h-[92vh] rounded-2xl overflow-hidden shadow-2xl flex flex-col font-sans">
             
             {/* Topbar matching original with title, status, save indicator, activity logs, and close */}
@@ -6964,7 +6964,7 @@ const mockWorkflows: Workflow[] = [
                 initial={{ opacity: 0, y: 50 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[200] px-6 py-3 bg-slate-900 text-white rounded-full shadow-2xl flex items-center gap-3 border border-slate-700"
+                className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[700] px-6 py-3 bg-slate-900 text-white rounded-full shadow-2xl flex items-center gap-3 border border-slate-700"
               >
                 <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center">
                   <Check size={12} strokeWidth={4} />
@@ -6981,7 +6981,7 @@ const mockWorkflows: Workflow[] = [
 
       {/* Reject Pending Modal */}
       {showRejectPendingModal && rejectPendingId && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300 font-sans">
+        <div className="fixed inset-0 z-[620] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300 font-sans">
            <div className="bg-white p-10 rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 text-center flex flex-col items-center gap-6 animate-in zoom-in-95 duration-300">
               <div className="w-24 h-24 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center border-4 border-rose-100 mb-2">
                  <AlertCircle size={48} strokeWidth={3} />
@@ -7022,7 +7022,7 @@ const mockWorkflows: Workflow[] = [
 
       {/* Delete Document Column Confirm Modal */}
       {showDeleteColumnConfirmModal && deleteColumnTargetDocName && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300 font-sans">
+        <div className="fixed inset-0 z-[620] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300 font-sans">
           <div className="bg-white p-10 rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 text-center flex flex-col items-center gap-6 animate-in zoom-in-95 duration-300">
             <div className="w-24 h-24 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center border-4 border-rose-100 mb-2">
               <AlertCircle size={48} strokeWidth={3} />
@@ -7074,7 +7074,7 @@ const mockWorkflows: Workflow[] = [
         const targetDoc = confirmAllMismatchesTargetDocName;
         const mismatchCount = allComparisonResults.filter(res => res.targets.some(t => t.fileName === targetDoc && t.status === 'MISMATCH')).length;
         return (
-          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300 font-sans">
+          <div className="fixed inset-0 z-[620] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300 font-sans">
             <div className="bg-white p-10 rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 text-center flex flex-col items-center gap-6 animate-in zoom-in-95 duration-300">
               <div className="text-amber-500 flex items-center justify-center mb-2">
                 <AlertCircle size={44} strokeWidth={2} />
@@ -7116,7 +7116,7 @@ const mockWorkflows: Workflow[] = [
 
       {/* Rejection Reason Popup — full reason text behind the icon button next to the REJECTED pill */}
       {showRejectionReasonModal && selectedJob?.rejectionReason && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300 font-sans">
+        <div className="fixed inset-0 z-[620] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300 font-sans">
           <div className="bg-white p-10 rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 text-center flex flex-col items-center gap-6 animate-in zoom-in-95 duration-300">
             <div className="text-[#1f5df9] flex items-center justify-center mb-2">
               <Undo2 size={44} strokeWidth={2} />
@@ -7150,7 +7150,7 @@ const mockWorkflows: Workflow[] = [
       {showRejectFlowConfirm && selectedJob && (() => {
         const prevJob = getPreviousJobInShipment(selectedJob);
         return (
-          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300 font-sans">
+          <div className="fixed inset-0 z-[620] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300 font-sans">
             <div className="bg-white p-10 rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 text-center flex flex-col items-center gap-6 animate-in zoom-in-95 duration-300">
               <div className="text-[#1f5df9] flex items-center justify-center mb-2">
                 <Undo2 size={44} strokeWidth={2} />
@@ -7201,7 +7201,7 @@ const mockWorkflows: Workflow[] = [
 
       {/* Workflow Warning Modal */}
       {showWorkflowWarning && (
-        <div className="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-[630] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
            <div className="bg-white p-10 rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 text-center flex flex-col items-center gap-6 animate-in zoom-in-95 duration-300">
               <div className="w-24 h-24 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center border-4 border-amber-50">
                  <AlertCircle size={48} strokeWidth={3} />
@@ -7244,7 +7244,7 @@ const mockWorkflows: Workflow[] = [
         const nextJob = seqIndex !== -1 && seqIndex < shipmentJobs.length - 1 ? shipmentJobs[seqIndex + 1] : null;
 
         return (
-          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300 font-sans">
+          <div className="fixed inset-0 z-[620] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300 font-sans">
             <div className="bg-white p-8 rounded-2xl max-w-lg w-full shadow-2xl border border-slate-100 flex flex-col gap-6 animate-in zoom-in-95 duration-300 relative overflow-hidden">
               
               {/* Header section with export tag & title */}
@@ -7351,7 +7351,7 @@ const mockWorkflows: Workflow[] = [
 
       {/* Reject Data confirmation modal */}
        {showRejectFileModal && rejectFileTargetDocName && (
-         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+         <div className="fixed inset-0 z-[620] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
             <div className="bg-white p-10 rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 text-center flex flex-col items-center gap-6 animate-in zoom-in-95 duration-300">
                <div className="w-24 h-24 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center border-4 border-rose-50">
                   <AlertTriangle size={48} strokeWidth={3} />
@@ -7670,10 +7670,10 @@ const mockWorkflows: Workflow[] = [
                       {showColumnSelector && (
                         <>
                           <div 
-                            className="fixed inset-0 z-[90] cursor-default" 
+                            className="fixed inset-0 z-[590] cursor-default" 
                             onClick={() => setShowColumnSelector(false)} 
                           />
-                          <div className="absolute right-0 mt-1.5 w-64 bg-white border border-slate-200 rounded-lg shadow-xl p-3 z-[100] select-none">
+                          <div className="absolute right-0 mt-1.5 w-64 bg-white border border-slate-200 rounded-lg shadow-xl p-3 z-[600] select-none">
                             <p className="text-[10px] font-black text-[#010136] uppercase tracking-widest mb-2 pb-1.5 border-b border-slate-100 flex items-center justify-between">
                               <span>{language === 'TH' ? 'ตั้งค่าคอลัมน์' : 'COLUMN SETTINGS'}</span>
                               <span className="text-slate-400 font-mono">
@@ -8508,7 +8508,7 @@ const mockWorkflows: Workflow[] = [
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md"
+            className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md"
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -8701,7 +8701,7 @@ const mockWorkflows: Workflow[] = [
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md"
+            className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md"
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
