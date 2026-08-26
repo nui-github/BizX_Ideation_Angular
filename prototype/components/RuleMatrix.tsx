@@ -694,8 +694,28 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                                                 fieldName: row.detail,
                                                 docType: activeRule.docTypes[vIdx]
                                               });
-                                            } else if (openDrawerInfo?.rowId === row.id && openDrawerInfo?.colIdx === vIdx) {
-                                              setOpenDrawerInfo(null);
+                                            } else {
+                                              if (openDrawerInfo?.rowId === row.id && openDrawerInfo?.colIdx === vIdx) {
+                                                setOpenDrawerInfo(null);
+                                              }
+                                              // Turning off a merged column is table-wide too: restore
+                                              // every other row's cell right away, no drawer needed.
+                                              const existingSnapshot = activeRule.combineSnapshots?.[vIdx];
+                                              if (existingSnapshot) {
+                                                const newParts = activeRule.parts.map((part: any) => ({
+                                                  ...part,
+                                                  rows: part.rows.map((r: any) => {
+                                                    if (r.id === row.id || !(r.id in existingSnapshot)) return r;
+                                                    const rowValues = [...r.values];
+                                                    rowValues[vIdx] = existingSnapshot[r.id];
+                                                    return { ...r, values: rowValues };
+                                                  })
+                                                }));
+                                                const remainingSnapshots = { ...activeRule.combineSnapshots };
+                                                delete remainingSnapshots[vIdx];
+                                                setActiveRule({ ...activeRule, parts: newParts, combineSnapshots: remainingSnapshots });
+                                                setToastMessage(language === 'TH' ? 'ยกเลิกการรวมข้อมูล คืนค่าฟิลด์อื่นแล้ว' : 'Combine turned off — other fields restored');
+                                              }
                                             }
                                           }}
                                           className="w-3 h-3 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer accent-blue-600"
@@ -1499,30 +1519,10 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                           </div>
                         </div>
                       </div>
-                      <label className="flex items-start gap-2.5 p-4 border border-slate-200 rounded-lg cursor-pointer select-none" style={{ borderRadius: '8px' }}>
-                        <input
-                          type="checkbox"
-                          checked={drawerVal?.combineApplyAll || false}
-                          onChange={(e) => {
-                            const checked = e.target.checked;
-                            const newValues = [...editFormData.values];
-                            newValues[openDrawerInfo.colIdx] = {
-                              ...newValues[openDrawerInfo.colIdx],
-                              combineApplyAll: checked
-                            };
-                            setEditFormData({...editFormData, values: newValues});
-                          }}
-                          className="w-3.5 h-3.5 mt-0.5 text-blue-600 rounded border-slate-300 focus:ring-blue-500 accent-blue-600 cursor-pointer shrink-0"
-                        />
-                        <span className="flex flex-col gap-0.5">
-                          <span className="text-xs font-bold text-[#010136]">
-                            {language === 'TH' ? 'ใช้การตั้งค่านี้กับทุกฟิลด์ใน Compare Rule นี้' : 'Apply this setting to every field in this Compare Rule'}
-                          </span>
-                          <span className="text-[11px] text-slate-500 leading-relaxed">
-                            {language === 'TH' ? 'เมื่อเลือก ทุกแถวในตารางจะใช้คอลัมน์รวมนี้แบบเดียวกันทันที ไม่ต้องตั้งค่าทีละฟิลด์' : 'When checked, every row in the table switches to this same merged column right away — no need to set it up field by field.'}
-                          </span>
-                        </span>
-                      </label>
+                      <div className="p-4 bg-blue-50 border border-blue-100 text-xs text-blue-700 font-bold flex items-center gap-2" style={{ borderRadius: '8px' }}>
+                        <span className="inline-block w-2 h-2 rounded-full bg-blue-500 shrink-0"></span>
+                        <span>{language === 'TH' ? 'การตั้งค่านี้มีผลกับทุกฟิลด์ที่ใช้เอกสารนี้ในตาราง ไม่ใช่แค่ฟิลด์นี้ฟิลด์เดียว' : 'This setting applies to every field in the table that uses this document, not just this one.'}</span>
+                      </div>
                     </div>
                   );
                 }
@@ -2471,9 +2471,10 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                   const colIdx = openDrawerInfo.colIdx;
                   const existingSnapshot = activeRule.combineSnapshots?.[colIdx];
 
-                  if (drawerVal?.combineFromPrevFlow && drawerVal?.combineApplyAll) {
-                    // Applying to every field: remember each row's prior cell (only once, the
-                    // first time this is turned on) so unchecking later can put it all back.
+                  if (drawerVal?.combineFromPrevFlow) {
+                    // A merged document column is a table-wide decision, not per-field, so it
+                    // always syncs to every row. Remember each row's prior cell (only once, the
+                    // first time this column turns on) so turning it back off can restore it.
                     const combineDocTypes = drawerVal.combineDocTypes || [];
                     const snapshot: Record<string, any> = existingSnapshot ? { ...existingSnapshot } : {};
                     const newParts = activeRule.parts.map((part: any) => ({
@@ -2488,8 +2489,7 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                           isMain: idx === colIdx,
                           type: idx === colIdx ? '' : v.type,
                           combineFromPrevFlow: idx === colIdx ? true : v.combineFromPrevFlow,
-                          combineDocTypes: idx === colIdx ? combineDocTypes : v.combineDocTypes,
-                          combineApplyAll: idx === colIdx ? true : v.combineApplyAll
+                          combineDocTypes: idx === colIdx ? combineDocTypes : v.combineDocTypes
                         }));
                         return { ...row, values: newValues };
                       })
@@ -2501,7 +2501,7 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                     });
                     setToastMessage(language === 'TH' ? 'ใช้การตั้งค่านี้กับทุกฟิลด์แล้ว' : 'Applied this setting to every field');
                   } else if (existingSnapshot) {
-                    // Unchecked "apply to all": put every other row's cell back the way it was.
+                    // Turned off combine for this column: put every other row's cell back the way it was.
                     const newParts = activeRule.parts.map((part: any) => ({
                       ...part,
                       rows: part.rows.map((row: any) => {
@@ -2514,7 +2514,7 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                     const remainingSnapshots = { ...activeRule.combineSnapshots };
                     delete remainingSnapshots[colIdx];
                     setActiveRule({ ...activeRule, parts: newParts, combineSnapshots: remainingSnapshots });
-                    setToastMessage(language === 'TH' ? 'ยกเลิกใช้กับทุกฟิลด์ คืนค่าฟิลด์อื่นแล้ว' : 'Unapplied — other fields restored');
+                    setToastMessage(language === 'TH' ? 'ยกเลิกการรวมข้อมูล คืนค่าฟิลด์อื่นแล้ว' : 'Combine turned off — other fields restored');
                   } else {
                     setToastMessage(language === 'TH' ? 'บันทึกการตั้งค่าลงตารางแล้ว' : 'Comparison settings saved');
                   }
