@@ -695,9 +695,9 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                                               setOpenDrawerInfo(null);
                                             }
                                           }}
-                                          className="w-3 h-3 text-teal-600 rounded border-slate-300 focus:ring-teal-500 cursor-pointer accent-teal-600"
+                                          className="w-3 h-3 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer accent-blue-600"
                                         />
-                                        <label htmlFor={`combine-flow-${row.id}-${vIdx}`} className="text-[9px] font-bold tracking-tight uppercase text-teal-600 cursor-pointer select-none">
+                                        <label htmlFor={`combine-flow-${row.id}-${vIdx}`} className="text-[9px] font-bold tracking-tight uppercase text-blue-600 cursor-pointer select-none">
                                           {language === 'TH' ? 'รวมข้อมูลทุกเอกสารจากโฟลว์ก่อนหน้า' : 'Combine all docs from previous flow'}
                                         </label>
                                         {currentVal?.combineFromPrevFlow && (
@@ -711,8 +711,8 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                                             })}
                                             className={`p-1 rounded-[4px] transition-all shrink-0 cursor-pointer ${
                                               openDrawerInfo && openDrawerInfo.rowId === row.id && openDrawerInfo.colIdx === vIdx
-                                                ? 'bg-teal-600 text-white hover:bg-teal-700'
-                                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-teal-600'
+                                                ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-blue-600'
                                             }`}
                                             title={language === 'TH' ? 'เลือกประเภทเอกสาร' : 'Select document types'}
                                           >
@@ -1092,6 +1092,12 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                                         </div>
                                       )
                                     )}
+                                    {val?.isMain && val?.combineFromPrevFlow && (
+                                      <div className="flex items-center gap-1 bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded-full text-[8px] font-black border border-blue-200 mb-1">
+                                        <Check size={9} className="text-blue-600 shrink-0" />
+                                        <span>{language === 'TH' ? 'รวมข้อมูล' : 'Combined'}</span>
+                                      </div>
+                                    )}
                                     {val?.isMain ? (
                                       isArrayField(val?.schemaField) && (
                                         <div className="bg-blue-50 border border-blue-200 text-[#1f5df9] text-[8.5px] font-bold px-2 py-1 rounded-full text-center tracking-tight shadow-sm">
@@ -1411,7 +1417,7 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                         </p>
                         <div className="relative" id={`combine-doctypes-wrapper-${openDrawerInfo.colIdx}`}>
                           <div
-                            className="w-full bg-white border border-teal-400 focus:border-teal-500 rounded p-1.5 flex flex-wrap items-center gap-1 min-h-[34px] pr-6 cursor-pointer"
+                            className="w-full bg-white border border-blue-400 focus:border-blue-500 rounded p-1.5 flex flex-wrap items-center gap-1 min-h-[34px] pr-6 cursor-pointer"
                             style={{ borderRadius: '4px' }}
                             onClick={() => {
                               const el = document.getElementById(`combine-doctypes-dropdown-${openDrawerInfo.colIdx}`);
@@ -1424,7 +1430,7 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                               </span>
                             )}
                             {selectedDocTypes.map((dt: string) => (
-                              <span key={dt} className="inline-flex items-center gap-1 bg-teal-50 text-teal-700 text-[10px] font-bold px-1.5 py-0.5 rounded border border-teal-200">
+                              <span key={dt} className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-[10px] font-bold px-1.5 py-0.5 rounded border border-blue-200">
                                 {dt}
                                 <button
                                   type="button"
@@ -1437,7 +1443,7 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                                     };
                                     setEditFormData({...editFormData, values: newValues});
                                   }}
-                                  className="text-teal-400 hover:text-red-500 font-bold ml-0.5 select-none cursor-pointer"
+                                  className="text-blue-400 hover:text-red-500 font-bold ml-0.5 select-none cursor-pointer"
                                 >
                                   ×
                                 </button>
@@ -1447,41 +1453,42 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                               <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-down"><path d="m6 9 6 6 6-6"/></svg>
                             </div>
                           </div>
-                          <div id={`combine-doctypes-dropdown-${openDrawerInfo.colIdx}`} className="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-md shadow-lg z-[200] hidden p-1.5 text-left flex flex-col gap-1 max-h-[180px] overflow-y-auto">
+                          <div id={`combine-doctypes-dropdown-${openDrawerInfo.colIdx}`} className="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-md shadow-lg z-[200] hidden p-1 text-left flex flex-col gap-0.5 max-h-[180px] overflow-y-auto">
                             {availableDocTypes.length === 0 && (
-                              <span className="text-[10px] text-slate-400 font-bold px-1.5 py-1">
+                              <span className="text-[10px] text-slate-400 font-bold px-2 py-1.5">
                                 {language === 'TH' ? 'ไม่มีประเภทเอกสารอื่นใน Compare Rule นี้' : 'No other document types in this Compare Rule'}
                               </span>
                             )}
                             {availableDocTypes.map((dt: string) => {
                               const isSelected = selectedDocTypes.includes(dt);
                               return (
-                                <label key={dt} className="flex items-center gap-2 px-1.5 py-1 hover:bg-slate-50 text-[10px] font-bold text-slate-600 cursor-pointer select-none">
-                                  <input
-                                    type="checkbox"
-                                    checked={isSelected}
-                                    onChange={() => {
-                                      const nextDocTypes = isSelected
-                                        ? selectedDocTypes.filter((d: string) => d !== dt)
-                                        : [...selectedDocTypes, dt];
-                                      const newValues = [...editFormData.values];
-                                      newValues[openDrawerInfo.colIdx] = {
-                                        ...newValues[openDrawerInfo.colIdx],
-                                        combineDocTypes: nextDocTypes
-                                      };
-                                      setEditFormData({...editFormData, values: newValues});
-                                    }}
-                                    className="w-3 h-3 text-teal-600 border-slate-300 focus:ring-teal-500 accent-teal-600 cursor-pointer"
-                                  />
+                                <div
+                                  key={dt}
+                                  onClick={() => {
+                                    const nextDocTypes = isSelected
+                                      ? selectedDocTypes.filter((d: string) => d !== dt)
+                                      : [...selectedDocTypes, dt];
+                                    const newValues = [...editFormData.values];
+                                    newValues[openDrawerInfo.colIdx] = {
+                                      ...newValues[openDrawerInfo.colIdx],
+                                      combineDocTypes: nextDocTypes
+                                    };
+                                    setEditFormData({...editFormData, values: newValues});
+                                  }}
+                                  className={`flex items-center justify-between gap-2 px-2 py-1.5 rounded text-[10px] font-bold cursor-pointer select-none transition-colors ${
+                                    isSelected ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'
+                                  }`}
+                                >
                                   <span>{dt}</span>
-                                </label>
+                                  {isSelected && <Check size={13} className="text-blue-600 shrink-0" />}
+                                </div>
                               );
                             })}
                           </div>
                         </div>
                       </div>
-                      <div className="p-4 bg-teal-50 border border-teal-100 text-xs text-teal-700 font-bold flex items-center gap-2" style={{ borderRadius: '8px' }}>
-                        <span className="inline-block w-2 h-2 rounded-full bg-teal-500 shrink-0"></span>
+                      <div className="p-4 bg-blue-50 border border-blue-100 text-xs text-blue-700 font-bold flex items-center gap-2" style={{ borderRadius: '8px' }}>
+                        <span className="inline-block w-2 h-2 rounded-full bg-blue-500 shrink-0"></span>
                         <span>{language === 'TH' ? 'คอลัมน์นี้จะไม่ผ่านการเปรียบเทียบจนกว่าจะมีเอกสารอื่นให้เทียบด้วย' : 'This column stays pending until another document is available to compare against.'}</span>
                       </div>
                     </div>
