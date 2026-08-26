@@ -89,11 +89,6 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
   const openDrawerColIdx = openDrawerInfo?.colIdx;
   const openDrawerRowId = openDrawerInfo?.rowId;
   const openDrawerFieldName = openDrawerInfo?.fieldName;
-  const [applyToAllFields, setApplyToAllFields] = useState(false);
-
-  useEffect(() => {
-    setApplyToAllFields(false);
-  }, [openDrawerRowId, openDrawerColIdx]);
 
   useEffect(() => {
     if (openDrawerColIdx !== undefined && openDrawerColIdx !== null && editFormData) {
@@ -1507,8 +1502,16 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                       <label className="flex items-start gap-2.5 p-4 border border-slate-200 rounded-lg cursor-pointer select-none" style={{ borderRadius: '8px' }}>
                         <input
                           type="checkbox"
-                          checked={applyToAllFields}
-                          onChange={(e) => setApplyToAllFields(e.target.checked)}
+                          checked={drawerVal?.combineApplyAll || false}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            const newValues = [...editFormData.values];
+                            newValues[openDrawerInfo.colIdx] = {
+                              ...newValues[openDrawerInfo.colIdx],
+                              combineApplyAll: checked
+                            };
+                            setEditFormData({...editFormData, values: newValues});
+                          }}
                           className="w-3.5 h-3.5 mt-0.5 text-blue-600 rounded border-slate-300 focus:ring-blue-500 accent-blue-600 cursor-pointer shrink-0"
                         />
                         <span className="flex flex-col gap-0.5">
@@ -2465,7 +2468,7 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                 }}
                 onClick={() => {
                   const drawerVal = editFormData?.values[openDrawerInfo.colIdx];
-                  if (drawerVal?.combineFromPrevFlow && applyToAllFields) {
+                  if (drawerVal?.combineFromPrevFlow && drawerVal?.combineApplyAll) {
                     const colIdx = openDrawerInfo.colIdx;
                     const combineDocTypes = drawerVal.combineDocTypes || [];
                     const newParts = activeRule.parts.map((part: any) => ({
@@ -2477,7 +2480,8 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                           isMain: idx === colIdx,
                           type: idx === colIdx ? '' : v.type,
                           combineFromPrevFlow: idx === colIdx ? true : v.combineFromPrevFlow,
-                          combineDocTypes: idx === colIdx ? combineDocTypes : v.combineDocTypes
+                          combineDocTypes: idx === colIdx ? combineDocTypes : v.combineDocTypes,
+                          combineApplyAll: idx === colIdx ? true : v.combineApplyAll
                         }));
                         return { ...row, values: newValues };
                       })
