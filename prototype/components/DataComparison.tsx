@@ -5679,7 +5679,7 @@ const mockWorkflows: Workflow[] = [
 
               {/* Uploaded Files Section */}
               {replaceUploadedFiles.length > 0 && (
-                <div className="flex flex-col gap-2.5 max-h-[320px] overflow-auto border border-slate-150 rounded-xl p-3 bg-white shadow-sm">
+                <div className="flex flex-col gap-2.5 border border-slate-150 rounded-xl p-3 bg-white shadow-sm">
                   <h4 className="text-xs font-black text-slate-400 tracking-widest uppercase mb-1">
                     {LOCAL_T[language].newUploadedHeader.replace('%count%', String(replaceUploadedFiles.length))}
                   </h4>
