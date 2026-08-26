@@ -2905,6 +2905,102 @@ const mockWorkflows: Workflow[] = [
       foundDocs: 2,
       matchedCount: 0,
       mismatchedCount: 0
+    },
+
+    // --- Shipment 14: Combine all flow2 into 1column in flow3 — CDS shipment preset (PO/PI
+    // Matching -> Shipping Doc Matching -> Import Declaration Matching#1/#2). Flow 1 done,
+    // flow 2 half-uploaded, flow 3/4 not started yet. Flow 3 is pre-collapsed to just 2
+    // columns ("ใบขนสินค้า" + the merged flow-2 dataset) instead of the usual 8 — see the
+    // 'รวมข้อมูลทั้งหมด (Flow ก่อนหน้า)' isPrimary special-case in getMockComparisonResults. ---
+    {
+      id: 'job-f2c1-a',
+      reference: 'Combine all flow2 into 1column in flow3',
+      expiryDate: '28 AUG 2026 17:00:00',
+      createdAt: '26 AUG 2026',
+      workflowName: 'PO/PI Matching',
+      assignedTeam: 'operation',
+      assignee: 'Somchai T.',
+      isLocked: true,
+      status: JobStatus.READY,
+      totalFieldsCount: 11,
+      accuracyScore: 100.0,
+      docs: {
+        'PO/PI': ComparisonDocStatus.LOCKED,
+        'Invoice': ComparisonDocStatus.LOCKED
+      },
+      progress: 100,
+      totalDocs: 2,
+      foundDocs: 2,
+      matchedCount: 2,
+      mismatchedCount: 0
+    },
+    {
+      id: 'job-f2c1-b',
+      reference: 'Combine all flow2 into 1column in flow3',
+      expiryDate: '29 AUG 2026 17:00:00',
+      createdAt: '26 AUG 2026',
+      workflowName: 'Shipping Doc Matching',
+      assignedTeam: 'operation',
+      assignee: 'Somchai T.',
+      status: JobStatus.PENDING,
+      totalFieldsCount: 0,
+      accuracyScore: 0.0,
+      docs: {
+        'Invoice': ComparisonDocStatus.RECEIVED,
+        'Packing List': ComparisonDocStatus.RECEIVED,
+        'Bill of Lading': ComparisonDocStatus.RECEIVED,
+        'FREIGHT INVOICE': ComparisonDocStatus.MISSING,
+        'HS Code Master File': ComparisonDocStatus.MISSING,
+        'Form FTA (Draft version)': ComparisonDocStatus.MISSING
+      },
+      progress: 50,
+      totalDocs: 6,
+      foundDocs: 3,
+      matchedCount: 0,
+      mismatchedCount: 0
+    },
+    {
+      id: 'job-f2c1-c',
+      reference: 'Combine all flow2 into 1column in flow3',
+      expiryDate: '30 AUG 2026 17:00:00',
+      createdAt: '26 AUG 2026',
+      workflowName: 'Import Declaration Matching#1',
+      assignedTeam: 'customs',
+      status: JobStatus.NEW,
+      totalFieldsCount: 0,
+      accuracyScore: 0.0,
+      docs: {
+        'ใบขนสินค้า': ComparisonDocStatus.MISSING,
+        'รวมข้อมูลทั้งหมด (Flow ก่อนหน้า)': ComparisonDocStatus.MISSING
+      },
+      progress: 0,
+      totalDocs: 2,
+      foundDocs: 0,
+      matchedCount: 0,
+      mismatchedCount: 0
+    },
+    {
+      id: 'job-f2c1-d',
+      reference: 'Combine all flow2 into 1column in flow3',
+      expiryDate: '31 AUG 2026 17:00:00',
+      createdAt: '26 AUG 2026',
+      workflowName: 'Import Declaration Matching#2',
+      assignedTeam: 'customs',
+      status: JobStatus.NEW,
+      totalFieldsCount: 0,
+      accuracyScore: 0.0,
+      docs: {
+        'Import Dec.': ComparisonDocStatus.MISSING,
+        'Form FTA': ComparisonDocStatus.MISSING,
+        'License': ComparisonDocStatus.MISSING,
+        'LPI': ComparisonDocStatus.MISSING,
+        'Other': ComparisonDocStatus.MISSING
+      },
+      progress: 0,
+      totalDocs: 5,
+      foundDocs: 0,
+      matchedCount: 0,
+      mismatchedCount: 0
     }
   ]);
 
@@ -3408,7 +3504,11 @@ const mockWorkflows: Workflow[] = [
       for (let i = 0; i < docNames.length; i++) {
         const dName = docNames[i];
         let isPrimaryCandidate = false;
-        if (f.part === 'Header' && (dName.toUpperCase().includes('INVOICE') || dName.toUpperCase().includes('B / L'))) {
+        // Flow 3's collapsed "all previous flows merged" column is always the reference doc,
+        // for every field — it already represents matched data from the prior flow.
+        if (dName === 'รวมข้อมูลทั้งหมด (Flow ก่อนหน้า)') {
+          isPrimaryCandidate = true;
+        } else if (f.part === 'Header' && (dName.toUpperCase().includes('INVOICE') || dName.toUpperCase().includes('B / L'))) {
           isPrimaryCandidate = true;
         } else if (f.part === 'Footer' && (dName.toUpperCase().includes('PACKING') || dName.toUpperCase().includes('B / L'))) {
           isPrimaryCandidate = true;
