@@ -54,7 +54,7 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
   // Mock Rules Data
   const [rules, setRules] = useState(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('bizx_compare_rules_v6');
+      const saved = localStorage.getItem('bizx_compare_rules_v7');
       if (saved) {
         try {
           return JSON.parse(saved);
@@ -65,373 +65,229 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
     }
     return [
       {
-        id: 'rule-001',
-        name: 'Import Declaration High-Value',
-        nameTh: 'กฎตรวจสอบใบขนสินค้าข้ามแดนมูลค่าสูง',
-        description: 'Strict matching rules for high-value retail shipments, customs clearance documents, and corresponding invoices.',
-        descriptionTh: 'กฎเกณฑ์การเปรียบเทียบข้อมูลที่เข้มงวดสำหรับการนำสินค้าเข้ากลุ่มมูลค่าสูง ใบขนสินค้าศุลกากร และเอกสารที่เกี่ยวข้อง',
+        id: 'rule-po-pi',
+        name: 'PO/PI Matching',
+        nameTh: 'PO/PI Matching',
+        description: 'Matches Purchase Order / Proforma Invoice against the Commercial Invoice before a shipment is created.',
+        descriptionTh: 'จับคู่ใบสั่งซื้อ/ใบแจ้งราคาสินค้า (PO/PI) กับใบแจ้งหนี้เชิงพาณิชย์ ก่อนสร้างรายการชิปเมนต์',
         status: 'Active',
-        updatedAt: '2026-05-29',
-        workflowIds: ['cwf-leo', 'cwf-cds'],
-        docTypes: [
-          t.docTypeShort, t.docTypePO, t.docTypeInvoice, t.docTypePL,
-          t.docTypeBL, t.docTypeRemark
-        ],
-        totalFields: 14,
-        parts: [
-          {
-            title: t.ruleHeader,
-            rows: [
-              { id: 'h1', detail: 'Seller Name', detailTh: 'ชื่อผู้ขาย (Seller Name)', values: [
-                {type: 'CONDITIONAL', schemaId: 'ls-1', schemaField: 'Total Value', condField: 'Invoice#', condValue: 'L/C', condSource: 'L/C No.'},
-                {type: 'BILINGUAL', schemaId: 'ls-2', schemaField: 'PO No'},
-                {type: '', schemaId: 'ls-1', schemaField: 'Invoice#', isMain: true},
-                {type: 'BILINGUAL', schemaId: 'ls-1', schemaField: 'Packing#'},
-                {type: 'BILINGUAL', schemaId: 'ls-1', schemaField: 'B/L No'},
-                {type: 'TEXT', text: ''}
-              ] },
-              { id: 'h2', detail: 'Seller Address', detailTh: 'ที่อยู่ผู้ขาย (Seller Address)', values: [
-                {type: 'BILINGUAL', schemaId: 'ls-1', schemaField: 'Invoice#'},
-                {type: 'BILINGUAL', schemaId: 'ls-2', schemaField: 'PO No'},
-                {type: '', schemaId: 'ls-1', schemaField: 'Invoice#', isMain: true},
-                {type: 'BILINGUAL', schemaId: 'ls-1', schemaField: 'Packing#'},
-                {type: 'BILINGUAL', schemaId: 'ls-1', schemaField: 'B/L No'},
-                {type: 'TEXT', text: ''}
-              ] },
-              { id: 'h3', detail: 'Buyer Name', detailTh: 'ชื่อผู้ซื้อ (Buyer Name)', values: [
-                {type: 'MASTER_LOOKUP', schemaId: 'ls-1', schemaField: 'Invoice#', lookupSource: 'MASTER_DATA', masterDb: 'Customers'},
-                {type: 'MASTER_LOOKUP', schemaId: 'ls-2', schemaField: 'PO No', lookupSource: 'MASTER_DATA', masterDb: 'Customers'},
-                {type: '', schemaId: 'ls-1', schemaField: 'Invoice#', isMain: true},
-                {type: 'MASTER_LOOKUP', schemaId: 'ls-1', schemaField: 'Packing#', lookupSource: 'MASTER_DATA', masterDb: 'Customers'},
-                {type: 'MASTER_LOOKUP', schemaId: 'ls-1', schemaField: 'B/L No', lookupSource: 'DOC_TYPE', lookupDocType: t.docTypeInvoice, lookupMatchColumns: 'Customer Name, Tax ID'},
-                {type: 'TEXT', text: ''}
-              ] },
-              { id: 'h4', detail: 'Invoice No.', detailTh: 'เลขที่ใบแจ้งหนี้ (Invoice No.)', values: [
-                {type: 'EXACT', schemaId: 'ls-1', schemaField: 'Invoice#'},
-                {type: 'EXACT', schemaId: 'ls-2', schemaField: 'PO No'},
-                {type: '', schemaId: 'ls-1', schemaField: 'Invoice#', isMain: true},
-                {type: 'EXACT', schemaId: 'ls-1', schemaField: 'Packing#'},
-                {type: 'EXACT', schemaId: 'ls-1', schemaField: 'B/L No'},
-                {type: 'TEXT', text: ''}
-              ] },
-              { id: 'h_date', detail: 'Invoice Date', detailTh: 'วันที่ออกใบแจ้งหนี้ (Invoice Date)', values: [
-                {type: 'DATE_NORMALIZATION', schemaId: 'ls-1', schemaField: 'Invoice#', dateBuddhist: true, dateADToBE: false},
-                {type: 'DATE_NORMALIZATION', schemaId: 'ls-2', schemaField: 'PO No', dateBuddhist: false, dateADToBE: false},
-                {type: '', schemaId: 'ls-1', schemaField: 'Invoice#', isMain: true, dateBuddhist: false, dateADToBE: false},
-                {type: 'DATE_NORMALIZATION', schemaId: 'ls-1', schemaField: 'Packing#', dateBuddhist: false, dateADToBE: false},
-                {type: 'DATE_NORMALIZATION', schemaId: 'ls-1', schemaField: 'B/L No', dateBuddhist: false, dateADToBE: false},
-                {type: 'TEXT', text: ''}
-              ] },
-              { id: 'h5', detail: 'Internal Code', detailTh: 'รหัสควบคุมภายใน (Internal Code)', values: [
-                {type: 'EXACT', schemaId: 'ls-1', schemaField: 'Invoice#'},
-                {type: 'EXACT', schemaId: 'ls-2', schemaField: 'PO No'},
-                {type: '', schemaId: 'ls-1', schemaField: 'Invoice#', isMain: true},
-                {type: 'EXACT', schemaId: 'ls-1', schemaField: 'Packing#'},
-                {type: 'EXACT', schemaId: 'ls-1', schemaField: 'B/L No'},
-                {type: 'TEXT', text: ''}
-              ] },
-            ]
-          },
-          {
-            title: t.ruleDescription,
-            rows: [
-              { id: 'd1', detail: 'Product Description', detailTh: 'คำอธิบายสินค้า (Product Description)', values: [
-                {type: 'BILINGUAL', schemaId: 'ls-1', schemaField: 'Invoice#'},
-                {type: 'BILINGUAL', schemaId: 'ls-2', schemaField: 'PO No'},
-                {type: '', schemaId: 'ls-1', schemaField: 'Invoice#', isMain: true},
-                {type: 'BILINGUAL', schemaId: 'ls-1', schemaField: 'Packing#'},
-                {type: 'BILINGUAL', schemaId: 'ls-1', schemaField: 'B/L No'},
-                {type: 'TEXT', text: ''}
-              ] },
-              { id: 'd2', detail: 'hsCode', detailTh: 'พิกัดอัตราศุลกากร (hsCode)', values: [
-                {type: 'EXACT', schemaId: 'ls-1', schemaField: 'items.hsCode'},
-                {type: 'EXACT', schemaId: 'ls-2', schemaField: 'items.hsCode'},
-                {type: '', schemaId: 'ls-1', schemaField: 'items.hsCode', isMain: true, arrayMatchingMode: 'key-based', arrayMatchingKey: ['itemId'], arrayMatchingFields: ['hsCode', 'description', 'quantity'], fallbackToIndex: true},
-                {type: 'EXACT', schemaId: 'ls-1', schemaField: 'items.hsCode'},
-                {type: 'EXACT', schemaId: 'ls-1', schemaField: 'items.hsCode'},
-                {type: 'TEXT', text: ''}
-              ] },
-              { id: 'd3', detail: 'quantity', detailTh: 'จำนวนหน่วยสินค้า (quantity)', values: [
-                {type: 'NUMBER_WORD', schemaId: 'ls-1', schemaField: 'items.quantity'},
-                {type: 'NUMBER_WORD', schemaId: 'ls-2', schemaField: 'items.quantity'},
-                {type: '', schemaId: 'ls-1', schemaField: 'items.quantity', isMain: true, arrayMatchingMode: 'key-based', arrayMatchingKey: ['itemId'], arrayMatchingFields: ['hsCode', 'description', 'quantity'], fallbackToIndex: true},
-                {type: 'NUMBER_WORD', schemaId: 'ls-1', schemaField: 'items.quantity'},
-                {type: 'NUMBER_WORD', schemaId: 'ls-1', schemaField: 'items.quantity'},
-                {type: 'TEXT', text: ''}
-              ] },
-              { id: 'd4', detail: 'UOM', detailTh: 'หน่วยนับสินค้า (UOM)', values: [
-                {type: 'EXACT', schemaId: 'ls-1', schemaField: 'Invoice#'},
-                {type: 'EXACT', schemaId: 'ls-2', schemaField: 'PO No'},
-                {type: '', schemaId: 'ls-1', schemaField: 'Invoice#', isMain: true},
-                {type: 'EXACT', schemaId: 'ls-1', schemaField: 'Packing#'},
-                {type: 'EXACT', schemaId: 'ls-1', schemaField: 'B/L No'},
-                {type: 'TEXT', text: ''}
-              ] },
-              { id: 'd5', detail: "Total Q'ty", detailTh: 'จำนวนสินค้ารวมทั้งหมด', values: [
-                {type: 'NUMBER_WORD', schemaId: 'ls-1', schemaField: 'Quantity'},
-                {type: 'NUMBER_WORD', schemaId: 'ls-2', schemaField: 'PO No'},
-                {type: '', schemaId: 'ls-1', schemaField: 'Quantity', isMain: true},
-                {type: 'NUMBER_WORD', schemaId: 'ls-1', schemaField: 'Packing#'},
-                {type: 'NUMBER_WORD', schemaId: 'ls-1', schemaField: 'B/L No'},
-                {type: 'TEXT', text: ''}
-              ] },
-              { id: 'd6', detail: 'Internal Remarks', detailTh: 'หมายเหตุภายใน', values: [
-                {type: '', schemaId: 'ls-1', schemaField: 'Invoice#'},
-                {type: '', schemaId: 'ls-2', schemaField: 'PO No'},
-                {type: '', schemaId: 'ls-1', schemaField: 'Invoice#', isMain: true},
-                {type: '', schemaId: 'ls-1', schemaField: 'Packing#'},
-                {type: '', schemaId: 'ls-1', schemaField: 'B/L No'},
-                {type: 'TEXT', text: ''}
-              ] },
-            ]
-          },
-          {
-            title: t.ruleFooter,
-            rows: [
-              { id: 'f1', detail: 'Company Stamp', detailTh: 'ตราประทับบริษัท', values: [
-                {type: 'EXISTENCE', schemaId: 'ls-1', schemaField: 'Invoice#'},
-                {type: 'EXISTENCE', schemaId: 'ls-2', schemaField: 'PO No'},
-                {type: '', schemaId: 'ls-1', schemaField: 'Invoice#', isMain: true},
-                {type: 'EXISTENCE', schemaId: 'ls-1', schemaField: 'Packing#'},
-                {type: 'EXISTENCE', schemaId: 'ls-1', schemaField: 'B/L No'},
-                {type: 'TEXT', text: ''}
-              ] },
-              { id: 'f2', detail: 'Human Sign', detailTh: 'ลายเซ็นบุคคล', values: [
-                {type: 'EXISTENCE', schemaId: 'ls-1', schemaField: 'Invoice#'},
-                {type: 'EXISTENCE', schemaId: 'ls-2', schemaField: 'PO No'},
-                {type: '', schemaId: 'ls-1', schemaField: 'Invoice#', isMain: true},
-                {type: 'EXISTENCE', schemaId: 'ls-1', schemaField: 'Packing#'},
-                {type: 'EXISTENCE', schemaId: 'ls-1', schemaField: 'B/L No'},
-                {type: 'TEXT', text: ''}
-              ] },
-            ]
-          }
-        ]
-      },
-      {
-        id: 'rule-002',
-        name: 'Standard Export Documents',
-        nameTh: 'กฎตรวจสอบเอกสารส่งออกมาตรฐาน',
-        description: 'Standard operational rules for outward shipments, focusing on tracking, invoice verification, weight tallies, and a carried-forward container seal reference from the express clearance flow.',
-        descriptionTh: 'กฎเกณฑ์มาตรฐานปฏิบัติการสำหรับการส่งสินค้าออกนอกประเทศ เน้นควบคุมการติดตามสถานะ ตรวจสอบใบกำกับสินค้า บันทึกบัญชีน้ำหนักรวม และดึงค่าเลขซีลตู้คอนเทนเนอร์ต่อเนื่องจากเวิร์กโฟลว์ Express Clearance',
-        status: 'Active',
-        updatedAt: '2026-05-15',
-        workflowIds: ['cwf-3'],
-        docTypes: [t.docTypeInvoice, t.docTypePL, t.docTypeBL, t.docTypePO, t.docTypeRemark],
-        totalFields: 6,
-        parts: [
-          {
-            title: t.ruleHeader,
-            rows: [
-              { id: 'h1_2', detail: 'Shipper', detailTh: 'ผู้ส่งสินค้า (Shipper)', values: [
-                {type: 'BILINGUAL', schemaId: 'ls-1', schemaField: 'Invoice#'},
-                {type: 'BILINGUAL', schemaId: 'ls-1', schemaField: 'Packing#'},
-                {type: '', schemaId: 'ls-1', schemaField: 'B/L No', isMain: true},
-                {type: 'BILINGUAL', schemaId: 'ls-2', schemaField: 'PO No'},
-                {type: 'TEXT', text: ''}
-              ] },
-              { id: 'h2_2', detail: 'Consignee', detailTh: 'ผู้รับสินค้า (Consignee)', values: [
-                {type: 'BILINGUAL', schemaId: 'ls-1', schemaField: 'Invoice#'},
-                {type: 'BILINGUAL', schemaId: 'ls-1', schemaField: 'Packing#'},
-                {type: '', schemaId: 'ls-1', schemaField: 'B/L No', isMain: true},
-                {type: 'BILINGUAL', schemaId: 'ls-2', schemaField: 'PO No'},
-                {type: 'TEXT', text: ''}
-              ] },
-            ]
-          },
-          {
-            title: t.ruleDescription,
-            rows: [
-              { id: 'd1_2', detail: 'Total Weight', detailTh: 'น้ำหนักรวมทั้งหมด (Weight)', values: [
-                {type: '', schemaId: 'ls-1', schemaField: 'Invoice#'},
-                {type: 'NUMBER_WORD', schemaId: 'ls-1', schemaField: 'Weight'},
-                {type: '', schemaId: 'ls-1', schemaField: 'B/L No', isMain: true},
-                {type: 'NUMBER_WORD', schemaId: 'ls-2', schemaField: 'PO No'},
-                {type: 'TEXT', text: ''}
-              ] },
-              { id: 'd2_2', detail: 'Total Volume', detailTh: 'ปริมาตรรวมทั้งหมด (Volume)', values: [
-                {type: '', schemaId: 'ls-1', schemaField: 'Invoice#'},
-                {type: 'NUMBER_WORD', schemaId: 'ls-1', schemaField: 'Weight'},
-                {type: '', schemaId: 'ls-1', schemaField: 'B/L No', isMain: true},
-                {type: 'NUMBER_WORD', schemaId: 'ls-2', schemaField: 'PO No'},
-                {type: 'TEXT', text: ''}
-              ] },
-            ]
-          },
-          {
-            title: t.ruleFooter,
-            rows: [
-              { id: 'f1_2', detail: 'Port of Loading', detailTh: 'ท่าเรือต้นทาง (Port of Loading)', values: [
-                {type: 'EXACT', schemaId: 'ls-1', schemaField: 'Invoice#'},
-                {type: '', schemaId: 'ls-1', schemaField: 'Packing#'},
-                {type: '', schemaId: 'ls-1', schemaField: 'B/L No', isMain: true},
-                {type: 'EXACT', schemaId: 'ls-2', schemaField: 'PO No'},
-                {type: 'TEXT', text: ''}
-              ] },
-              { id: 'f2_2', detail: 'Container Seal No.', detailTh: 'เลขซีลตู้คอนเทนเนอร์ (Container Seal No.)', values: [
-                {type: 'CROSS_FLOW_CARRY', schemaId: 'ls-1', schemaField: 'Invoice#', carryRule: 'Gate Pass Rule', carryField: 'Seal No'},
-                {type: 'CROSS_FLOW_CARRY', schemaId: 'ls-1', schemaField: 'Packing#', carryRule: 'Gate Pass Rule', carryField: 'Seal No'},
-                {type: '', schemaId: 'ls-1', schemaField: 'B/L No', isMain: true},
-                {type: 'CROSS_FLOW_CARRY', schemaId: 'ls-2', schemaField: 'PO No', carryRule: 'Gate Pass Rule', carryField: 'Seal No'},
-                {type: 'TEXT', text: ''}
-              ] },
-            ]
-          }
-        ]
-      },
-      {
-        id: 'rule-003',
-        name: 'Chemical & Dangerous Goods',
-        nameTh: 'กฎตรวจสอบเคมีภัณฑ์และสินค้าอันตราย',
-        description: 'Additional validation layers for DG declarations, safety data sheets (SDS), packaging groups, and emergency contacts.',
-        descriptionTh: 'ชั้นข้อมูลการตรวจสอบแบบพิเศษสำหรับเอกสารแจ้งสินค้าอันตราย ใบรับรองเคมีภัณฑ์ กลุ่มการบรรจุภัณฑ์ และช่องทางติดต่อฉุกเฉิน',
-        status: 'Inactive',
         updatedAt: '2026-05-10',
-        workflowIds: ['cwf-1'],
-        docTypes: [t.docTypeInvoice, t.docTypePL, t.docTypeBL, t.docTypePO, t.docTypeRemark],
-        totalFields: 5,
-        parts: [
-          {
-            title: t.ruleHeader,
-            rows: [
-              { id: 'h1_3', detail: 'UN Number', detailTh: 'หมายเลขสหประชาชาติ (UN Number)', values: [
-                {type: 'EXACT', schemaId: 'ls-1', schemaField: 'Invoice#'},
-                {type: 'EXACT', schemaId: 'ls-1', schemaField: 'Packing#'},
-                {type: '', schemaId: 'ls-1', schemaField: 'B/L No', isMain: true},
-                {type: 'EXACT', schemaId: 'ls-2', schemaField: 'PO No'},
-                {type: 'TEXT', text: ''}
-              ] },
-              { id: 'h2_3', detail: 'Proper Shipping Name', detailTh: 'ชื่อที่ถูกต้องในการขนส่ง (Proper Shipping Name)', values: [
-                {type: 'BILINGUAL', schemaId: 'ls-1', schemaField: 'Invoice#'},
-                {type: 'BILINGUAL', schemaId: 'ls-1', schemaField: 'Packing#'},
-                {type: '', schemaId: 'ls-1', schemaField: 'B/L No', isMain: true},
-                {type: 'BILINGUAL', schemaId: 'ls-2', schemaField: 'PO No'},
-                {type: 'TEXT', text: ''}
-              ] },
-            ]
-          },
-          {
-            title: t.ruleDescription,
-            rows: [
-              { id: 'd1_3', detail: 'Hazard Class', detailTh: 'ระดับความเป็นอันตราย (Hazard Class)', values: [
-                {type: '', schemaId: 'ls-1', schemaField: 'Invoice#'},
-                {type: '', schemaId: 'ls-1', schemaField: 'Packing#'},
-                {type: '', schemaId: 'ls-1', schemaField: 'B/L No', isMain: true},
-                {type: 'EXACT', schemaId: 'ls-2', schemaField: 'PO No'},
-                {type: 'TEXT', text: ''}
-              ] },
-              { id: 'd2_3', detail: 'Packing Group', detailTh: 'กลุ่มการบรรจุทางเคมี (Packing Group)', values: [
-                {type: '', schemaId: 'ls-1', schemaField: 'Invoice#'},
-                {type: '', schemaId: 'ls-1', schemaField: 'Packing#'},
-                {type: '', schemaId: 'ls-1', schemaField: 'B/L No', isMain: true},
-                {type: 'EXACT', schemaId: 'ls-2', schemaField: 'PO No'},
-                {type: 'TEXT', text: ''}
-              ] },
-            ]
-          },
-          {
-            title: t.ruleFooter,
-            rows: [
-              { id: 'f1_3', detail: 'Emergency Contact', detailTh: 'เบอร์ติดต่อกรณีฉุกเฉิน (Emergency Contact)', values: [
-                {type: 'EXACT', schemaId: 'ls-1', schemaField: 'Invoice#'},
-                {type: '', schemaId: 'ls-1', schemaField: 'Packing#'},
-                {type: '', schemaId: 'ls-1', schemaField: 'B/L No', isMain: true},
-                {type: 'EXACT', schemaId: 'ls-2', schemaField: 'PO No'},
-                {type: 'TEXT', text: ''}
-              ] },
-            ]
-          }
-        ]
-      },
-      {
-        id: 'rule-004',
-        name: 'Automated HS Code Verification',
-        nameTh: 'กฎเปรียบเทียบพิกัดศุลกากร (HS Code) อัตโนมัติ',
-        description: 'Verifies standard HS Code classifications and special duty rate matches for general imports against FTA agreements, cross-referencing the HS Code Master File doc type directly.',
-        descriptionTh: 'ประเมินข้ามข้อมูลพิกัดสิทธิประโยชน์ทางภาษี อัตราอากรศุลกากร และระบบตรวจสอบหนังสือรับรองแหล่งกำเนิดสินค้าภายใต้ข้อตกลง FTA โดยอ้างอิงไฟล์ HS Code Master File โดยตรง',
-        status: 'Active',
-        updatedAt: '2026-05-24',
-        workflowIds: ['cwf-2'],
-        docTypes: [t.docTypeHSCode, t.docTypeFTADraft, t.docTypeInvoice],
-        totalFields: 4,
-        parts: [
-          {
-            title: t.ruleHeader,
-            rows: [
-              { id: 'h1_4', detail: 'HS Code Listing', detailTh: 'พิกัดอัตราศุลกากร (HS Code Listing)', values: [
-                {type: 'EXACT', schemaId: 'ls-1', schemaField: 'HS Code'},
-                {type: 'MASTER_LOOKUP', schemaId: 'ls-2', schemaField: 'PO No', lookupSource: 'DOC_TYPE', lookupDocType: t.docTypeHSCode, lookupMatchColumns: 'HS Code, Description'},
-                {type: '', schemaId: 'ls-1', schemaField: 'Invoice#', isMain: true}
-              ] }
-            ]
-          },
-          {
-            title: t.ruleDescription,
-            rows: [
-              { id: 'd1_4', detail: 'Duty Rate %', detailTh: 'อัตราอากรศุลกากร % (Duty Rate %)', values: [
-                {type: 'EXACT', schemaId: 'ls-1', schemaField: 'Duty Rate'},
-                {type: 'EXACT', schemaId: 'ls-2', schemaField: 'PO No'},
-                {type: '', schemaId: 'ls-1', schemaField: 'Invoice#', isMain: true}
-              ] },
-              { id: 'd2_4', detail: 'Country of Origin', detailTh: 'ประเทศแหล่งกำเนิดสินค้า (Country of Origin)', values: [
-                {type: 'BILINGUAL', schemaId: 'ls-1', schemaField: 'Origin Country'},
-                {type: 'BILINGUAL', schemaId: 'ls-2', schemaField: 'Origin Country'},
-                {type: '', schemaId: 'ls-1', schemaField: 'Invoice#', isMain: true}
-              ] }
-            ]
-          },
-          {
-            title: t.ruleFooter,
-            rows: [
-              { id: 'f1_4', detail: 'FTA Reference No.', detailTh: 'เลขที่หนังสือรับรอง FTA (FTA Reference No.)', values: [
-                {type: 'EXACT', schemaId: 'ls-1', schemaField: 'FTA Ref No.'},
-                {type: 'EXACT', schemaId: 'ls-2', schemaField: 'FTA Ref No.'},
-                {type: '', schemaId: 'ls-1', schemaField: 'Invoice#', isMain: true}
-              ] }
-            ]
-          }
-        ]
-      },
-      {
-        id: 'rule-005',
-        name: 'B2B Freight Invoice Discrepancy',
-        nameTh: 'กฎตรวจส่วนต่างบิลค่าขนส่งทางเรือ (B2B)',
-        description: 'Cross-checks logistics carrier costs, freight charges, and surcharges against billing statements.',
-        descriptionTh: 'ตรวจสอบเปรียบเทียบส่วนต่างบัญชี ค่าระวางเรือ ค่าธรรมเนียมเสริมโลจิสติกส์ และระบบจับคู่ลายเซ็นรับเอกสารอย่างลงตัว',
-        status: 'Active',
-        updatedAt: '2026-05-28',
-        workflowIds: [],
-        docTypes: [t.docTypeFreightInv, t.docTypeInvoice, t.docTypeRemark],
+        workflowIds: ['cwf-po-pi'],
+        docTypes: [t.docTypePO, t.docTypeInvoice],
         totalFields: 3,
         parts: [
           {
             title: t.ruleHeader,
             rows: [
-              { id: 'h1_5', detail: 'Carrier Name', detailTh: 'ชื่อบริษัทผู้ขนส่ง (Carrier Name)', values: [
-                {type: 'BILINGUAL', schemaId: 'ls-1', schemaField: 'Carrier'},
-                {type: '', schemaId: 'ls-1', schemaField: 'Invoice#', isMain: true},
+              { id: 'popi-h1', detail: 'PO/PI Number', detailTh: 'เลขที่ PO/PI (PO/PI Number)', values: [
+                {type: '', schemaId: 'ls-popi', schemaField: 'PO/PI Number', isMain: true},
+                {type: 'EXACT', schemaId: 'ls-inv', schemaField: 'Invoice Number'}
+              ] },
+              { id: 'popi-h2', detail: 'Document Date', detailTh: 'วันที่ออกเอกสาร (Document Date)', values: [
+                {type: '', schemaId: 'ls-popi', schemaField: 'PO/PI Date', isMain: true, dateBuddhist: false, dateADToBE: false},
+                {type: 'DATE_NORMALIZATION', schemaId: 'ls-inv', schemaField: 'Invoice Date', dateBuddhist: false, dateADToBE: false}
+              ] },
+            ]
+          },
+          {
+            title: t.ruleDescription,
+            rows: []
+          },
+          {
+            title: t.ruleFooter,
+            rows: [
+              { id: 'popi-f1', detail: 'Total Amount', detailTh: 'ยอดรวมทั้งหมด (Total Amount)', values: [
+                {type: '', schemaId: 'ls-popi', schemaField: 'Total Value', isMain: true},
+                {type: 'NUMBER_WORD', schemaId: 'ls-inv', schemaField: 'Total Amount'}
+              ] },
+            ]
+          }
+        ]
+      },
+      {
+        id: 'rule-shipping-doc',
+        name: 'Shipping Doc Matching',
+        nameTh: 'Shipping Doc Matching',
+        description: 'Cross-checks Invoice, Packing List, Bill of Lading, Freight Invoice, HS Code, and the draft FTA form for a shipment.',
+        descriptionTh: 'ตรวจสอบไขว้ระหว่าง Invoice, Packing List, ใบตราส่งสินค้า, ใบแจ้งค่าระวาง, HS Code และแบบฟอร์ม FTA (ฉบับร่าง) ของชิปเมนต์',
+        status: 'Active',
+        updatedAt: '2026-05-12',
+        workflowIds: ['cwf-shipping-doc'],
+        docTypes: [t.docTypeInvoice, t.docTypePL, t.docTypeBL, t.docTypeFreightInv, t.docTypeHSCode, t.docTypeFTADraft],
+        totalFields: 6,
+        parts: [
+          {
+            title: t.ruleHeader,
+            rows: [
+              { id: 'ship-h1', detail: 'Reference / Document No.', detailTh: 'เลขที่เอกสารอ้างอิง (Reference No.)', values: [
+                {type: '', schemaId: 'ls-inv', schemaField: 'Invoice Number', isMain: true},
+                {type: 'EXACT', schemaId: 'ls-pl', schemaField: 'Packing List No'},
+                {type: 'EXACT', schemaId: 'ls-bl', schemaField: 'B/L Number'},
+                {type: 'EXACT', schemaId: 'ls-frt', schemaField: 'Freight Invoice No'},
+                {type: 'EXACT', schemaId: 'ls-hs', schemaField: 'HS Code'},
+                {type: 'EXACT', schemaId: 'ls-ftad', schemaField: 'FTA Form No'}
+              ] },
+              { id: 'ship-h2', detail: 'Consignee Name', detailTh: 'ชื่อผู้รับสินค้า (Consignee Name)', values: [
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: '', schemaId: 'ls-bl', schemaField: 'Consignee Name', isMain: true},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
                 {type: 'TEXT', text: ''}
-              ] }
+              ] },
             ]
           },
           {
             title: t.ruleDescription,
             rows: [
-              { id: 'd1_5', detail: 'Surcharge breakdown', detailTh: 'รายการค่าธรรมเนียมพิเศษ (Surcharge breakdown)', values: [
-                {type: 'EXACT', schemaId: 'ls-1', schemaField: 'Surcharges'},
-                {type: '', schemaId: 'ls-1', schemaField: 'Invoice#', isMain: true},
+              { id: 'ship-d1', detail: 'Total Packages', detailTh: 'จำนวนหีบห่อรวม (Total Packages)', values: [
+                {type: 'TEXT', text: ''},
+                {type: '', schemaId: 'ls-pl', schemaField: 'Total Packages', isMain: true},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
                 {type: 'TEXT', text: ''}
-              ] }
+              ] },
+              { id: 'ship-d2', detail: 'Product Description', detailTh: 'คำอธิบายสินค้า (Product Description)', values: [
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: '', schemaId: 'ls-hs', schemaField: 'Product Description', isMain: true},
+                {type: 'TEXT', text: ''}
+              ] },
             ]
           },
           {
             title: t.ruleFooter,
             rows: [
-              { id: 'f1_5', detail: 'Billing Signature Verification', detailTh: 'ลายเซ็นยืนยันการรับบิลสำหรับเรียกเก็บเงิน', values: [
-                {type: 'EXISTENCE', schemaId: 'ls-1', schemaField: 'Signature'},
-                {type: '', schemaId: 'ls-1', schemaField: 'Invoice#', isMain: true},
+              { id: 'ship-f1', detail: 'Amount', detailTh: 'ยอดเงิน (Amount)', values: [
+                {type: '', schemaId: 'ls-inv', schemaField: 'Total Amount', isMain: true},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'EXACT', schemaId: 'ls-frt', schemaField: 'Freight Amount'},
+                {type: 'TEXT', text: ''},
                 {type: 'TEXT', text: ''}
-              ] }
+              ] },
+              { id: 'ship-f2', detail: 'Origin Country', detailTh: 'ประเทศแหล่งกำเนิดสินค้า (Origin Country)', values: [
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: '', schemaId: 'ls-ftad', schemaField: 'Origin Country', isMain: true}
+              ] },
+            ]
+          }
+        ]
+      },
+      {
+        id: 'rule-import-dec-1',
+        name: 'Import Declaration Matching#1',
+        nameTh: 'Import Declaration Matching#1',
+        description: 'Full import declaration matching set: Invoice, Packing List, B/L, Freight Invoice, HS Code, Form FTA, and Insurance Sheet.',
+        descriptionTh: 'ชุดตรวจสอบใบขนสินค้าขาเข้าแบบเต็ม: Invoice, Packing List, B/L, ใบแจ้งค่าระวาง, HS Code, แบบฟอร์ม FTA และใบรับรองประกันภัย',
+        status: 'Active',
+        updatedAt: '2026-05-14',
+        workflowIds: ['cwf-import-dec-1'],
+        docTypes: [t.docTypeInvoice, t.docTypePL, t.docTypeBL, t.docTypeFreightInv, t.docTypeHSCode, t.docTypeFTA, t.docTypeInsurance],
+        totalFields: 4,
+        parts: [
+          {
+            title: t.ruleHeader,
+            rows: [
+              { id: 'imp1-h1', detail: 'Reference / Document No.', detailTh: 'เลขที่เอกสารอ้างอิง (Reference No.)', values: [
+                {type: '', schemaId: 'ls-inv', schemaField: 'Invoice Number', isMain: true},
+                {type: 'EXACT', schemaId: 'ls-pl', schemaField: 'Packing List No'},
+                {type: 'EXACT', schemaId: 'ls-bl', schemaField: 'B/L Number'},
+                {type: 'EXACT', schemaId: 'ls-frt', schemaField: 'Freight Invoice No'},
+                {type: 'EXACT', schemaId: 'ls-hs', schemaField: 'HS Code'},
+                {type: 'EXACT', schemaId: 'ls-ftad', schemaField: 'FTA Form No'},
+                {type: 'EXACT', schemaId: 'ls-ins', schemaField: 'Policy No'}
+              ] },
+              { id: 'imp1-h2', detail: 'Tax ID / Consignee', detailTh: 'เลขผู้เสียภาษี / ผู้รับสินค้า (Tax ID / Consignee)', values: [
+                {type: '', schemaId: 'ls-inv', schemaField: 'Tax ID', isMain: true},
+                {type: 'TEXT', text: ''},
+                {type: 'EXACT', schemaId: 'ls-bl', schemaField: 'Consignee Name'},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''}
+              ] },
+            ]
+          },
+          {
+            title: t.ruleDescription,
+            rows: [
+              { id: 'imp1-d1', detail: 'Origin Country', detailTh: 'ประเทศแหล่งกำเนิดสินค้า (Origin Country)', values: [
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: '', schemaId: 'ls-ftad', schemaField: 'Origin Country', isMain: true},
+                {type: 'TEXT', text: ''}
+              ] },
+            ]
+          },
+          {
+            title: t.ruleFooter,
+            rows: [
+              { id: 'imp1-f1', detail: 'Amount', detailTh: 'ยอดเงิน (Amount)', values: [
+                {type: '', schemaId: 'ls-inv', schemaField: 'Total Amount', isMain: true},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'EXACT', schemaId: 'ls-frt', schemaField: 'Freight Amount'},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'EXACT', schemaId: 'ls-ins', schemaField: 'Insured Value'}
+              ] },
+            ]
+          }
+        ]
+      },
+      {
+        id: 'rule-import-dec-2',
+        name: 'Import Declaration Matching#2',
+        nameTh: 'Import Declaration Matching#2',
+        description: 'Supplementary import declaration matching for FTA form, License, LPI, and other supporting documents.',
+        descriptionTh: 'ตรวจสอบเอกสารประกอบใบขนสินค้าขาเข้าเพิ่มเติม สำหรับแบบฟอร์ม FTA, ใบอนุญาต, LPI และเอกสารสนับสนุนอื่นๆ',
+        status: 'Active',
+        updatedAt: '2026-05-16',
+        workflowIds: ['cwf-import-dec-2'],
+        docTypes: [t.docTypeFTA, t.docTypeLicense, t.docTypeLPI, t.docTypeOther],
+        totalFields: 3,
+        parts: [
+          {
+            title: t.ruleHeader,
+            rows: [
+              { id: 'imp2-h1', detail: 'Reference / Document No.', detailTh: 'เลขที่เอกสารอ้างอิง (Reference No.)', values: [
+                {type: '', schemaId: 'ls-ftad', schemaField: 'FTA Form No', isMain: true},
+                {type: 'EXACT', schemaId: 'ls-lic', schemaField: 'License No'},
+                {type: 'EXACT', schemaId: 'ls-lpi', schemaField: 'LPI No'},
+                {type: 'EXISTENCE', schemaId: 'ls-oth', schemaField: 'Document Title'}
+              ] },
+              { id: 'imp2-h2', detail: 'Expiry Date', detailTh: 'วันหมดอายุ (Expiry Date)', values: [
+                {type: 'TEXT', text: ''},
+                {type: '', schemaId: 'ls-lic', schemaField: 'Expiry Date', isMain: true, dateBuddhist: false, dateADToBE: false},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''}
+              ] },
+            ]
+          },
+          {
+            title: t.ruleDescription,
+            rows: []
+          },
+          {
+            title: t.ruleFooter,
+            rows: [
+              { id: 'imp2-f1', detail: 'Document Existence Check', detailTh: 'ตรวจสอบว่ามีเอกสารครบ (Document Existence Check)', values: [
+                {type: '', schemaId: 'ls-ftad', schemaField: 'FTA Form No', isMain: true},
+                {type: 'EXISTENCE', schemaId: 'ls-lic', schemaField: 'License No'},
+                {type: 'EXISTENCE', schemaId: 'ls-lpi', schemaField: 'LPI No'},
+                {type: 'EXISTENCE', schemaId: 'ls-oth', schemaField: 'Document Title'}
+              ] },
             ]
           }
         ]
@@ -441,7 +297,7 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('bizx_compare_rules_v6', JSON.stringify(rules));
+      localStorage.setItem('bizx_compare_rules_v7', JSON.stringify(rules));
     }
   }, [rules]);
 
