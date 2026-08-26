@@ -89,6 +89,11 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
   const openDrawerColIdx = openDrawerInfo?.colIdx;
   const openDrawerRowId = openDrawerInfo?.rowId;
   const openDrawerFieldName = openDrawerInfo?.fieldName;
+  const [applyToAllFields, setApplyToAllFields] = useState(false);
+
+  useEffect(() => {
+    setApplyToAllFields(false);
+  }, [openDrawerRowId, openDrawerColIdx]);
 
   useEffect(() => {
     if (openDrawerColIdx !== undefined && openDrawerColIdx !== null && editFormData) {
@@ -1410,10 +1415,12 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                     <div className="flex flex-col gap-4">
                       <div className="bg-slate-50 p-4 border border-slate-200" style={{ borderRadius: '8px' }}>
                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-wide block mb-1">
-                          {language === 'TH' ? 'ประเภทเอกสารที่จะรวมข้อมูล' : 'Document types to combine'}
+                          {language === 'TH' ? 'เลือกเอกสารที่จะรวมเป็นคอลัมน์เดียว' : 'Choose documents to merge into one column'}
                         </span>
                         <p className="text-xs text-slate-500 leading-relaxed mb-3">
-                          {language === 'TH' ? 'ระบบจะรวมข้อมูลที่ตรวจสอบแล้วจากเอกสารที่เลือกไว้ในโฟลว์ก่อนหน้า มาแสดงเป็นค่าอ้างอิงหลักของฟิลด์นี้' : 'The already-verified data from the selected documents in the previous flow will be combined as this field\'s main reference value.'}
+                          {language === 'TH'
+                            ? 'ตัวเลือกด้านล่างคือเอกสารทั้งหมดที่มีอยู่ใน Compare Rule นี้ เอกสารที่คุณเลือกจะถูกรวมเป็นคอลัมน์เดียว และแสดงข้อมูลที่รวบรวมมาจากโฟลว์ก่อนหน้าให้อัตโนมัติ โดยไม่ต้องให้ผู้ใช้อัปโหลดหรือเทียบเอกสารเหล่านั้นทีละไฟล์อีก'
+                            : 'The choices below are all the document types in this Compare Rule. Whichever ones you pick get merged into a single column that automatically shows data combined from the previous flow — no need to upload or compare those documents one by one anymore.'}
                         </p>
                         <div className="relative" id={`combine-doctypes-wrapper-${openDrawerInfo.colIdx}`}>
                           <div
@@ -1491,6 +1498,22 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                         <span className="inline-block w-2 h-2 rounded-full bg-blue-500 shrink-0"></span>
                         <span>{language === 'TH' ? 'คอลัมน์นี้จะไม่ผ่านการเปรียบเทียบจนกว่าจะมีเอกสารอื่นให้เทียบด้วย' : 'This column stays pending until another document is available to compare against.'}</span>
                       </div>
+                      <label className="flex items-start gap-2.5 p-4 border border-slate-200 rounded-lg cursor-pointer select-none" style={{ borderRadius: '8px' }}>
+                        <input
+                          type="checkbox"
+                          checked={applyToAllFields}
+                          onChange={(e) => setApplyToAllFields(e.target.checked)}
+                          className="w-3.5 h-3.5 mt-0.5 text-blue-600 rounded border-slate-300 focus:ring-blue-500 accent-blue-600 cursor-pointer shrink-0"
+                        />
+                        <span className="flex flex-col gap-0.5">
+                          <span className="text-xs font-bold text-[#010136]">
+                            {language === 'TH' ? 'ใช้การตั้งค่านี้กับทุกฟิลด์ใน Compare Rule นี้' : 'Apply this setting to every field in this Compare Rule'}
+                          </span>
+                          <span className="text-[11px] text-slate-500 leading-relaxed">
+                            {language === 'TH' ? 'เมื่อเลือก ทุกแถวในตารางจะใช้คอลัมน์รวมนี้แบบเดียวกันทันที ไม่ต้องตั้งค่าทีละฟิลด์' : 'When checked, every row in the table switches to this same merged column right away — no need to set it up field by field.'}
+                          </span>
+                        </span>
+                      </label>
                     </div>
                   );
                 }
@@ -2435,7 +2458,29 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                   backgroundColor: '#1f5df9'
                 }}
                 onClick={() => {
-                  setToastMessage(language === 'TH' ? 'บันทึกการตั้งค่าลงตารางแล้ว' : 'Comparison settings saved');
+                  const drawerVal = editFormData?.values[openDrawerInfo.colIdx];
+                  if (drawerVal?.combineFromPrevFlow && applyToAllFields) {
+                    const colIdx = openDrawerInfo.colIdx;
+                    const combineDocTypes = drawerVal.combineDocTypes || [];
+                    const newParts = activeRule.parts.map((part: any) => ({
+                      ...part,
+                      rows: part.rows.map((row: any) => {
+                        if (row.id === openDrawerInfo.rowId) return row;
+                        const newValues = row.values.map((v: any, idx: number) => ({
+                          ...v,
+                          isMain: idx === colIdx,
+                          type: idx === colIdx ? '' : v.type,
+                          combineFromPrevFlow: idx === colIdx ? true : v.combineFromPrevFlow,
+                          combineDocTypes: idx === colIdx ? combineDocTypes : v.combineDocTypes
+                        }));
+                        return { ...row, values: newValues };
+                      })
+                    }));
+                    setActiveRule({ ...activeRule, parts: newParts });
+                    setToastMessage(language === 'TH' ? 'ใช้การตั้งค่านี้กับทุกฟิลด์แล้ว' : 'Applied this setting to every field');
+                  } else {
+                    setToastMessage(language === 'TH' ? 'บันทึกการตั้งค่าลงตารางแล้ว' : 'Comparison settings saved');
+                  }
                   setOpenDrawerInfo(null);
                 }}
               >
