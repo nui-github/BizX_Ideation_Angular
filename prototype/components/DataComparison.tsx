@@ -1651,6 +1651,11 @@ const mockWorkflows: Workflow[] = [
   // --- Custom States for Column Replace Feature ---
   const [showReplaceModal, setShowReplaceModal] = useState(false);
   const [replaceTargetColumn, setReplaceTargetColumn] = useState<string | null>(null);
+  // Whether replaceTargetColumn already had data before this upload (opened via the
+  // "Replace" icon on an already-OCR'd column) vs. a first-time upload on a MISSING column —
+  // only the former needs to ask whether to replace or merge with the existing dataset.
+  const [replaceIsResubmission, setReplaceIsResubmission] = useState(false);
+  const [replaceMode, setReplaceMode] = useState<'replace' | 'merge'>('replace');
   const [replaceUploadedFiles, setReplaceUploadedFiles] = useState<{
     id: string;
     name: string;
@@ -1830,7 +1835,11 @@ const mockWorkflows: Workflow[] = [
       docName: replaceTargetColumn,
       timestamp: new Date().toISOString(),
       action: 'UPLOAD_NEW_VERSION',
-      details: language === 'TH' ? `อัปโหลดไฟล์เวอร์ชันใหม่ (${replaceUploadedFiles.length} ไฟล์)` : `Uploaded new version (${replaceUploadedFiles.length} files)`,
+      details: replaceIsResubmission
+        ? (replaceMode === 'merge'
+            ? (language === 'TH' ? `อัปโหลดไฟล์เพิ่มเติมและรวมเข้ากับชุดเดิม (${replaceUploadedFiles.length} ไฟล์)` : `Uploaded additional files and merged with the existing set (${replaceUploadedFiles.length} files)`)
+            : (language === 'TH' ? `อัปโหลดไฟล์ชุดใหม่ทับชุดเดิม (${replaceUploadedFiles.length} ไฟล์)` : `Uploaded a new set of files, replacing the old set (${replaceUploadedFiles.length} files)`))
+        : (language === 'TH' ? `อัปโหลดไฟล์เวอร์ชันใหม่ (${replaceUploadedFiles.length} ไฟล์)` : `Uploaded new version (${replaceUploadedFiles.length} files)`),
       version: 2,
       user: 'Kunawut W.'
     };
@@ -1872,6 +1881,8 @@ const mockWorkflows: Workflow[] = [
     setReplaceTargetColumn(null);
     setReplaceUploadedFiles([]);
     setReplacePreviewFileId(null);
+    setReplaceIsResubmission(false);
+    setReplaceMode('replace');
   };
 
   // --- Custom Handlers for User File Upload & Grouping ---
@@ -5601,6 +5612,8 @@ const mockWorkflows: Workflow[] = [
                   setReplaceTargetColumn(null);
                   setReplaceUploadedFiles([]);
                   setReplacePreviewFileId(null);
+                  setReplaceIsResubmission(false);
+                  setReplaceMode('replace');
                 }}
                 className="p-2 hover:bg-slate-100 rounded-[4px] text-slate-400 transition-colors"
                 id="close-replace-modal-btn"
@@ -5745,6 +5758,64 @@ const mockWorkflows: Workflow[] = [
                   <div className="text-xs font-bold text-amber-600 bg-amber-50 p-2.5 rounded-lg flex items-center gap-2 mt-2">
                     <Info size={14} />
                     {language === 'TH' ? 'ไฟล์ทั้งหมดที่อัปโหลดด้านบน ข้อมูลที่สกัดออกมาได้จะถูกนำมารวมกันและแสดงอยู่ในคอลัมน์เดียวกัน' : 'The data extracted from all the files uploaded above will be combined and shown in the same column'}
+                  </div>
+                </div>
+              )}
+
+              {/* Replace vs Merge — only relevant from the 2nd upload onward on this column,
+                  since the first upload has no existing dataset to replace or merge into. */}
+              {replaceIsResubmission && (
+                <div className="flex flex-col gap-2.5">
+                  <h4 className="text-xs font-black text-slate-400 tracking-widest uppercase mb-0.5">
+                    {language === 'TH' ? 'วิธีนำเข้าไฟล์ชุดใหม่' : 'How to import the new files'}
+                  </h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <label
+                      className={`flex flex-col gap-1.5 p-3.5 rounded-xl border-2 cursor-pointer transition-all ${
+                        replaceMode === 'replace' ? 'border-blue-500 bg-blue-50/50 shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="replace-mode"
+                          checked={replaceMode === 'replace'}
+                          onChange={() => setReplaceMode('replace')}
+                          className="w-3.5 h-3.5 text-blue-600 focus:ring-blue-100 cursor-pointer"
+                        />
+                        <span className="text-xs font-black text-slate-800 uppercase tracking-wide">
+                          {language === 'TH' ? 'ทับชุดเดิม' : 'Replace'}
+                        </span>
+                      </div>
+                      <p className="text-[10px] font-bold text-slate-400 leading-relaxed pl-5">
+                        {language === 'TH'
+                          ? 'เอาไฟล์ชุดใหม่ทั้งชุดไปแทนที่ชุดเดิมทั้งหมด ไม่ว่าชุดเก่าหรือชุดใหม่จะมีจำนวนไฟล์เท่ากันหรือไม่'
+                          : 'Replace the entire old set with the new one, regardless of how many files are in either set.'}
+                      </p>
+                    </label>
+                    <label
+                      className={`flex flex-col gap-1.5 p-3.5 rounded-xl border-2 cursor-pointer transition-all ${
+                        replaceMode === 'merge' ? 'border-blue-500 bg-blue-50/50 shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="replace-mode"
+                          checked={replaceMode === 'merge'}
+                          onChange={() => setReplaceMode('merge')}
+                          className="w-3.5 h-3.5 text-blue-600 focus:ring-blue-100 cursor-pointer"
+                        />
+                        <span className="text-xs font-black text-slate-800 uppercase tracking-wide">
+                          {language === 'TH' ? 'รวมกับชุดเดิม' : 'Merge'}
+                        </span>
+                      </div>
+                      <p className="text-[10px] font-bold text-slate-400 leading-relaxed pl-5">
+                        {language === 'TH'
+                          ? 'นำข้อมูลจากไฟล์ชุดใหม่ไปต่อรวมกับชุดข้อมูลเดิมที่อ่านไฟล์ (OCR) ไปแล้ว'
+                          : "Append the new files' data onto the existing dataset that has already been OCR'd."}
+                      </p>
+                    </label>
                   </div>
                 </div>
               )}
@@ -7904,6 +7975,8 @@ const mockWorkflows: Workflow[] = [
                                                e.stopPropagation();
                                                if (docStatus === ComparisonDocStatus.MISSING) {
                                                   setReplaceTargetColumn(docName);
+                                                  setReplaceIsResubmission(false);
+                                                  setReplaceMode('replace');
                                                   setShowReplaceModal(true);
                                                } else {
                                                   handleOCRFiles(selectedJob.id, [docName]);
@@ -8059,6 +8132,8 @@ const mockWorkflows: Workflow[] = [
                                                         onClick={(e) => {
                                                           e.stopPropagation();
                                                           setReplaceTargetColumn(docName);
+                                                          setReplaceIsResubmission(true);
+                                                          setReplaceMode('replace');
                                                           setShowReplaceModal(true);
                                                         }}
                                                         className={`h-[18px] w-[18px] flex items-center justify-center rounded-[4px] bg-white border border-slate-200 transition-all ${
