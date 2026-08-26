@@ -2972,13 +2972,14 @@ const mockWorkflows: Workflow[] = [
       docs: {
         'ใบขนสินค้า': ComparisonDocStatus.MISSING,
         // Pre-filled: this is flow 2's already-matched dataset carried forward automatically,
-        // not something flow 3 needs to re-upload or re-extract.
-        'รวมข้อมูลทั้งหมด (Flow ก่อนหน้า)': ComparisonDocStatus.MATCHED
+        // not something flow 3 needs to re-upload or re-extract. Still OCR_DONE (not MATCHED)
+        // since it's the only column present so far — nothing to compare it against yet.
+        'รวมข้อมูลทั้งหมด (Flow ก่อนหน้า)': ComparisonDocStatus.OCR_DONE
       },
       progress: 50,
       totalDocs: 2,
       foundDocs: 1,
-      matchedCount: 1,
+      matchedCount: 0,
       mismatchedCount: 0
     },
     {
@@ -2992,9 +2993,11 @@ const mockWorkflows: Workflow[] = [
       totalFieldsCount: 0,
       accuracyScore: 0.0,
       docs: {
-        // Carried forward: flow 3 already OCR'd and compared this doc, so flow 4
-        // reuses that result instead of asking the user to upload it again.
-        'Import Dec.': ComparisonDocStatus.MATCHED,
+        // Carried forward: flow 3 already OCR'd this doc, so flow 4 reuses that
+        // extraction instead of asking the user to upload it again. Still OCR_DONE
+        // (not MATCHED) since it's the only column present until another doc arrives
+        // to actually compare against.
+        'Import Dec.': ComparisonDocStatus.OCR_DONE,
         'Form FTA': ComparisonDocStatus.MISSING,
         'License': ComparisonDocStatus.MISSING,
         'LPI': ComparisonDocStatus.MISSING,
@@ -3003,7 +3006,7 @@ const mockWorkflows: Workflow[] = [
       progress: 20,
       totalDocs: 5,
       foundDocs: 1,
-      matchedCount: 1,
+      matchedCount: 0,
       mismatchedCount: 0
     }
   ]);
