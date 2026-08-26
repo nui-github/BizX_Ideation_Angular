@@ -669,6 +669,58 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                                         {language === 'TH' ? 'เอกสารหลัก' : 'Main Doc'}
                                       </label>
                                     </div>
+                                    {currentVal?.isMain && (
+                                      <div className="flex items-center gap-1.5 justify-center mb-1">
+                                        <input
+                                          type="checkbox"
+                                          id={`combine-flow-${row.id}-${vIdx}`}
+                                          checked={currentVal?.combineFromPrevFlow || false}
+                                          onChange={(e) => {
+                                            const checked = e.target.checked;
+                                            const newValues = [...editFormData.values];
+                                            newValues[vIdx] = {
+                                              ...newValues[vIdx],
+                                              combineFromPrevFlow: checked,
+                                              combineDocTypes: newValues[vIdx].combineDocTypes || []
+                                            };
+                                            setEditFormData({...editFormData, values: newValues});
+                                            if (checked) {
+                                              setOpenDrawerInfo({
+                                                colIdx: vIdx,
+                                                rowId: row.id,
+                                                fieldName: row.detail,
+                                                docType: activeRule.docTypes[vIdx]
+                                              });
+                                            } else if (openDrawerInfo?.rowId === row.id && openDrawerInfo?.colIdx === vIdx) {
+                                              setOpenDrawerInfo(null);
+                                            }
+                                          }}
+                                          className="w-3 h-3 text-teal-600 rounded border-slate-300 focus:ring-teal-500 cursor-pointer accent-teal-600"
+                                        />
+                                        <label htmlFor={`combine-flow-${row.id}-${vIdx}`} className="text-[9px] font-bold tracking-tight uppercase text-teal-600 cursor-pointer select-none">
+                                          {language === 'TH' ? 'รวมข้อมูลทุกเอกสารจากโฟลว์ก่อนหน้า' : 'Combine all docs from previous flow'}
+                                        </label>
+                                        {currentVal?.combineFromPrevFlow && (
+                                          <button
+                                            type="button"
+                                            onClick={() => setOpenDrawerInfo({
+                                              colIdx: vIdx,
+                                              rowId: row.id,
+                                              fieldName: row.detail,
+                                              docType: activeRule.docTypes[vIdx]
+                                            })}
+                                            className={`p-1 rounded-[4px] transition-all shrink-0 cursor-pointer ${
+                                              openDrawerInfo && openDrawerInfo.rowId === row.id && openDrawerInfo.colIdx === vIdx
+                                                ? 'bg-teal-600 text-white hover:bg-teal-700'
+                                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-teal-600'
+                                            }`}
+                                            title={language === 'TH' ? 'เลือกประเภทเอกสาร' : 'Select document types'}
+                                          >
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-settings-2"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>
+                                          </button>
+                                        )}
+                                      </div>
+                                    )}
                                     {(() => {
                                       const docColName = activeRule.docTypes[vIdx];
                                       const schemasForDoc = getSchemasForDocType(docColName);
@@ -1319,6 +1371,15 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
             <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-5 font-sans">
               {(() => {
                 const drawerVal = editFormData?.values[openDrawerInfo.colIdx];
+                if (drawerVal?.combineFromPrevFlow) {
+                  return (
+                    <div className="flex flex-col select-none border-b border-slate-100 pb-3">
+                      <span className="text-lg font-black text-[#010136]">
+                        {language === 'TH' ? 'รวมข้อมูลทุกเอกสารจากโฟลว์ก่อนหน้า' : 'Combine all docs from previous flow'}
+                      </span>
+                    </div>
+                  );
+                }
                 const type = drawerVal?.type;
                 if (!type || type === 'NONE') return null;
                 const typeLabel = getTypeLabel(type);
@@ -1335,7 +1396,98 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                 const drawerVal = editFormData?.values[openDrawerInfo.colIdx];
                 const type = drawerVal?.type;
                 const allRuleFields = activeRule?.parts?.flatMap((p: any) => p.rows.map((r: any) => r.detail)) || [];
-                
+
+                if (drawerVal?.combineFromPrevFlow) {
+                  const selectedDocTypes: string[] = drawerVal?.combineDocTypes || [];
+                  const availableDocTypes: string[] = (activeRule?.docTypes || []).filter((dt: string) => dt !== t.docTypeRemark && dt !== openDrawerInfo.docType);
+                  return (
+                    <div className="flex flex-col gap-4">
+                      <div className="bg-slate-50 p-4 border border-slate-200" style={{ borderRadius: '8px' }}>
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wide block mb-1">
+                          {language === 'TH' ? 'ประเภทเอกสารที่จะรวมข้อมูล' : 'Document types to combine'}
+                        </span>
+                        <p className="text-xs text-slate-500 leading-relaxed mb-3">
+                          {language === 'TH' ? 'ระบบจะรวมข้อมูลที่ตรวจสอบแล้วจากเอกสารที่เลือกไว้ในโฟลว์ก่อนหน้า มาแสดงเป็นค่าอ้างอิงหลักของฟิลด์นี้' : 'The already-verified data from the selected documents in the previous flow will be combined as this field\'s main reference value.'}
+                        </p>
+                        <div className="relative" id={`combine-doctypes-wrapper-${openDrawerInfo.colIdx}`}>
+                          <div
+                            className="w-full bg-white border border-teal-400 focus:border-teal-500 rounded p-1.5 flex flex-wrap items-center gap-1 min-h-[34px] pr-6 cursor-pointer"
+                            style={{ borderRadius: '4px' }}
+                            onClick={() => {
+                              const el = document.getElementById(`combine-doctypes-dropdown-${openDrawerInfo.colIdx}`);
+                              if (el) el.classList.toggle('hidden');
+                            }}
+                          >
+                            {selectedDocTypes.length === 0 && (
+                              <span className="text-[10px] text-slate-400 font-bold px-1">
+                                {language === 'TH' ? 'เลือกประเภทเอกสาร...' : 'Select document types...'}
+                              </span>
+                            )}
+                            {selectedDocTypes.map((dt: string) => (
+                              <span key={dt} className="inline-flex items-center gap-1 bg-teal-50 text-teal-700 text-[10px] font-bold px-1.5 py-0.5 rounded border border-teal-200">
+                                {dt}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const newValues = [...editFormData.values];
+                                    newValues[openDrawerInfo.colIdx] = {
+                                      ...newValues[openDrawerInfo.colIdx],
+                                      combineDocTypes: selectedDocTypes.filter((d: string) => d !== dt)
+                                    };
+                                    setEditFormData({...editFormData, values: newValues});
+                                  }}
+                                  className="text-teal-400 hover:text-red-500 font-bold ml-0.5 select-none cursor-pointer"
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))}
+                            <div className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-down"><path d="m6 9 6 6 6-6"/></svg>
+                            </div>
+                          </div>
+                          <div id={`combine-doctypes-dropdown-${openDrawerInfo.colIdx}`} className="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-md shadow-lg z-[200] hidden p-1.5 text-left flex flex-col gap-1 max-h-[180px] overflow-y-auto">
+                            {availableDocTypes.length === 0 && (
+                              <span className="text-[10px] text-slate-400 font-bold px-1.5 py-1">
+                                {language === 'TH' ? 'ไม่มีประเภทเอกสารอื่นใน Compare Rule นี้' : 'No other document types in this Compare Rule'}
+                              </span>
+                            )}
+                            {availableDocTypes.map((dt: string) => {
+                              const isSelected = selectedDocTypes.includes(dt);
+                              return (
+                                <label key={dt} className="flex items-center gap-2 px-1.5 py-1 hover:bg-slate-50 text-[10px] font-bold text-slate-600 cursor-pointer select-none">
+                                  <input
+                                    type="checkbox"
+                                    checked={isSelected}
+                                    onChange={() => {
+                                      const nextDocTypes = isSelected
+                                        ? selectedDocTypes.filter((d: string) => d !== dt)
+                                        : [...selectedDocTypes, dt];
+                                      const newValues = [...editFormData.values];
+                                      newValues[openDrawerInfo.colIdx] = {
+                                        ...newValues[openDrawerInfo.colIdx],
+                                        combineDocTypes: nextDocTypes
+                                      };
+                                      setEditFormData({...editFormData, values: newValues});
+                                    }}
+                                    className="w-3 h-3 text-teal-600 border-slate-300 focus:ring-teal-500 accent-teal-600 cursor-pointer"
+                                  />
+                                  <span>{dt}</span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="p-4 bg-teal-50 border border-teal-100 text-xs text-teal-700 font-bold flex items-center gap-2" style={{ borderRadius: '8px' }}>
+                        <span className="inline-block w-2 h-2 rounded-full bg-teal-500 shrink-0"></span>
+                        <span>{language === 'TH' ? 'คอลัมน์นี้จะไม่ผ่านการเปรียบเทียบจนกว่าจะมีเอกสารอื่นให้เทียบด้วย' : 'This column stays pending until another document is available to compare against.'}</span>
+                      </div>
+                    </div>
+                  );
+                }
+
                 if (!type || type === 'NONE') {
                   return (
                     <div className="flex flex-col items-center justify-center py-12 text-center text-slate-400">
