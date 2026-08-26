@@ -2468,13 +2468,21 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                 }}
                 onClick={() => {
                   const drawerVal = editFormData?.values[openDrawerInfo.colIdx];
+                  const colIdx = openDrawerInfo.colIdx;
+                  const existingSnapshot = activeRule.combineSnapshots?.[colIdx];
+
                   if (drawerVal?.combineFromPrevFlow && drawerVal?.combineApplyAll) {
-                    const colIdx = openDrawerInfo.colIdx;
+                    // Applying to every field: remember each row's prior cell (only once, the
+                    // first time this is turned on) so unchecking later can put it all back.
                     const combineDocTypes = drawerVal.combineDocTypes || [];
+                    const snapshot: Record<string, any> = existingSnapshot ? { ...existingSnapshot } : {};
                     const newParts = activeRule.parts.map((part: any) => ({
                       ...part,
                       rows: part.rows.map((row: any) => {
                         if (row.id === openDrawerInfo.rowId) return row;
+                        if (!existingSnapshot) {
+                          snapshot[row.id] = row.values[colIdx];
+                        }
                         const newValues = row.values.map((v: any, idx: number) => ({
                           ...v,
                           isMain: idx === colIdx,
@@ -2486,8 +2494,27 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                         return { ...row, values: newValues };
                       })
                     }));
-                    setActiveRule({ ...activeRule, parts: newParts });
+                    setActiveRule({
+                      ...activeRule,
+                      parts: newParts,
+                      combineSnapshots: { ...(activeRule.combineSnapshots || {}), [colIdx]: snapshot }
+                    });
                     setToastMessage(language === 'TH' ? 'ใช้การตั้งค่านี้กับทุกฟิลด์แล้ว' : 'Applied this setting to every field');
+                  } else if (existingSnapshot) {
+                    // Unchecked "apply to all": put every other row's cell back the way it was.
+                    const newParts = activeRule.parts.map((part: any) => ({
+                      ...part,
+                      rows: part.rows.map((row: any) => {
+                        if (row.id === openDrawerInfo.rowId || !(row.id in existingSnapshot)) return row;
+                        const newValues = [...row.values];
+                        newValues[colIdx] = existingSnapshot[row.id];
+                        return { ...row, values: newValues };
+                      })
+                    }));
+                    const remainingSnapshots = { ...activeRule.combineSnapshots };
+                    delete remainingSnapshots[colIdx];
+                    setActiveRule({ ...activeRule, parts: newParts, combineSnapshots: remainingSnapshots });
+                    setToastMessage(language === 'TH' ? 'ยกเลิกใช้กับทุกฟิลด์ คืนค่าฟิลด์อื่นแล้ว' : 'Unapplied — other fields restored');
                   } else {
                     setToastMessage(language === 'TH' ? 'บันทึกการตั้งค่าลงตารางแล้ว' : 'Comparison settings saved');
                   }
