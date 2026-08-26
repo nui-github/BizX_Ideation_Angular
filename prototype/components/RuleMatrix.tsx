@@ -637,6 +637,9 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                            const currentVal = isEditing ? editFormData.values[vIdx] : val;
                            const isRemarkCol = activeRule.docTypes[vIdx] === t.docTypeRemark;
                            const allRuleFields = activeRule?.parts?.flatMap((p: any) => p.rows.map((r: any) => r.detail)) || [];
+                           const isMergedAway = !isEditing && row.values.some((v: any, idx: number) =>
+                             idx !== vIdx && v?.isMain && v?.combineFromPrevFlow && (v?.combineDocTypes || []).includes(activeRule.docTypes[vIdx])
+                           );
                            return (
                              <td key={vIdx} style={{ minWidth: `${colWidth}px`, maxWidth: `${colWidth}px`, width: `${colWidth}px` }} className={`px-4 py-4 text-center border-r border-slate-50 transition-colors last:border-r-0 align-top ${isEditing ? 'bg-white' : ''}`}>
                                {isEditing ? (
@@ -1076,6 +1079,13 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                                   isRemarkCol ? (
                                     <div className="text-[10px] font-bold text-slate-500 whitespace-pre-wrap">
                                       {val?.text || '-'}
+                                    </div>
+                                  ) : isMergedAway ? (
+                                    <div className="flex flex-col gap-1 items-center justify-center w-full px-2">
+                                      <div className="flex items-center gap-1 bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded-full text-[8px] font-black border border-blue-200">
+                                        <Check size={9} className="text-blue-600 shrink-0" />
+                                        <span>{language === 'TH' ? 'รวมข้อมูล' : 'Combined'}</span>
+                                      </div>
                                     </div>
                                   ) : (
                                   <div className="flex flex-col gap-1 items-center justify-center relative w-full px-2">
