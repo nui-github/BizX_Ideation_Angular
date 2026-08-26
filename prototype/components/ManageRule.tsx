@@ -54,7 +54,7 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
   // Mock Rules Data
   const [rules, setRules] = useState(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('bizx_compare_rules_v7');
+      const saved = localStorage.getItem('bizx_compare_rules_v8');
       if (saved) {
         try {
           return JSON.parse(saved);
@@ -74,7 +74,7 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
         updatedAt: '2026-05-10',
         workflowIds: ['cwf-po-pi'],
         docTypes: [t.docTypePO, t.docTypeInvoice],
-        totalFields: 3,
+        totalFields: 11,
         parts: [
           {
             title: t.ruleHeader,
@@ -87,11 +87,40 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
                 {type: '', schemaId: 'ls-popi', schemaField: 'PO/PI Date', isMain: true, dateBuddhist: false, dateADToBE: false},
                 {type: 'DATE_NORMALIZATION', schemaId: 'ls-inv', schemaField: 'Invoice Date', dateBuddhist: false, dateADToBE: false}
               ] },
+              { id: 'popi-h3', detail: 'Buyer Name', detailTh: 'ชื่อผู้ซื้อ (Buyer Name)', values: [
+                {type: '', schemaId: 'ls-popi', schemaField: 'Sold To Name', isMain: true},
+                {type: 'BILINGUAL', schemaId: 'ls-inv', schemaField: 'Sold To Name'}
+              ] },
+              { id: 'popi-h4', detail: 'Seller / Vendor Name', detailTh: 'ชื่อผู้ขาย (Seller / Vendor Name)', values: [
+                {type: 'BILINGUAL', schemaId: 'ls-popi', schemaField: 'Vendor Name'},
+                {type: '', schemaId: 'ls-inv', schemaField: 'Vendor Name', isMain: true}
+              ] },
+              { id: 'popi-h5', detail: 'Currency', detailTh: 'สกุลเงิน (Currency)', values: [
+                {type: '', schemaId: 'ls-popi', schemaField: 'Currency', isMain: true},
+                {type: 'EXACT', schemaId: 'ls-inv', schemaField: 'Currency'}
+              ] },
+              { id: 'popi-h6', detail: 'Payment Terms', detailTh: 'เงื่อนไขการชำระเงิน (Payment Terms)', values: [
+                {type: '', schemaId: 'ls-popi', schemaField: 'Payment Terms', isMain: true},
+                {type: 'EXACT', schemaId: 'ls-inv', schemaField: 'Payment Terms'}
+              ] },
             ]
           },
           {
             title: t.ruleDescription,
-            rows: []
+            rows: [
+              { id: 'popi-d1', detail: 'Item Description', detailTh: 'รายละเอียดสินค้า (Item Description)', values: [
+                {type: '', schemaId: 'ls-popi', schemaField: 'items.description', isMain: true},
+                {type: 'BILINGUAL', schemaId: 'ls-inv', schemaField: 'items.description'}
+              ] },
+              { id: 'popi-d2', detail: 'Quantity', detailTh: 'จำนวนสินค้า (Quantity)', values: [
+                {type: '', schemaId: 'ls-popi', schemaField: 'items.quantity', isMain: true},
+                {type: 'NUMBER_WORD', schemaId: 'ls-inv', schemaField: 'items.quantity'}
+              ] },
+              { id: 'popi-d3', detail: 'Unit Price', detailTh: 'ราคาต่อหน่วย (Unit Price)', values: [
+                {type: '', schemaId: 'ls-popi', schemaField: 'items.unitPrice', isMain: true},
+                {type: 'EXACT', schemaId: 'ls-inv', schemaField: 'items.unitPrice'}
+              ] },
+            ]
           },
           {
             title: t.ruleFooter,
@@ -99,6 +128,10 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
               { id: 'popi-f1', detail: 'Total Amount', detailTh: 'ยอดรวมทั้งหมด (Total Amount)', values: [
                 {type: '', schemaId: 'ls-popi', schemaField: 'Total Value', isMain: true},
                 {type: 'NUMBER_WORD', schemaId: 'ls-inv', schemaField: 'Total Amount'}
+              ] },
+              { id: 'popi-f2', detail: 'Incoterm', detailTh: 'เงื่อนไขการส่งมอบสินค้า (Incoterm)', values: [
+                {type: 'EXACT', schemaId: 'ls-popi', schemaField: 'Incoterm'},
+                {type: '', schemaId: 'ls-inv', schemaField: 'Incoterm', isMain: true}
               ] },
             ]
           }
@@ -114,7 +147,7 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
         updatedAt: '2026-05-12',
         workflowIds: ['cwf-shipping-doc'],
         docTypes: [t.docTypeInvoice, t.docTypePL, t.docTypeBL, t.docTypeFreightInv, t.docTypeHSCode, t.docTypeFTADraft],
-        totalFields: 6,
+        totalFields: 16,
         parts: [
           {
             title: t.ruleHeader,
@@ -127,10 +160,42 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
                 {type: 'EXACT', schemaId: 'ls-hs', schemaField: 'HS Code'},
                 {type: 'EXACT', schemaId: 'ls-ftad', schemaField: 'FTA Form No'}
               ] },
-              { id: 'ship-h2', detail: 'Consignee Name', detailTh: 'ชื่อผู้รับสินค้า (Consignee Name)', values: [
+              { id: 'ship-h2', detail: 'Shipper / Exporter Name', detailTh: 'ชื่อผู้ส่งออก (Shipper Name)', values: [
+                {type: 'BILINGUAL', schemaId: 'ls-inv', schemaField: 'Vendor Name'},
+                {type: 'TEXT', text: ''},
+                {type: '', schemaId: 'ls-bl', schemaField: 'Shipper Name', isMain: true},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''}
+              ] },
+              { id: 'ship-h3', detail: 'Consignee Name', detailTh: 'ชื่อผู้รับสินค้า (Consignee Name)', values: [
                 {type: 'TEXT', text: ''},
                 {type: 'TEXT', text: ''},
                 {type: '', schemaId: 'ls-bl', schemaField: 'Consignee Name', isMain: true},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''}
+              ] },
+              { id: 'ship-h4', detail: 'Vessel / Voyage No.', detailTh: 'ชื่อเรือ / เที่ยวเรือ (Vessel / Voyage No.)', values: [
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: '', schemaId: 'ls-bl', schemaField: 'Vessel Name', isMain: true},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''}
+              ] },
+              { id: 'ship-h5', detail: 'Port of Loading', detailTh: 'ท่าเรือต้นทาง (Port of Loading)', values: [
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: '', schemaId: 'ls-bl', schemaField: 'Port of Loading', isMain: true},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''}
+              ] },
+              { id: 'ship-h6', detail: 'Port of Discharge', detailTh: 'ท่าเรือปลายทาง (Port of Discharge)', values: [
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: '', schemaId: 'ls-bl', schemaField: 'Port of Discharge', isMain: true},
                 {type: 'TEXT', text: ''},
                 {type: 'TEXT', text: ''},
                 {type: 'TEXT', text: ''}
@@ -148,7 +213,23 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
                 {type: 'TEXT', text: ''},
                 {type: 'TEXT', text: ''}
               ] },
-              { id: 'ship-d2', detail: 'Product Description', detailTh: 'คำอธิบายสินค้า (Product Description)', values: [
+              { id: 'ship-d2', detail: 'Gross Weight (KGS)', detailTh: 'น้ำหนักรวม (Gross Weight, KGS)', values: [
+                {type: 'TEXT', text: ''},
+                {type: '', schemaId: 'ls-pl', schemaField: 'Gross Weight', isMain: true},
+                {type: 'EXACT', schemaId: 'ls-bl', schemaField: 'Gross Weight'},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''}
+              ] },
+              { id: 'ship-d3', detail: 'Total Volume (CBM)', detailTh: 'ปริมาตรรวม (Total Volume, CBM)', values: [
+                {type: 'TEXT', text: ''},
+                {type: '', schemaId: 'ls-pl', schemaField: 'Total Volume', isMain: true},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''}
+              ] },
+              { id: 'ship-d4', detail: 'Product Description', detailTh: 'คำอธิบายสินค้า (Product Description)', values: [
                 {type: 'TEXT', text: ''},
                 {type: 'TEXT', text: ''},
                 {type: 'TEXT', text: ''},
@@ -156,12 +237,20 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
                 {type: '', schemaId: 'ls-hs', schemaField: 'Product Description', isMain: true},
                 {type: 'TEXT', text: ''}
               ] },
+              { id: 'ship-d5', detail: 'HS Code Cross-check', detailTh: 'ตรวจสอบพิกัดศุลกากรไขว้ (HS Code Cross-check)', values: [
+                {type: 'EXACT', schemaId: 'ls-inv', schemaField: 'items.hsCode'},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: '', schemaId: 'ls-hs', schemaField: 'HS Code', isMain: true},
+                {type: 'TEXT', text: ''}
+              ] },
             ]
           },
           {
             title: t.ruleFooter,
             rows: [
-              { id: 'ship-f1', detail: 'Amount', detailTh: 'ยอดเงิน (Amount)', values: [
+              { id: 'ship-f1', detail: 'Total Invoice Amount', detailTh: 'ยอดรวมใบแจ้งหนี้ (Total Invoice Amount)', values: [
                 {type: '', schemaId: 'ls-inv', schemaField: 'Total Amount', isMain: true},
                 {type: 'TEXT', text: ''},
                 {type: 'TEXT', text: ''},
@@ -169,7 +258,31 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
                 {type: 'TEXT', text: ''},
                 {type: 'TEXT', text: ''}
               ] },
-              { id: 'ship-f2', detail: 'Origin Country', detailTh: 'ประเทศแหล่งกำเนิดสินค้า (Origin Country)', values: [
+              { id: 'ship-f2', detail: 'Freight Amount', detailTh: 'ค่าระวางเรือ (Freight Amount)', values: [
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: '', schemaId: 'ls-frt', schemaField: 'Freight Amount', isMain: true},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''}
+              ] },
+              { id: 'ship-f3', detail: 'Incoterm', detailTh: 'เงื่อนไขการส่งมอบสินค้า (Incoterm)', values: [
+                {type: '', schemaId: 'ls-inv', schemaField: 'Incoterm', isMain: true},
+                {type: 'TEXT', text: ''},
+                {type: 'EXACT', schemaId: 'ls-bl', schemaField: 'Incoterm'},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''}
+              ] },
+              { id: 'ship-f4', detail: 'FTA Declared Value vs Invoice', detailTh: 'มูลค่าที่แจ้งใน FTA เทียบใบแจ้งหนี้ (FTA Declared Value vs Invoice)', values: [
+                {type: 'CONDITIONAL', schemaId: 'ls-inv', schemaField: 'Total Amount', condField: 'Incoterm', condValue: 'FOB', condSource: 'FTA Declared Value'},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: '', schemaId: 'ls-ftad', schemaField: 'FTA Declared Value', isMain: true}
+              ] },
+              { id: 'ship-f5', detail: 'Country of Origin', detailTh: 'ประเทศแหล่งกำเนิดสินค้า (Country of Origin)', values: [
                 {type: 'TEXT', text: ''},
                 {type: 'TEXT', text: ''},
                 {type: 'TEXT', text: ''},
@@ -191,7 +304,7 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
         updatedAt: '2026-05-14',
         workflowIds: ['cwf-import-dec-1'],
         docTypes: [t.docTypeInvoice, t.docTypePL, t.docTypeBL, t.docTypeFreightInv, t.docTypeHSCode, t.docTypeFTA, t.docTypeInsurance],
-        totalFields: 4,
+        totalFields: 13,
         parts: [
           {
             title: t.ruleHeader,
@@ -214,6 +327,42 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
                 {type: 'TEXT', text: ''},
                 {type: 'TEXT', text: ''}
               ] },
+              { id: 'imp1-h3', detail: 'Shipper / Exporter Name', detailTh: 'ชื่อผู้ส่งออก (Shipper Name)', values: [
+                {type: 'BILINGUAL', schemaId: 'ls-inv', schemaField: 'Vendor Name'},
+                {type: 'TEXT', text: ''},
+                {type: '', schemaId: 'ls-bl', schemaField: 'Shipper Name', isMain: true},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''}
+              ] },
+              { id: 'imp1-h4', detail: 'Vessel / Voyage No.', detailTh: 'ชื่อเรือ / เที่ยวเรือ (Vessel / Voyage No.)', values: [
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: '', schemaId: 'ls-bl', schemaField: 'Vessel Name', isMain: true},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''}
+              ] },
+              { id: 'imp1-h5', detail: 'Port of Loading', detailTh: 'ท่าเรือต้นทาง (Port of Loading)', values: [
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: '', schemaId: 'ls-bl', schemaField: 'Port of Loading', isMain: true},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''}
+              ] },
+              { id: 'imp1-h6', detail: 'Port of Discharge', detailTh: 'ท่าเรือปลายทาง (Port of Discharge)', values: [
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: '', schemaId: 'ls-bl', schemaField: 'Port of Discharge', isMain: true},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''}
+              ] },
             ]
           },
           {
@@ -227,6 +376,33 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
                 {type: 'TEXT', text: ''},
                 {type: '', schemaId: 'ls-ftad', schemaField: 'Origin Country', isMain: true},
                 {type: 'TEXT', text: ''}
+              ] },
+              { id: 'imp1-d2', detail: 'Gross Weight (KGS)', detailTh: 'น้ำหนักรวม (Gross Weight, KGS)', values: [
+                {type: 'TEXT', text: ''},
+                {type: '', schemaId: 'ls-pl', schemaField: 'Gross Weight', isMain: true},
+                {type: 'EXACT', schemaId: 'ls-bl', schemaField: 'Gross Weight'},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''}
+              ] },
+              { id: 'imp1-d3', detail: 'Product Description', detailTh: 'คำอธิบายสินค้า (Product Description)', values: [
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: '', schemaId: 'ls-hs', schemaField: 'Product Description', isMain: true},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''}
+              ] },
+              { id: 'imp1-d4', detail: 'Insured Value vs Declared Value', detailTh: 'มูลค่าเอาประกันเทียบมูลค่าที่แจ้ง (Insured Value ≥ CIF Value)', values: [
+                {type: 'EXACT', schemaId: 'ls-inv', schemaField: 'Total Amount'},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: '', schemaId: 'ls-ins', schemaField: 'Insured Value', isMain: true}
               ] },
             ]
           },
@@ -242,6 +418,24 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
                 {type: 'TEXT', text: ''},
                 {type: 'EXACT', schemaId: 'ls-ins', schemaField: 'Insured Value'}
               ] },
+              { id: 'imp1-f2', detail: 'Incoterm', detailTh: 'เงื่อนไขการส่งมอบสินค้า (Incoterm)', values: [
+                {type: '', schemaId: 'ls-inv', schemaField: 'Incoterm', isMain: true},
+                {type: 'TEXT', text: ''},
+                {type: 'EXACT', schemaId: 'ls-bl', schemaField: 'Incoterm'},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''}
+              ] },
+              { id: 'imp1-f3', detail: 'Insurance Policy Covers Shipment Date', detailTh: 'ระยะเวลาคุ้มครองกรมธรรม์ครอบคลุมวันที่ขนส่ง (Policy Period Covers Shipment Date)', values: [
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'EXISTENCE', schemaId: 'ls-bl', schemaField: 'Vessel Name'},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''},
+                {type: '', schemaId: 'ls-ins', schemaField: 'Policy Period', isMain: true}
+              ] },
             ]
           }
         ]
@@ -256,7 +450,7 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
         updatedAt: '2026-05-16',
         workflowIds: ['cwf-import-dec-2'],
         docTypes: [t.docTypeFTA, t.docTypeLicense, t.docTypeLPI, t.docTypeOther],
-        totalFields: 3,
+        totalFields: 6,
         parts: [
           {
             title: t.ruleHeader,
@@ -273,11 +467,24 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
                 {type: 'TEXT', text: ''},
                 {type: 'TEXT', text: ''}
               ] },
+              { id: 'imp2-h3', detail: 'Country of Origin', detailTh: 'ประเทศแหล่งกำเนิดสินค้า (Country of Origin)', values: [
+                {type: '', schemaId: 'ls-ftad', schemaField: 'Origin Country', isMain: true},
+                {type: 'EXACT', schemaId: 'ls-lic', schemaField: 'Origin Country'},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''}
+              ] },
             ]
           },
           {
             title: t.ruleDescription,
-            rows: []
+            rows: [
+              { id: 'imp2-d1', detail: 'Issuing Authority', detailTh: 'หน่วยงานผู้ออกเอกสาร (Issuing Authority)', values: [
+                {type: 'TEXT', text: ''},
+                {type: '', schemaId: 'ls-lic', schemaField: 'Issuing Authority', isMain: true},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''}
+              ] },
+            ]
           },
           {
             title: t.ruleFooter,
@@ -288,6 +495,12 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
                 {type: 'EXISTENCE', schemaId: 'ls-lpi', schemaField: 'LPI No'},
                 {type: 'EXISTENCE', schemaId: 'ls-oth', schemaField: 'Document Title'}
               ] },
+              { id: 'imp2-f2', detail: 'License Covers Shipment Scope', detailTh: 'ใบอนุญาตครอบคลุมรายการสินค้าที่นำเข้า (License Covers Shipment Scope)', values: [
+                {type: 'TEXT', text: ''},
+                {type: '', schemaId: 'ls-lic', schemaField: 'Covered HS Code', isMain: true},
+                {type: 'TEXT', text: ''},
+                {type: 'TEXT', text: ''}
+              ] },
             ]
           }
         ]
@@ -297,7 +510,7 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('bizx_compare_rules_v7', JSON.stringify(rules));
+      localStorage.setItem('bizx_compare_rules_v8', JSON.stringify(rules));
     }
   }, [rules]);
 
