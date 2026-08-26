@@ -1494,10 +1494,6 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                           </div>
                         </div>
                       </div>
-                      <div className="p-4 bg-blue-50 border border-blue-100 text-xs text-blue-700 font-bold flex items-center gap-2" style={{ borderRadius: '8px' }}>
-                        <span className="inline-block w-2 h-2 rounded-full bg-blue-500 shrink-0"></span>
-                        <span>{language === 'TH' ? 'คอลัมน์นี้จะไม่ผ่านการเปรียบเทียบจนกว่าจะมีเอกสารอื่นให้เทียบด้วย' : 'This column stays pending until another document is available to compare against.'}</span>
-                      </div>
                       <label className="flex items-start gap-2.5 p-4 border border-slate-200 rounded-lg cursor-pointer select-none" style={{ borderRadius: '8px' }}>
                         <input
                           type="checkbox"
