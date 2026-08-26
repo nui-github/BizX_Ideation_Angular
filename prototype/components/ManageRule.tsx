@@ -54,7 +54,7 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
   // Mock Rules Data
   const [rules, setRules] = useState(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('bizx_compare_rules_v9');
+      const saved = localStorage.getItem('bizx_compare_rules_v10');
       if (saved) {
         try {
           return JSON.parse(saved);
@@ -74,7 +74,7 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
         updatedAt: '2026-05-10',
         workflowIds: ['cwf-po-pi'],
         docTypes: [t.docTypePO, t.docTypeInvoice],
-        totalFields: 11,
+        totalFields: 12,
         parts: [
           {
             title: t.ruleHeader,
@@ -133,6 +133,10 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
                 {type: 'EXACT', schemaId: 'ls-popi', schemaField: 'Incoterm'},
                 {type: '', schemaId: 'ls-inv', schemaField: 'Incoterm', isMain: true}
               ] },
+              { id: 'popi-f3', detail: 'Delivery Address', detailTh: 'ที่อยู่จัดส่งสินค้า (Delivery Address)', values: [
+                {type: ''},
+                {type: ''}
+              ] },
             ]
           }
         ]
@@ -147,7 +151,7 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
         updatedAt: '2026-05-12',
         workflowIds: ['cwf-shipping-doc'],
         docTypes: [t.docTypeInvoice, t.docTypePL, t.docTypeBL, t.docTypeFreightInv, t.docTypeHSCode, t.docTypeFTADraft],
-        totalFields: 16,
+        totalFields: 17,
         parts: [
           {
             title: t.ruleHeader,
@@ -290,6 +294,14 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
                 {type: 'NONE'},
                 {type: '', schemaId: 'ls-ftad', schemaField: 'Origin Country', isMain: true}
               ] },
+              { id: 'ship-f6', detail: 'Marks & Numbers', detailTh: 'เครื่องหมายและเลขหีบห่อ (Marks & Numbers)', values: [
+                {type: ''},
+                {type: ''},
+                {type: ''},
+                {type: ''},
+                {type: ''},
+                {type: ''}
+              ] },
             ]
           }
         ]
@@ -304,7 +316,7 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
         updatedAt: '2026-05-14',
         workflowIds: ['cwf-import-dec-1'],
         docTypes: [t.docTypeInvoice, t.docTypePL, t.docTypeBL, t.docTypeFreightInv, t.docTypeHSCode, t.docTypeFTA, t.docTypeInsurance],
-        totalFields: 13,
+        totalFields: 14,
         parts: [
           {
             title: t.ruleHeader,
@@ -436,6 +448,15 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
                 {type: 'NONE'},
                 {type: '', schemaId: 'ls-ins', schemaField: 'Policy Period', isMain: true}
               ] },
+              { id: 'imp1-f4', detail: 'Container / Seal No.', detailTh: 'เลขตู้คอนเทนเนอร์ / เลขซีล (Container / Seal No.)', values: [
+                {type: ''},
+                {type: ''},
+                {type: ''},
+                {type: ''},
+                {type: ''},
+                {type: ''},
+                {type: ''}
+              ] },
             ]
           }
         ]
@@ -450,7 +471,7 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
         updatedAt: '2026-05-16',
         workflowIds: ['cwf-import-dec-2'],
         docTypes: [t.docTypeFTA, t.docTypeLicense, t.docTypeLPI, t.docTypeOther],
-        totalFields: 6,
+        totalFields: 7,
         parts: [
           {
             title: t.ruleHeader,
@@ -501,6 +522,12 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
                 {type: 'NONE'},
                 {type: 'NONE'}
               ] },
+              { id: 'imp2-f3', detail: 'Remarks / Special Conditions', detailTh: 'หมายเหตุ / เงื่อนไขพิเศษ (Remarks / Special Conditions)', values: [
+                {type: ''},
+                {type: ''},
+                {type: ''},
+                {type: ''}
+              ] },
             ]
           }
         ]
@@ -510,7 +537,7 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('bizx_compare_rules_v9', JSON.stringify(rules));
+      localStorage.setItem('bizx_compare_rules_v10', JSON.stringify(rules));
     }
   }, [rules]);
 
