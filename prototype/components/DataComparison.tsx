@@ -3173,7 +3173,7 @@ const mockWorkflows: Workflow[] = [
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed right-0 top-0 bottom-0 w-80 bg-white shadow-2xl z-[201] border-l border-slate-200 flex flex-col"
+              className="fixed right-0 top-0 bottom-0 w-80 bg-white shadow-2xl z-[701] border-l border-slate-200 flex flex-col"
             >
               <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                 <div>
@@ -7604,7 +7604,7 @@ const mockWorkflows: Workflow[] = [
               <div className="flex items-center gap-2 p-1.5">
 
                   {/* 1. Show only differences Filter */}
-                  <Tooltip content={showOnlyDiff ? (language === 'TH' ? 'แสดงทั้งหมด' : 'Show All') : (language === 'TH' ? 'ดูเฉพาะที่ต่าง' : 'Show Only Differences')}>
+                  <Tooltip position={isJobPanelFullscreen ? 'bottom' : 'top'} content={showOnlyDiff ? (language === 'TH' ? 'แสดงทั้งหมด' : 'Show All') : (language === 'TH' ? 'ดูเฉพาะที่ต่าง' : 'Show Only Differences')}>
                     <button 
                       disabled={isUnassigned}
                       onClick={() => setShowOnlyDiff(!showOnlyDiff)}
@@ -7619,7 +7619,7 @@ const mockWorkflows: Workflow[] = [
                   </Tooltip>
 
                   {/* Activity Logs for this job — who on the team did what, on which document/field */}
-                  <Tooltip content={language === 'TH' ? 'ดูประวัติกิจกรรมของรายการนี้' : 'View activity logs for this job'}>
+                  <Tooltip position={isJobPanelFullscreen ? 'bottom' : 'top'} content={language === 'TH' ? 'ดูประวัติกิจกรรมของรายการนี้' : 'View activity logs for this job'}>
                     <button
                       onClick={() => setShowJobLogsModal(true)}
                       className="p-2.5 rounded-[4px] transition-all border flex items-center justify-center cursor-pointer shadow-sm bg-white text-slate-500 border-slate-200/60 hover:bg-slate-50"
@@ -7630,7 +7630,7 @@ const mockWorkflows: Workflow[] = [
 
                   {/* Fullscreen — expands this job header + compare table card to fill the
                       viewport, for reviewing wide tables without the page chrome around it. */}
-                  <Tooltip content={isJobPanelFullscreen ? (language === 'TH' ? 'ออกจากเต็มหน้าจอ' : 'Exit Fullscreen') : (language === 'TH' ? 'ขยายเต็มหน้าจอ' : 'Fullscreen')}>
+                  <Tooltip position={isJobPanelFullscreen ? 'bottom' : 'top'} content={isJobPanelFullscreen ? (language === 'TH' ? 'ออกจากเต็มหน้าจอ' : 'Exit Fullscreen') : (language === 'TH' ? 'ขยายเต็มหน้าจอ' : 'Fullscreen')}>
                     <button
                       onClick={() => setIsJobPanelFullscreen(!isJobPanelFullscreen)}
                       className={`p-2.5 rounded-[4px] transition-all border flex items-center justify-center cursor-pointer shadow-sm ${
@@ -7648,7 +7648,7 @@ const mockWorkflows: Workflow[] = [
                   {/* Column Visibility Selector Option */}
                   {selectedJob && Object.keys(selectedJob.docs).length >= 3 && (
                     <div className="relative">
-                      <Tooltip content={language === 'TH' ? 'แสดง/ซ่อน คอลัมน์เอกสาร' : 'Show/Hide Document Columns'}>
+                      <Tooltip position={isJobPanelFullscreen ? 'bottom' : 'top'} content={language === 'TH' ? 'แสดง/ซ่อน คอลัมน์เอกสาร' : 'Show/Hide Document Columns'}>
                         <button
                           disabled={isUnassigned}
                           onClick={() => setShowColumnSelector(!showColumnSelector)}
@@ -7738,7 +7738,7 @@ const mockWorkflows: Workflow[] = [
 
                   {/* 3. Bulk OCR - Read All files (only visible conditionally) */}
                   {selectedJob.status !== JobStatus.READY && Object.values(selectedJob.docs).some(s => s === ComparisonDocStatus.RECEIVED) && (
-                    <Tooltip content={t.btnBulkOCR}>
+                    <Tooltip position={isJobPanelFullscreen ? 'bottom' : 'top'} content={t.btnBulkOCR}>
                       <button 
                         disabled={isUnassigned}
                         onClick={() => {
@@ -7758,7 +7758,7 @@ const mockWorkflows: Workflow[] = [
                       back for correction (e.g. a reviewer here spots the earlier job's document
                       is still wrong). */}
                   {canRejectToPreviousJob(selectedJob) && (
-                    <Tooltip content={language === 'TH' ? 'ตีกลับไปยังขั้นตอนก่อนหน้าเพื่อแก้ไข' : 'Reject back to the previous job for correction'}>
+                    <Tooltip position={isJobPanelFullscreen ? 'bottom' : 'top'} content={language === 'TH' ? 'ตีกลับไปยังขั้นตอนก่อนหน้าเพื่อแก้ไข' : 'Reject back to the previous job for correction'}>
                       <button
                         disabled={isUnassigned}
                         onClick={() => setShowRejectFlowConfirm(true)}
@@ -7770,7 +7770,7 @@ const mockWorkflows: Workflow[] = [
                   )}
 
                   {/* 6. Finish / Export Data Button */}
-                  <Tooltip content={getLastSubItemExportTooltip(selectedJob, t.exportData)}>
+                  <Tooltip position={isJobPanelFullscreen ? 'bottom' : 'top'} content={getLastSubItemExportTooltip(selectedJob, t.exportData)}>
                       <button
                       disabled={isUnassigned || selectedJob.status === JobStatus.READY || selectedJob.status === JobStatus.REJECTED || !isAllDocsMatched(selectedJob)}
                       onClick={() => {
