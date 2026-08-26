@@ -1381,7 +1381,7 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                   return (
                     <div className="flex flex-col select-none border-b border-slate-100 pb-3">
                       <span className="text-lg font-black text-[#010136]">
-                        {language === 'TH' ? 'รวมข้อมูลทุกเอกสารจากโฟลว์ก่อนหน้า' : 'Combine all docs from previous flow'}
+                        {language === 'TH' ? 'รวมข้อมูลทุกเอกสารจากโฟล์ก่อนหน้าสำหรับฟิลด์ข้อมูลนี้' : 'Combine all docs from previous flow for this field'}
                       </span>
                     </div>
                   );
