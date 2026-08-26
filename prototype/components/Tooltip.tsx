@@ -32,6 +32,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
     const scrollY = window.scrollY;
     const scrollX = window.scrollX;
     const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
 
     const preferredLeft = rect.left + scrollX + rect.width / 2 - tooltipWidth / 2;
 
@@ -60,7 +61,14 @@ export const Tooltip: React.FC<TooltipProps> = ({
     const maxLeft = scrollX + viewportWidth - tooltipWidth - 16;
     const clampedLeft = Math.max(minLeft, Math.min(maxLeft, left));
 
-    tooltip.style.top = `${top}px`;
+    // Clamp vertically too — a trigger sitting flush against the top/bottom edge
+    // (e.g. the fullscreen job panel's toolbar) would otherwise push the tooltip
+    // off-screen entirely.
+    const minTop = scrollY + 8;
+    const maxTop = scrollY + viewportHeight - tooltipHeight - 8;
+    const clampedTop = Math.max(minTop, Math.min(maxTop, top));
+
+    tooltip.style.top = `${clampedTop}px`;
     tooltip.style.left = `${clampedLeft}px`;
 
     // Handle arrow offset
