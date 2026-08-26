@@ -1028,7 +1028,7 @@ const mockWorkflows: Workflow[] = [
         position: { x: 0, y: 0 },
         data: {
           jobName: 'Import Declaration Matching#1',
-          docTypes: ['Invoice', 'Packing List', 'Bill of Lading', 'FREIGHT INVOICE', 'HS Code Master File', 'Form FTA', 'Insurance Sheet']
+          docTypes: ['Import Dec.', 'Invoice', 'Packing List', 'Bill of Lading', 'FREIGHT INVOICE', 'HS Code Master File', 'Form FTA', 'Insurance Sheet']
         }
       },
       {
@@ -1060,7 +1060,7 @@ const mockWorkflows: Workflow[] = [
         position: { x: 0, y: 0 },
         data: {
           jobName: 'Import Declaration Matching#2',
-          docTypes: ['Form FTA', 'License', 'LPI', 'Other']
+          docTypes: ['Import Dec.', 'Form FTA', 'License', 'LPI', 'Other']
         }
       }
     ],

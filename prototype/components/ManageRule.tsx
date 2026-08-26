@@ -54,7 +54,7 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
   // Mock Rules Data
   const [rules, setRules] = useState(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('bizx_compare_rules_v11');
+      const saved = localStorage.getItem('bizx_compare_rules_v12');
       if (saved) {
         try {
           return JSON.parse(saved);
@@ -310,88 +310,164 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
         id: 'rule-import-dec-1',
         name: 'Import Declaration Matching#1',
         nameTh: 'Import Declaration Matching#1',
-        description: "Matches the Import Declaration directly against the already-verified dataset merged from Shipping Doc Matching (flow 2), instead of re-checking each of that flow's source documents individually.",
-        descriptionTh: 'ตรวจสอบใบขนสินค้าขาเข้าเทียบกับชุดข้อมูลที่ผ่านการตรวจสอบแล้วจาก Shipping Doc Matching (flow 2) โดยไม่ต้องเทียบกับเอกสารต้นทางแต่ละใบซ้ำอีกครั้ง',
+        description: 'Full import declaration matching set: Import Declaration, Invoice, Packing List, B/L, Freight Invoice, HS Code, Form FTA, and Insurance Sheet.',
+        descriptionTh: 'ชุดตรวจสอบใบขนสินค้าขาเข้าแบบเต็ม: ใบขนสินค้า, Invoice, Packing List, B/L, ใบแจ้งค่าระวาง, HS Code, แบบฟอร์ม FTA และใบรับรองประกันภัย',
         status: 'Active',
         updatedAt: '2026-05-14',
         workflowIds: ['cwf-import-dec-1'],
-        docTypes: [t.docTypeShort, t.docTypeFlow2Merged],
-        totalFields: 16,
+        docTypes: [t.docTypeShort, t.docTypeInvoice, t.docTypePL, t.docTypeBL, t.docTypeFreightInv, t.docTypeHSCode, t.docTypeFTA, t.docTypeInsurance],
+        totalFields: 14,
         parts: [
           {
             title: t.ruleHeader,
             rows: [
               { id: 'imp1-h1', detail: 'Reference / Document No.', detailTh: 'เลขที่เอกสารอ้างอิง (Reference No.)', values: [
-                {type: '', schemaId: 'ls-impdec', schemaField: 'Declaration No', isMain: true},
-                {type: 'CROSS_FLOW_CARRY', carryRule: 'Shipping Doc Matching', carryField: 'Invoice Number'}
+                {type: 'EXACT', schemaId: 'ls-impdec', schemaField: 'Invoice Ref No'},
+                {type: '', schemaId: 'ls-inv', schemaField: 'Invoice Number', isMain: true},
+                {type: 'EXACT', schemaId: 'ls-pl', schemaField: 'Packing List No'},
+                {type: 'EXACT', schemaId: 'ls-bl', schemaField: 'B/L Number'},
+                {type: 'EXACT', schemaId: 'ls-frt', schemaField: 'Freight Invoice No'},
+                {type: 'EXACT', schemaId: 'ls-hs', schemaField: 'HS Code'},
+                {type: 'EXACT', schemaId: 'ls-ftad', schemaField: 'FTA Form No'},
+                {type: 'EXACT', schemaId: 'ls-ins', schemaField: 'Policy No'}
               ] },
               { id: 'imp1-h2', detail: 'Tax ID / Consignee', detailTh: 'เลขผู้เสียภาษี / ผู้รับสินค้า (Tax ID / Consignee)', values: [
-                {type: '', schemaId: 'ls-impdec', schemaField: 'Importer Name', isMain: true},
-                {type: 'CROSS_FLOW_CARRY', carryRule: 'Shipping Doc Matching', carryField: 'Consignee Name (B/L)'}
+                {type: 'EXACT', schemaId: 'ls-impdec', schemaField: 'Importer Tax ID'},
+                {type: '', schemaId: 'ls-inv', schemaField: 'Tax ID', isMain: true},
+                {type: 'NONE'},
+                {type: 'EXACT', schemaId: 'ls-bl', schemaField: 'Consignee Name'},
+                {type: 'NONE'},
+                {type: 'NONE'},
+                {type: 'NONE'},
+                {type: 'NONE'}
               ] },
               { id: 'imp1-h3', detail: 'Shipper / Exporter Name', detailTh: 'ชื่อผู้ส่งออก (Shipper Name)', values: [
-                {type: '', schemaId: 'ls-impdec', schemaField: 'Exporter Name', isMain: true},
-                {type: 'CROSS_FLOW_CARRY', carryRule: 'Shipping Doc Matching', carryField: 'Shipper Name (B/L)'}
+                {type: 'BILINGUAL', schemaId: 'ls-impdec', schemaField: 'Exporter Name'},
+                {type: 'BILINGUAL', schemaId: 'ls-inv', schemaField: 'Vendor Name'},
+                {type: 'NONE'},
+                {type: '', schemaId: 'ls-bl', schemaField: 'Shipper Name', isMain: true},
+                {type: 'NONE'},
+                {type: 'NONE'},
+                {type: 'NONE'},
+                {type: 'NONE'}
               ] },
               { id: 'imp1-h4', detail: 'Vessel / Voyage No.', detailTh: 'ชื่อเรือ / เที่ยวเรือ (Vessel / Voyage No.)', values: [
-                {type: '', schemaId: 'ls-impdec', schemaField: 'Vessel / Voyage No', isMain: true},
-                {type: 'CROSS_FLOW_CARRY', carryRule: 'Shipping Doc Matching', carryField: 'Vessel Name (B/L)'}
+                {type: 'EXACT', schemaId: 'ls-impdec', schemaField: 'Vessel / Voyage No'},
+                {type: 'NONE'},
+                {type: 'NONE'},
+                {type: '', schemaId: 'ls-bl', schemaField: 'Vessel Name', isMain: true},
+                {type: 'NONE'},
+                {type: 'NONE'},
+                {type: 'NONE'},
+                {type: 'NONE'}
               ] },
               { id: 'imp1-h5', detail: 'Port of Loading', detailTh: 'ท่าเรือต้นทาง (Port of Loading)', values: [
-                {type: '', schemaId: 'ls-impdec', schemaField: 'Port of Loading', isMain: true},
-                {type: 'CROSS_FLOW_CARRY', carryRule: 'Shipping Doc Matching', carryField: 'Port of Loading (B/L)'}
+                {type: 'EXACT', schemaId: 'ls-impdec', schemaField: 'Port of Loading'},
+                {type: 'NONE'},
+                {type: 'NONE'},
+                {type: '', schemaId: 'ls-bl', schemaField: 'Port of Loading', isMain: true},
+                {type: 'NONE'},
+                {type: 'NONE'},
+                {type: 'NONE'},
+                {type: 'NONE'}
               ] },
               { id: 'imp1-h6', detail: 'Port of Discharge', detailTh: 'ท่าเรือปลายทาง (Port of Discharge)', values: [
-                {type: '', schemaId: 'ls-impdec', schemaField: 'Port of Discharge', isMain: true},
-                {type: 'CROSS_FLOW_CARRY', carryRule: 'Shipping Doc Matching', carryField: 'Port of Discharge (B/L)'}
+                {type: 'EXACT', schemaId: 'ls-impdec', schemaField: 'Port of Discharge'},
+                {type: 'NONE'},
+                {type: 'NONE'},
+                {type: '', schemaId: 'ls-bl', schemaField: 'Port of Discharge', isMain: true},
+                {type: 'NONE'},
+                {type: 'NONE'},
+                {type: 'NONE'},
+                {type: 'NONE'}
               ] },
             ]
           },
           {
             title: t.ruleDescription,
             rows: [
-              { id: 'imp1-d1', detail: 'Total Packages', detailTh: 'จำนวนหีบห่อรวม (Total Packages)', values: [
-                {type: '', schemaId: 'ls-impdec', schemaField: 'Total Packages', isMain: true},
-                {type: 'CROSS_FLOW_CARRY', carryRule: 'Shipping Doc Matching', carryField: 'Total Packages (PL)'}
+              { id: 'imp1-d1', detail: 'Origin Country', detailTh: 'ประเทศแหล่งกำเนิดสินค้า (Origin Country)', values: [
+                {type: 'EXACT', schemaId: 'ls-impdec', schemaField: 'Country of Origin'},
+                {type: 'NONE'},
+                {type: 'NONE'},
+                {type: 'NONE'},
+                {type: 'NONE'},
+                {type: 'NONE'},
+                {type: '', schemaId: 'ls-ftad', schemaField: 'Origin Country', isMain: true},
+                {type: 'NONE'}
               ] },
               { id: 'imp1-d2', detail: 'Gross Weight (KGS)', detailTh: 'น้ำหนักรวม (Gross Weight, KGS)', values: [
-                {type: '', schemaId: 'ls-impdec', schemaField: 'Gross Weight', isMain: true},
-                {type: 'CROSS_FLOW_CARRY', carryRule: 'Shipping Doc Matching', carryField: 'Gross Weight (PL)'}
+                {type: 'NUMBER_WORD', schemaId: 'ls-impdec', schemaField: 'Gross Weight'},
+                {type: 'NONE'},
+                {type: '', schemaId: 'ls-pl', schemaField: 'Gross Weight', isMain: true},
+                {type: 'EXACT', schemaId: 'ls-bl', schemaField: 'Gross Weight'},
+                {type: 'NONE'},
+                {type: 'NONE'},
+                {type: 'NONE'},
+                {type: 'NONE'}
               ] },
               { id: 'imp1-d3', detail: 'Product Description', detailTh: 'คำอธิบายสินค้า (Product Description)', values: [
-                {type: '', schemaId: 'ls-impdec', schemaField: 'Product Description', isMain: true},
-                {type: 'CROSS_FLOW_CARRY', carryRule: 'Shipping Doc Matching', carryField: 'Product Description (HS Code Master File)'}
+                {type: 'BILINGUAL', schemaId: 'ls-impdec', schemaField: 'Product Description'},
+                {type: 'NONE'},
+                {type: 'NONE'},
+                {type: 'NONE'},
+                {type: 'NONE'},
+                {type: '', schemaId: 'ls-hs', schemaField: 'Product Description', isMain: true},
+                {type: 'NONE'},
+                {type: 'NONE'}
               ] },
-              { id: 'imp1-d4', detail: 'HS Code', detailTh: 'พิกัดอัตราศุลกากร (HS Code)', values: [
-                {type: '', schemaId: 'ls-impdec', schemaField: 'HS Code', isMain: true},
-                {type: 'CROSS_FLOW_CARRY', carryRule: 'Shipping Doc Matching', carryField: 'HS Code (HS Code Master File)'}
-              ] },
-              { id: 'imp1-d5', detail: 'Country of Origin', detailTh: 'ประเทศแหล่งกำเนิดสินค้า (Country of Origin)', values: [
-                {type: '', schemaId: 'ls-impdec', schemaField: 'Country of Origin', isMain: true},
-                {type: 'CROSS_FLOW_CARRY', carryRule: 'Shipping Doc Matching', carryField: 'Origin Country (Form FTA)'}
+              { id: 'imp1-d4', detail: 'Insured Value vs Declared Value', detailTh: 'มูลค่าเอาประกันเทียบมูลค่าที่แจ้ง (Insured Value ≥ CIF Value)', values: [
+                {type: 'EXACT', schemaId: 'ls-impdec', schemaField: 'CIF Value'},
+                {type: 'EXACT', schemaId: 'ls-inv', schemaField: 'Total Amount'},
+                {type: 'NONE'},
+                {type: 'NONE'},
+                {type: 'NONE'},
+                {type: 'NONE'},
+                {type: 'NONE'},
+                {type: '', schemaId: 'ls-ins', schemaField: 'Insured Value', isMain: true}
               ] },
             ]
           },
           {
             title: t.ruleFooter,
             rows: [
-              { id: 'imp1-f1', detail: 'CIF / Declared Value', detailTh: 'มูลค่า CIF / มูลค่าที่แจ้ง (CIF / Declared Value)', values: [
-                {type: '', schemaId: 'ls-impdec', schemaField: 'CIF Value', isMain: true},
-                {type: 'CROSS_FLOW_CARRY', carryRule: 'Shipping Doc Matching', carryField: 'Total Invoice Amount (Invoice)'}
+              { id: 'imp1-f1', detail: 'Amount', detailTh: 'ยอดเงิน (Amount)', values: [
+                {type: 'EXACT', schemaId: 'ls-impdec', schemaField: 'CIF Value'},
+                {type: '', schemaId: 'ls-inv', schemaField: 'Total Amount', isMain: true},
+                {type: 'NONE'},
+                {type: 'NONE'},
+                {type: 'EXACT', schemaId: 'ls-frt', schemaField: 'Freight Amount'},
+                {type: 'NONE'},
+                {type: 'NONE'},
+                {type: 'EXACT', schemaId: 'ls-ins', schemaField: 'Insured Value'}
               ] },
-              { id: 'imp1-f2', detail: 'Freight Charges', detailTh: 'ค่าระวางเรือ (Freight Charges)', values: [
-                {type: '', schemaId: 'ls-impdec', schemaField: 'Freight Charges', isMain: true},
-                {type: 'CROSS_FLOW_CARRY', carryRule: 'Shipping Doc Matching', carryField: 'Freight Amount (Freight Invoice)'}
+              { id: 'imp1-f2', detail: 'Incoterm', detailTh: 'เงื่อนไขการส่งมอบสินค้า (Incoterm)', values: [
+                {type: 'EXACT', schemaId: 'ls-impdec', schemaField: 'Incoterm'},
+                {type: '', schemaId: 'ls-inv', schemaField: 'Incoterm', isMain: true},
+                {type: 'NONE'},
+                {type: 'EXACT', schemaId: 'ls-bl', schemaField: 'Incoterm'},
+                {type: 'NONE'},
+                {type: 'NONE'},
+                {type: 'NONE'},
+                {type: 'NONE'}
               ] },
-              { id: 'imp1-f3', detail: 'Incoterm', detailTh: 'เงื่อนไขการส่งมอบสินค้า (Incoterm)', values: [
-                {type: '', schemaId: 'ls-impdec', schemaField: 'Incoterm', isMain: true},
-                {type: 'CROSS_FLOW_CARRY', carryRule: 'Shipping Doc Matching', carryField: 'Incoterm (Invoice)'}
+              { id: 'imp1-f3', detail: 'Insurance Policy Covers Shipment Date', detailTh: 'ระยะเวลาคุ้มครองกรมธรรม์ครอบคลุมวันที่ขนส่ง (Policy Period Covers Shipment Date)', values: [
+                {type: 'NONE'},
+                {type: 'NONE'},
+                {type: 'NONE'},
+                {type: 'EXISTENCE', schemaId: 'ls-bl', schemaField: 'Vessel Name'},
+                {type: 'NONE'},
+                {type: 'NONE'},
+                {type: 'NONE'},
+                {type: '', schemaId: 'ls-ins', schemaField: 'Policy Period', isMain: true}
               ] },
-              { id: 'imp1-f4', detail: 'FTA Declared Value', detailTh: 'มูลค่าที่แจ้งใน FTA (FTA Declared Value)', values: [
-                {type: '', schemaId: 'ls-impdec', schemaField: 'FTA Declared Value', isMain: true},
-                {type: 'CROSS_FLOW_CARRY', carryRule: 'Shipping Doc Matching', carryField: 'FTA Declared Value (Form FTA)'}
-              ] },
-              { id: 'imp1-f5', detail: 'Marks & Numbers', detailTh: 'เครื่องหมายและเลขหีบห่อ (Marks & Numbers)', values: [
+              { id: 'imp1-f4', detail: 'Container / Seal No.', detailTh: 'เลขตู้คอนเทนเนอร์ / เลขซีล (Container / Seal No.)', values: [
+                {type: ''},
+                {type: ''},
+                {type: ''},
+                {type: ''},
+                {type: ''},
+                {type: ''},
                 {type: ''},
                 {type: ''}
               ] },
@@ -403,18 +479,19 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
         id: 'rule-import-dec-2',
         name: 'Import Declaration Matching#2',
         nameTh: 'Import Declaration Matching#2',
-        description: 'Supplementary import declaration matching for FTA form, License, LPI, and other supporting documents.',
-        descriptionTh: 'ตรวจสอบเอกสารประกอบใบขนสินค้าขาเข้าเพิ่มเติม สำหรับแบบฟอร์ม FTA, ใบอนุญาต, LPI และเอกสารสนับสนุนอื่นๆ',
+        description: 'Supplementary import declaration matching for the Import Declaration against FTA form, License, LPI, and other supporting documents.',
+        descriptionTh: 'ตรวจสอบใบขนสินค้าขาเข้าเทียบกับเอกสารประกอบเพิ่มเติม สำหรับแบบฟอร์ม FTA, ใบอนุญาต, LPI และเอกสารสนับสนุนอื่นๆ',
         status: 'Active',
         updatedAt: '2026-05-16',
         workflowIds: ['cwf-import-dec-2'],
-        docTypes: [t.docTypeFTA, t.docTypeLicense, t.docTypeLPI, t.docTypeOther],
+        docTypes: [t.docTypeShort, t.docTypeFTA, t.docTypeLicense, t.docTypeLPI, t.docTypeOther],
         totalFields: 7,
         parts: [
           {
             title: t.ruleHeader,
             rows: [
               { id: 'imp2-h1', detail: 'Reference / Document No.', detailTh: 'เลขที่เอกสารอ้างอิง (Reference No.)', values: [
+                {type: 'EXACT', schemaId: 'ls-impdec', schemaField: 'Declaration No'},
                 {type: '', schemaId: 'ls-ftad', schemaField: 'FTA Form No', isMain: true},
                 {type: 'EXACT', schemaId: 'ls-lic', schemaField: 'License No'},
                 {type: 'EXACT', schemaId: 'ls-lpi', schemaField: 'LPI No'},
@@ -422,11 +499,13 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
               ] },
               { id: 'imp2-h2', detail: 'Expiry Date', detailTh: 'วันหมดอายุ (Expiry Date)', values: [
                 {type: 'NONE'},
+                {type: 'NONE'},
                 {type: '', schemaId: 'ls-lic', schemaField: 'Expiry Date', isMain: true, dateBuddhist: false, dateADToBE: false},
                 {type: 'NONE'},
                 {type: 'NONE'}
               ] },
               { id: 'imp2-h3', detail: 'Country of Origin', detailTh: 'ประเทศแหล่งกำเนิดสินค้า (Country of Origin)', values: [
+                {type: 'EXACT', schemaId: 'ls-impdec', schemaField: 'Country of Origin'},
                 {type: '', schemaId: 'ls-ftad', schemaField: 'Origin Country', isMain: true},
                 {type: 'EXACT', schemaId: 'ls-lic', schemaField: 'Origin Country'},
                 {type: 'NONE'},
@@ -439,6 +518,7 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
             rows: [
               { id: 'imp2-d1', detail: 'Issuing Authority', detailTh: 'หน่วยงานผู้ออกเอกสาร (Issuing Authority)', values: [
                 {type: 'NONE'},
+                {type: 'NONE'},
                 {type: '', schemaId: 'ls-lic', schemaField: 'Issuing Authority', isMain: true},
                 {type: 'NONE'},
                 {type: 'NONE'}
@@ -449,18 +529,21 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
             title: t.ruleFooter,
             rows: [
               { id: 'imp2-f1', detail: 'Document Existence Check', detailTh: 'ตรวจสอบว่ามีเอกสารครบ (Document Existence Check)', values: [
+                {type: 'EXISTENCE', schemaId: 'ls-impdec', schemaField: 'Declaration No'},
                 {type: '', schemaId: 'ls-ftad', schemaField: 'FTA Form No', isMain: true},
                 {type: 'EXISTENCE', schemaId: 'ls-lic', schemaField: 'License No'},
                 {type: 'EXISTENCE', schemaId: 'ls-lpi', schemaField: 'LPI No'},
                 {type: 'EXISTENCE', schemaId: 'ls-oth', schemaField: 'Document Title'}
               ] },
               { id: 'imp2-f2', detail: 'License Covers Shipment Scope', detailTh: 'ใบอนุญาตครอบคลุมรายการสินค้าที่นำเข้า (License Covers Shipment Scope)', values: [
+                {type: 'EXACT', schemaId: 'ls-impdec', schemaField: 'HS Code'},
                 {type: 'NONE'},
                 {type: '', schemaId: 'ls-lic', schemaField: 'Covered HS Code', isMain: true},
                 {type: 'NONE'},
                 {type: 'NONE'}
               ] },
               { id: 'imp2-f3', detail: 'Remarks / Special Conditions', detailTh: 'หมายเหตุ / เงื่อนไขพิเศษ (Remarks / Special Conditions)', values: [
+                {type: ''},
                 {type: ''},
                 {type: ''},
                 {type: ''},
@@ -475,7 +558,7 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('bizx_compare_rules_v11', JSON.stringify(rules));
+      localStorage.setItem('bizx_compare_rules_v12', JSON.stringify(rules));
     }
   }, [rules]);
 
