@@ -5613,8 +5613,8 @@ const mockWorkflows: Workflow[] = [
       {/* Replace Column File Modal */}
       {showReplaceModal && (
         <div className="fixed inset-0 z-[660] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-white w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl flex flex-col border border-slate-100 font-sans">
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+          <div className="bg-white w-full max-w-2xl max-h-[90vh] rounded-3xl overflow-hidden shadow-2xl flex flex-col border border-slate-100 font-sans">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-4">
                 <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl border border-blue-100">
                   <ArrowLeftRight size={20} />
@@ -5643,8 +5643,8 @@ const mockWorkflows: Workflow[] = [
                 <X size={20} />
               </button>
             </div>
-            
-            <div className="p-6 bg-slate-50/30 flex flex-col gap-6">
+
+            <div className="p-6 bg-slate-50/30 flex flex-col gap-6 overflow-y-auto flex-1 min-h-0 custom-scrollbar">
               {/* Drag and Drop Zone */}
               <div
                 onDragOver={handleReplaceDragOver}
@@ -5841,34 +5841,35 @@ const mockWorkflows: Workflow[] = [
                   </div>
                 </div>
               )}
+            </div>
 
-              {/* Action Buttons */}
-              <div className="flex flex-col gap-4 mt-2">
-                <label className="flex items-center gap-3 cursor-pointer p-1.5 hover:bg-slate-100/50 rounded-lg group select-none transition-colors w-fit">
-                  <input
-                    type="checkbox"
-                    checked={replaceAutoStartOCR}
-                    onChange={(e) => setReplaceAutoStartOCR(e.target.checked)}
-                    className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-100 shrink-0 cursor-pointer"
-                  />
-                  <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wide group-hover:text-slate-800 leading-none">
-                    {LOCAL_T[language].autoOCRLabel}
-                  </span>
-                </label>
-                <button
-                  onClick={handleConfirmReplace}
-                  className="w-full py-4 rounded-[4px] font-black text-xs uppercase tracking-widest transition-all text-white bg-[#1f5df9] hover:bg-[#104BE3] shadow-xl shadow-[#1f5df9]/20 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer disabled:bg-slate-300 disabled:shadow-none disabled:cursor-not-allowed"
-                  disabled={replaceUploadedFiles.length === 0 || replaceUploadedFiles.some(f => (f.pageMode === 'custom' && !f.pageRange.trim()) || !f.templateName)}
-                  id="submit-replace-import-btn"
-                >
-                  {LOCAL_T[language].btnConfirmReplace}
-                  {replaceUploadedFiles.length > 0 && (
-                    language === 'TH'
-                      ? ` (${replaceUploadedFiles.length} ไฟล์)`
-                      : ` (${replaceUploadedFiles.length} ${replaceUploadedFiles.length === 1 ? 'file' : 'files'})`
-                  )}
-                </button>
-              </div>
+            {/* Action Buttons — kept outside the scrollable body so they stay reachable
+                even when the uploaded-files list pushes the modal past the viewport. */}
+            <div className="p-6 pt-4 border-t border-slate-100 flex flex-col gap-4 bg-white shrink-0">
+              <label className="flex items-center gap-3 cursor-pointer p-1.5 hover:bg-slate-100/50 rounded-lg group select-none transition-colors w-fit">
+                <input
+                  type="checkbox"
+                  checked={replaceAutoStartOCR}
+                  onChange={(e) => setReplaceAutoStartOCR(e.target.checked)}
+                  className="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-100 shrink-0 cursor-pointer"
+                />
+                <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wide group-hover:text-slate-800 leading-none">
+                  {LOCAL_T[language].autoOCRLabel}
+                </span>
+              </label>
+              <button
+                onClick={handleConfirmReplace}
+                className="w-full py-4 rounded-[4px] font-black text-xs uppercase tracking-widest transition-all text-white bg-[#1f5df9] hover:bg-[#104BE3] shadow-xl shadow-[#1f5df9]/20 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer disabled:bg-slate-300 disabled:shadow-none disabled:cursor-not-allowed"
+                disabled={replaceUploadedFiles.length === 0 || replaceUploadedFiles.some(f => (f.pageMode === 'custom' && !f.pageRange.trim()) || !f.templateName)}
+                id="submit-replace-import-btn"
+              >
+                {LOCAL_T[language].btnConfirmReplace}
+                {replaceUploadedFiles.length > 0 && (
+                  language === 'TH'
+                    ? ` (${replaceUploadedFiles.length} ไฟล์)`
+                    : ` (${replaceUploadedFiles.length} ${replaceUploadedFiles.length === 1 ? 'file' : 'files'})`
+                )}
+              </button>
             </div>
           </div>
         </div>
