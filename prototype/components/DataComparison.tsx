@@ -2971,12 +2971,14 @@ const mockWorkflows: Workflow[] = [
       accuracyScore: 0.0,
       docs: {
         'ใบขนสินค้า': ComparisonDocStatus.MISSING,
-        'รวมข้อมูลทั้งหมด (Flow ก่อนหน้า)': ComparisonDocStatus.MISSING
+        // Pre-filled: this is flow 2's already-matched dataset carried forward automatically,
+        // not something flow 3 needs to re-upload or re-extract.
+        'รวมข้อมูลทั้งหมด (Flow ก่อนหน้า)': ComparisonDocStatus.MATCHED
       },
-      progress: 0,
+      progress: 50,
       totalDocs: 2,
-      foundDocs: 0,
-      matchedCount: 0,
+      foundDocs: 1,
+      matchedCount: 1,
       mismatchedCount: 0
     },
     {
@@ -3500,15 +3502,14 @@ const mockWorkflows: Workflow[] = [
       const docNames = Object.keys(job.docs);
       
       // Determine which docName is the primary one for this field (first matching)
-      let primaryTargetIdx = -1;
-      for (let i = 0; i < docNames.length; i++) {
+      // Flow 3's collapsed "all previous flows merged" column is always the reference doc,
+      // for every field — it already represents matched data from the prior flow. Checked
+      // ahead of the loop below so it isn't shadowed by the index-0 fallback case.
+      let primaryTargetIdx = docNames.indexOf('รวมข้อมูลทั้งหมด (Flow ก่อนหน้า)');
+      for (let i = 0; primaryTargetIdx === -1 && i < docNames.length; i++) {
         const dName = docNames[i];
         let isPrimaryCandidate = false;
-        // Flow 3's collapsed "all previous flows merged" column is always the reference doc,
-        // for every field — it already represents matched data from the prior flow.
-        if (dName === 'รวมข้อมูลทั้งหมด (Flow ก่อนหน้า)') {
-          isPrimaryCandidate = true;
-        } else if (f.part === 'Header' && (dName.toUpperCase().includes('INVOICE') || dName.toUpperCase().includes('B / L'))) {
+        if (f.part === 'Header' && (dName.toUpperCase().includes('INVOICE') || dName.toUpperCase().includes('B / L'))) {
           isPrimaryCandidate = true;
         } else if (f.part === 'Footer' && (dName.toUpperCase().includes('PACKING') || dName.toUpperCase().includes('B / L'))) {
           isPrimaryCandidate = true;
