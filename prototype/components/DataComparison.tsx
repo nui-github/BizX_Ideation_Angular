@@ -2992,16 +2992,18 @@ const mockWorkflows: Workflow[] = [
       totalFieldsCount: 0,
       accuracyScore: 0.0,
       docs: {
-        'Import Dec.': ComparisonDocStatus.MISSING,
+        // Carried forward: flow 3 already OCR'd and compared this doc, so flow 4
+        // reuses that result instead of asking the user to upload it again.
+        'Import Dec.': ComparisonDocStatus.MATCHED,
         'Form FTA': ComparisonDocStatus.MISSING,
         'License': ComparisonDocStatus.MISSING,
         'LPI': ComparisonDocStatus.MISSING,
         'Other': ComparisonDocStatus.MISSING
       },
-      progress: 0,
+      progress: 20,
       totalDocs: 5,
-      foundDocs: 0,
-      matchedCount: 0,
+      foundDocs: 1,
+      matchedCount: 1,
       mismatchedCount: 0
     }
   ]);
