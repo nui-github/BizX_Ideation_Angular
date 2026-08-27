@@ -7723,7 +7723,7 @@ const mockWorkflows: Workflow[] = [
                     setSelectedJob(null);
                     setIsJobPanelFullscreen(false);
                   }}
-                  className="p-2.5 bg-white border border-slate-200 text-slate-400 hover:text-slate-600 rounded-[4px] shadow-sm hover:shadow transition-all flex items-center justify-center group"
+                  className="p-2.5 bg-white text-slate-400 hover:text-slate-600 rounded-[4px] transition-all flex items-center justify-center group"
                 >
                   <ArrowLeft size={18} className="group-hover:-translate-x-0.5 transition-transform" />
                 </button>
