@@ -1366,10 +1366,10 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
                 onChange={(e) => setFormName(e.target.value)}
                 placeholder={isTh ? 'เช่น Import standard v2' : 'e.g. Import standard v2'}
                 className="py-2.5 rounded-xl border-slate-200 font-semibold text-slate-800 hover:border-blue-300 focus:border-[#1f5df9] focus:shadow-sm shadow-2xs placeholder-slate-400"
-                maxLength={512}
+                maxLength={500}
               />
               <div className="flex justify-end">
-                <span className="text-[10px] font-bold text-slate-400">{formName.length} / 512</span>
+                <span className="text-[10px] font-bold text-slate-400">{formName.length} / 500</span>
               </div>
             </div>
 
@@ -1383,11 +1383,11 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
                 onChange={(e) => setFormDesc(e.target.value)}
                 placeholder={isTh ? 'สรุปรายละเอียดหรือจุดประสงค์ในการใช้สคีมานี้...' : 'Detail the use case or objective of this schema...'}
                 rows={2}
-                maxLength={512}
+                maxLength={500}
                 className="rounded-xl border-slate-200 font-semibold text-slate-800 hover:border-blue-300 focus:border-[#1f5df9] focus:shadow-sm shadow-2xs placeholder-slate-400"
               />
               <div className="flex justify-end">
-                <span className="text-[10px] font-bold text-slate-400">{formDesc.length} / 512</span>
+                <span className="text-[10px] font-bold text-slate-400">{formDesc.length} / 500</span>
               </div>
               <div className="flex items-start gap-2.5 p-3.5 bg-blue-50 border border-blue-100 rounded-[8px]">
                 <Info className="text-[#1f5df9] shrink-0" size={16} />

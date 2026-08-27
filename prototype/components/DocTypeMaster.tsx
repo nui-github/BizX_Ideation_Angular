@@ -825,10 +825,10 @@ export const DocTypeMaster: React.FC<DocTypeMasterProps> = ({
                       placeholder={text.labelNamePlaceholder}
                       value={formName}
                       onChange={(e) => setFormName(e.target.value)}
-                      maxLength={512}
+                      maxLength={500}
                     />
                     <div className="flex justify-end">
-                      <span className="text-[10px] font-bold text-slate-400">{formName.length} / 512</span>
+                      <span className="text-[10px] font-bold text-slate-400">{formName.length} / 500</span>
                     </div>
                   </div>
 
@@ -847,10 +847,10 @@ export const DocTypeMaster: React.FC<DocTypeMasterProps> = ({
                       placeholder={text.labelHintPlaceholder}
                       value={formHint}
                       onChange={(e) => setFormHint(e.target.value)}
-                      maxLength={512}
+                      maxLength={500}
                     />
                     <div className="flex justify-end">
-                      <span className="text-[10px] font-bold text-slate-400">{formHint.length} / 512</span>
+                      <span className="text-[10px] font-bold text-slate-400">{formHint.length} / 500</span>
                     </div>
                   </div>
 
