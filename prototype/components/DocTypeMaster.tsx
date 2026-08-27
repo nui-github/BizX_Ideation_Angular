@@ -825,10 +825,10 @@ export const DocTypeMaster: React.FC<DocTypeMasterProps> = ({
                       placeholder={text.labelNamePlaceholder}
                       value={formName}
                       onChange={(e) => setFormName(e.target.value)}
-                      maxLength={500}
+                      maxLength={200}
                     />
                     <div className="flex justify-end">
-                      <span className="text-[10px] font-bold text-slate-400">{formName.length} / 500</span>
+                      <span className="text-[10px] font-bold text-slate-400">{formName.length} / 200</span>
                     </div>
                   </div>
 

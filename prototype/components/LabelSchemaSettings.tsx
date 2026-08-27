@@ -1366,10 +1366,10 @@ export const LabelSchemaSettings: React.FC<LabelSchemaSettingsProps> = ({
                 onChange={(e) => setFormName(e.target.value)}
                 placeholder={isTh ? 'เช่น Import standard v2' : 'e.g. Import standard v2'}
                 className="py-2.5 rounded-xl border-slate-200 font-semibold text-slate-800 hover:border-blue-300 focus:border-[#1f5df9] focus:shadow-sm shadow-2xs placeholder-slate-400"
-                maxLength={500}
+                maxLength={200}
               />
               <div className="flex justify-end">
-                <span className="text-[10px] font-bold text-slate-400">{formName.length} / 500</span>
+                <span className="text-[10px] font-bold text-slate-400">{formName.length} / 200</span>
               </div>
             </div>
 
