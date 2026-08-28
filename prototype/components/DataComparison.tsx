@@ -8733,28 +8733,19 @@ const mockWorkflows: Workflow[] = [
               className="bg-white w-full max-w-5xl max-h-[85vh] rounded-2xl overflow-hidden shadow-2xl flex flex-col border border-slate-200"
             >
               <div className="p-6 border-b border-slate-100 bg-white sticky top-0 z-10">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl shrink-0">
                       <History size={20} />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <h3 className="font-black text-slate-800 tracking-tight text-lg leading-tight uppercase">
                         {language === 'TH' ? 'ประวัติกิจกรรมของรายการ' : 'Job Activity Logs'}
                       </h3>
-                      <p className="text-[11px] font-bold text-slate-400 tracking-tight leading-none mt-0.5 uppercase">{selectedJob.reference}</p>
+                      <p className="text-[11px] font-bold text-slate-400 tracking-tight leading-none mt-0.5 uppercase truncate">{selectedJob.reference}</p>
                     </div>
                   </div>
-                  <button
-                    onClick={() => setShowJobLogsModal(false)}
-                    className="w-10 h-10 rounded-[4px] bg-slate-100 text-slate-400 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center"
-                  >
-                    <X size={20} />
-                  </button>
-                </div>
-
-                {(jobLogsTeamOptions.length > 0 || jobLogsWorkflowOptions.length > 0) && (
-                  <div className="flex items-center gap-3 mt-4">
+                  <div className="flex items-center gap-3 shrink-0">
                     {jobLogsTeamOptions.length > 0 && (
                       <div className="relative">
                         <select
@@ -8785,8 +8776,14 @@ const mockWorkflows: Workflow[] = [
                         <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
                       </div>
                     )}
+                    <button
+                      onClick={() => setShowJobLogsModal(false)}
+                      className="w-10 h-10 rounded-[4px] bg-slate-100 text-slate-400 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center shrink-0"
+                    >
+                      <X size={20} />
+                    </button>
                   </div>
-                )}
+                </div>
               </div>
 
               <div className="flex-1 overflow-auto p-6 bg-slate-50/50">
