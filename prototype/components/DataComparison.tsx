@@ -8713,7 +8713,13 @@ const mockWorkflows: Workflow[] = [
       {/* Shipment-level Activity Logs Modal — combines logs across every flow/job in this
           shipment (same reference): who on the team did what, on which document, on which field. */}
       <AnimatePresence>
-        {showJobLogsModal && selectedJob && (
+        {showJobLogsModal && selectedJob && (() => {
+          // Shared with the header filter selects and the body's row filtering below —
+          // computed once here so both stay in sync off the same shipment-wide job list.
+          const shipmentJobsForLogsModal = jobs.filter(j => j.reference === selectedJob.reference);
+          const jobLogsTeamOptions = Array.from(new Set(shipmentJobsForLogsModal.map(j => j.assignedTeam).filter(Boolean))) as string[];
+          const jobLogsWorkflowOptions = Array.from(new Set(shipmentJobsForLogsModal.map(j => j.workflowName).filter(Boolean))) as string[];
+          return (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -8726,24 +8732,61 @@ const mockWorkflows: Workflow[] = [
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               className="bg-white w-full max-w-5xl max-h-[85vh] rounded-2xl overflow-hidden shadow-2xl flex flex-col border border-slate-200"
             >
-              <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-10">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
-                    <History size={20} />
+              <div className="p-6 border-b border-slate-100 bg-white sticky top-0 z-10">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
+                      <History size={20} />
+                    </div>
+                    <div>
+                      <h3 className="font-black text-slate-800 tracking-tight text-lg leading-tight uppercase">
+                        {language === 'TH' ? 'ประวัติกิจกรรมของรายการ' : 'Job Activity Logs'}
+                      </h3>
+                      <p className="text-[11px] font-bold text-slate-400 tracking-tight leading-none mt-0.5 uppercase">{selectedJob.reference}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-black text-slate-800 tracking-tight text-lg leading-tight uppercase">
-                      {language === 'TH' ? 'ประวัติกิจกรรมของรายการ' : 'Job Activity Logs'}
-                    </h3>
-                    <p className="text-[11px] font-bold text-slate-400 tracking-tight leading-none mt-0.5 uppercase">{selectedJob.reference}</p>
-                  </div>
+                  <button
+                    onClick={() => setShowJobLogsModal(false)}
+                    className="w-10 h-10 rounded-[4px] bg-slate-100 text-slate-400 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center"
+                  >
+                    <X size={20} />
+                  </button>
                 </div>
-                <button
-                  onClick={() => setShowJobLogsModal(false)}
-                  className="w-10 h-10 rounded-[4px] bg-slate-100 text-slate-400 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center"
-                >
-                  <X size={20} />
-                </button>
+
+                {(jobLogsTeamOptions.length > 0 || jobLogsWorkflowOptions.length > 0) && (
+                  <div className="flex items-center gap-3 mt-4">
+                    {jobLogsTeamOptions.length > 0 && (
+                      <div className="relative">
+                        <select
+                          value={jobLogsTeamFilter}
+                          onChange={(e) => setJobLogsTeamFilter(e.target.value)}
+                          className="bg-white border border-slate-200 rounded-xl py-2 pl-3 pr-8 focus:ring-4 focus:ring-blue-500/10 focus:border-[#1f5df9] text-[11px] font-black uppercase tracking-tight appearance-none cursor-pointer outline-none shadow-sm transition-all text-slate-600"
+                        >
+                          <option value="ALL">{language === 'TH' ? 'ทีมทั้งหมด' : 'All Teams'}</option>
+                          {jobLogsTeamOptions.map(team => (
+                            <option key={team} value={team}>{team}</option>
+                          ))}
+                        </select>
+                        <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
+                      </div>
+                    )}
+                    {jobLogsWorkflowOptions.length > 0 && (
+                      <div className="relative">
+                        <select
+                          value={jobLogsWorkflowFilter}
+                          onChange={(e) => setJobLogsWorkflowFilter(e.target.value)}
+                          className="bg-white border border-slate-200 rounded-xl py-2 pl-3 pr-8 focus:ring-4 focus:ring-blue-500/10 focus:border-[#1f5df9] text-[11px] font-black uppercase tracking-tight appearance-none cursor-pointer outline-none shadow-sm transition-all text-slate-600 max-w-[220px]"
+                        >
+                          <option value="ALL">{language === 'TH' ? 'เวิร์กโฟลว์ทั้งหมด' : 'All Workflows'}</option>
+                          {jobLogsWorkflowOptions.map(wf => (
+                            <option key={wf} value={wf}>{wf}</option>
+                          ))}
+                        </select>
+                        <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="flex-1 overflow-auto p-6 bg-slate-50/50">
@@ -8841,11 +8884,8 @@ const mockWorkflows: Workflow[] = [
                     jobLogs = synthetic.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
                   }
 
-                  // Team / workflow filters — options come from every flow in this shipment,
-                  // so filtering stays possible even before any log entry is loaded.
-                  const teamOptions = Array.from(new Set(shipmentJobs.map(j => j.assignedTeam).filter(Boolean))) as string[];
-                  const workflowOptions = Array.from(new Set(shipmentJobs.map(j => j.workflowName).filter(Boolean))) as string[];
-
+                  // Team / workflow filters — driven by the selects in the modal header,
+                  // which share the same shipment-wide job list computed above.
                   if (jobLogsTeamFilter !== 'ALL' || jobLogsWorkflowFilter !== 'ALL') {
                     jobLogs = jobLogs.filter(log => {
                       const logJob = jobById.get((log as any).jobId);
@@ -8855,67 +8895,27 @@ const mockWorkflows: Workflow[] = [
                     });
                   }
 
-                  const filterBar = (teamOptions.length > 0 || workflowOptions.length > 0) && (
-                    <div className="flex items-center gap-3 mb-4">
-                      {teamOptions.length > 0 && (
-                        <div className="relative">
-                          <select
-                            value={jobLogsTeamFilter}
-                            onChange={(e) => setJobLogsTeamFilter(e.target.value)}
-                            className="bg-white border border-slate-200 rounded-xl py-2 pl-3 pr-8 focus:ring-4 focus:ring-blue-500/10 focus:border-[#1f5df9] text-[11px] font-black uppercase tracking-tight appearance-none cursor-pointer outline-none shadow-sm transition-all text-slate-600"
-                          >
-                            <option value="ALL">{language === 'TH' ? 'ทีมทั้งหมด' : 'All Teams'}</option>
-                            {teamOptions.map(team => (
-                              <option key={team} value={team}>{team}</option>
-                            ))}
-                          </select>
-                          <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
-                        </div>
-                      )}
-                      {workflowOptions.length > 0 && (
-                        <div className="relative">
-                          <select
-                            value={jobLogsWorkflowFilter}
-                            onChange={(e) => setJobLogsWorkflowFilter(e.target.value)}
-                            className="bg-white border border-slate-200 rounded-xl py-2 pl-3 pr-8 focus:ring-4 focus:ring-blue-500/10 focus:border-[#1f5df9] text-[11px] font-black uppercase tracking-tight appearance-none cursor-pointer outline-none shadow-sm transition-all text-slate-600 max-w-[220px]"
-                          >
-                            <option value="ALL">{language === 'TH' ? 'เวิร์กโฟลว์ทั้งหมด' : 'All Workflows'}</option>
-                            {workflowOptions.map(wf => (
-                              <option key={wf} value={wf}>{wf}</option>
-                            ))}
-                          </select>
-                          <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
-                        </div>
-                      )}
-                    </div>
-                  );
-
                   if (jobLogs.length === 0) {
                     return (
-                      <>
-                        {filterBar}
-                        <div className="flex flex-col items-center justify-center h-48 text-center space-y-3 opacity-60 bg-white border border-slate-200 border-dashed rounded-xl m-6">
-                          <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center">
-                            <History size={24} className="text-slate-400" />
-                          </div>
-                          <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">{language === 'TH' ? 'ยังไม่มีประวัติ' : 'No logs found'}</p>
+                      <div className="flex flex-col items-center justify-center h-48 text-center space-y-3 opacity-60 bg-white border border-slate-200 border-dashed rounded-xl m-6">
+                        <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center">
+                          <History size={24} className="text-slate-400" />
                         </div>
-                      </>
+                        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">{language === 'TH' ? 'ยังไม่มีประวัติ' : 'No logs found'}</p>
+                      </div>
                     );
                   }
 
                   return (
-                    <>
-                    {filterBar}
-                    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div className="bg-white border border-slate-200 rounded-xl overflow-y-auto shadow-sm max-h-[60vh]">
                       <table className="w-full text-left border-collapse table-fixed">
                         <thead>
-                          <tr className="bg-slate-50 border-b border-slate-200">
-                            <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-28">{language === 'TH' ? 'วัน/เวลา' : 'Date/Time'}</th>
-                            <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-64">{language === 'TH' ? 'ผู้ใช้งาน' : 'User'}</th>
-                            <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-44">{language === 'TH' ? 'การกระทำ' : 'Action'}</th>
-                            <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-32">{language === 'TH' ? 'เอกสาร' : 'Document'}</th>
-                            <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{language === 'TH' ? 'รายละเอียด (ฟิลด์)' : 'Details (Fields)'}</th>
+                          <tr className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
+                            <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-28 bg-slate-50">{language === 'TH' ? 'วัน/เวลา' : 'Date/Time'}</th>
+                            <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-64 bg-slate-50">{language === 'TH' ? 'ผู้ใช้งาน' : 'User'}</th>
+                            <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-44 bg-slate-50">{language === 'TH' ? 'การกระทำ' : 'Action'}</th>
+                            <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-32 bg-slate-50">{language === 'TH' ? 'เอกสาร' : 'Document'}</th>
+                            <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50">{language === 'TH' ? 'รายละเอียด (ฟิลด์)' : 'Details (Fields)'}</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -8993,13 +8993,13 @@ const mockWorkflows: Workflow[] = [
                         </tbody>
                       </table>
                     </div>
-                    </>
                   );
                 })()}
               </div>
             </motion.div>
           </motion.div>
-        )}
+          );
+        })()}
       </AnimatePresence>
 
       {/* Document Comments — a discussion thread attached to a specific document within this
