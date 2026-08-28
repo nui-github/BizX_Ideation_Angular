@@ -654,6 +654,8 @@ export const DataComparison: React.FC<DataComparisonProps> = ({ language, tracki
     { id: 'log-13', jobId: 'job-004a', docName: 'CO', timestamp: new Date(Date.now() - 7 * 86400000).toISOString(), action: 'EDIT_DATA', details: 'แก้ไขข้อมูลฟิลด์: Certificate No.', version: 1, user: 'Nui P.' }
   ]);
   const [showJobLogsModal, setShowJobLogsModal] = useState(false);
+  const [jobLogsTeamFilter, setJobLogsTeamFilter] = useState('ALL');
+  const [jobLogsWorkflowFilter, setJobLogsWorkflowFilter] = useState('ALL');
   const [showSaveToast, setShowSaveToast] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [activeBoardTab, setActiveBoardTab] = useState('jobs');
@@ -7821,7 +7823,11 @@ const mockWorkflows: Workflow[] = [
                   {/* Activity Logs for this job — who on the team did what, on which document/field */}
                   <Tooltip position={isJobPanelFullscreen ? 'bottom' : 'top'} content={language === 'TH' ? 'ดูประวัติกิจกรรมของรายการนี้' : 'View activity logs for this job'}>
                     <button
-                      onClick={() => setShowJobLogsModal(true)}
+                      onClick={() => {
+                        setJobLogsTeamFilter('ALL');
+                        setJobLogsWorkflowFilter('ALL');
+                        setShowJobLogsModal(true);
+                      }}
                       className="p-2.5 rounded-[4px] transition-all border flex items-center justify-center cursor-pointer shadow-sm bg-white text-slate-500 border-slate-200/60 hover:bg-slate-50"
                     >
                       <History size={15} strokeWidth={2.5} className="text-slate-400" />
@@ -8835,18 +8841,72 @@ const mockWorkflows: Workflow[] = [
                     jobLogs = synthetic.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
                   }
 
+                  // Team / workflow filters — options come from every flow in this shipment,
+                  // so filtering stays possible even before any log entry is loaded.
+                  const teamOptions = Array.from(new Set(shipmentJobs.map(j => j.assignedTeam).filter(Boolean))) as string[];
+                  const workflowOptions = Array.from(new Set(shipmentJobs.map(j => j.workflowName).filter(Boolean))) as string[];
+
+                  if (jobLogsTeamFilter !== 'ALL' || jobLogsWorkflowFilter !== 'ALL') {
+                    jobLogs = jobLogs.filter(log => {
+                      const logJob = jobById.get((log as any).jobId);
+                      if (jobLogsTeamFilter !== 'ALL' && logJob?.assignedTeam !== jobLogsTeamFilter) return false;
+                      if (jobLogsWorkflowFilter !== 'ALL' && logJob?.workflowName !== jobLogsWorkflowFilter) return false;
+                      return true;
+                    });
+                  }
+
+                  const filterBar = (teamOptions.length > 0 || workflowOptions.length > 0) && (
+                    <div className="flex items-center gap-3 mb-4">
+                      {teamOptions.length > 0 && (
+                        <div className="relative">
+                          <select
+                            value={jobLogsTeamFilter}
+                            onChange={(e) => setJobLogsTeamFilter(e.target.value)}
+                            className="bg-white border border-slate-200 rounded-xl py-2 pl-3 pr-8 focus:ring-4 focus:ring-blue-500/10 focus:border-[#1f5df9] text-[11px] font-black uppercase tracking-tight appearance-none cursor-pointer outline-none shadow-sm transition-all text-slate-600"
+                          >
+                            <option value="ALL">{language === 'TH' ? 'ทีมทั้งหมด' : 'All Teams'}</option>
+                            {teamOptions.map(team => (
+                              <option key={team} value={team}>{team}</option>
+                            ))}
+                          </select>
+                          <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
+                        </div>
+                      )}
+                      {workflowOptions.length > 0 && (
+                        <div className="relative">
+                          <select
+                            value={jobLogsWorkflowFilter}
+                            onChange={(e) => setJobLogsWorkflowFilter(e.target.value)}
+                            className="bg-white border border-slate-200 rounded-xl py-2 pl-3 pr-8 focus:ring-4 focus:ring-blue-500/10 focus:border-[#1f5df9] text-[11px] font-black uppercase tracking-tight appearance-none cursor-pointer outline-none shadow-sm transition-all text-slate-600 max-w-[220px]"
+                          >
+                            <option value="ALL">{language === 'TH' ? 'เวิร์กโฟลว์ทั้งหมด' : 'All Workflows'}</option>
+                            {workflowOptions.map(wf => (
+                              <option key={wf} value={wf}>{wf}</option>
+                            ))}
+                          </select>
+                          <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
+                        </div>
+                      )}
+                    </div>
+                  );
+
                   if (jobLogs.length === 0) {
                     return (
-                      <div className="flex flex-col items-center justify-center h-48 text-center space-y-3 opacity-60 bg-white border border-slate-200 border-dashed rounded-xl m-6">
-                        <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center">
-                          <History size={24} className="text-slate-400" />
+                      <>
+                        {filterBar}
+                        <div className="flex flex-col items-center justify-center h-48 text-center space-y-3 opacity-60 bg-white border border-slate-200 border-dashed rounded-xl m-6">
+                          <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center">
+                            <History size={24} className="text-slate-400" />
+                          </div>
+                          <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">{language === 'TH' ? 'ยังไม่มีประวัติ' : 'No logs found'}</p>
                         </div>
-                        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">{language === 'TH' ? 'ยังไม่มีประวัติ' : 'No logs found'}</p>
-                      </div>
+                      </>
                     );
                   }
 
                   return (
+                    <>
+                    {filterBar}
                     <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
                       <table className="w-full text-left border-collapse table-fixed">
                         <thead>
@@ -8933,6 +8993,7 @@ const mockWorkflows: Workflow[] = [
                         </tbody>
                       </table>
                     </div>
+                    </>
                   );
                 })()}
               </div>
