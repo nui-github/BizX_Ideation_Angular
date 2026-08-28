@@ -8801,6 +8801,23 @@ const mockWorkflows: Workflow[] = [
                           version: 1,
                           user: actor
                         });
+                        // First doc of each job also gets a manual OCR correction, so the log
+                        // isn't just upload -> read for every entry — it mirrors a reviewer
+                        // catching a misread value and fixing it before comparison.
+                        if (i === 0) {
+                          synthetic.push({
+                            id: `synthetic-${job.id}-${docName}-edit`,
+                            jobId: job.id,
+                            docName,
+                            timestamp: new Date(baseTime + i * 60000 + 45000).toISOString(),
+                            action: 'EDIT_DATA',
+                            details: language === 'TH'
+                              ? `แก้ไขฟิลด์ในใบย่อย (${docName}): Consignee TAX ID (0105562OOOOOO → 0105562000000)`
+                              : `Edited fields in sub-file (${docName}): Consignee TAX ID (0105562OOOOOO → 0105562000000)`,
+                            version: 1,
+                            user: actor
+                          });
+                        }
                       });
                       if (job.status === JobStatus.READY || job.isLocked) {
                         synthetic.push({
