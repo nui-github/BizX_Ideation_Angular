@@ -8869,8 +8869,8 @@ const mockWorkflows: Workflow[] = [
                                           </span>
                                         )}
                                         {logJob?.workflowName && (
-                                          <Tooltip content={logJob.workflowName} position="top">
-                                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100 uppercase truncate block max-w-[160px]">
+                                          <Tooltip content={logJob.workflowName} position="top" className="min-w-0">
+                                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100 uppercase truncate block">
                                               {logJob.workflowName}
                                             </span>
                                           </Tooltip>
