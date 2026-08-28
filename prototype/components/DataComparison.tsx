@@ -8704,8 +8704,8 @@ const mockWorkflows: Workflow[] = [
           </div>
         )}
 
-      {/* Job-level Activity Logs Modal — combines logs across all documents in this job:
-          who on the team did what, on which document, on which field. */}
+      {/* Shipment-level Activity Logs Modal — combines logs across every flow/job in this
+          shipment (same reference): who on the team did what, on which document, on which field. */}
       <AnimatePresence>
         {showJobLogsModal && selectedJob && (
           <motion.div
@@ -8742,15 +8742,21 @@ const mockWorkflows: Workflow[] = [
 
               <div className="flex-1 overflow-auto p-6 bg-slate-50/50">
                 {(() => {
-                  // Scoped strictly to this job's id — document names (e.g. "INVOICE") repeat
-                  // across jobs, so matching by name alone would leak other jobs' history in.
-                  const docLogs = ocrLogs.filter(log => log.jobId === selectedJob.id);
+                  // Shipment-wide: every job/flow sharing this reference, not just the flow
+                  // currently open. Document names (e.g. "INVOICE") repeat across jobs, so we
+                  // still key everything off jobId rather than name alone.
+                  const shipmentJobs = jobs.filter(j => j.reference === selectedJob.reference);
+                  const shipmentJobIds = new Set(shipmentJobs.map(j => j.id));
+                  const jobById = new Map(shipmentJobs.map(j => [j.id, j]));
+
+                  const docLogs = ocrLogs.filter(log => shipmentJobIds.has(log.jobId));
                   // Job-wide events (e.g. export) aren't tied to a single document — pull them
                   // in from the general activity log by matching the job they were logged for.
                   const jobWideLogs = activityLogs
-                    .filter(log => log.originalItem?.id === selectedJob.id)
+                    .filter(log => shipmentJobIds.has(log.originalItem?.id))
                     .map(log => ({
                       id: log.id,
+                      jobId: log.originalItem.id,
                       docName: language === 'TH' ? 'ทั้งหมด' : 'ALL',
                       timestamp: log.timestamp,
                       action: log.action,
@@ -8763,19 +8769,21 @@ const mockWorkflows: Workflow[] = [
 
                   // Demo jobs created directly from mock data (rather than through the
                   // upload/OCR/export flow in this session) never got real log entries.
-                  // For any job that has actually processed documents, synthesize a
-                  // plausible upload -> OCR -> export history instead of showing empty.
+                  // For any flow in the shipment that has actually processed documents,
+                  // synthesize a plausible upload -> OCR -> export history instead of
+                  // showing empty.
                   if (jobLogs.length === 0) {
-                    const processedDocs = Object.entries(selectedJob.docs || {})
-                      .filter(([, status]) => status !== ComparisonDocStatus.MISSING);
-                    if (processedDocs.length > 0) {
-                      const baseTime = selectedJob.createdAt ? new Date(selectedJob.createdAt).getTime() : Date.now() - 86400000;
-                      const actor = selectedJob.assignee || (language === 'TH' ? 'ระบบ' : 'System');
-                      const synthetic: typeof docLogs = [];
+                    const synthetic: typeof docLogs = [];
+                    shipmentJobs.forEach(job => {
+                      const processedDocs = Object.entries(job.docs || {})
+                        .filter(([, status]) => status !== ComparisonDocStatus.MISSING);
+                      if (processedDocs.length === 0) return;
+                      const baseTime = job.createdAt ? new Date(job.createdAt).getTime() : Date.now() - 86400000;
+                      const actor = job.assignee || (language === 'TH' ? 'ระบบ' : 'System');
                       processedDocs.forEach(([docName], i) => {
                         synthetic.push({
-                          id: `synthetic-${selectedJob.id}-${docName}-upload`,
-                          jobId: selectedJob.id,
+                          id: `synthetic-${job.id}-${docName}-upload`,
+                          jobId: job.id,
                           docName,
                           timestamp: new Date(baseTime + i * 60000).toISOString(),
                           action: 'UPLOAD_NEW',
@@ -8784,8 +8792,8 @@ const mockWorkflows: Workflow[] = [
                           user: actor
                         });
                         synthetic.push({
-                          id: `synthetic-${selectedJob.id}-${docName}-ocr`,
-                          jobId: selectedJob.id,
+                          id: `synthetic-${job.id}-${docName}-ocr`,
+                          jobId: job.id,
                           docName,
                           timestamp: new Date(baseTime + i * 60000 + 30000).toISOString(),
                           action: 'OCR_DONE',
@@ -8794,10 +8802,10 @@ const mockWorkflows: Workflow[] = [
                           user: actor
                         });
                       });
-                      if (selectedJob.status === JobStatus.READY || selectedJob.isLocked) {
+                      if (job.status === JobStatus.READY || job.isLocked) {
                         synthetic.push({
-                          id: `synthetic-${selectedJob.id}-export`,
-                          jobId: selectedJob.id,
+                          id: `synthetic-${job.id}-export`,
+                          jobId: job.id,
                           docName: language === 'TH' ? 'ทั้งหมด' : 'ALL',
                           timestamp: new Date(baseTime + processedDocs.length * 60000 + 60000).toISOString(),
                           action: 'APPROVE',
@@ -8806,8 +8814,8 @@ const mockWorkflows: Workflow[] = [
                           user: actor
                         });
                       }
-                      jobLogs = synthetic.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-                    }
+                    });
+                    jobLogs = synthetic.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
                   }
 
                   if (jobLogs.length === 0) {
@@ -8834,7 +8842,9 @@ const mockWorkflows: Workflow[] = [
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                          {jobLogs.map(log => (
+                          {jobLogs.map(log => {
+                            const logJob = jobById.get((log as any).jobId);
+                            return (
                             <tr key={log.id} className="hover:bg-slate-50/50 transition-colors">
                               <td className="p-4 whitespace-nowrap">
                                 <span className="text-xs font-bold text-slate-600 block">
@@ -8849,7 +8859,25 @@ const mockWorkflows: Workflow[] = [
                                   <div className="w-6 h-6 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[10px] font-black text-slate-600 uppercase shrink-0">
                                     {log.user.slice(0, 2)}
                                   </div>
-                                  <span className="text-sm font-semibold text-slate-600 truncate">{log.user}</span>
+                                  <div className="min-w-0 flex flex-col gap-1">
+                                    <span className="text-sm font-semibold text-slate-600 truncate">{log.user}</span>
+                                    {(logJob?.assignedTeam || logJob?.workflowName) && (
+                                      <div className="flex items-center gap-1 min-w-0">
+                                        {logJob?.assignedTeam && (
+                                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 uppercase shrink-0">
+                                            {logJob.assignedTeam}
+                                          </span>
+                                        )}
+                                        {logJob?.workflowName && (
+                                          <Tooltip content={logJob.workflowName} position="top">
+                                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100 uppercase truncate block max-w-[110px]">
+                                              {logJob.workflowName}
+                                            </span>
+                                          </Tooltip>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
                               </td>
                               <td className="p-4 overflow-hidden">
@@ -8884,7 +8912,7 @@ const mockWorkflows: Workflow[] = [
                                 </div>
                               </td>
                             </tr>
-                          ))}
+                          );})}
                         </tbody>
                       </table>
                     </div>
