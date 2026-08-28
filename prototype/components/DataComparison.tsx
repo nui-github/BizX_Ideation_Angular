@@ -8835,7 +8835,7 @@ const mockWorkflows: Workflow[] = [
                         <thead>
                           <tr className="bg-slate-50 border-b border-slate-200">
                             <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-28">{language === 'TH' ? 'วัน/เวลา' : 'Date/Time'}</th>
-                            <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-48">{language === 'TH' ? 'ผู้ใช้งาน' : 'User'}</th>
+                            <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-64">{language === 'TH' ? 'ผู้ใช้งาน' : 'User'}</th>
                             <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-44">{language === 'TH' ? 'การกระทำ' : 'Action'}</th>
                             <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-32">{language === 'TH' ? 'เอกสาร' : 'Document'}</th>
                             <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{language === 'TH' ? 'รายละเอียด (ฟิลด์)' : 'Details (Fields)'}</th>
@@ -8870,7 +8870,7 @@ const mockWorkflows: Workflow[] = [
                                         )}
                                         {logJob?.workflowName && (
                                           <Tooltip content={logJob.workflowName} position="top">
-                                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100 uppercase truncate block max-w-[110px]">
+                                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100 uppercase truncate block max-w-[160px]">
                                               {logJob.workflowName}
                                             </span>
                                           </Tooltip>
