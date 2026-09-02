@@ -36,7 +36,7 @@ const CURRENT_USER_NAME = 'Kunawut W.';
 // template name is built as [Brand]_[Doctype], e.g. MARDI_Invoice.
 const REPLACE_FILE_TEMPLATE_BRANDS = ['MARDI', 'Elita', 'MINIMONO', 'ROENARI', 'SANRIO', 'WANTEX'];
 
-const MAX_UPLOAD_FILE_SIZE_BYTES = 5 * 1024 * 1024;
+const MAX_UPLOAD_FILE_SIZE_BYTES = 20 * 1024 * 1024;
 
 // Picks which preview mockup to render for a document based on its real file extension
 // when one is present (real uploaded filenames), falling back to 'pdf' for the many
@@ -180,7 +180,7 @@ const LOCAL_T = {
     uploadManageTitle: "อัปโหลดและสะสมกลุ่มเอกสาร (Upload & Multi-File Grouping)",
     uploadManageSubtitle: "อัปโหลดไฟล์เอกสาร PDF/รูปภาพเพิ่มเติม และเลือกจับกลุ่มเพื่อเชื่อมข้อมูลเป็น 1 คอลัมน์สำหรับ OCR และเปรียบเทียบข้อมูลร่วมกัน",
     dropzonePlaceholder: "ลากไฟล์มาวางที่นี่ หรือ คลิกเพื่อเลือกไฟล์",
-    dropzoneSub: "รองรับ PDF, Excel, XML, JPG, PNG (เลือกหรือลากพร้อมกันได้หลายไฟล์ ขนาดไม่เกิน 5MB ต่อไฟล์)",
+    dropzoneSub: "รองรับ PDF, Excel, XML, JPG, PNG (เลือกหรือลากพร้อมกันได้หลายไฟล์ ขนาดไม่เกิน 20MB ต่อไฟล์)",
     newUploadedHeader: "ไฟล์ที่เพิ่งอัปโหลดใหม่ (%count% ไฟล์)",
     noFilesUploaded: "ยังไม่มีไฟล์ที่อัปโหลด ดรอปไฟล์ที่นี่เพื่อเริ่มใช้งาน",
     groupHeading: "การจัดกลุ่มเอกสารที่จะ Merge (Grouping Columns)",
@@ -207,7 +207,7 @@ const LOCAL_T = {
     uploadManageTitle: "Upload & Multi-File Grouping Workspace",
     uploadManageSubtitle: "Upload additional PDF/Image source files and select to group them as a unified column for joint OCR and comparison.",
     dropzonePlaceholder: "Drag & drop files here, or click to browse",
-    dropzoneSub: "Supports PDF, Excel, XML, JPG, PNG (multiple files allowed, max 5MB per file)",
+    dropzoneSub: "Supports PDF, Excel, XML, JPG, PNG (multiple files allowed, max 20MB per file)",
     newUploadedHeader: "Newly Uploaded Files (%count% files)",
     noFilesUploaded: "No files uploaded yet. Drag & drop files here to begin.",
     groupHeading: "Document Grouping Option (Merge to Column)",
@@ -1743,8 +1743,8 @@ const mockWorkflows: Workflow[] = [
     if (oversized.length > 0) {
       alert(
         language === 'TH'
-          ? `ไฟล์ต่อไปนี้มีขนาดเกิน 5MB จึงไม่ถูกอัปโหลด:\n${oversized.map(f => f.name).join('\n')}`
-          : `The following files exceed 5MB and were not uploaded:\n${oversized.map(f => f.name).join('\n')}`
+          ? `ไฟล์ต่อไปนี้มีขนาดเกิน 20MB จึงไม่ถูกอัปโหลด:\n${oversized.map(f => f.name).join('\n')}`
+          : `The following files exceed 20MB and were not uploaded:\n${oversized.map(f => f.name).join('\n')}`
       );
     }
     const newFiles = validFiles.map(f => ({
@@ -1930,8 +1930,8 @@ const mockWorkflows: Workflow[] = [
     if (oversized.length > 0) {
       alert(
         language === 'TH'
-          ? `ไฟล์ต่อไปนี้มีขนาดเกิน 5MB จึงไม่ถูกอัปโหลด:\n${oversized.map(f => f.name).join('\n')}`
-          : `The following files exceed 5MB and were not uploaded:\n${oversized.map(f => f.name).join('\n')}`
+          ? `ไฟล์ต่อไปนี้มีขนาดเกิน 20MB จึงไม่ถูกอัปโหลด:\n${oversized.map(f => f.name).join('\n')}`
+          : `The following files exceed 20MB and were not uploaded:\n${oversized.map(f => f.name).join('\n')}`
       );
     }
     const newFiles = validFiles.map(f => ({
