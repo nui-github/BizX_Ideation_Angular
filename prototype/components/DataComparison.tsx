@@ -8985,10 +8985,12 @@ const mockWorkflows: Workflow[] = [
                                   </span>
                                 </div>
                               </td>
-                              <td className="p-4">
-                                <span className="text-[10px] font-black px-2.5 py-1 rounded-full border bg-slate-100 text-slate-600 border-slate-200 uppercase inline-block max-w-full truncate align-bottom">
-                                  {log.docName}
-                                </span>
+                              <td className="p-4 overflow-hidden">
+                                <Tooltip content={log.docName} position="top" className="min-w-0 max-w-full">
+                                  <span className="text-[10px] font-black px-2.5 py-1 rounded-full border bg-slate-100 text-slate-600 border-slate-200 uppercase truncate block">
+                                    {log.docName}
+                                  </span>
+                                </Tooltip>
                               </td>
                               <td className="p-4">
                                 <div className="text-xs text-slate-500 font-medium leading-relaxed max-w-sm">
