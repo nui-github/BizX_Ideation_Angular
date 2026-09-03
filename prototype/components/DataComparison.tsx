@@ -654,7 +654,7 @@ export const DataComparison: React.FC<DataComparisonProps> = ({ language, tracki
     { id: 'log-13', jobId: 'job-004a', docName: 'CO', timestamp: new Date(Date.now() - 7 * 86400000).toISOString(), action: 'EDIT_DATA', details: 'แก้ไขข้อมูลฟิลด์: Certificate No.', version: 1, user: 'Nui P.' }
   ]);
   const [showJobLogsModal, setShowJobLogsModal] = useState(false);
-  const [jobLogsTeamFilter, setJobLogsTeamFilter] = useState('ALL');
+  const [jobLogsDocFilter, setJobLogsDocFilter] = useState('ALL');
   const [jobLogsWorkflowFilter, setJobLogsWorkflowFilter] = useState('ALL');
   const [showSaveToast, setShowSaveToast] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -7824,7 +7824,7 @@ const mockWorkflows: Workflow[] = [
                   <Tooltip position={isJobPanelFullscreen ? 'bottom' : 'top'} content={language === 'TH' ? 'ดูประวัติกิจกรรมของรายการนี้' : 'View activity logs for this job'}>
                     <button
                       onClick={() => {
-                        setJobLogsTeamFilter('ALL');
+                        setJobLogsDocFilter('ALL');
                         setJobLogsWorkflowFilter('ALL');
                         setShowJobLogsModal(true);
                       }}
@@ -8717,8 +8717,15 @@ const mockWorkflows: Workflow[] = [
           // Shared with the header filter selects and the body's row filtering below —
           // computed once here so both stay in sync off the same shipment-wide job list.
           const shipmentJobsForLogsModal = jobs.filter(j => j.reference === selectedJob.reference);
-          const jobLogsTeamOptions = Array.from(new Set(shipmentJobsForLogsModal.map(j => j.assignedTeam).filter(Boolean))) as string[];
           const jobLogsWorkflowOptions = Array.from(new Set(shipmentJobsForLogsModal.map(j => j.workflowName).filter(Boolean))) as string[];
+          // Document choices depend on the workflow filter — only offer doc types that
+          // actually belong to the flow(s) currently selected, not the whole shipment.
+          const jobsForDocOptions = jobLogsWorkflowFilter === 'ALL'
+            ? shipmentJobsForLogsModal
+            : shipmentJobsForLogsModal.filter(j => j.workflowName === jobLogsWorkflowFilter);
+          const jobLogsDocOptions = Array.from(new Set(
+            jobsForDocOptions.flatMap(j => Object.keys(j.docs || {}))
+          )) as string[];
           return (
           <motion.div
             initial={{ opacity: 0 }}
@@ -8746,31 +8753,34 @@ const mockWorkflows: Workflow[] = [
                     </div>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
-                    {jobLogsTeamOptions.length > 0 && (
-                      <div className="relative">
-                        <select
-                          value={jobLogsTeamFilter}
-                          onChange={(e) => setJobLogsTeamFilter(e.target.value)}
-                          className="bg-white border border-slate-200 rounded-xl py-2 pl-3 pr-8 focus:ring-4 focus:ring-blue-500/10 focus:border-[#1f5df9] text-[11px] font-black uppercase tracking-tight appearance-none cursor-pointer outline-none shadow-sm transition-all text-slate-600"
-                        >
-                          <option value="ALL">{language === 'TH' ? 'ทีมทั้งหมด' : 'All Teams'}</option>
-                          {jobLogsTeamOptions.map(team => (
-                            <option key={team} value={team}>{team}</option>
-                          ))}
-                        </select>
-                        <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
-                      </div>
-                    )}
                     {jobLogsWorkflowOptions.length > 0 && (
                       <div className="relative">
                         <select
                           value={jobLogsWorkflowFilter}
-                          onChange={(e) => setJobLogsWorkflowFilter(e.target.value)}
+                          onChange={(e) => {
+                            setJobLogsWorkflowFilter(e.target.value);
+                            setJobLogsDocFilter('ALL');
+                          }}
                           className="bg-white border border-slate-200 rounded-xl py-2 pl-3 pr-8 focus:ring-4 focus:ring-blue-500/10 focus:border-[#1f5df9] text-[11px] font-black uppercase tracking-tight appearance-none cursor-pointer outline-none shadow-sm transition-all text-slate-600 max-w-[220px]"
                         >
                           <option value="ALL">{language === 'TH' ? 'เวิร์กโฟลว์ทั้งหมด' : 'All Workflows'}</option>
                           {jobLogsWorkflowOptions.map(wf => (
                             <option key={wf} value={wf}>{wf}</option>
+                          ))}
+                        </select>
+                        <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
+                      </div>
+                    )}
+                    {jobLogsDocOptions.length > 0 && (
+                      <div className="relative">
+                        <select
+                          value={jobLogsDocFilter}
+                          onChange={(e) => setJobLogsDocFilter(e.target.value)}
+                          className="bg-white border border-slate-200 rounded-xl py-2 pl-3 pr-8 focus:ring-4 focus:ring-blue-500/10 focus:border-[#1f5df9] text-[11px] font-black uppercase tracking-tight appearance-none cursor-pointer outline-none shadow-sm transition-all text-slate-600"
+                        >
+                          <option value="ALL">{language === 'TH' ? 'เอกสารทั้งหมด' : 'All Documents'}</option>
+                          {jobLogsDocOptions.map(doc => (
+                            <option key={doc} value={doc}>{doc}</option>
                           ))}
                         </select>
                         <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
@@ -8881,12 +8891,12 @@ const mockWorkflows: Workflow[] = [
                     jobLogs = synthetic.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
                   }
 
-                  // Team / workflow filters — driven by the selects in the modal header,
+                  // Document / workflow filters — driven by the selects in the modal header,
                   // which share the same shipment-wide job list computed above.
-                  if (jobLogsTeamFilter !== 'ALL' || jobLogsWorkflowFilter !== 'ALL') {
+                  if (jobLogsDocFilter !== 'ALL' || jobLogsWorkflowFilter !== 'ALL') {
                     jobLogs = jobLogs.filter(log => {
                       const logJob = jobById.get((log as any).jobId);
-                      if (jobLogsTeamFilter !== 'ALL' && logJob?.assignedTeam !== jobLogsTeamFilter) return false;
+                      if (jobLogsDocFilter !== 'ALL' && log.docName !== jobLogsDocFilter) return false;
                       if (jobLogsWorkflowFilter !== 'ALL' && logJob?.workflowName !== jobLogsWorkflowFilter) return false;
                       return true;
                     });
