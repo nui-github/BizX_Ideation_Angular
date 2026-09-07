@@ -3561,11 +3561,15 @@ const mockWorkflows: Workflow[] = [
       { name: 'Freight Charges', source: 'PREPAID', type: 'string', part: 'Footer' },
     ];
 
-    // Customs declaration ("ใบขนสินค้า") flows get one extra section at the very
-    // end — the grand total across every invoice line item's Invoice Amount, so
-    // the declared total is visible without adding up all 50 items by hand.
+    // Customs declaration flows get one extra section at the very end — the grand
+    // total across every invoice line item's Invoice Amount, so the declared total
+    // is visible without adding up all 50 items by hand. Covers the doc under both
+    // names: "ใบขนสินค้า" where it's first read, and "Import Dec." once a later
+    // flow carries that same extraction forward under its English label.
     const summaryFields: any[] = [];
-    if (Object.prototype.hasOwnProperty.call(job.docs, 'ใบขนสินค้า')) {
+    const hasCustomsDeclaration = Object.prototype.hasOwnProperty.call(job.docs, 'ใบขนสินค้า')
+      || Object.prototype.hasOwnProperty.call(job.docs, 'Import Dec.');
+    if (hasCustomsDeclaration) {
       const grandTotalAmount = descriptionFields
         .filter(f => f.name === 'Invoice Amount')
         .reduce((sum, f) => sum + parseFloat(f.source), 0);
