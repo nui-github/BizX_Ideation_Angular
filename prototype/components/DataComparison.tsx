@@ -570,6 +570,30 @@ export const DataComparison: React.FC<DataComparisonProps> = ({ language, tracki
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(true);
   const [overriddenValues, setOverriddenValues] = useState<Record<string, string>>({}); // field-tIdx -> value
   const [confirmedMismatches, setConfirmedMismatches] = useState<Record<string, boolean>>({}); // job_doc_field -> boolean
+  // Double-click a MISMATCH cell in the main comparison table to fix a misread OCR
+  // value inline, without opening the full Excel Preview panel.
+  const [inlineEditCell, setInlineEditCell] = useState<{ docName: string; fieldName: string } | null>(null);
+  const [inlineEditValue, setInlineEditValue] = useState('');
+
+  const handleInlineOcrEdit = (docName: string, fieldName: string, newValue: string) => {
+    if (!selectedJob) return;
+    assignJobToCurrentUser(selectedJob.id);
+    const overrideKey = `${docName}_${fieldName}`;
+    setOverriddenValues(prev => ({ ...prev, [overrideKey]: newValue }));
+    const newLog = {
+      id: Math.random().toString(36).substr(2, 9),
+      jobId: selectedJob.id,
+      docName,
+      timestamp: new Date().toISOString(),
+      action: 'EDIT_DATA',
+      details: language === 'TH'
+        ? `แก้ไขข้อมูล OCR ฟิลด์ "${fieldName}" ใน "${docName}" จากตารางเปรียบเทียบ`
+        : `Edited OCR data for field "${fieldName}" in "${docName}" from the comparison table`,
+      version: 1,
+      user: CURRENT_USER_NAME
+    };
+    setOcrLogs(prev => [newLog, ...prev]);
+  };
   // Comments attached to a specific document within a job — key is `${jobId}_${docName}`.
   // Anyone on the assigned team can add a comment; carried forward to the next job in the
   // shipment sequence on export (see handleConfirmExport) so context isn't lost downstream.
@@ -8602,7 +8626,37 @@ const mockWorkflows: Workflow[] = [
                                             target.status === 'MISMATCH' ? 'text-rose-600' :
                                             'text-slate-300'
                                          }`}>
-                                            <div className="flex items-center gap-2">
+                                            {inlineEditCell?.docName === docName && inlineEditCell?.fieldName === res.fieldName ? (
+                                              <input
+                                                autoFocus
+                                                type="text"
+                                                value={inlineEditValue}
+                                                onChange={(e) => setInlineEditValue(e.target.value)}
+                                                onClick={(e) => e.stopPropagation()}
+                                                onKeyDown={(e) => {
+                                                  if (e.key === 'Enter') {
+                                                    handleInlineOcrEdit(docName, res.fieldName, inlineEditValue);
+                                                    setInlineEditCell(null);
+                                                  } else if (e.key === 'Escape') {
+                                                    setInlineEditCell(null);
+                                                  }
+                                                }}
+                                                onBlur={() => {
+                                                  handleInlineOcrEdit(docName, res.fieldName, inlineEditValue);
+                                                  setInlineEditCell(null);
+                                                }}
+                                                className="w-full text-center text-[11px] font-black text-rose-700 bg-white border border-rose-300 rounded px-1.5 py-0.5 outline-none focus:ring-2 focus:ring-rose-400/30 font-sans"
+                                              />
+                                            ) : (
+                                            <div
+                                              className="flex items-center gap-2"
+                                              onDoubleClick={() => {
+                                                if (target.status !== 'MISMATCH' || selectedJob?.status === JobStatus.READY) return;
+                                                setInlineEditCell({ docName, fieldName: res.fieldName });
+                                                setInlineEditValue(String(target.value ?? ''));
+                                              }}
+                                              title={target.status === 'MISMATCH' && selectedJob?.status !== JobStatus.READY ? (language === 'TH' ? 'ดับเบิ้ลคลิกเพื่อแก้ไขค่า OCR' : 'Double-click to edit the OCR value') : undefined}
+                                            >
                                                <span className="break-all">
                                                    {target.status === 'MISMATCH' && target.value && res.sourceValue ? (
                                                      diffChars(String(target.value), String(res.sourceValue)).map((part, index) => {
@@ -8650,6 +8704,7 @@ const mockWorkflows: Workflow[] = [
                                                   </Tooltip>
                                                 )}
                                             </div>
+                                            )}
 
                                             {(target as any).isPrimary && res.targets.find((t: any) => t.isPrimary) === target && (
                                               <div className="px-1.5 py-0.5 bg-blue-100 text-blue-700 border border-blue-200 rounded-[4px] text-[8px] font-black uppercase tracking-wider shrink-0 shadow-sm flex items-center gap-1.5 w-fit">
