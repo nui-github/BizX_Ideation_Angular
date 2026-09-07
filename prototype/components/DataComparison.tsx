@@ -3025,6 +3025,36 @@ const mockWorkflows: Workflow[] = [
     onConsumeTargetJobId?.();
   }, [targetJobId]);
 
+  // Document preview now opens in its own browser tab (see openDocPreviewInNewTab
+  // below) rather than as an in-page modal. That new tab is a fresh load of this
+  // same app with ?docPreview=1&jobId=&doc= in the URL — pick the job out of the
+  // (static, mock) jobs list and jump straight into the fullscreen preview.
+  const [standaloneDocPreview] = useState(() => {
+    if (typeof window === 'undefined') return null;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('docPreview') !== '1') return null;
+    return { jobId: params.get('jobId') || '', docName: params.get('doc') || '' };
+  });
+
+  useEffect(() => {
+    if (!standaloneDocPreview) return;
+    const job = jobs.find(j => j.id === standaloneDocPreview.jobId);
+    if (job) {
+      setSelectedJob(job);
+      setPdfPreviewUrl(standaloneDocPreview.docName);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const openDocPreviewInNewTab = (jobId: string, docName: string) => {
+    const url = new URL(window.location.href);
+    url.search = '';
+    url.searchParams.set('docPreview', '1');
+    url.searchParams.set('jobId', jobId);
+    url.searchParams.set('doc', docName);
+    window.open(url.toString(), '_blank');
+  };
+
 
   // Sync selectedJob when jobs state updates (e.g. background processing completes)
   useEffect(() => {
@@ -3036,10 +3066,12 @@ const mockWorkflows: Workflow[] = [
     }
   }, [jobs, selectedJob]);
 
-  // Reset hidden locked docs and pdf preview when switching jobs
+  // Reset hidden locked docs and pdf preview when switching jobs — except in a
+  // standalone doc-preview tab, where selecting the job IS how the preview opens,
+  // so this must not immediately null the pdfPreviewUrl it just set.
   useEffect(() => {
     setHiddenLockedDocs([]);
-    setPdfPreviewUrl(null);
+    if (!standaloneDocPreview) setPdfPreviewUrl(null);
     setShowColumnSelector(false);
     setTableScrolledPastTop(false);
   }, [selectedJob?.id]);
@@ -6167,8 +6199,14 @@ const mockWorkflows: Workflow[] = [
 
       {/* PDF View Overlay Side-by-side */}
       {pdfPreviewUrl && (
-        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-white w-[96vw] max-w-7xl h-[92vh] rounded-2xl overflow-hidden shadow-2xl flex flex-col font-sans">
+        <div className={standaloneDocPreview
+          ? "fixed inset-0 z-[600] bg-white animate-in fade-in duration-300"
+          : "fixed inset-0 z-[600] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300"
+        }>
+          <div className={standaloneDocPreview
+            ? "bg-white w-full h-full overflow-hidden flex flex-col font-sans"
+            : "bg-white w-[96vw] max-w-7xl h-[92vh] rounded-2xl overflow-hidden shadow-2xl flex flex-col font-sans"
+          }>
             
             {/* Topbar matching original with title, status, save indicator, activity logs, and close */}
             <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-10">
@@ -6236,8 +6274,9 @@ const mockWorkflows: Workflow[] = [
               
               <div className="flex items-center gap-3">
                 <button
-                  onClick={() => setPdfPreviewUrl(null)}
+                  onClick={() => standaloneDocPreview ? window.close() : setPdfPreviewUrl(null)}
                   className="w-10 h-10 rounded-[4px] bg-slate-100 text-slate-400 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center cursor-pointer"
+                  title={standaloneDocPreview ? (language === 'TH' ? 'ปิดแท็บนี้' : 'Close this tab') : undefined}
                 >
                   <XCircle size={24} />
                 </button>
@@ -8113,7 +8152,7 @@ const mockWorkflows: Workflow[] = [
                                    : docStatus;
                                  
                                  return (
-                                   <th key={docName} className={`bg-slate-50 border-b border-slate-200 px-2 py-1.5 min-w-[180px] text-center group cursor-pointer hover:bg-slate-100 transition-[height,background-color] duration-300 will-change-[height] border-r border-slate-100 z-30 relative ${tableScrolledPastTop ? 'h-[48px]' : 'h-[82px]'}`} onClick={() => isReady && setPdfPreviewUrl(DEMO_PREVIEW_FILENAME_OVERRIDES[selectedJob.id]?.[docName] || docName)}>
+                                   <th key={docName} className={`bg-slate-50 border-b border-slate-200 px-2 py-1.5 min-w-[180px] text-center group cursor-pointer hover:bg-slate-100 transition-[height,background-color] duration-300 will-change-[height] border-r border-slate-100 z-30 relative ${tableScrolledPastTop ? 'h-[48px]' : 'h-[82px]'}`} onClick={() => isReady && openDocPreviewInNewTab(selectedJob.id, DEMO_PREVIEW_FILENAME_OVERRIDES[selectedJob.id]?.[docName] || docName)}>
                                        {(docStatus === ComparisonDocStatus.RECEIVED || docStatus === ComparisonDocStatus.MISSING) && (
                                          <div className="absolute inset-0 z-50 bg-white/95 backdrop-blur-[1px] flex flex-col items-center justify-between p-1.5 border-x border-slate-100 shadow-inner">
                                             <div className="flex items-center justify-between w-full gap-1 px-1 py-0.5">
