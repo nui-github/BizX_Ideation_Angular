@@ -3557,7 +3557,22 @@ const mockWorkflows: Workflow[] = [
       { name: 'Country of Origin', source: 'CHINA', type: 'string', part: 'Footer' },
       { name: 'Freight Charges', source: 'PREPAID', type: 'string', part: 'Footer' },
     ];
-    
+
+    // Customs declaration ("ใบขนสินค้า") flows get one extra row at the very end —
+    // the grand total across every invoice line item's Invoice Amount, so the
+    // declared total is visible without adding up all 50 items by hand.
+    if (Object.prototype.hasOwnProperty.call(job.docs, 'ใบขนสินค้า')) {
+      const grandTotalAmount = descriptionFields
+        .filter(f => f.name === 'Invoice Amount')
+        .reduce((sum, f) => sum + parseFloat(f.source), 0);
+      footerFields.push({
+        name: 'Grand Total Amount',
+        source: grandTotalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+        type: 'number',
+        part: 'Footer'
+      });
+    }
+
     const fields = [...headerFields, ...descriptionFields, ...footerFields];
 
     const synonymRules: Record<string, string[]> = {
