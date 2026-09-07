@@ -3039,6 +3039,100 @@ const mockWorkflows: Workflow[] = [
       foundDocs: 1,
       matchedCount: 0,
       mismatchedCount: 0
+    },
+
+    // --- Shipment 15: "Summary section" — same CDS preset as above, but flow 1 and
+    // flow 2 start already completed and flow 3's "ใบขนสินค้า" doc is pre-matched,
+    // so opening flow 3 immediately shows the Summary section with real numbers —
+    // no manual read/confirm steps needed to demo it. ---
+    {
+      id: 'job-summary-a',
+      reference: 'Summary section',
+      expiryDate: '28 AUG 2026 17:00:00',
+      createdAt: '26 AUG 2026',
+      workflowName: 'PO/PI Matching',
+      assignedTeam: 'operation',
+      assignee: 'Somchai T.',
+      isLocked: true,
+      status: JobStatus.READY,
+      totalFieldsCount: 11,
+      accuracyScore: 100.0,
+      docs: {
+        'PO/PI': ComparisonDocStatus.LOCKED,
+        'Invoice': ComparisonDocStatus.LOCKED
+      },
+      progress: 100,
+      totalDocs: 2,
+      foundDocs: 2,
+      matchedCount: 2,
+      mismatchedCount: 0
+    },
+    {
+      id: 'job-summary-b',
+      reference: 'Summary section',
+      expiryDate: '29 AUG 2026 17:00:00',
+      createdAt: '26 AUG 2026',
+      workflowName: 'Shipping Doc Matching',
+      assignedTeam: 'operation',
+      assignee: 'Somchai T.',
+      isLocked: true,
+      status: JobStatus.READY,
+      totalFieldsCount: 63,
+      accuracyScore: 100.0,
+      docs: {
+        'Invoice': ComparisonDocStatus.LOCKED,
+        'Packing List': ComparisonDocStatus.LOCKED,
+        'Bill of Lading': ComparisonDocStatus.LOCKED
+      },
+      progress: 100,
+      totalDocs: 3,
+      foundDocs: 3,
+      matchedCount: 3,
+      mismatchedCount: 0
+    },
+    {
+      id: 'job-summary-c',
+      reference: 'Summary section',
+      expiryDate: '30 AUG 2026 17:00:00',
+      createdAt: '26 AUG 2026',
+      workflowName: 'Import Declaration Matching#1',
+      assignedTeam: 'customs',
+      assignee: 'Somchai T.',
+      status: JobStatus.REVIEW,
+      totalFieldsCount: 63,
+      accuracyScore: 100.0,
+      docs: {
+        'ใบขนสินค้า': ComparisonDocStatus.MATCHED,
+        'รวมข้อมูลทั้งหมด (Flow ก่อนหน้า)': ComparisonDocStatus.MATCHED
+      },
+      progress: 100,
+      totalDocs: 2,
+      foundDocs: 2,
+      matchedCount: 2,
+      mismatchedCount: 0
+    },
+    {
+      id: 'job-summary-d',
+      reference: 'Summary section',
+      expiryDate: '31 AUG 2026 17:00:00',
+      createdAt: '26 AUG 2026',
+      workflowName: 'Import Declaration Matching#2',
+      assignedTeam: 'customs',
+      status: JobStatus.NEW,
+      totalFieldsCount: 0,
+      accuracyScore: 0.0,
+      docs: {
+        'Import Dec.': ComparisonDocStatus.OCR_DONE,
+        'Form FTA': ComparisonDocStatus.MISSING,
+        'License': ComparisonDocStatus.MISSING,
+        'LPI': ComparisonDocStatus.MISSING,
+        'Other': ComparisonDocStatus.MISSING
+      },
+      progress: 20,
+      totalDocs: 5,
+      foundDocs: 1,
+      matchedCount: 0,
+      mismatchedCount: 0
     }
   ]);
 
