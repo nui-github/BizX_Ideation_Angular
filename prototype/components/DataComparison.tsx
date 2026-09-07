@@ -642,7 +642,7 @@ export const DataComparison: React.FC<DataComparisonProps> = ({ language, tracki
   const [tempOCRData, setTempOCRData] = useState<Record<string, string>>({});
   const [originalOCRData, setOriginalOCRData] = useState<Record<string, string>>({});
   const [activePdfTab, setActivePdfTab] = useState<'EXTRACTED' | 'LOG'>('EXTRACTED');
-  const [zoomLevel, setZoomLevel] = useState<number>(0.89);
+  const [zoomLevel, setZoomLevel] = useState<number>(1);
   const [rotationAngle, setRotationAngle] = useState<number>(0);
   const [pdfCurrentPage, setPdfCurrentPage] = useState<number>(1);
   const [activeRightTab, setActiveRightTab] = useState<'excel' | 'json'>('excel');
@@ -2131,7 +2131,7 @@ const mockWorkflows: Workflow[] = [
       });
       setTempOCRData(initialData);
       setOriginalOCRData({ ...initialData });
-      setZoomLevel(0.89);
+      setZoomLevel(1);
       setRotationAngle(0);
       setPdfCurrentPage(1);
       setActiveRightTab('excel');
