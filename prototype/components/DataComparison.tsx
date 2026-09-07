@@ -624,6 +624,7 @@ export const DataComparison: React.FC<DataComparisonProps> = ({ language, tracki
   const [hoveredFieldKey, setHoveredFieldKey] = useState<string | null>(null);
   const [selectedFieldKey, setSelectedFieldKey] = useState<string | null>(null);
   const [showOnlyMismatchedFields, setShowOnlyMismatchedFields] = useState(false);
+  const [excelPreviewSearch, setExcelPreviewSearch] = useState('');
   const isFieldHighlighted = (fieldName: string, group?: string) => {
     if (!hoveredFieldKey && !selectedFieldKey) return false;
     const key = `${group || 'no-group'}::${fieldName}`;
@@ -6923,7 +6924,21 @@ const mockWorkflows: Workflow[] = [
                   {/* Right Tab Content */}
                   {activeRightTab === 'excel' ? (
                     <div className="flex-1 overflow-hidden flex flex-col bg-white min-h-0">
-                      
+
+                      {/* Search — matches against field name or extracted value */}
+                      <div className="px-4 py-2 border-b border-slate-100 bg-white shrink-0">
+                        <div className="relative">
+                          <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                          <input
+                            type="text"
+                            value={excelPreviewSearch}
+                            onChange={(e) => setExcelPreviewSearch(e.target.value)}
+                            placeholder={language === 'TH' ? 'ค้นหาชื่อฟิลด์หรือข้อมูลที่สกัด' : 'Search field name or extracted value'}
+                            className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-[#010136] placeholder:text-slate-400 placeholder:font-medium outline-none focus:border-[#1f5df9] focus:ring-2 focus:ring-[#1f5df9]/20 transition-all font-sans"
+                          />
+                        </div>
+                      </div>
+
                       {/* Excel Header row indicators */}
                       <div className="grid grid-cols-12 px-6 py-3 border-b border-slate-200 bg-slate-50 text-[10px] font-black tracking-wider uppercase text-[#1f5df9] shrink-0 font-sans items-center">
                         <div className="col-span-5 font-sans">{language === 'TH' ? 'ชื่อฟิลด์' : 'FIELD'}</div>
@@ -6970,10 +6985,20 @@ const mockWorkflows: Workflow[] = [
                             });
                           }
 
+                          const searchTerm = excelPreviewSearch.trim().toLowerCase();
+                          if (searchTerm) {
+                            filteredResults = filteredResults.filter(res => {
+                              const value = String(tempOCRData[res.fieldName] || '');
+                              return res.fieldName.toLowerCase().includes(searchTerm) || value.toLowerCase().includes(searchTerm);
+                            });
+                          }
+
                           if (filteredResults.length === 0) {
                             return (
                                <div className="p-8 text-center text-slate-400 font-sans text-xs">
-                                  {showOnlyMismatchedFields
+                                  {searchTerm
+                                    ? (language === 'TH' ? 'ไม่พบฟิลด์หรือข้อมูลที่ตรงกับคำค้นหา' : 'No field or value matches your search.')
+                                    : showOnlyMismatchedFields
                                     ? (language === 'TH' ? 'ไม่มีฟิลด์ที่ไม่ตรงกันแล้ว' : 'No mismatched fields left.')
                                     : (language === 'TH' ? 'ไม่มีฟิลด์ข้อมูลเสริมที่เกี่ยวข้อง' : 'No relevant comparison fields found for this document.')}
                                </div>
