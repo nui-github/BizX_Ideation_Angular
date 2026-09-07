@@ -8,7 +8,7 @@ import {
   CheckCircle2, XCircle, Info, Eye, Send, Filter, ListFilter, ArrowLeft, Save, RotateCcw,
   LayoutGrid, List, ScanEye, Bot, ChevronDown, Lock, Unlock, HelpCircle, X, Loader2, ShieldCheck, ArrowUpRight, ScanSearch, History, Edit3, UploadCloud, AlertTriangle,
   Printer, RotateCw, ZoomIn, ZoomOut, Menu, Copy, Star, CheckCheck, StickyNote, SkipForward, Undo2,
-  FileBarChart2, Layers, Maximize2, Minimize2
+  FileBarChart2, Layers, Maximize2, Minimize2, PanelRightClose, PanelRightOpen
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Tabs, Tag, Badge, Empty, Button, message, DatePicker } from 'antd';
@@ -3063,6 +3063,9 @@ const mockWorkflows: Workflow[] = [
     if (params.get('docPreview') !== '1') return null;
     return { jobId: params.get('jobId') || '', docName: params.get('doc') || '' };
   });
+  // In the standalone preview tab the viewer is the main attraction — let the
+  // OCR fields panel on the right be toggled away so the document can go full width.
+  const [showOcrPanel, setShowOcrPanel] = useState(true);
 
   useEffect(() => {
     if (!standaloneDocPreview) return;
@@ -6251,15 +6254,19 @@ const mockWorkflows: Workflow[] = [
             : "bg-white w-[96vw] max-w-7xl h-[92vh] rounded-2xl overflow-hidden shadow-2xl flex flex-col font-sans"
           }>
             
-            {/* Topbar matching original with title, status, save indicator, activity logs, and close */}
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-10">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl">
-                  <FileText size={20} />
+            {/* Topbar matching original with title, status, save indicator, activity logs, and close.
+                Compact in the standalone tab — the viewer is the point, not this bar. */}
+            <div className={standaloneDocPreview
+              ? "px-4 py-2 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-10"
+              : "p-5 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-10"
+            }>
+              <div className={standaloneDocPreview ? "flex items-center gap-2.5" : "flex items-center gap-4"}>
+                <div className={standaloneDocPreview ? "p-1.5 bg-blue-50 text-blue-600 rounded-xl" : "p-3 bg-blue-50 text-blue-600 rounded-2xl"}>
+                  <FileText size={standaloneDocPreview ? 16 : 20} />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="font-black text-slate-800 tracking-tight text-lg leading-tight">{pdfPreviewUrl}</h3>
+                    <h3 className={standaloneDocPreview ? "font-black text-slate-800 tracking-tight text-sm leading-tight" : "font-black text-slate-800 tracking-tight text-lg leading-tight"}>{pdfPreviewUrl}</h3>
                     {activeBoardTab !== 'pending' && selectedJob?.docs[pdfPreviewUrl] && (() => {
                       const docStatus = selectedJob.docs[pdfPreviewUrl];
                       const isMismatched = mismatchedFileNames.has(pdfPreviewUrl);
@@ -6315,13 +6322,26 @@ const mockWorkflows: Workflow[] = [
                 </div>
               </div>
               
-              <div className="flex items-center gap-3">
+              <div className={standaloneDocPreview ? "flex items-center gap-2" : "flex items-center gap-3"}>
+                {standaloneDocPreview && (
+                  <button
+                    onClick={() => setShowOcrPanel(prev => !prev)}
+                    className="h-8 px-3 rounded-[4px] bg-slate-100 text-slate-500 hover:bg-slate-200 transition-all flex items-center justify-center gap-1.5 cursor-pointer text-[11px] font-black uppercase tracking-wide"
+                    title={showOcrPanel ? (language === 'TH' ? 'ซ่อนพาเนลข้อมูล OCR' : 'Hide OCR panel') : (language === 'TH' ? 'แสดงพาเนลข้อมูล OCR' : 'Show OCR panel')}
+                  >
+                    {showOcrPanel ? <PanelRightClose size={14} /> : <PanelRightOpen size={14} />}
+                    {showOcrPanel ? (language === 'TH' ? 'ซ่อนพาเนล' : 'Hide panel') : (language === 'TH' ? 'แสดงพาเนล' : 'Show panel')}
+                  </button>
+                )}
                 <button
                   onClick={() => standaloneDocPreview ? window.close() : setPdfPreviewUrl(null)}
-                  className="w-10 h-10 rounded-[4px] bg-slate-100 text-slate-400 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center cursor-pointer"
+                  className={standaloneDocPreview
+                    ? "w-8 h-8 rounded-[4px] bg-slate-100 text-slate-400 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center cursor-pointer"
+                    : "w-10 h-10 rounded-[4px] bg-slate-100 text-slate-400 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center cursor-pointer"
+                  }
                   title={standaloneDocPreview ? (language === 'TH' ? 'ปิดแท็บนี้' : 'Close this tab') : undefined}
                 >
-                  <XCircle size={24} />
+                  <XCircle size={standaloneDocPreview ? 18 : 24} />
                 </button>
               </div>
             </div>
@@ -6368,7 +6388,10 @@ const mockWorkflows: Workflow[] = [
             <div className="flex-1 bg-slate-100 flex overflow-hidden min-h-0">
                
                {/* Left Pane: PDF Preview in grey canvas container */}
-               <div className={`${activeBoardTab === 'pending' ? 'w-full' : 'w-1/2'} flex flex-col border-[#eaecf0] bg-white ${activeBoardTab === 'pending' ? '' : 'border-r'}`}>
+               {(() => {
+                 const isFullWidth = activeBoardTab === 'pending' || (standaloneDocPreview && !showOcrPanel);
+                 return (
+               <div className={`${isFullWidth ? 'w-full' : 'w-1/2'} flex flex-col border-[#eaecf0] bg-white ${isFullWidth ? '' : 'border-r'}`}>
                   
                   {/* PDF Simulator Cool Dark Chrome Toolbar */}
                   <div className="bg-[#323639] h-11 text-white flex items-center justify-between px-4 select-none shrink-0 border-b border-[#212325]">
@@ -6974,9 +6997,11 @@ const mockWorkflows: Workflow[] = [
                   </div>
 
                </div>
+                 );
+               })()}
 
                {/* Right Pane: Multi Tab view of either Editable Excel layout or Raw JSON with Copy Code */}
-               {activeBoardTab !== 'pending' && (
+               {activeBoardTab !== 'pending' && (!standaloneDocPreview || showOcrPanel) && (
                  <div className="w-1/2 flex flex-col bg-white overflow-hidden min-h-0">
                   
                   {/* Right Tab Headers matching reference image */}
