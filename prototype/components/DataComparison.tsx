@@ -571,15 +571,19 @@ export const DataComparison: React.FC<DataComparisonProps> = ({ language, tracki
   const [overriddenValues, setOverriddenValues] = useState<Record<string, string>>({}); // field-tIdx -> value
   const [confirmedMismatches, setConfirmedMismatches] = useState<Record<string, boolean>>({}); // job_doc_field -> boolean
   // Double-click a MISMATCH cell in the main comparison table to fix a misread OCR
-  // value inline, without opening the full Excel Preview panel.
-  const [inlineEditCell, setInlineEditCell] = useState<{ docName: string; fieldName: string } | null>(null);
+  // value inline, without opening the full Excel Preview panel. Saving (Enter) asks
+  // for confirmation first via pendingInlineEdit, since this writes straight into
+  // the comparison result with no separate "save" step to catch a mistake.
+  const [inlineEditCell, setInlineEditCell] = useState<{ docName: string; fieldName: string; oldValue: string } | null>(null);
   const [inlineEditValue, setInlineEditValue] = useState('');
+  const [pendingInlineEdit, setPendingInlineEdit] = useState<{ docName: string; fieldName: string; oldValue: string; newValue: string } | null>(null);
 
-  const handleInlineOcrEdit = (docName: string, fieldName: string, newValue: string) => {
+  const handleInlineOcrEdit = (docName: string, fieldName: string, oldValue: string, newValue: string) => {
     if (!selectedJob) return;
     assignJobToCurrentUser(selectedJob.id);
     const overrideKey = `${docName}_${fieldName}`;
     setOverriddenValues(prev => ({ ...prev, [overrideKey]: newValue }));
+    const emptyLabel = language === 'TH' ? 'ว่าง' : 'empty';
     const newLog = {
       id: Math.random().toString(36).substr(2, 9),
       jobId: selectedJob.id,
@@ -587,8 +591,8 @@ export const DataComparison: React.FC<DataComparisonProps> = ({ language, tracki
       timestamp: new Date().toISOString(),
       action: 'EDIT_DATA',
       details: language === 'TH'
-        ? `แก้ไขข้อมูล OCR ฟิลด์ "${fieldName}" ใน "${docName}" จากตารางเปรียบเทียบ`
-        : `Edited OCR data for field "${fieldName}" in "${docName}" from the comparison table`,
+        ? `แก้ไขข้อมูล OCR ฟิลด์ "${fieldName}" ใน "${docName}" จากตารางเปรียบเทียบ: ${oldValue || emptyLabel} → ${newValue || emptyLabel}`
+        : `Edited OCR data for field "${fieldName}" in "${docName}" from the comparison table: ${oldValue || emptyLabel} → ${newValue || emptyLabel}`,
       version: 1,
       user: CURRENT_USER_NAME
     };
@@ -7359,6 +7363,61 @@ const mockWorkflows: Workflow[] = [
         </div>
       )}
 
+      {/* Confirm inline OCR edit — pressing Enter in the comparison table's inline
+          edit input doesn't save immediately, it asks first since there's no
+          separate "save" step to undo a typo. */}
+      {pendingInlineEdit && (
+        <div className="fixed inset-0 z-[630] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300 font-sans">
+          <div className="bg-white p-10 rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 text-center flex flex-col items-center gap-6 animate-in zoom-in-95 duration-300">
+            <div className="w-24 h-24 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center border-4 border-blue-100 mb-2">
+              <Edit3 size={40} strokeWidth={2.5} />
+            </div>
+            <div>
+              <h3 className="text-xl font-black text-[#010136] tracking-tight mb-3 font-sans">
+                {language === 'TH' ? 'ยืนยันการแก้ไขข้อมูล' : 'Confirm Field Edit'}
+              </h3>
+              <p className="text-slate-500 font-medium text-[13px] leading-relaxed font-sans max-w-sm mx-auto mb-4">
+                {language === 'TH'
+                  ? `ต้องการแก้ไขค่าฟิลด์ "${pendingInlineEdit.fieldName}" ใน "${pendingInlineEdit.docName}" ใช่หรือไม่?`
+                  : `Edit the value of field "${pendingInlineEdit.fieldName}" in "${pendingInlineEdit.docName}"?`}
+              </p>
+              <div className="flex flex-col gap-2 text-left bg-slate-50 border border-slate-200 rounded-xl p-4 font-sans">
+                <div className="flex items-center gap-2 text-[11px]">
+                  <span className="font-black text-slate-400 uppercase tracking-wider shrink-0 w-14">{language === 'TH' ? 'ค่าเดิม' : 'From'}</span>
+                  <span className="font-bold text-rose-600 break-all line-through decoration-rose-300">{pendingInlineEdit.oldValue || (language === 'TH' ? 'ว่าง' : 'empty')}</span>
+                </div>
+                <div className="flex items-center gap-2 text-[11px]">
+                  <span className="font-black text-slate-400 uppercase tracking-wider shrink-0 w-14">{language === 'TH' ? 'ค่าใหม่' : 'To'}</span>
+                  <span className="font-bold text-emerald-700 break-all">{pendingInlineEdit.newValue || (language === 'TH' ? 'ว่าง' : 'empty')}</span>
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-4 w-full mt-4">
+              <Button
+                size="large"
+                className="flex-1 rounded-[4px] h-14 font-black uppercase tracking-widest text-[11px] border-slate-200 text-slate-600 hover:bg-slate-50 font-sans"
+                onClick={() => setPendingInlineEdit(null)}
+              >
+                {language === 'TH' ? 'ยกเลิก' : 'CANCEL'}
+              </Button>
+              <Button
+                type="primary"
+                size="large"
+                className="flex-1 rounded-[4px] h-14 font-black uppercase tracking-widest text-[11px] bg-[#1f5df9] border-none shadow-lg shadow-blue-500/20 hover:bg-blue-600 font-sans"
+                onClick={() => {
+                  const { docName, fieldName, oldValue, newValue } = pendingInlineEdit;
+                  handleInlineOcrEdit(docName, fieldName, oldValue, newValue);
+                  setPendingInlineEdit(null);
+                  setInlineEditCell(null);
+                }}
+              >
+                {language === 'TH' ? 'ยืนยันแก้ไข' : 'CONFIRM EDIT'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Confirm-all-mismatches Modal */}
       {confirmAllMismatchesTargetDocName && (() => {
         const targetDoc = confirmAllMismatchesTargetDocName;
@@ -8635,16 +8694,12 @@ const mockWorkflows: Workflow[] = [
                                                 onClick={(e) => e.stopPropagation()}
                                                 onKeyDown={(e) => {
                                                   if (e.key === 'Enter') {
-                                                    handleInlineOcrEdit(docName, res.fieldName, inlineEditValue);
-                                                    setInlineEditCell(null);
+                                                    setPendingInlineEdit({ docName, fieldName: res.fieldName, oldValue: inlineEditCell.oldValue, newValue: inlineEditValue });
                                                   } else if (e.key === 'Escape') {
                                                     setInlineEditCell(null);
                                                   }
                                                 }}
-                                                onBlur={() => {
-                                                  handleInlineOcrEdit(docName, res.fieldName, inlineEditValue);
-                                                  setInlineEditCell(null);
-                                                }}
+                                                onBlur={() => setInlineEditCell(null)}
                                                 className="w-full text-center text-[11px] font-black text-rose-700 bg-white border border-rose-300 rounded px-1.5 py-0.5 outline-none focus:ring-2 focus:ring-rose-400/30 font-sans"
                                               />
                                             ) : (
@@ -8652,7 +8707,7 @@ const mockWorkflows: Workflow[] = [
                                               className="flex items-center gap-2"
                                               onDoubleClick={() => {
                                                 if (target.status !== 'MISMATCH' || selectedJob?.status === JobStatus.READY) return;
-                                                setInlineEditCell({ docName, fieldName: res.fieldName });
+                                                setInlineEditCell({ docName, fieldName: res.fieldName, oldValue: String(target.value ?? '') });
                                                 setInlineEditValue(String(target.value ?? ''));
                                               }}
                                               title={target.status === 'MISMATCH' && selectedJob?.status !== JobStatus.READY ? (language === 'TH' ? 'ดับเบิ้ลคลิกเพื่อแก้ไขค่า OCR' : 'Double-click to edit the OCR value') : undefined}
