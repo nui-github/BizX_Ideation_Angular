@@ -8355,6 +8355,10 @@ const mockWorkflows: Workflow[] = [
                         <div className="w-2 h-2 rounded-full bg-rose-500"></div>
                         <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{language === 'TH' ? 'ไม่ตรงกัน' : 'Mismatched'}</span>
                      </div>
+                     <div className="flex items-center gap-1.5">
+                        <div className="w-2 h-2 rounded-full bg-purple-500"></div>
+                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{language === 'TH' ? 'ค่าสรุปยอดรวม' : 'Summary'}</span>
+                     </div>
                   </div>
                   <div
                     className="flex-1 overflow-auto custom-scrollbar relative"
@@ -8710,7 +8714,7 @@ const mockWorkflows: Workflow[] = [
                                                 </div>
                                               </div>
                                               
-                                              {showHeaderBadges && (
+                                              {showHeaderBadges && part !== 'Summary' && (
                                                 <div className="flex items-center gap-1.5 translate-y-[1px]">
                                                  <Tooltip content={part === 'Description' ? t.ttMatchedCountDesc : t.ttMatchedCount}><div className={`flex items-center gap-1 px-1.5 py-0.5 rounded border text-[9px] font-black tracking-tight ${showOnlyDiff ? 'bg-slate-50 text-slate-400 border-slate-200 shadow-none opacity-60' : (displayMatchCount > 0 ? 'bg-emerald-50 text-emerald-600 border-emerald-100/50 shadow-sm' : 'bg-slate-50 text-slate-300 border-slate-100')}`}>
                                                    <Check size={9} strokeWidth={4} />
@@ -8818,8 +8822,10 @@ const mockWorkflows: Workflow[] = [
                                       );
                                     }
                                     const isUserConfirmed = target && (target.ruleTitle === 'ยืนยันโดยผู้ใช้' || target.ruleTitle === 'Confirmed by User' || target.ruleTitle === 'ผ่านการตรวจสอบแล้ว' || target.ruleTitle === 'Verified');
+                                    const isSummary = (res as any).part === 'Summary';
                                     return (
                                       <td key={docName} className={`p-0 border-r border-r-slate-100 border-t border-t-slate-200 transition-all ${
+                                         isSummary ? 'bg-purple-50' :
                                          (target as any).isPrimary ? 'bg-blue-50' :
                                          isUserConfirmed ? 'bg-emerald-50/10' :
                                          (target.status === 'MATCH' || target.status === 'SYNONYM') ? 'bg-emerald-50' :
@@ -8828,6 +8834,7 @@ const mockWorkflows: Workflow[] = [
                                          'bg-slate-50/10 opacity-50'
                                       }`}>
                                          <div className={`px-4 py-4 text-[11px] font-black text-center min-h-full flex flex-col items-center justify-center gap-1.5 group/cell relative overflow-visible ${
+                                            isSummary ? 'text-purple-700' :
                                             isUserConfirmed ? 'text-emerald-700' :
                                             (target.status === 'MATCH' || target.status === 'SYNONYM') ? 'text-slate-600' :
                                             target.status === 'WAITING' ? 'text-slate-500' :
@@ -8880,7 +8887,7 @@ const mockWorkflows: Workflow[] = [
                                                      target.value
                                                    )}
                                                 </span>
-                                                {target.status === 'MATCH' && (
+                                                {target.status === 'MATCH' && !isSummary && (
                                                    <Tooltip content="ตรงกัน">
                                                      <CheckCircle2 size={14} className="text-emerald-500 shrink-0 cursor-help" />
                                                    </Tooltip>
@@ -8910,7 +8917,7 @@ const mockWorkflows: Workflow[] = [
                                             </div>
                                             )}
 
-                                            {(target as any).isPrimary && res.targets.find((t: any) => t.isPrimary) === target && (
+                                            {(target as any).isPrimary && res.targets.find((t: any) => t.isPrimary) === target && !isSummary && (
                                               <div className="px-1.5 py-0.5 bg-blue-100 text-blue-700 border border-blue-200 rounded-[4px] text-[8px] font-black uppercase tracking-wider shrink-0 shadow-sm flex items-center gap-1.5 w-fit">
                                                 Main
                                               </div>
