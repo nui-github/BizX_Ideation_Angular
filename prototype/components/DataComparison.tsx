@@ -3675,15 +3675,13 @@ const mockWorkflows: Workflow[] = [
       const totalInsurance = 850;
       const totalExWorkCharge = 600;
       const totalOther = 0;
-      const grandTotalAmount = totalAmount + totalFreight + totalInsurance + totalExWorkCharge + totalOther;
       summaryFields.push(
         { name: 'Total Quantity', source: totalQuantity.toLocaleString('en-US'), type: 'number', part: 'Summary' },
         { name: 'Total Amount', source: fmt(totalAmount), type: 'number', part: 'Summary' },
         { name: 'Total Freight', source: fmt(totalFreight), type: 'number', part: 'Summary' },
         { name: 'Total Insurance', source: fmt(totalInsurance), type: 'number', part: 'Summary' },
         { name: 'Total Ex-work chg', source: fmt(totalExWorkCharge), type: 'number', part: 'Summary' },
-        { name: 'Other', source: fmt(totalOther), type: 'number', part: 'Summary' },
-        { name: 'Grand Total Amount', source: fmt(grandTotalAmount), type: 'number', part: 'Summary' }
+        { name: 'Other', source: fmt(totalOther), type: 'number', part: 'Summary' }
       );
     }
 
