@@ -8794,7 +8794,12 @@ const mockWorkflows: Workflow[] = [
 
                                  {comparedDocs.map(docName => {
                                     const target = res.targets.find(t => t.fileName === docName);
-                                    if (selectedJob && getNoRuleCellsForJob(selectedJob.id, comparedDocs).has(noRuleCellKey(res.fieldName, docName))) {
+                                    // Summary rows are computed sums, not per-document compare rules — the
+                                    // random "no rule configured" simulation below is keyed on field name
+                                    // alone, so it must not apply here (it would otherwise blank out this
+                                    // row wherever its name coincidentally matches a Footer field, e.g.
+                                    // "Total Quantity").
+                                    if ((res as any).part !== 'Summary' && selectedJob && getNoRuleCellsForJob(selectedJob.id, comparedDocs).has(noRuleCellKey(res.fieldName, docName))) {
                                       return (
                                         <td key={docName} className="p-0 border-r border-r-slate-100 border-t border-t-slate-200 bg-slate-100/60">
                                           <div className="min-h-full py-4" />
