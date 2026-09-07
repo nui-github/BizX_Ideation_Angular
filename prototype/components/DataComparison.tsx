@@ -7369,8 +7369,8 @@ const mockWorkflows: Workflow[] = [
       {pendingInlineEdit && (
         <div className="fixed inset-0 z-[630] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300 font-sans">
           <div className="bg-white p-10 rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 text-center flex flex-col items-center gap-6 animate-in zoom-in-95 duration-300">
-            <div className="w-24 h-24 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center border-4 border-blue-100 mb-2">
-              <Edit3 size={40} strokeWidth={2.5} />
+            <div className="text-amber-500 flex items-center justify-center mb-2">
+              <AlertCircle size={44} strokeWidth={2} />
             </div>
             <div>
               <h3 className="text-xl font-black text-[#010136] tracking-tight mb-3 font-sans">
