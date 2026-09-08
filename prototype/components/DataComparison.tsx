@@ -11,7 +11,7 @@ import {
   FileBarChart2, Layers, Maximize2, Minimize2, PanelRightClose, PanelRightOpen
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Tabs, Tag, Badge, Empty, Button, message, DatePicker } from 'antd';
+import { Tabs, Tag, Badge, Empty, Button, message, DatePicker, Select, Radio } from 'antd';
 import thTH from 'antd/locale/th_TH';
 import dayjs from 'dayjs';
 import 'dayjs/locale/th';
@@ -1744,6 +1744,13 @@ const mockWorkflows: Workflow[] = [
   const [showDeleteColumnConfirmModal, setShowDeleteColumnConfirmModal] = useState(false);
   const [deleteColumnTargetDocName, setDeleteColumnTargetDocName] = useState<string | null>(null);
   const [confirmAllMismatchesTargetDocName, setConfirmAllMismatchesTargetDocName] = useState<string | null>(null);
+  // Step before the confirm-all dialog: lets the user pick "whole column" vs "specific fields"
+  // before the same confirm dialog appears.
+  const [confirmModeTargetDocName, setConfirmModeTargetDocName] = useState<string | null>(null);
+  const [confirmMode, setConfirmMode] = useState<'column' | 'fields'>('column');
+  const [selectedConfirmFields, setSelectedConfirmFields] = useState<string[]>([]);
+  // null = confirm every mismatched field in the doc (whole column); an array = only these fields.
+  const [pendingConfirmFieldNames, setPendingConfirmFieldNames] = useState<string[] | null>(null);
   const [showRejectFlowConfirm, setShowRejectFlowConfirm] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectionReasonModal, setShowRejectionReasonModal] = useState(false);
@@ -5531,11 +5538,14 @@ const mockWorkflows: Workflow[] = [
 
   // Confirm every currently-mismatched field in a single document at once, regardless
   // of how many fields are mismatched, instead of requiring one click per field.
-  const confirmAllMismatchesInDoc = (docName: string) => {
+  const confirmAllMismatchesInDoc = (docName: string, onlyFieldNames?: string[]) => {
     if (!selectedJob) return;
-    const fieldNames = allComparisonResults
+    const mismatchedFieldNames = allComparisonResults
       .filter(res => res.targets.some(t => t.fileName === docName && t.status === 'MISMATCH'))
       .map(res => res.fieldName);
+    const fieldNames = onlyFieldNames
+      ? Array.from(new Set(onlyFieldNames)).filter(name => mismatchedFieldNames.includes(name))
+      : mismatchedFieldNames;
     if (fieldNames.length === 0) return;
     assignJobToCurrentUser(selectedJob.id);
 
@@ -5547,6 +5557,7 @@ const mockWorkflows: Workflow[] = [
       return next;
     });
 
+    const isPartial = !!onlyFieldNames;
     const newLog = {
       id: Math.random().toString(36).substr(2, 9),
       jobId: selectedJob.id,
@@ -5554,8 +5565,12 @@ const mockWorkflows: Workflow[] = [
       timestamp: new Date().toISOString(),
       action: 'CONFIRM_DATA',
       details: language === 'TH'
-        ? `กดยืนยันใช้ค่านี้ทั้งเอกสาร "${docName}" (${fieldNames.length} ฟิลด์)`
-        : `Confirmed all mismatched values in "${docName}" (${fieldNames.length} fields)`,
+        ? (isPartial
+          ? `กดยืนยันใช้ค่านี้เฉพาะฟิลด์ที่เลือกในเอกสาร "${docName}" (${fieldNames.length} ฟิลด์: ${fieldNames.join(', ')})`
+          : `กดยืนยันใช้ค่านี้ทั้งเอกสาร "${docName}" (${fieldNames.length} ฟิลด์)`)
+        : (isPartial
+          ? `Confirmed selected mismatched values in "${docName}" (${fieldNames.length} fields: ${fieldNames.join(', ')})`
+          : `Confirmed all mismatched values in "${docName}" (${fieldNames.length} fields)`),
       version: selectedJob.updatedDocs?.includes(docName) ? 2 : 1,
       user: 'Kunawut W.'
     };
@@ -7574,10 +7589,112 @@ const mockWorkflows: Workflow[] = [
         </div>
       )}
 
+      {/* Confirm-mode choice Modal — pick "whole column" vs "specific fields" before the confirm dialog */}
+      {confirmModeTargetDocName && (() => {
+        const targetDoc = confirmModeTargetDocName;
+        const sectionLabels: Record<'Header' | 'Description' | 'Footer', string> = {
+          Header: language === 'TH' ? 'ส่วนหัว (Header)' : 'Header',
+          Description: language === 'TH' ? 'รายการสินค้า (Description)' : 'Description',
+          Footer: language === 'TH' ? 'ส่วนท้าย (Footer)' : 'Footer'
+        };
+        const fieldsBySection: Record<'Header' | 'Description' | 'Footer', string[]> = { Header: [], Description: [], Footer: [] };
+        const seen = new Set<string>();
+        allComparisonResults.forEach(res => {
+          const part = (res as any).part as 'Header' | 'Description' | 'Footer' | 'Summary';
+          if (part === 'Summary') return;
+          if (!res.targets.some(t => t.fileName === targetDoc && t.status === 'MISMATCH')) return;
+          const key = `${part}::${res.fieldName}`;
+          if (seen.has(key)) return;
+          seen.add(key);
+          fieldsBySection[part].push(res.fieldName);
+        });
+        const closeAll = () => {
+          setConfirmModeTargetDocName(null);
+          setSelectedConfirmFields([]);
+        };
+        return (
+          <div className="fixed inset-0 z-[620] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300 font-sans">
+            <div className="bg-white p-10 rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 text-center flex flex-col items-center gap-6 animate-in zoom-in-95 duration-300">
+              <div className="text-amber-500 flex items-center justify-center mb-2">
+                <AlertCircle size={44} strokeWidth={2} />
+              </div>
+              <div className="w-full">
+                <h3 className="text-xl font-black text-[#010136] tracking-tight mb-3 font-sans">
+                  {language === 'TH' ? 'ยืนยันใช้ค่านี้ทั้งเอกสาร' : 'Confirm Mismatched Values'}
+                </h3>
+                <p className="text-slate-500 font-medium text-[13px] leading-relaxed font-sans max-w-sm mx-auto mb-5">
+                  {language === 'TH'
+                    ? `เลือกขอบเขตที่ต้องการยืนยันในเอกสาร "${targetDoc}"`
+                    : `Choose the scope to confirm in "${targetDoc}"`}
+                </p>
+                <Radio.Group
+                  className="w-full flex flex-col gap-2 text-left"
+                  value={confirmMode}
+                  onChange={(e) => setConfirmMode(e.target.value)}
+                >
+                  <Radio value="column" className="!flex items-center px-4 py-3 border border-slate-200 rounded-xl font-bold text-[13px] text-slate-700">
+                    {language === 'TH' ? 'ยืนยันทั้งคอลัม (ทุกฟิลด์ที่ไม่ตรงกัน)' : 'Confirm whole column (all mismatched fields)'}
+                  </Radio>
+                  <Radio value="fields" className="!flex items-center px-4 py-3 border border-slate-200 rounded-xl font-bold text-[13px] text-slate-700">
+                    {language === 'TH' ? 'เลือกเฉพาะบางฟิลด์' : 'Select specific fields'}
+                  </Radio>
+                </Radio.Group>
+                {confirmMode === 'fields' && (
+                  <div className="mt-4 text-left">
+                    <Select
+                      mode="multiple"
+                      allowClear
+                      style={{ width: '100%' }}
+                      placeholder={language === 'TH' ? 'เลือกฟิลด์ที่ต้องการยืนยัน...' : 'Select fields to confirm...'}
+                      value={selectedConfirmFields}
+                      onChange={(vals) => setSelectedConfirmFields(vals as string[])}
+                    >
+                      {(['Header', 'Description', 'Footer'] as const).map(part => (
+                        fieldsBySection[part].length > 0 && (
+                          <Select.OptGroup key={part} label={sectionLabels[part]}>
+                            {fieldsBySection[part].map(fieldName => (
+                              <Select.Option key={`${part}::${fieldName}`} value={fieldName}>{fieldName}</Select.Option>
+                            ))}
+                          </Select.OptGroup>
+                        )
+                      ))}
+                    </Select>
+                  </div>
+                )}
+              </div>
+              <div className="flex gap-4 w-full mt-4">
+                <Button
+                  size="large"
+                  className="flex-1 rounded-[4px] h-14 font-black uppercase tracking-widest text-[11px] border-slate-200 text-slate-600 hover:bg-slate-50 font-sans"
+                  onClick={closeAll}
+                >
+                  {language === 'TH' ? 'ยกเลิก' : 'CANCEL'}
+                </Button>
+                <Button
+                  type="primary"
+                  size="large"
+                  disabled={confirmMode === 'fields' && selectedConfirmFields.length === 0}
+                  className="flex-1 rounded-[4px] h-14 font-black uppercase tracking-widest text-[11px] bg-[#1f5df9] border-none shadow-lg shadow-[#1f5df9]/20 hover:!bg-[#104BE3] font-sans disabled:opacity-40"
+                  onClick={() => {
+                    setPendingConfirmFieldNames(confirmMode === 'fields' ? selectedConfirmFields : null);
+                    setConfirmAllMismatchesTargetDocName(targetDoc);
+                    setConfirmModeTargetDocName(null);
+                  }}
+                >
+                  {language === 'TH' ? 'ถัดไป' : 'NEXT'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Confirm-all-mismatches Modal */}
       {confirmAllMismatchesTargetDocName && (() => {
         const targetDoc = confirmAllMismatchesTargetDocName;
-        const mismatchCount = allComparisonResults.filter(res => res.targets.some(t => t.fileName === targetDoc && t.status === 'MISMATCH')).length;
+        const mismatchCount = pendingConfirmFieldNames
+          ? pendingConfirmFieldNames.length
+          : allComparisonResults.filter(res => res.targets.some(t => t.fileName === targetDoc && t.status === 'MISMATCH')).length;
         return (
           <div className="fixed inset-0 z-[620] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300 font-sans">
             <div className="bg-white p-10 rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 text-center flex flex-col items-center gap-6 animate-in zoom-in-95 duration-300">
@@ -7590,15 +7707,15 @@ const mockWorkflows: Workflow[] = [
                 </h3>
                 <p className="text-slate-500 font-medium text-[13px] leading-relaxed font-sans max-w-sm mx-auto">
                   {language === 'TH'
-                    ? `คุณต้องการยืนยันใช้ค่าที่สกัดได้สำหรับฟิลด์ที่ไม่ตรงกันทั้งหมด ${mismatchCount} ฟิลด์ ในเอกสาร "${targetDoc}" ใช่หรือไม่? การกระทำนี้จะถือว่าทุกฟิลด์ที่ไม่ตรงกันผ่านการตรวจสอบแล้ว`
-                    : `Are you sure you want to confirm all ${mismatchCount} mismatched fields in "${targetDoc}"? This will mark every mismatched field as reviewed and accepted.`}
+                    ? `คุณต้องการยืนยันใช้ค่าที่สกัดได้สำหรับฟิลด์ที่ไม่ตรงกัน${pendingConfirmFieldNames ? 'ที่เลือก' : 'ทั้งหมด'} ${mismatchCount} ฟิลด์ ในเอกสาร "${targetDoc}" ใช่หรือไม่? การกระทำนี้จะถือว่าทุกฟิลด์ที่ไม่ตรงกันผ่านการตรวจสอบแล้ว`
+                    : `Are you sure you want to confirm ${pendingConfirmFieldNames ? 'the selected' : 'all'} ${mismatchCount} mismatched fields in "${targetDoc}"? This will mark ${pendingConfirmFieldNames ? 'them' : 'every mismatched field'} as reviewed and accepted.`}
                 </p>
               </div>
               <div className="flex gap-4 w-full mt-4">
                 <Button
                   size="large"
                   className="flex-1 rounded-[4px] h-14 font-black uppercase tracking-widest text-[11px] border-slate-200 text-slate-600 hover:bg-slate-50 font-sans"
-                  onClick={() => setConfirmAllMismatchesTargetDocName(null)}
+                  onClick={() => { setConfirmAllMismatchesTargetDocName(null); setPendingConfirmFieldNames(null); }}
                 >
                   {language === 'TH' ? 'ยกเลิก' : 'CANCEL'}
                 </Button>
@@ -7607,8 +7724,10 @@ const mockWorkflows: Workflow[] = [
                   size="large"
                   className="flex-1 rounded-[4px] h-14 font-black uppercase tracking-widest text-[11px] bg-[#1f5df9] border-none shadow-lg shadow-[#1f5df9]/20 hover:!bg-[#104BE3] font-sans"
                   onClick={() => {
-                    confirmAllMismatchesInDoc(targetDoc);
+                    confirmAllMismatchesInDoc(targetDoc, pendingConfirmFieldNames ?? undefined);
                     setConfirmAllMismatchesTargetDocName(null);
+                    setPendingConfirmFieldNames(null);
+                    setSelectedConfirmFields([]);
                   }}
                 >
                   {language === 'TH' ? 'ยืนยัน' : 'CONFIRM'}
@@ -8512,7 +8631,9 @@ const mockWorkflows: Workflow[] = [
                                                         disabled={isUnassigned || selectedJob.status === JobStatus.READY}
                                                         onClick={(e) => {
                                                           e.stopPropagation();
-                                                          setConfirmAllMismatchesTargetDocName(docName);
+                                                          setConfirmMode('column');
+                                                          setSelectedConfirmFields([]);
+                                                          setConfirmModeTargetDocName(docName);
                                                         }}
                                                         className={`h-[18px] w-[18px] flex items-center justify-center rounded-[4px] bg-white border border-slate-200 transition-all ${
                                                           (isUnassigned || selectedJob.status === JobStatus.READY)
