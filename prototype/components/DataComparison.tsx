@@ -3204,7 +3204,13 @@ const mockWorkflows: Workflow[] = [
     url.searchParams.set('docPreview', '1');
     url.searchParams.set('jobId', jobId);
     url.searchParams.set('doc', docName);
-    window.open(url.toString(), '_blank');
+    const newTab = window.open(url.toString(), '_blank');
+    // A blocked popup (browser popup-blocker, or a sandboxed embedding context with no
+    // window.open access) returns null/undefined instead of throwing — fall back to
+    // navigating this tab so the preview still opens rather than silently doing nothing.
+    if (!newTab) {
+      window.location.href = url.toString();
+    }
   };
 
 
@@ -6409,16 +6415,16 @@ const mockWorkflows: Workflow[] = [
             {/* Topbar matching original with title, status, save indicator, activity logs, and close.
                 Compact in the standalone tab — the viewer is the point, not this bar. */}
             <div className={standaloneDocPreview
-              ? "px-4 py-2 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-10"
-              : "p-5 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-10"
+              ? "px-4 py-2 border-b border-slate-100 flex items-center justify-between gap-3 bg-white sticky top-0 z-10"
+              : "p-5 border-b border-slate-100 flex items-center justify-between gap-3 bg-white sticky top-0 z-10"
             }>
-              <div className={standaloneDocPreview ? "flex items-center gap-2.5" : "flex items-center gap-4"}>
-                <div className={standaloneDocPreview ? "p-1.5 bg-blue-50 text-blue-600 rounded-xl" : "p-3 bg-blue-50 text-blue-600 rounded-2xl"}>
+              <div className={standaloneDocPreview ? "flex items-center gap-2.5 min-w-0" : "flex items-center gap-4 min-w-0"}>
+                <div className={standaloneDocPreview ? "p-1.5 bg-blue-50 text-blue-600 rounded-xl shrink-0" : "p-3 bg-blue-50 text-blue-600 rounded-2xl shrink-0"}>
                   <FileText size={standaloneDocPreview ? 16 : 20} />
                 </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className={standaloneDocPreview ? "font-black text-slate-800 tracking-tight text-sm leading-tight" : "font-black text-slate-800 tracking-tight text-lg leading-tight"}>{pdfPreviewUrl}</h3>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <h3 className={standaloneDocPreview ? "font-black text-slate-800 tracking-tight text-sm leading-tight truncate" : "font-black text-slate-800 tracking-tight text-lg leading-tight truncate"}>{pdfPreviewUrl}</h3>
                     {activeBoardTab !== 'pending' && selectedJob?.docs[pdfPreviewUrl] && (() => {
                       const docStatus = selectedJob.docs[pdfPreviewUrl];
                       const isMismatched = mismatchedFileNames.has(pdfPreviewUrl);
@@ -6474,7 +6480,7 @@ const mockWorkflows: Workflow[] = [
                 </div>
               </div>
               
-              <div className={standaloneDocPreview ? "flex items-center gap-2" : "flex items-center gap-3"}>
+              <div className={standaloneDocPreview ? "flex items-center gap-2 shrink-0" : "flex items-center gap-3 shrink-0"}>
                 {(() => {
                   const previewDocName = resolveDocNameFromPreviewUrl(pdfPreviewUrl, selectedJob?.id);
                   const hasDifference = allComparisonResults.some(res => isPreviewFieldDifferent(res, previewDocName, activeSubFileId));
