@@ -3671,16 +3671,20 @@ const mockWorkflows: Workflow[] = [
       const totalAmount = descriptionFields
         .filter(f => f.name === 'Invoice Amount')
         .reduce((sum, f) => sum + parseFloat(f.source), 0);
+      const totalGrossWeight = footerFields.find(f => f.name === 'Total Gross Weight (KGS)')?.source ?? '0';
       const totalFreight = 3500;
       const totalInsurance = 850;
       const totalExWorkCharge = 600;
+      const totalRoyalty = 0;
       const totalOther = 0;
       summaryFields.push(
         { name: 'Total Quantity', source: totalQuantity.toLocaleString('en-US'), type: 'number', part: 'Summary' },
         { name: 'Total Amount', source: fmt(totalAmount), type: 'number', part: 'Summary' },
         { name: 'Total Freight', source: fmt(totalFreight), type: 'number', part: 'Summary' },
+        { name: 'Total GrossWeight', source: totalGrossWeight, type: 'number', part: 'Summary' },
         { name: 'Total Insurance', source: fmt(totalInsurance), type: 'number', part: 'Summary' },
         { name: 'Total Ex-work chg', source: fmt(totalExWorkCharge), type: 'number', part: 'Summary' },
+        { name: 'Royalty chg / Licensee fee / Commission fee', source: fmt(totalRoyalty), type: 'number', part: 'Summary' },
         { name: 'Other', source: fmt(totalOther), type: 'number', part: 'Summary' }
       );
     }
