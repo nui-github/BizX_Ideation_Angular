@@ -124,6 +124,11 @@ const pickRandomNoRuleCells = (candidateFields: string[], docNames: string[], co
   return shuffled.slice(0, Math.min(count, shuffled.length));
 };
 
+// Jobs created at runtime (via "สร้างรายการใหม่") exist only in React state, which a fresh
+// browser tab never sees — persisted here so a document preview opened in a new tab (see
+// openDocPreviewInNewTab) can find jobs the current tab created after the initial page load.
+const DYNAMIC_JOBS_STORAGE_KEY = 'bizx_dynamic_jobs';
+
 // Demo-only preview filename overrides so a specific mock job can showcase the Excel/XML
 // preview mockups without changing the real doc-type keys other logic (schema/rule matching,
 // OCR simulation) relies on. Keyed by job id, then by the doc-type column name.
@@ -2164,7 +2169,8 @@ const mockWorkflows: Workflow[] = [
   }, [pdfPreviewUrl, selectedJob, activeSubFileId]);
 
   // Move jobs state to the top
-  const [jobs, setJobs] = useState<ComparisonJob[]>([
+  const [jobs, setJobs] = useState(() => {
+    const seedJobs: ComparisonJob[] = [
     // --- Shipment 1: CN-TH-2026-00451 (3 jobs) ---
     {
       id: 'job-001a',
@@ -3161,7 +3167,22 @@ const mockWorkflows: Workflow[] = [
       matchedCount: 0,
       mismatchedCount: 0
     }
-  ]);
+    ];
+    // Jobs created via "สร้างรายการใหม่" only ever live in this tab's memory — a doc preview
+    // opened in a genuinely new browser tab (see openDocPreviewInNewTab below) starts with
+    // none of that state and can't find the job, so rehydrate any locally-persisted dynamic
+    // jobs here (see the CreateJobModal onCreate handler, which writes to this same key).
+    try {
+      const raw = localStorage.getItem(DYNAMIC_JOBS_STORAGE_KEY);
+      const dynamicJobs: ComparisonJob[] = raw ? JSON.parse(raw) : [];
+      if (Array.isArray(dynamicJobs) && dynamicJobs.length > 0) {
+        const seedIds = new Set(seedJobs.map(j => j.id));
+        const toAdd = dynamicJobs.filter(dj => dj && dj.id && !seedIds.has(dj.id));
+        if (toAdd.length > 0) return [...seedJobs, ...toAdd];
+      }
+    } catch {}
+    return seedJobs;
+  });
 
   // Jump straight into a job from a notification bell click (see Layout.tsx).
   useEffect(() => {
@@ -7982,7 +8003,15 @@ const mockWorkflows: Workflow[] = [
         <CreateJobModal
           visible={showCreateJobModal}
           onClose={() => setShowCreateJobModal(false)}
-          onCreate={(newJobs) => setJobs(prev => Array.isArray(newJobs) ? [...prev, ...newJobs] : [...prev, newJobs])}
+          onCreate={(newJobs) => {
+            const jobsToAdd = Array.isArray(newJobs) ? newJobs : [newJobs];
+            setJobs(prev => [...prev, ...jobsToAdd]);
+            try {
+              const raw = localStorage.getItem(DYNAMIC_JOBS_STORAGE_KEY);
+              const existing = raw ? JSON.parse(raw) : [];
+              localStorage.setItem(DYNAMIC_JOBS_STORAGE_KEY, JSON.stringify([...(Array.isArray(existing) ? existing : []), ...jobsToAdd]));
+            } catch {}
+          }}
           workflows={mockWorkflows}
           language={language}
           prefilledReference={selectedShipment || undefined}
