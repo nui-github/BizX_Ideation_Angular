@@ -3002,13 +3002,15 @@ const mockWorkflows: Workflow[] = [
       accuracyScore: 0.0,
       docs: {
         'ใบขนสินค้า': ComparisonDocStatus.MISSING,
+        // Shown as its own column — no longer folded into the merged column below.
+        'Bill of Lading': ComparisonDocStatus.MISSING,
         // Pre-filled: this is flow 2's already-matched dataset carried forward automatically,
         // not something flow 3 needs to re-upload or re-extract. Still OCR_DONE (not MATCHED)
         // since it's the only column present so far — nothing to compare it against yet.
         'รวมข้อมูลทั้งหมด (Flow ก่อนหน้า)': ComparisonDocStatus.OCR_DONE
       },
       progress: 50,
-      totalDocs: 2,
+      totalDocs: 3,
       foundDocs: 1,
       matchedCount: 0,
       mismatchedCount: 0
@@ -3103,12 +3105,13 @@ const mockWorkflows: Workflow[] = [
       accuracyScore: 100.0,
       docs: {
         'ใบขนสินค้า': ComparisonDocStatus.MATCHED,
+        'Bill of Lading': ComparisonDocStatus.MATCHED,
         'รวมข้อมูลทั้งหมด (Flow ก่อนหน้า)': ComparisonDocStatus.MATCHED
       },
       progress: 100,
-      totalDocs: 2,
-      foundDocs: 2,
-      matchedCount: 2,
+      totalDocs: 3,
+      foundDocs: 3,
+      matchedCount: 3,
       mismatchedCount: 0
     },
     {
