@@ -554,6 +554,19 @@ export const DataComparison: React.FC<DataComparisonProps> = ({ language, tracki
     return baseValue;
   };
 
+  // A field counts as "different" in the OCR preview panel filter for two distinct reasons:
+  // it's a real cross-document MISMATCH, or — for a doc with no comparison target at all
+  // (standalone preview, or a doc still WAITING/NA) — this specific sub-file's simulated OCR
+  // reading deviates from the field's base/reference value (e.g. Container 2's TAX ID typo).
+  const isPreviewFieldDifferent = (res: any, docName: string | null, subFileId: string | null) => {
+    const target = res.targets.find((t: any) => t.fileName === docName);
+    if (!target) return false;
+    if (target.status === 'MISMATCH') return true;
+    if (!subFileId) return false;
+    const baseValue = target.status === 'NA' ? (res.sourceValue ?? target.value) : target.value;
+    return String(getSubFileFieldValue(res.fieldName, subFileId, baseValue)) !== String(baseValue);
+  };
+
   useEffect(() => {
     if (pdfPreviewUrl) {
       const subs = getSubFilesForDoc(pdfPreviewUrl);
@@ -7192,11 +7205,9 @@ const mockWorkflows: Workflow[] = [
                         <div className="col-span-7 pl-4 font-sans flex items-center justify-between gap-2">
                           <span>{language === 'TH' ? 'ข้อมูลที่สกัด' : 'VALUE'}</span>
                           {(() => {
-                            const hasMismatch = allComparisonResults.some(res => {
-                              const target = res.targets.find((t: any) => t.fileName === resolveDocNameFromPreviewUrl(pdfPreviewUrl, selectedJob?.id));
-                              return target && target.status === 'MISMATCH';
-                            });
-                            if (!hasMismatch) return null;
+                            const docName = resolveDocNameFromPreviewUrl(pdfPreviewUrl, selectedJob?.id);
+                            const hasDifference = allComparisonResults.some(res => isPreviewFieldDifferent(res, docName, activeSubFileId));
+                            if (!hasDifference) return null;
                             return (
                               <button
                                 type="button"
@@ -7210,7 +7221,7 @@ const mockWorkflows: Workflow[] = [
                                 <AlertCircle size={10} />
                                 {showOnlyMismatchedFields
                                   ? (language === 'TH' ? 'แสดงทั้งหมด' : 'Show all')
-                                  : (language === 'TH' ? 'เฉพาะที่ไม่ตรงกัน' : 'Mismatched only')}
+                                  : (language === 'TH' ? 'แสดงเฉพาะที่ต่าง' : 'Different only')}
                               </button>
                             );
                           })()}
@@ -7226,10 +7237,8 @@ const mockWorkflows: Workflow[] = [
                           });
 
                           if (showOnlyMismatchedFields) {
-                            filteredResults = filteredResults.filter(res => {
-                              const target = res.targets.find((t: any) => t.fileName === resolveDocNameFromPreviewUrl(pdfPreviewUrl, selectedJob?.id));
-                              return target && target.status === 'MISMATCH';
-                            });
+                            const docName = resolveDocNameFromPreviewUrl(pdfPreviewUrl, selectedJob?.id);
+                            filteredResults = filteredResults.filter(res => isPreviewFieldDifferent(res, docName, activeSubFileId));
                           }
 
                           const searchTerm = excelPreviewSearch.trim().toLowerCase();
@@ -7246,7 +7255,7 @@ const mockWorkflows: Workflow[] = [
                                   {searchTerm
                                     ? (language === 'TH' ? 'ไม่พบฟิลด์หรือข้อมูลที่ตรงกับคำค้นหา' : 'No field or value matches your search.')
                                     : showOnlyMismatchedFields
-                                    ? (language === 'TH' ? 'ไม่มีฟิลด์ที่ไม่ตรงกันแล้ว' : 'No mismatched fields left.')
+                                    ? (language === 'TH' ? 'ไม่มีฟิลด์ที่ต่างกันแล้ว' : 'No different fields left.')
                                     : (language === 'TH' ? 'ไม่มีฟิลด์ข้อมูลเสริมที่เกี่ยวข้อง' : 'No relevant comparison fields found for this document.')}
                                </div>
                             );
