@@ -8642,7 +8642,7 @@ const mockWorkflows: Workflow[] = [
                                             </div>
 
                                             
-                                             <div className={`flex items-center gap-1 origin-right transition-transform duration-300 will-change-transform ${tableScrolledPastTop ? 'scale-90' : 'scale-100'}`}>
+                                             <div className={`flex items-center gap-2 origin-right transition-transform duration-300 will-change-transform ${tableScrolledPastTop ? 'scale-90' : 'scale-100'}`}>
                                                {displayStatus === ComparisonDocStatus.MISMATCHED && (
                                                     <Tooltip content={language === 'TH' ? 'ยืนยันใช้ค่านี้ทั้งเอกสาร' : 'Confirm all mismatches in this document'}>
                                                       <button
@@ -8653,13 +8653,13 @@ const mockWorkflows: Workflow[] = [
                                                           setSelectedConfirmFields([]);
                                                           setConfirmModeTargetDocName(docName);
                                                         }}
-                                                        className={`h-[18px] w-[18px] flex items-center justify-center rounded-[4px] bg-white border border-slate-200 transition-all ${
+                                                        className={`p-1 flex items-center justify-center rounded-[4px] transition-all ${
                                                           (isUnassigned || selectedJob.status === JobStatus.READY)
-                                                          ? 'text-slate-200 cursor-not-allowed opacity-50'
-                                                          : 'text-rose-400 hover:bg-rose-500 hover:text-white hover:border-rose-500 hover:shadow-lg shadow-sm cursor-pointer'
+                                                          ? 'text-slate-300 cursor-not-allowed opacity-50'
+                                                          : 'text-emerald-600 hover:bg-blue-50 cursor-pointer'
                                                         }`}
                                                       >
-                                                        <CheckCheck size={10} strokeWidth={2.5} />
+                                                        <CheckCheck size={12} strokeWidth={2.5} />
                                                       </button>
                                                     </Tooltip>
                                                )}
@@ -8671,13 +8671,13 @@ const mockWorkflows: Workflow[] = [
                                                           e.stopPropagation();
                                                           unconfirmAllMismatchesInDoc(docName);
                                                         }}
-                                                        className={`h-[18px] w-[18px] flex items-center justify-center rounded-[4px] bg-white border border-slate-200 transition-all ${
+                                                        className={`p-1 flex items-center justify-center rounded-[4px] transition-all ${
                                                           (isUnassigned || selectedJob.status === JobStatus.READY)
-                                                          ? 'text-slate-200 cursor-not-allowed opacity-50'
-                                                          : 'text-slate-400 hover:bg-slate-500 hover:text-white hover:border-slate-500 hover:shadow-lg shadow-sm cursor-pointer'
+                                                          ? 'text-slate-300 cursor-not-allowed opacity-50'
+                                                          : 'text-slate-600 hover:bg-blue-50 cursor-pointer'
                                                         }`}
                                                       >
-                                                        <Undo2 size={10} strokeWidth={2.5} />
+                                                        <Undo2 size={12} strokeWidth={2.5} />
                                                       </button>
                                                     </Tooltip>
                                                )}
@@ -8692,13 +8692,9 @@ const mockWorkflows: Workflow[] = [
                                                      setCommentDraft('');
                                                      setNoteEditorDocName(docName);
                                                    }}
-                                                   className={`h-[18px] w-[18px] flex items-center justify-center rounded-[4px] border transition-all cursor-pointer relative ${
-                                                     (docComments[`${selectedJob.id}_${docName}`]?.length ?? 0) > 0
-                                                       ? 'bg-amber-400 border-amber-400 text-white hover:bg-amber-500 hover:border-amber-500 shadow-sm'
-                                                       : 'bg-white border-slate-200 text-slate-400 hover:bg-slate-500 hover:text-white hover:border-slate-500 hover:shadow-lg shadow-sm'
-                                                   }`}
+                                                   className="p-1 flex items-center justify-center rounded-[4px] transition-all cursor-pointer relative text-slate-600 hover:bg-blue-50"
                                                  >
-                                                   <StickyNote size={10} strokeWidth={2.5} />
+                                                   <StickyNote size={12} strokeWidth={2.5} />
                                                    {(docComments[`${selectedJob.id}_${docName}`]?.length ?? 0) > 0 && (
                                                      <span className="absolute -top-1.5 -right-1.5 min-w-[12px] h-[12px] px-0.5 rounded-full bg-rose-500 text-white text-[7px] font-black flex items-center justify-center leading-none">
                                                        {docComments[`${selectedJob.id}_${docName}`]!.length}
@@ -8717,13 +8713,13 @@ const mockWorkflows: Workflow[] = [
                                                           setReplaceMode('replace');
                                                           setShowReplaceModal(true);
                                                         }}
-                                                        className={`h-[18px] w-[18px] flex items-center justify-center rounded-[4px] bg-white border border-slate-200 transition-all ${
+                                                        className={`p-1 flex items-center justify-center rounded-[4px] transition-all ${
                                                           (isUnassigned || selectedJob.status === JobStatus.READY)
-                                                          ? 'text-slate-200 cursor-not-allowed opacity-50'
-                                                          : 'text-indigo-400 hover:bg-indigo-500 hover:text-white hover:border-indigo-500 hover:shadow-lg shadow-sm cursor-pointer'
+                                                          ? 'text-slate-300 cursor-not-allowed opacity-50'
+                                                          : 'text-slate-600 hover:bg-blue-50 cursor-pointer'
                                                         }`}
                                                       >
-                                                        <Upload size={10} strokeWidth={2.5} />
+                                                        <Upload size={12} strokeWidth={2.5} />
                                                       </button>
                                                     </Tooltip>
                                                )}
