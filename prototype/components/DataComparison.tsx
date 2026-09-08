@@ -2131,8 +2131,12 @@ const mockWorkflows: Workflow[] = [
           initialData[res.fieldName] = overriddenValues[overrideKey];
         } else {
           const target = res.targets.find(t => t.fileName === resolveDocNameFromPreviewUrl(pdfPreviewUrl, selectedJob?.id));
-          if (target && target.status !== 'NA') {
-            initialData[res.fieldName] = getSubFileFieldValue(res.fieldName, activeSubFileId, target.value);
+          if (target) {
+            // A doc that hasn't been "read" yet (RECEIVED/MISSING/ERROR) reports NA with a
+            // placeholder value here — but the OCR field panel should still show what would've
+            // been extracted, so fall back to the field's reference source value in that case.
+            const rawValue = target.status === 'NA' ? (res as any).sourceValue ?? target.value : target.value;
+            initialData[res.fieldName] = getSubFileFieldValue(res.fieldName, activeSubFileId, rawValue);
           }
         }
       });
@@ -5485,11 +5489,13 @@ const mockWorkflows: Workflow[] = [
       status !== ComparisonDocStatus.ERROR
     );
 
-    // If no files have been successfully read, there should be no comparison data rows filled.
-    if (!hasAnyFileRead) return [];
+    // If no files have been successfully read, there should be no comparison data rows filled —
+    // except the standalone document-preview tab, whose whole point is showing this one file's
+    // mock OCR fields regardless of whether the rest of the job has been "read" yet.
+    if (!hasAnyFileRead && !standaloneDocPreview) return [];
 
     const baseResults = getMockComparisonResults(selectedJob);
-    
+
     // Filter targets to only include docs that are actually compared
     return baseResults.map(res => ({
       ...res,
@@ -5498,7 +5504,7 @@ const mockWorkflows: Workflow[] = [
         status: unvalidatedDocs.has(t.fileName) ? 'WAITING' as any : t.status
       }))
     }));
-  }, [selectedJob, overriddenValues, comparedDocs, unvalidatedDocs, confirmedMismatches]);
+  }, [selectedJob, overriddenValues, comparedDocs, unvalidatedDocs, confirmedMismatches, standaloneDocPreview]);
 
   const allComparisonResults = React.useMemo(() => {
     if (!selectedJob) return [];
@@ -5511,8 +5517,10 @@ const mockWorkflows: Workflow[] = [
       status !== ComparisonDocStatus.ERROR
     );
 
-    // If no files have been successfully read, there should be no comparison data rows filled.
-    if (!hasAnyFileRead) return [];
+    // If no files have been successfully read, there should be no comparison data rows filled —
+    // except the standalone document-preview tab, whose whole point is showing this one file's
+    // mock OCR fields regardless of whether the rest of the job has been "read" yet.
+    if (!hasAnyFileRead && !standaloneDocPreview) return [];
 
     const baseResults = getMockComparisonResults(selectedJob);
     return baseResults.map(res => ({
@@ -5522,7 +5530,7 @@ const mockWorkflows: Workflow[] = [
         status: unvalidatedDocs.has(t.fileName) ? 'WAITING' as any : t.status
       }))
     }));
-  }, [selectedJob, overriddenValues, unvalidatedDocs, confirmedMismatches]);
+  }, [selectedJob, overriddenValues, unvalidatedDocs, confirmedMismatches, standaloneDocPreview]);
 
   const mismatchedFileNames = React.useMemo(() => {
     const set = new Set<string>();
@@ -6521,8 +6529,9 @@ const mockWorkflows: Workflow[] = [
                {/* Left Pane: PDF Preview in grey canvas container */}
                {(() => {
                  const isFullWidth = activeBoardTab === 'pending' || (standaloneDocPreview && !showOcrPanel);
+                 const leftWidthClass = isFullWidth ? 'w-full' : (standaloneDocPreview ? 'w-2/3' : 'w-1/2');
                  return (
-               <div className={`${isFullWidth ? 'w-full' : 'w-1/2'} flex flex-col border-[#eaecf0] bg-white ${isFullWidth ? '' : 'border-r'}`}>
+               <div className={`${leftWidthClass} flex flex-col border-[#eaecf0] bg-white ${isFullWidth ? '' : 'border-r'}`}>
                   
                   {/* PDF Simulator Cool Dark Chrome Toolbar */}
                   <div className="bg-[#323639] h-11 text-white flex items-center justify-between px-4 select-none shrink-0 border-b border-[#212325]">
@@ -7133,7 +7142,7 @@ const mockWorkflows: Workflow[] = [
 
                {/* Right Pane: Multi Tab view of either Editable Excel layout or Raw JSON with Copy Code */}
                {activeBoardTab !== 'pending' && (!standaloneDocPreview || showOcrPanel) && (
-                 <div className="w-1/2 flex flex-col bg-white overflow-hidden min-h-0">
+                 <div className={`${standaloneDocPreview ? 'w-1/3' : 'w-1/2'} flex flex-col bg-white overflow-hidden min-h-0`}>
                   
                   {/* Right Tab Headers matching reference image */}
                   <div className="bg-slate-50/50 border-b border-[#eaecf0] flex px-4 shrink-0 h-12">
