@@ -6475,10 +6475,33 @@ const mockWorkflows: Workflow[] = [
               </div>
               
               <div className={standaloneDocPreview ? "flex items-center gap-2" : "flex items-center gap-3"}>
+                {(() => {
+                  const previewDocName = resolveDocNameFromPreviewUrl(pdfPreviewUrl, selectedJob?.id);
+                  const hasDifference = allComparisonResults.some(res => isPreviewFieldDifferent(res, previewDocName, activeSubFileId));
+                  if (!hasDifference) return null;
+                  return (
+                    <button
+                      type="button"
+                      onClick={() => setShowOnlyMismatchedFields(prev => !prev)}
+                      className={`h-8 px-3 rounded-[4px] border bg-white transition-all flex items-center justify-center gap-1.5 cursor-pointer text-[11px] font-black uppercase tracking-wide ${
+                        showOnlyMismatchedFields
+                          ? 'border-rose-500 text-rose-600'
+                          : 'border-slate-300 text-slate-500 hover:bg-slate-50'
+                      }`}
+                    >
+                      <AlertCircle size={14} />
+                      {language === 'TH' ? 'แสดงเฉพาะที่ต่าง' : 'Different only'}
+                    </button>
+                  );
+                })()}
                 {standaloneDocPreview && (
                   <button
                     onClick={() => setShowOcrPanel(prev => !prev)}
-                    className="h-8 px-3 rounded-[4px] bg-slate-100 text-slate-500 hover:bg-slate-200 transition-all flex items-center justify-center gap-1.5 cursor-pointer text-[11px] font-black uppercase tracking-wide"
+                    className={`h-8 px-3 rounded-[4px] border bg-white transition-all flex items-center justify-center gap-1.5 cursor-pointer text-[11px] font-black uppercase tracking-wide ${
+                      !showOcrPanel
+                        ? 'border-[#1f5df9] text-[#1f5df9]'
+                        : 'border-slate-300 text-slate-500 hover:bg-slate-50'
+                    }`}
                     title={showOcrPanel ? (language === 'TH' ? 'ซ่อนพาเนลข้อมูล OCR' : 'Hide OCR panel') : (language === 'TH' ? 'แสดงพาเนลข้อมูล OCR' : 'Show OCR panel')}
                   >
                     {showOcrPanel ? <PanelRightClose size={14} /> : <PanelRightOpen size={14} />}
@@ -7202,30 +7225,7 @@ const mockWorkflows: Workflow[] = [
                       {/* Excel Header row indicators */}
                       <div className="grid grid-cols-12 px-6 py-3 border-b border-slate-200 bg-slate-50 text-[10px] font-black tracking-wider uppercase text-[#1f5df9] shrink-0 font-sans items-center">
                         <div className="col-span-5 font-sans">{language === 'TH' ? 'ชื่อฟิลด์' : 'FIELD'}</div>
-                        <div className="col-span-7 pl-4 font-sans flex items-center justify-between gap-2">
-                          <span>{language === 'TH' ? 'ข้อมูลที่สกัด' : 'VALUE'}</span>
-                          {(() => {
-                            const docName = resolveDocNameFromPreviewUrl(pdfPreviewUrl, selectedJob?.id);
-                            const hasDifference = allComparisonResults.some(res => isPreviewFieldDifferent(res, docName, activeSubFileId));
-                            if (!hasDifference) return null;
-                            return (
-                              <button
-                                type="button"
-                                onClick={() => setShowOnlyMismatchedFields(prev => !prev)}
-                                className={`flex items-center gap-1 px-2 py-1 rounded border text-[9px] font-black normal-case tracking-normal transition-all shrink-0 ${
-                                  showOnlyMismatchedFields
-                                    ? 'bg-rose-600 text-white border-rose-600'
-                                    : 'bg-white text-rose-600 border-rose-200 hover:bg-rose-50'
-                                }`}
-                              >
-                                <AlertCircle size={10} />
-                                {showOnlyMismatchedFields
-                                  ? (language === 'TH' ? 'แสดงทั้งหมด' : 'Show all')
-                                  : (language === 'TH' ? 'แสดงเฉพาะที่ต่าง' : 'Different only')}
-                              </button>
-                            );
-                          })()}
-                        </div>
+                        <div className="col-span-7 pl-4 font-sans">{language === 'TH' ? 'ข้อมูลที่สกัด' : 'VALUE'}</div>
                       </div>
 
                       {/* Excel rows with clean editing cell styling */}
