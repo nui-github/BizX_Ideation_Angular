@@ -7322,7 +7322,7 @@ const mockWorkflows: Workflow[] = [
                                     const fieldId = `input-field-${groupName.replace(/\s/g, '-')}-${i}`;
                                     const isDisabled = isUnassigned || selectedJob?.status === JobStatus.READY;
                                     const target = res.targets.find((t: any) => t.fileName === resolveDocNameFromPreviewUrl(pdfPreviewUrl, selectedJob?.id));
-                                    const isMismatch = target && target.status === 'MISMATCH';
+                                    const isMismatch = isPreviewFieldDifferent(res, resolveDocNameFromPreviewUrl(pdfPreviewUrl, selectedJob?.id), activeSubFileId);
                                     const fieldKey = `${res.group || 'no-group'}::${res.fieldName}`;
                                     const isSelected = selectedFieldKey === fieldKey;
                                     const isHovered = hoveredFieldKey === fieldKey;
