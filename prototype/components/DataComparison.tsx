@@ -8608,20 +8608,12 @@ const mockWorkflows: Workflow[] = [
                                          {/* Status and Action Buttons */}
                                          <div className="flex items-center justify-between w-full px-1">
                                             <div className={`flex items-center gap-1.5 origin-left transition-transform duration-300 will-change-transform ${tableScrolledPastTop ? 'scale-90' : 'scale-100'} ${
-                                              displayStatus === ComparisonDocStatus.MATCHED || displayStatus === ComparisonDocStatus.LOCKED ? 'px-2.5 py-0.5 bg-emerald-50 text-emerald-600 border border-emerald-200/60 rounded-[4px] shadow-sm' :
-                                              displayStatus === ComparisonDocStatus.OCR_DONE ? 'px-2.5 py-0.5 bg-amber-50 text-amber-600 border border-amber-200/60 rounded-[4px] shadow-sm' :
-                                              displayStatus === ComparisonDocStatus.ERROR || displayStatus === ComparisonDocStatus.MISMATCHED ? 'px-2.5 py-0.5 bg-rose-50 text-rose-600 border border-rose-200/60 rounded-[4px] shadow-sm' :
-                                              displayStatus === ComparisonDocStatus.SKIPPED ? 'px-2.5 py-0.5 bg-slate-100 text-slate-500 border border-slate-200/60 rounded-[4px] shadow-sm' :
+                                              displayStatus === ComparisonDocStatus.MATCHED || displayStatus === ComparisonDocStatus.LOCKED ? 'px-2.5 py-0.5 bg-emerald-50 text-emerald-600 border border-emerald-200/60 rounded-[10px] shadow-sm' :
+                                              displayStatus === ComparisonDocStatus.OCR_DONE ? 'px-2.5 py-0.5 bg-amber-50 text-amber-600 border border-amber-200/60 rounded-[10px] shadow-sm' :
+                                              displayStatus === ComparisonDocStatus.ERROR || displayStatus === ComparisonDocStatus.MISMATCHED ? 'px-2.5 py-0.5 bg-rose-50 text-rose-600 border border-rose-200/60 rounded-[10px] shadow-sm' :
+                                              displayStatus === ComparisonDocStatus.SKIPPED ? 'px-2.5 py-0.5 bg-slate-100 text-slate-500 border border-slate-200/60 rounded-[10px] shadow-sm' :
                                               ''
                                             }`}>
-                                               <div className={`w-1.5 h-1.5 rounded-full ${
-                                                 displayStatus === ComparisonDocStatus.MATCHED || displayStatus === ComparisonDocStatus.LOCKED ? 'bg-emerald-500' :
-                                                 displayStatus === ComparisonDocStatus.OCR_DONE ? 'bg-amber-500' :
-                                                 displayStatus === ComparisonDocStatus.EXTRACTING || displayStatus === ComparisonDocStatus.RECEIVED ? 'bg-amber-500 animate-pulse' :
-                                                 displayStatus === ComparisonDocStatus.ERROR || displayStatus === ComparisonDocStatus.MISMATCHED ? 'bg-rose-500' :
-                                                 displayStatus === ComparisonDocStatus.SKIPPED ? 'bg-slate-400' :
-                                                 'bg-slate-300'
-                                               }`}></div>
                                                <span className={`text-[9px] font-black uppercase tracking-wider ${
                                                  displayStatus === ComparisonDocStatus.MATCHED || displayStatus === ComparisonDocStatus.LOCKED ? 'text-emerald-500' :
                                                  displayStatus === ComparisonDocStatus.OCR_DONE ? 'text-amber-500' :
