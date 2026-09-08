@@ -7260,7 +7260,12 @@ const mockWorkflows: Workflow[] = [
                         {(() => {
                           let filteredResults = allComparisonResults.filter(res => {
                             const target = res.targets.find(t => t.fileName === resolveDocNameFromPreviewUrl(pdfPreviewUrl, selectedJob?.id));
-                            return target && target.status !== 'NA';
+                            if (!target) return false;
+                            // A doc that hasn't been "read" yet (RECEIVED/MISSING/ERROR) reports every
+                            // field as NA — fine for the comparison table, but the standalone preview's
+                            // whole point is showing mock OCR data for this one file, so don't hide rows
+                            // here just because the rest of the job hasn't caught up.
+                            return target.status !== 'NA' || !!standaloneDocPreview;
                           });
 
                           if (showOnlyMismatchedFields) {
