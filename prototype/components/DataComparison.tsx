@@ -5787,24 +5787,23 @@ const mockWorkflows: Workflow[] = [
     }));
   }, [selectedJob, overriddenValues, unvalidatedDocs, confirmedMismatches, standaloneDocPreview, selectedDatasetKey]);
 
-  // Grouped, deduped list of every field that currently has at least one mismatched target,
-  // each with a count of how many mismatched cells it has — powers the "select specific
-  // fields" mode of the differences filter panel.
+  // Grouped, deduped list of every field present in this flow (regardless of match status),
+  // each with a count of how many rows carry it — powers the "select specific fields" mode
+  // of the differences filter panel, since the status (Matched/Unmatched/Both) is now a
+  // separate filter layered on top instead of being baked into which fields are pickable.
   const diffFieldOptions = React.useMemo(() => {
     const groups: Record<string, { fieldName: string; count: number }[]> = { Header: [], Description: [], Footer: [] };
     const seen = new Map<string, number>();
     allComparisonResults.forEach(res => {
       const part = (res as any).part as 'Header' | 'Description' | 'Footer' | 'Summary';
       if (part === 'Summary' || !groups[part]) return;
-      const mismatchCount = res.targets.filter((t: any) => t.status === 'MISMATCH').length;
-      if (mismatchCount === 0) return;
       const key = `${part}::${res.fieldName}`;
       if (seen.has(key)) {
         const idx = seen.get(key)!;
-        groups[part][idx].count += mismatchCount;
+        groups[part][idx].count += 1;
       } else {
         seen.set(key, groups[part].length);
-        groups[part].push({ fieldName: res.fieldName, count: mismatchCount });
+        groups[part].push({ fieldName: res.fieldName, count: 1 });
       }
     });
     return groups;
