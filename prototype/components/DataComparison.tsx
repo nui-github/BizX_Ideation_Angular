@@ -8618,7 +8618,17 @@ const mockWorkflows: Workflow[] = [
                                       placeholder={language === 'TH' ? 'เลือกฟิลด์ที่ต้องการยืนยัน...' : 'Search fields...'}
                                       className="w-full pl-2 pr-7 py-1.5 rounded-md border border-slate-200 text-[13px] font-semibold text-[#010136] placeholder:text-slate-400 placeholder:font-medium outline-none focus:border-[#1f5df9] focus:ring-2 focus:ring-[#1f5df9]/20 transition-all font-sans"
                                     />
-                                    <Search size={13} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                    {diffFieldSearch ? (
+                                      <button
+                                        type="button"
+                                        onClick={() => setDiffFieldSearch('')}
+                                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 cursor-pointer"
+                                      >
+                                        <X size={13} />
+                                      </button>
+                                    ) : (
+                                      <Search size={13} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                    )}
                                   </div>
                                   <div className="max-h-96 overflow-y-auto custom-scrollbar">
                                     {(['Header', 'Description', 'Footer'] as const).map(part => {
