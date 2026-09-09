@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { diffChars } from 'diff';
 import * as XLSX from 'xlsx';
 import { 
@@ -8498,96 +8499,125 @@ const mockWorkflows: Workflow[] = [
                       </button>
                     </Tooltip>
 
-                    {showDiffFilterPanel && (
-                      <>
-                        <div
-                          className="fixed inset-0 z-[590] cursor-default"
-                          onClick={() => setShowDiffFilterPanel(false)}
-                        />
-                        <div className="absolute left-0 mt-1.5 w-80 bg-white border border-slate-200 rounded-lg shadow-xl p-3 z-[600] select-none">
-                          <p className="text-[10px] font-black text-[#010136] uppercase tracking-widest mb-2 pb-1.5 border-b border-slate-100 flex items-center justify-between">
-                            <span>{language === 'TH' ? 'ตัวกรองข้อมูลที่ต่างกัน' : 'DIFFERENCES FILTER'}</span>
-                            {showOnlyDiff && (
-                              <button type="button" onClick={clearDiffFilter} className="text-slate-400 hover:text-rose-500 font-bold normal-case tracking-normal cursor-pointer">
-                                {language === 'TH' ? 'ล้างตัวกรอง' : 'Clear'}
-                              </button>
-                            )}
-                          </p>
-                          <div className="flex flex-col gap-1.5">
-                            <label className={`flex items-center gap-2 p-2 rounded-[4px] border text-[13px] font-bold cursor-pointer transition-all ${diffFilterMode === 'all' ? 'bg-blue-50 border-[#1f5df9] text-[#1f5df9]' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
-                              <input
-                                type="radio"
-                                checked={diffFilterMode === 'all'}
-                                onChange={() => { setDiffFilterMode('all'); setShowOnlyDiff(true); }}
-                                className="cursor-pointer"
-                              />
-                              {language === 'TH' ? 'ดูเฉพาะที่ต่างทั้งหมด' : 'View all differences'}
-                            </label>
-                            <label className={`flex items-center gap-2 p-2 rounded-[4px] border text-[13px] font-bold cursor-pointer transition-all ${diffFilterMode === 'fields' ? 'bg-blue-50 border-[#1f5df9] text-[#1f5df9]' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
-                              <input
-                                type="radio"
-                                checked={diffFilterMode === 'fields'}
-                                onChange={() => { setDiffFilterMode('fields'); setShowOnlyDiff(diffFilterFields.length > 0); }}
-                                className="cursor-pointer"
-                              />
-                              {language === 'TH' ? 'เลือกเฉพาะบางฟิลด์' : 'Select specific fields'}
-                            </label>
-                          </div>
-
-                          {diffFilterMode === 'fields' && (
-                            <div className="mt-2 border border-slate-200 rounded-lg overflow-hidden">
-                              <div className="relative p-2 border-b border-slate-100">
-                                <input
-                                  type="text"
-                                  value={diffFieldSearch}
-                                  onChange={(e) => setDiffFieldSearch(e.target.value)}
-                                  placeholder={language === 'TH' ? 'เลือกฟิลด์ที่ต้องการยืนยัน...' : 'Search fields...'}
-                                  className="w-full pl-2 pr-7 py-1.5 rounded-md border border-slate-200 text-[13px] font-semibold text-[#010136] placeholder:text-slate-400 placeholder:font-medium outline-none focus:border-[#1f5df9] focus:ring-2 focus:ring-[#1f5df9]/20 transition-all font-sans"
-                                />
-                                <Search size={13} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    {createPortal(
+                      <AnimatePresence>
+                        {showDiffFilterPanel && (
+                        <>
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setShowDiffFilterPanel(false)}
+                            className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-[700] cursor-default"
+                          />
+                          <motion.div
+                            initial={{ x: '100%' }}
+                            animate={{ x: 0 }}
+                            exit={{ x: '100%' }}
+                            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                            className="fixed right-0 top-0 bottom-0 w-96 bg-white shadow-2xl z-[701] border-l border-slate-200 flex flex-col select-none"
+                          >
+                            <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
+                              <div>
+                                <h3 className="font-black text-slate-800 tracking-tight flex items-center gap-2 text-sm">
+                                  <Filter size={16} className="text-blue-600" />
+                                  {language === 'TH' ? 'ตัวกรองข้อมูลที่ต่างกัน' : 'Differences Filter'}
+                                </h3>
                               </div>
-                              <div className="max-h-60 overflow-y-auto custom-scrollbar">
-                                {(['Header', 'Description', 'Footer'] as const).map(part => {
-                                  const items = diffFieldOptions[part].filter(f => f.fieldName.toLowerCase().includes(diffFieldSearch.trim().toLowerCase()));
-                                  if (items.length === 0) return null;
-                                  const partLabel = part === 'Header' ? (language === 'TH' ? 'ส่วนหัว (HEADER)' : 'HEADER') : part === 'Description' ? (language === 'TH' ? 'ส่วนรายละเอียด (DESCRIPTION)' : 'DESCRIPTION') : (language === 'TH' ? 'ส่วนท้าย (FOOTER)' : 'FOOTER');
-                                  return (
-                                    <div key={part}>
-                                      <div className="px-3 py-1.5 text-[10px] font-black text-slate-400 uppercase tracking-wider bg-slate-50">{partLabel}</div>
-                                      {items.map(item => {
-                                        const isSelected = diffFilterFields.includes(item.fieldName);
-                                        return (
-                                          <button
-                                            key={item.fieldName}
-                                            type="button"
-                                            onClick={() => toggleDiffFilterField(item.fieldName)}
-                                            className={`w-full text-left px-3 py-2 flex items-center justify-between gap-2 text-[13px] cursor-pointer transition-colors ${
-                                              isSelected ? 'bg-blue-50 text-[#1f5df9] font-bold' : 'text-slate-700 hover:bg-slate-50 font-medium'
-                                            }`}
-                                          >
-                                            <span className="flex items-center gap-1.5 truncate">
-                                              {isSelected && <Check size={12} strokeWidth={3} className="shrink-0" />}
-                                              <span className="truncate">{item.fieldName}</span>
-                                            </span>
-                                            <span className={`shrink-0 text-[11px] ${isSelected ? 'text-[#1f5df9]' : 'text-slate-400'}`}>
-                                              ({item.count} {language === 'TH' ? 'รายการ' : 'items'})
-                                            </span>
-                                          </button>
-                                        );
-                                      })}
-                                    </div>
-                                  );
-                                })}
-                                {Object.values(diffFieldOptions).every(list => list.filter(f => f.fieldName.toLowerCase().includes(diffFieldSearch.trim().toLowerCase())).length === 0) && (
-                                  <div className="p-4 text-center text-slate-400 text-[12px] font-semibold">
-                                    {language === 'TH' ? 'ไม่พบฟิลด์ที่ต่างกัน' : 'No differing fields found'}
-                                  </div>
+                              <div className="flex items-center gap-3">
+                                {showOnlyDiff && (
+                                  <button type="button" onClick={clearDiffFilter} className="text-[10px] uppercase tracking-widest text-slate-400 hover:text-rose-500 font-bold cursor-pointer">
+                                    {language === 'TH' ? 'ล้างตัวกรอง' : 'Clear'}
+                                  </button>
                                 )}
+                                <button
+                                  onClick={() => setShowDiffFilterPanel(false)}
+                                  className="w-8 h-8 rounded-[4px] hover:bg-white flex items-center justify-center text-slate-400 hover:text-rose-500 transition-all shadow-sm"
+                                >
+                                  <X size={18} />
+                                </button>
                               </div>
                             </div>
-                          )}
-                        </div>
-                      </>
+                            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                              <div className="flex flex-col gap-1.5">
+                                <label className={`flex items-center gap-2 p-2 rounded-[4px] border text-[13px] font-bold cursor-pointer transition-all ${diffFilterMode === 'all' ? 'bg-blue-50 border-[#1f5df9] text-[#1f5df9]' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
+                                  <input
+                                    type="radio"
+                                    checked={diffFilterMode === 'all'}
+                                    onChange={() => { setDiffFilterMode('all'); setShowOnlyDiff(true); }}
+                                    className="cursor-pointer"
+                                  />
+                                  {language === 'TH' ? 'ดูเฉพาะที่ต่างทั้งหมด' : 'View all differences'}
+                                </label>
+                                <label className={`flex items-center gap-2 p-2 rounded-[4px] border text-[13px] font-bold cursor-pointer transition-all ${diffFilterMode === 'fields' ? 'bg-blue-50 border-[#1f5df9] text-[#1f5df9]' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
+                                  <input
+                                    type="radio"
+                                    checked={diffFilterMode === 'fields'}
+                                    onChange={() => { setDiffFilterMode('fields'); setShowOnlyDiff(diffFilterFields.length > 0); }}
+                                    className="cursor-pointer"
+                                  />
+                                  {language === 'TH' ? 'เลือกเฉพาะบางฟิลด์' : 'Select specific fields'}
+                                </label>
+                              </div>
+
+                              {diffFilterMode === 'fields' && (
+                                <div className="mt-2 border border-slate-200 rounded-lg overflow-hidden">
+                                  <div className="relative p-2 border-b border-slate-100">
+                                    <input
+                                      type="text"
+                                      value={diffFieldSearch}
+                                      onChange={(e) => setDiffFieldSearch(e.target.value)}
+                                      placeholder={language === 'TH' ? 'เลือกฟิลด์ที่ต้องการยืนยัน...' : 'Search fields...'}
+                                      className="w-full pl-2 pr-7 py-1.5 rounded-md border border-slate-200 text-[13px] font-semibold text-[#010136] placeholder:text-slate-400 placeholder:font-medium outline-none focus:border-[#1f5df9] focus:ring-2 focus:ring-[#1f5df9]/20 transition-all font-sans"
+                                    />
+                                    <Search size={13} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                  </div>
+                                  <div className="max-h-[calc(100vh-320px)] overflow-y-auto custom-scrollbar">
+                                    {(['Header', 'Description', 'Footer'] as const).map(part => {
+                                      const items = diffFieldOptions[part].filter(f => f.fieldName.toLowerCase().includes(diffFieldSearch.trim().toLowerCase()));
+                                      if (items.length === 0) return null;
+                                      const partLabel = part === 'Header' ? (language === 'TH' ? 'ส่วนหัว (HEADER)' : 'HEADER') : part === 'Description' ? (language === 'TH' ? 'ส่วนรายละเอียด (DESCRIPTION)' : 'DESCRIPTION') : (language === 'TH' ? 'ส่วนท้าย (FOOTER)' : 'FOOTER');
+                                      return (
+                                        <div key={part}>
+                                          <div className="px-3 py-1.5 text-[10px] font-black text-slate-400 uppercase tracking-wider bg-slate-50">{partLabel}</div>
+                                          {items.map(item => {
+                                            const isSelected = diffFilterFields.includes(item.fieldName);
+                                            return (
+                                              <button
+                                                key={item.fieldName}
+                                                type="button"
+                                                onClick={() => toggleDiffFilterField(item.fieldName)}
+                                                className={`w-full text-left px-3 py-2 flex items-center justify-between gap-2 text-[13px] cursor-pointer transition-colors ${
+                                                  isSelected ? 'bg-blue-50 text-[#1f5df9] font-bold' : 'text-slate-700 hover:bg-slate-50 font-medium'
+                                                }`}
+                                              >
+                                                <span className="flex items-center gap-1.5 truncate">
+                                                  {isSelected && <Check size={12} strokeWidth={3} className="shrink-0" />}
+                                                  <span className="truncate">{item.fieldName}</span>
+                                                </span>
+                                                <span className={`shrink-0 text-[11px] ${isSelected ? 'text-[#1f5df9]' : 'text-slate-400'}`}>
+                                                  ({item.count} {language === 'TH' ? 'รายการ' : 'items'})
+                                                </span>
+                                              </button>
+                                            );
+                                          })}
+                                        </div>
+                                      );
+                                    })}
+                                    {Object.values(diffFieldOptions).every(list => list.filter(f => f.fieldName.toLowerCase().includes(diffFieldSearch.trim().toLowerCase())).length === 0) && (
+                                      <div className="p-4 text-center text-slate-400 text-[12px] font-semibold">
+                                        {language === 'TH' ? 'ไม่พบฟิลด์ที่ต่างกัน' : 'No differing fields found'}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </motion.div>
+                        </>
+                        )}
+                      </AnimatePresence>,
+                      document.body
                     )}
                   </div>
 
