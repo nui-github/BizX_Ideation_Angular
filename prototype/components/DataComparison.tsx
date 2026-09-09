@@ -8595,7 +8595,7 @@ const mockWorkflows: Workflow[] = [
                                     onChange={() => setDraftFilterMode('all')}
                                     className="cursor-pointer"
                                   />
-                                  {language === 'TH' ? 'ดูเฉพาะที่ต่างทั้งหมด' : 'View all differences'}
+                                  {language === 'TH' ? 'ทุกฟิลด์' : 'All fields'}
                                 </label>
                                 <label className={`flex items-center gap-2 p-2 rounded-[4px] border text-[13px] font-bold cursor-pointer transition-all ${draftFilterMode === 'fields' ? 'bg-blue-50 border-[#1f5df9] text-[#1f5df9]' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
                                   <input
@@ -8604,7 +8604,7 @@ const mockWorkflows: Workflow[] = [
                                     onChange={() => setDraftFilterMode('fields')}
                                     className="cursor-pointer"
                                   />
-                                  {language === 'TH' ? 'เลือกเฉพาะบางฟิลด์' : 'Select specific fields'}
+                                  {language === 'TH' ? 'เฉพาะบางฟิลด์' : 'Specific fields'}
                                 </label>
                               </div>
 
