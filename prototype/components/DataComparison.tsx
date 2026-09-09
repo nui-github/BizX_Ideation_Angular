@@ -8615,7 +8615,7 @@ const mockWorkflows: Workflow[] = [
                                       type="text"
                                       value={diffFieldSearch}
                                       onChange={(e) => setDiffFieldSearch(e.target.value)}
-                                      placeholder={language === 'TH' ? 'เลือกฟิลด์ที่ต้องการยืนยัน...' : 'Search fields...'}
+                                      placeholder={language === 'TH' ? 'เลือกฟิลด์ที่ต้องการกรองค่า' : 'Search fields...'}
                                       className="w-full pl-2 pr-7 py-1.5 rounded-md border border-slate-200 text-[13px] font-semibold text-[#010136] placeholder:text-slate-400 placeholder:font-medium outline-none focus:border-[#1f5df9] focus:ring-2 focus:ring-[#1f5df9]/20 transition-all font-sans"
                                     />
                                     {diffFieldSearch ? (
