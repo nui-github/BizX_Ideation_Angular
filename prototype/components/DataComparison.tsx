@@ -1750,6 +1750,38 @@ const mockWorkflows: Workflow[] = [
   // Which dataset's values the comparison table shows, for a job whose uploaded file(s)
   // bundle more than one (see ComparisonJob.datasets). Null when the job has none/one.
   const [selectedDatasetKey, setSelectedDatasetKey] = useState<string | null>(null);
+  const datasetScrollRef = useRef<HTMLDivElement>(null);
+  const datasetScrollIdleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [datasetScrollState, setDatasetScrollState] = useState({ canLeft: false, canRight: false, isScrolling: false });
+
+  const updateDatasetScrollState = () => {
+    const el = datasetScrollRef.current;
+    if (!el) return;
+    setDatasetScrollState(prev => ({
+      ...prev,
+      canLeft: el.scrollLeft > 2,
+      canRight: el.scrollLeft + el.clientWidth < el.scrollWidth - 2,
+    }));
+  };
+
+  const handleDatasetScroll = () => {
+    updateDatasetScrollState();
+    setDatasetScrollState(prev => ({ ...prev, isScrolling: true }));
+    if (datasetScrollIdleTimerRef.current) clearTimeout(datasetScrollIdleTimerRef.current);
+    datasetScrollIdleTimerRef.current = setTimeout(() => {
+      setDatasetScrollState(prev => ({ ...prev, isScrolling: false }));
+    }, 600);
+  };
+
+  const scrollDatasetsBy = (delta: number) => {
+    datasetScrollRef.current?.scrollBy({ left: delta, behavior: 'smooth' });
+  };
+  const hasDatasetSelector = !!(selectedJob?.datasets && selectedJob.datasets.length > 1);
+  // Compact dataset-selector row's own height (sticky, right under the doc-header row) — every
+  // other sticky element further down the table (the HEADER/DESCRIPTION bars, group-row bars)
+  // must offset its own `top` by this much extra when the selector is showing, so it doesn't
+  // get hidden underneath it.
+  const DATASET_SELECTOR_HEIGHT = 36;
   // Expands the job header + compare table card to fill the viewport, for reviewing wide
   // tables without the surrounding page chrome getting in the way.
   const [isJobPanelFullscreen, setIsJobPanelFullscreen] = useState(false);
@@ -3208,6 +3240,10 @@ const mockWorkflows: Workflow[] = [
       datasets: [
         { key: 'NS-WHIZZY-251023', label: 'NS-WHIZZY-251023' },
         { key: 'NS-ODDTYPE-251023', label: 'NS-ODDTYPE-251023' },
+        { key: 'NS-KELVOX-251024', label: 'NS-KELVOX-251024' },
+        { key: 'NS-BRAMBLE-251024', label: 'NS-BRAMBLE-251024' },
+        { key: 'NS-QUARTZ-251025', label: 'NS-QUARTZ-251025' },
+        { key: 'NS-FERNTREE-251025', label: 'NS-FERNTREE-251025' },
       ],
       progress: 100,
       totalDocs: 2,
@@ -3331,6 +3367,7 @@ const mockWorkflows: Workflow[] = [
     setShowColumnSelector(false);
     setTableScrolledPastTop(false);
     setSelectedDatasetKey(selectedJob?.datasets?.[0]?.key ?? null);
+    requestAnimationFrame(updateDatasetScrollState);
   }, [selectedJob?.id]);
 
   const areAllFilesLocked = React.useMemo(() => {
@@ -8889,26 +8926,60 @@ const mockWorkflows: Workflow[] = [
                            </tr>
                         </thead>
                      </table>
-                     {selectedJob?.datasets && selectedJob.datasets.length > 1 && (
-                       <div className="px-6 py-3 bg-slate-50 border-b border-slate-200 flex items-center gap-3 flex-wrap">
-                         <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest shrink-0">
-                           {language === 'TH' ? 'เลือกแสดงชุดข้อมูล' : 'Select dataset'}
-                         </span>
-                         <div className="flex items-center gap-2 flex-wrap">
-                           {selectedJob.datasets.map(ds => (
-                             <button
-                               key={ds.key}
-                               type="button"
-                               onClick={() => setSelectedDatasetKey(ds.key)}
-                               className={`px-4 py-2 rounded-[4px] border text-[13px] font-bold transition-all cursor-pointer ${
-                                 selectedDatasetKey === ds.key
-                                   ? 'bg-blue-50 border-[#1f5df9] text-[#1f5df9]'
-                                   : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
-                               }`}
+                     {hasDatasetSelector && selectedJob?.datasets && (
+                       <div className={`sticky z-[30] bg-slate-50 border-b border-slate-200 transition-[top] duration-300 will-change-[top] ${tableScrolledPastTop ? 'top-[48px]' : 'top-[82px]'}`}>
+                         <style dangerouslySetInnerHTML={{__html: `
+                           .dataset-scroll-track { scrollbar-width: none; -ms-overflow-style: none; }
+                           .dataset-scroll-track::-webkit-scrollbar { height: 0px; transition: height 0.15s; }
+                           .dataset-scroll-track.is-scrolling { scrollbar-width: thin; }
+                           .dataset-scroll-track.is-scrolling::-webkit-scrollbar { height: 4px; }
+                           .dataset-scroll-track::-webkit-scrollbar-track { background: transparent; }
+                           .dataset-scroll-track::-webkit-scrollbar-thumb { background: rgba(100,116,139,0.4); border-radius: 4px; }
+                         `}} />
+                         <div className="px-4 py-1.5 flex items-center gap-2">
+                           <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest shrink-0">
+                             {language === 'TH' ? 'เลือกแสดงชุดข้อมูล' : 'Select dataset'}
+                           </span>
+                           <div className="relative flex-1 min-w-0 flex items-center gap-1">
+                             {datasetScrollState.canLeft && (
+                               <button
+                                 type="button"
+                                 onClick={() => scrollDatasetsBy(-160)}
+                                 className="shrink-0 w-5 h-5 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-[#1f5df9] cursor-pointer z-10"
+                               >
+                                 <ChevronLeft size={12} />
+                               </button>
+                             )}
+                             <div
+                               ref={datasetScrollRef}
+                               onScroll={handleDatasetScroll}
+                               className={`dataset-scroll-track flex items-center gap-1.5 overflow-x-auto scroll-smooth ${datasetScrollState.isScrolling ? 'is-scrolling' : ''}`}
                              >
-                               {ds.label}
-                             </button>
-                           ))}
+                               {selectedJob.datasets.map(ds => (
+                                 <button
+                                   key={ds.key}
+                                   type="button"
+                                   onClick={() => setSelectedDatasetKey(ds.key)}
+                                   className={`shrink-0 whitespace-nowrap px-2.5 py-1 rounded-[4px] border text-[11px] font-bold transition-all cursor-pointer ${
+                                     selectedDatasetKey === ds.key
+                                       ? 'bg-blue-50 border-[#1f5df9] text-[#1f5df9]'
+                                       : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
+                                   }`}
+                                 >
+                                   {ds.label}
+                                 </button>
+                               ))}
+                             </div>
+                             {datasetScrollState.canRight && (
+                               <button
+                                 type="button"
+                                 onClick={() => scrollDatasetsBy(160)}
+                                 className="shrink-0 w-5 h-5 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-[#1f5df9] cursor-pointer z-10"
+                               >
+                                 <ChevronRight size={12} />
+                               </button>
+                             )}
+                           </div>
                          </div>
                        </div>
                      )}
@@ -8995,7 +9066,11 @@ const mockWorkflows: Workflow[] = [
                                          <col key={`col-${docName}`} className="w-[180px]" style={{ minWidth: '180px' }} />
                                       ))}
                                    </colgroup>
-                                   <thead className={`sticky z-[25] bg-slate-50 shadow-[0_1px_4px_rgba(0,0,0,0.02)] transition-[top] duration-300 will-change-[top] ${tableScrolledPastTop ? 'top-[48px]' : 'top-[82px]'}`}>
+                                   <thead className={`sticky z-[25] bg-slate-50 shadow-[0_1px_4px_rgba(0,0,0,0.02)] transition-[top] duration-300 will-change-[top] ${
+                                     hasDatasetSelector
+                                       ? (tableScrolledPastTop ? 'top-[84px]' : 'top-[118px]')
+                                       : (tableScrolledPastTop ? 'top-[48px]' : 'top-[82px]')
+                                   }`}>
                                      <tr className="group cursor-pointer hover:bg-slate-100 transition-all" onClick={() => togglePart(part)}>
                                        <th 
                                          colSpan={comparedDocs.length + 1} 
@@ -9046,7 +9121,11 @@ const mockWorkflows: Workflow[] = [
                                            <tbody key={group}>
                                              {group !== 'no-group' && (
                                                 <tr className="bg-slate-100/80 group/itemheader hover:bg-slate-200/50 cursor-pointer transition-colors" onClick={(e) => toggleGroup(e, group as string)}>
-                                                   <td colSpan={comparedDocs.length + 1} className={`sticky z-[24] p-0 border-y-2 border-slate-200/80 bg-slate-100/90 shadow-sm relative transition-[top] duration-300 will-change-[top] ${tableScrolledPastTop ? 'top-[80px]' : 'top-[114px]'}`}>
+                                                   <td colSpan={comparedDocs.length + 1} className={`sticky z-[24] p-0 border-y-2 border-slate-200/80 bg-slate-100/90 shadow-sm relative transition-[top] duration-300 will-change-[top] ${
+                                                     hasDatasetSelector
+                                                       ? (tableScrolledPastTop ? 'top-[116px]' : 'top-[150px]')
+                                                       : (tableScrolledPastTop ? 'top-[80px]' : 'top-[114px]')
+                                                   }`}>
                                                       <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#1f5df9]"></div>
                                                       <div className="flex items-center gap-3 sticky left-0 pl-8 pr-6 py-2.5 z-[26] w-fit">
                                                          <div className="w-5 h-5 rounded bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-500 group-hover/itemheader:text-blue-600 group-hover/itemheader:border-blue-200 transition-all">
