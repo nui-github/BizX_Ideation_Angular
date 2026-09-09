@@ -8678,7 +8678,7 @@ const mockWorkflows: Workflow[] = [
                                                       onClick={(e) => e.stopPropagation()}
                                                       onChange={(e) => setDraftValueInput(prev => ({ ...prev, [item.fieldName]: e.target.value }))}
                                                       onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addDraftFieldValue(item.fieldName); } }}
-                                                      placeholder={language === 'TH' ? 'พิมพ์ค่า แล้วกด Enter เช่น china, cn' : 'Type a value, press Enter — e.g. china, cn'}
+                                                      placeholder={language === 'TH' ? 'พิมพ์ค่า แล้วกด Enter เพื่อเลือกใช้งาน' : 'Type a value, press Enter — e.g. china, cn'}
                                                       className="w-full px-2 py-1.5 rounded-md border border-slate-200 bg-white text-[12px] font-semibold text-[#010136] placeholder:text-slate-400 placeholder:font-medium outline-none focus:border-[#1f5df9] focus:ring-2 focus:ring-[#1f5df9]/20 transition-all font-sans"
                                                     />
                                                   </div>
