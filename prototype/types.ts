@@ -85,6 +85,10 @@ export interface ComparisonJob {
   rejectionReason?: string;
   rejectedAt?: string;
   rejectedBy?: string;
+  // Present when the uploaded file(s) for this job contain more than one dataset (e.g. multiple
+  // invoice numbers batched into one file) — lets the user pick which one the comparison table
+  // shows. Split key defaults to the doc-matching field configured in Compare rules (invoiceNo).
+  datasets?: { key: string; label: string }[];
 }
 
 export type Language = 'EN' | 'TH';

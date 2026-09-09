@@ -129,6 +129,23 @@ const pickRandomNoRuleCells = (candidateFields: string[], docNames: string[], co
 // openDocPreviewInNewTab) can find jobs the current tab created after the initial page load.
 const DYNAMIC_JOBS_STORAGE_KEY = 'bizx_dynamic_jobs';
 
+// Per-dataset field value overrides for jobs whose uploaded file(s) bundle more than one
+// dataset (see ComparisonJob.datasets and the dataset-selector UI). Keyed by job id, then by
+// dataset key, then by field name — only fields that actually differ from the default/first
+// dataset need an entry here; everything else falls back to the normal mock value.
+const DATASET_FIELD_OVERRIDES: Record<string, Record<string, Record<string, string>>> = {
+  'job-multidataset-a': {
+    'NS-ODDTYPE-251023': {
+      'Consignee Name': 'ODDTYPE TRADING CO., LTD.',
+      'Consignee TAX ID': '0105562000099',
+      'Port of Loading': 'NINGBO, CHINA',
+      'Port of Discharge': 'LAEM CHABANG, THAILAND',
+      'Vessel / Flight': 'MSC GENEVA',
+      'Voyage No.': 'V.041E',
+    },
+  },
+};
+
 // Demo-only preview filename overrides so a specific mock job can showcase the Excel/XML
 // preview mockups without changing the real doc-type keys other logic (schema/rule matching,
 // OCR simulation) relies on. Keyed by job id, then by the doc-type column name.
@@ -1730,6 +1747,9 @@ const mockWorkflows: Workflow[] = [
   const [replaceAutoStartOCR, setReplaceAutoStartOCR] = useState(true);
   const [hiddenLockedDocs, setHiddenLockedDocs] = useState<string[]>([]);
   const [showColumnSelector, setShowColumnSelector] = useState(false);
+  // Which dataset's values the comparison table shows, for a job whose uploaded file(s)
+  // bundle more than one (see ComparisonJob.datasets). Null when the job has none/one.
+  const [selectedDatasetKey, setSelectedDatasetKey] = useState<string | null>(null);
   // Expands the job header + compare table card to fill the viewport, for reviewing wide
   // tables without the surrounding page chrome getting in the way.
   const [isJobPanelFullscreen, setIsJobPanelFullscreen] = useState(false);
@@ -3166,6 +3186,34 @@ const mockWorkflows: Workflow[] = [
       foundDocs: 1,
       matchedCount: 0,
       mismatchedCount: 0
+    },
+    // --- Shipment 16: "Multi-dataset Demo" — the uploaded Invoice/Packing List each bundle
+    // two invoice numbers in one file, so the dataset-selector row lets the user pick which
+    // one the comparison table shows (see DATASET_FIELD_OVERRIDES above). ---
+    {
+      id: 'job-multidataset-a',
+      reference: 'Multi-dataset Demo',
+      expiryDate: '30 SEP 2026 17:00:00',
+      createdAt: '09 SEP 2026',
+      workflowName: 'PO/PI Matching',
+      assignedTeam: 'operation',
+      assignee: 'Somchai T.',
+      status: JobStatus.REVIEW,
+      totalFieldsCount: 63,
+      accuracyScore: 84.0,
+      docs: {
+        'Invoice': ComparisonDocStatus.MISMATCHED,
+        'Packing List': ComparisonDocStatus.MISMATCHED,
+      },
+      datasets: [
+        { key: 'NS-WHIZZY-251023', label: 'NS-WHIZZY-251023' },
+        { key: 'NS-ODDTYPE-251023', label: 'NS-ODDTYPE-251023' },
+      ],
+      progress: 100,
+      totalDocs: 2,
+      foundDocs: 2,
+      matchedCount: 1,
+      mismatchedCount: 1
     }
     ];
     // Jobs created via "สร้างรายการใหม่" only ever live in this tab's memory — a doc preview
@@ -3282,6 +3330,7 @@ const mockWorkflows: Workflow[] = [
     if (!standaloneDocPreview) setPdfPreviewUrl(null);
     setShowColumnSelector(false);
     setTableScrolledPastTop(false);
+    setSelectedDatasetKey(selectedJob?.datasets?.[0]?.key ?? null);
   }, [selectedJob?.id]);
 
   const areAllFilesLocked = React.useMemo(() => {
@@ -3701,7 +3750,7 @@ const mockWorkflows: Workflow[] = [
   };
 
   // Mock data generator for comparison - Logistics specific fields
-  const getMockComparisonResults = (job: ComparisonJob) => {
+  const getMockComparisonResults = (job: ComparisonJob, datasetKey?: string) => {
     // Generate realistic logistics data
     const headerFields = [
       { name: 'Consignee Name', source: 'BIZ-TRANS LOGISTICS CO., LTD.', type: 'string', part: 'Header' },
@@ -3772,7 +3821,16 @@ const mockWorkflows: Workflow[] = [
       );
     }
 
-    const fields = [...headerFields, ...descriptionFields, ...footerFields, ...summaryFields];
+    const baseFields = [...headerFields, ...descriptionFields, ...footerFields, ...summaryFields];
+
+    // When a job's uploaded file(s) bundle more than one dataset (see job.datasets and the
+    // dataset-selector UI), every field's "ground truth" value is swapped for the selected
+    // dataset's variant here — everything downstream (matching, mismatch simulation, etc.)
+    // then runs unchanged against whichever dataset was picked.
+    const datasetOverride = datasetKey ? DATASET_FIELD_OVERRIDES[job.id]?.[datasetKey] : undefined;
+    const fields = datasetOverride
+      ? baseFields.map(f => datasetOverride[f.name] !== undefined ? { ...f, source: datasetOverride[f.name] } : f)
+      : baseFields;
 
     const synonymRules: Record<string, string[]> = {
       'BIZ-TRANS LOGISTICS CO., LTD.': ['BIZ-TRANS LOGISTICS', 'BIZ-TRANS LOGISTICS (THAILAND) CO., LTD.'],
@@ -5563,7 +5621,7 @@ const mockWorkflows: Workflow[] = [
     // mock OCR fields regardless of whether the rest of the job has been "read" yet.
     if (!hasAnyFileRead && !standaloneDocPreview) return [];
 
-    const baseResults = getMockComparisonResults(selectedJob);
+    const baseResults = getMockComparisonResults(selectedJob, selectedDatasetKey ?? undefined);
 
     // Filter targets to only include docs that are actually compared
     return baseResults.map(res => ({
@@ -5573,7 +5631,7 @@ const mockWorkflows: Workflow[] = [
         status: unvalidatedDocs.has(t.fileName) ? 'WAITING' as any : t.status
       }))
     }));
-  }, [selectedJob, overriddenValues, comparedDocs, unvalidatedDocs, confirmedMismatches, standaloneDocPreview]);
+  }, [selectedJob, overriddenValues, comparedDocs, unvalidatedDocs, confirmedMismatches, standaloneDocPreview, selectedDatasetKey]);
 
   const allComparisonResults = React.useMemo(() => {
     if (!selectedJob) return [];
@@ -5591,7 +5649,7 @@ const mockWorkflows: Workflow[] = [
     // mock OCR fields regardless of whether the rest of the job has been "read" yet.
     if (!hasAnyFileRead && !standaloneDocPreview) return [];
 
-    const baseResults = getMockComparisonResults(selectedJob);
+    const baseResults = getMockComparisonResults(selectedJob, selectedDatasetKey ?? undefined);
     return baseResults.map(res => ({
       ...res,
       targets: res.targets.map(t => ({
@@ -5599,7 +5657,7 @@ const mockWorkflows: Workflow[] = [
         status: unvalidatedDocs.has(t.fileName) ? 'WAITING' as any : t.status
       }))
     }));
-  }, [selectedJob, overriddenValues, unvalidatedDocs, confirmedMismatches, standaloneDocPreview]);
+  }, [selectedJob, overriddenValues, unvalidatedDocs, confirmedMismatches, standaloneDocPreview, selectedDatasetKey]);
 
   const mismatchedFileNames = React.useMemo(() => {
     const set = new Set<string>();
@@ -8831,7 +8889,30 @@ const mockWorkflows: Workflow[] = [
                            </tr>
                         </thead>
                      </table>
-                      {(!selectedJob || !Object.values(selectedJob.docs).some(status => 
+                     {selectedJob?.datasets && selectedJob.datasets.length > 1 && (
+                       <div className="px-6 py-3 bg-slate-50 border-b border-slate-200 flex items-center gap-3 flex-wrap">
+                         <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest shrink-0">
+                           {language === 'TH' ? 'เลือกแสดงชุดข้อมูล' : 'Select dataset'}
+                         </span>
+                         <div className="flex items-center gap-2 flex-wrap">
+                           {selectedJob.datasets.map(ds => (
+                             <button
+                               key={ds.key}
+                               type="button"
+                               onClick={() => setSelectedDatasetKey(ds.key)}
+                               className={`px-4 py-2 rounded-[4px] border text-[13px] font-bold transition-all cursor-pointer ${
+                                 selectedDatasetKey === ds.key
+                                   ? 'bg-blue-50 border-[#1f5df9] text-[#1f5df9]'
+                                   : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
+                               }`}
+                             >
+                               {ds.label}
+                             </button>
+                           ))}
+                         </div>
+                       </div>
+                     )}
+                      {(!selectedJob || !Object.values(selectedJob.docs).some(status =>
                         status !== ComparisonDocStatus.MISSING && 
                         status !== ComparisonDocStatus.RECEIVED && 
                         status !== ComparisonDocStatus.EXTRACTING &&
