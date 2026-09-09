@@ -8542,7 +8542,7 @@ const mockWorkflows: Workflow[] = [
 
                   {/* 1. Show only differences Filter */}
                   <div className="relative">
-                    <Tooltip position={isJobPanelFullscreen ? 'bottom' : 'top'} content={showOnlyDiff ? (language === 'TH' ? 'ตัวกรองกำลังใช้งาน' : 'Filter active') : (language === 'TH' ? 'ดูเฉพาะที่ต่าง' : 'Show Only Differences')}>
+                    <Tooltip position={isJobPanelFullscreen ? 'bottom' : 'top'} content={showOnlyDiff ? (language === 'TH' ? 'ตัวกรองการแสดงผล (กำลังใช้งาน)' : 'Display Filter (active)') : (language === 'TH' ? 'ตัวกรองการแสดงผล' : 'Display Filter')}>
                       <button
                         disabled={isUnassigned}
                         onClick={() => setShowDiffFilterPanel(v => !v)}
@@ -8577,7 +8577,7 @@ const mockWorkflows: Workflow[] = [
                             <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
                               <h3 className="font-black text-slate-800 tracking-tight flex items-center gap-2 text-sm">
                                 <Filter size={16} className="text-blue-600" />
-                                {language === 'TH' ? 'ตัวกรองข้อมูลที่ต่างกัน' : 'Differences Filter'}
+                                {language === 'TH' ? 'ตัวกรองการแสดงผล' : 'Display Filter'}
                               </h3>
                               <button
                                 onClick={() => setShowDiffFilterPanel(false)}
