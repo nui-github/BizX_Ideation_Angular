@@ -8442,7 +8442,7 @@ const mockWorkflows: Workflow[] = [
                           : 'bg-white text-slate-500 border-slate-200/60 hover:bg-slate-50'
                       }`}
                     >
-                      <ListFilter size={15} strokeWidth={2.5} className={showOnlyDiff ? 'text-blue-500' : 'text-slate-400'} />
+                      <Filter size={15} strokeWidth={2.5} className={showOnlyDiff ? 'text-blue-500' : 'text-slate-400'} />
                     </button>
                   </Tooltip>
 
