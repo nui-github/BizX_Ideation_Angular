@@ -8,7 +8,7 @@ import {
   CheckCircle2, XCircle, Info, Eye, Send, Filter, ListFilter, ArrowLeft, Save, RotateCcw,
   LayoutGrid, List, ScanEye, Bot, ChevronDown, Lock, Unlock, HelpCircle, X, Loader2, ShieldCheck, ArrowUpRight, ScanSearch, History, Edit3, UploadCloud, AlertTriangle,
   Printer, RotateCw, ZoomIn, ZoomOut, Menu, Copy, Star, CheckCheck, StickyNote, SkipForward, Undo2,
-  FileBarChart2, Layers, Maximize2, Minimize2, PanelRightClose, PanelRightOpen
+  FileBarChart2, Layers, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, GripVertical
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Tabs, Tag, Badge, Empty, Button, message, DatePicker, Select, Radio } from 'antd';
@@ -7242,9 +7242,13 @@ const mockWorkflows: Workflow[] = [
                   {standaloneDocPreview && (
                     <div
                       onMouseDown={handleOcrPanelDragStart}
-                      className="absolute left-0 top-0 bottom-0 w-1.5 -ml-[3px] cursor-col-resize z-20 hover:bg-blue-400/40 active:bg-blue-500/50 transition-colors"
-                      title={language === 'TH' ? 'ลากเพื่อปรับความกว้างพาเนล' : 'Drag to resize panel'}
-                    />
+                      className="absolute left-0 top-0 bottom-0 w-2.5 -ml-[5px] cursor-col-resize z-20 flex items-center justify-center group/resize"
+                    >
+                      <div className="absolute inset-0 group-hover/resize:bg-blue-400/10 transition-colors" />
+                      <Tooltip content={language === 'TH' ? 'ลากเพื่อปรับความกว้างพาเนล' : 'Drag to resize panel'} position="left">
+                        <div className="w-[3px] h-10 rounded-full bg-slate-300 group-hover/resize:bg-[#1f5df9] group-hover/resize:h-14 transition-all duration-200" />
+                      </Tooltip>
+                    </div>
                   )}
 
                   {/* Right Tab Headers matching reference image */}
