@@ -1769,6 +1769,11 @@ const mockWorkflows: Workflow[] = [
     pageRange: string;
     templateName: string;
     file: File;
+    // Excel files only (.xlsx/.xls) — every sheet tab name in the workbook, and which one
+    // is selected to read from. Empty array while the workbook is still being parsed, or
+    // for non-Excel files. Defaults to the first sheet once parsed.
+    sheetNames: string[];
+    sheetName: string;
   }[]>([]);
   const [replaceIsDragging, setReplaceIsDragging] = useState(false);
   const [replacePreviewFileId, setReplacePreviewFileId] = useState<string | null>(null);
@@ -1954,9 +1959,24 @@ const mockWorkflows: Workflow[] = [
       pageMode: 'all' as const,
       pageRange: '',
       templateName: '',
-      file: f
+      file: f,
+      sheetNames: [] as string[],
+      sheetName: ''
     }));
     setReplaceUploadedFiles(prev => [...prev, ...newFiles]);
+
+    // Excel workbooks can have multiple sheet tabs — read them in the background so the
+    // per-file sheet picker can list them, defaulting to the first sheet.
+    newFiles.forEach(nf => {
+      if (!/\.(xlsx|xls)$/i.test(nf.name)) return;
+      nf.file.arrayBuffer()
+        .then(buffer => {
+          const workbook = XLSX.read(buffer, { type: 'array' });
+          const sheetNames = workbook.SheetNames;
+          setReplaceUploadedFiles(prev => prev.map(f => f.id === nf.id ? { ...f, sheetNames, sheetName: sheetNames[0] || '' } : f));
+        })
+        .catch(() => {});
+    });
   };
   const handleRemoveReplaceFile = (fileId: string) => {
     setReplaceUploadedFiles(prev => prev.filter(f => f.id !== fileId));
@@ -1967,6 +1987,9 @@ const mockWorkflows: Workflow[] = [
   };
   const setReplaceFilePageRange = (fileId: string, pageRange: string) => {
     setReplaceUploadedFiles(prev => prev.map(f => f.id === fileId ? { ...f, pageRange } : f));
+  };
+  const setReplaceFileSheetName = (fileId: string, sheetName: string) => {
+    setReplaceUploadedFiles(prev => prev.map(f => f.id === fileId ? { ...f, sheetName } : f));
   };
   const setReplaceFileTemplateName = (fileId: string, templateName: string) => {
     setReplaceUploadedFiles(prev => prev.map(f => f.id === fileId ? { ...f, templateName } : f));
@@ -1990,7 +2013,9 @@ const mockWorkflows: Workflow[] = [
   }, [replacePreviewFileId]);
 
   // Parses the real uploaded bytes for Excel/XML files so the preview overlay shows actual
-  // sheet data / document content instead of a generic placeholder card.
+  // sheet data / document content instead of a generic placeholder card. Re-runs when the
+  // previewed file's selected sheet changes, not just when the previewed file itself does.
+  const replacePreviewTargetSheetName = replaceUploadedFiles.find(f => f.id === replacePreviewFileId)?.sheetName;
   useEffect(() => {
     setReplacePreviewParsed(null);
     if (!replacePreviewFileId) return;
@@ -2004,7 +2029,7 @@ const mockWorkflows: Workflow[] = [
         .then(buffer => {
           if (cancelled) return;
           const workbook = XLSX.read(buffer, { type: 'array' });
-          const sheet = workbook.Sheets[workbook.SheetNames[0]];
+          const sheet = workbook.Sheets[target.sheetName || workbook.SheetNames[0]];
           const allRows: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1, blankrows: false });
           const MAX_ROWS = 100;
           const MAX_COLS = 15;
@@ -2027,7 +2052,7 @@ const mockWorkflows: Workflow[] = [
     }
 
     return () => { cancelled = true; };
-  }, [replacePreviewFileId]);
+  }, [replacePreviewFileId, replacePreviewTargetSheetName]);
 
   const handleConfirmReplace = () => {
     if (!selectedJob || !replaceTargetColumn) return;
@@ -6365,6 +6390,27 @@ const mockWorkflows: Workflow[] = [
                           }
                           className="w-full text-xs px-3 py-2 rounded-[4px] border border-slate-200 text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300"
                         />
+                      )}
+
+                      {/* Excel files only — which sheet tab to read from, defaults to the first one */}
+                      {/\.(xlsx|xls)$/i.test(file.name) && (
+                        <div className="flex items-center gap-2 pl-1">
+                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0">
+                            {language === 'TH' ? 'Sheet:' : 'Sheet:'}
+                          </span>
+                          <select
+                            value={file.sheetName}
+                            onChange={(e) => setReplaceFileSheetName(file.id, e.target.value)}
+                            disabled={file.sheetNames.length === 0}
+                            className="flex-1 min-w-0 text-xs px-3 py-2 rounded-[4px] border border-slate-200 text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 disabled:bg-slate-50 disabled:text-slate-400"
+                          >
+                            {file.sheetNames.length === 0 ? (
+                              <option value="">{language === 'TH' ? 'กำลังโหลด...' : 'Loading...'}</option>
+                            ) : (
+                              file.sheetNames.map(name => <option key={name} value={name}>{name}</option>)
+                            )}
+                          </select>
+                        </div>
                       )}
 
                       {/* Per-file template — required, [Brand]_[Doctype] built from the target column */}
