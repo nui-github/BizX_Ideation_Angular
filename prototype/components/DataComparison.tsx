@@ -6354,42 +6354,47 @@ const mockWorkflows: Workflow[] = [
                         </div>
                       </div>
 
-                      {/* Per-file page selection — which pages of this file to run OCR on */}
-                      <div className="flex items-center gap-2 pl-1">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0">
-                          {language === 'TH' ? 'หน้าที่จะอ่าน:' : 'Pages to read:'}
-                        </span>
-                        <div className="flex items-center gap-0.5 bg-white border border-slate-200 rounded-[4px] p-0.5 shrink-0">
-                          <button
-                            onClick={() => setReplaceFilePageMode(file.id, 'all')}
-                            className={`px-3 py-1 rounded-[3px] text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
-                              file.pageMode === 'all' ? 'bg-blue-500 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'
-                            }`}
-                          >
-                            {language === 'TH' ? 'ทั้งหมด' : 'All'}
-                          </button>
-                          <button
-                            onClick={() => setReplaceFilePageMode(file.id, 'custom')}
-                            className={`px-3 py-1 rounded-[3px] text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
-                              file.pageMode === 'custom' ? 'bg-blue-500 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'
-                            }`}
-                          >
-                            {language === 'TH' ? 'เลือกเอง' : 'Custom'}
-                          </button>
-                        </div>
-                      </div>
-                      {file.pageMode === 'custom' && (
-                        <input
-                          type="text"
-                          value={file.pageRange}
-                          onChange={(e) => setReplaceFilePageRange(file.id, e.target.value)}
-                          placeholder={
-                            language === 'TH'
-                              ? 'เช่น 1-3, 5, 8-10 (หน้าติดกันใช้ - / ข้ามหน้าใช้ , คั่น)'
-                              : 'e.g. 1-3, 5, 8-10 (use - for consecutive pages, , to skip)'
-                          }
-                          className="w-full text-xs px-3 py-2 rounded-[4px] border border-slate-200 text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300"
-                        />
+                      {/* Excel files pick a sheet instead of a page range — sheets are whole-tab
+                          reads, so "pages to read" doesn't apply to them. */}
+                      {!/\.(xlsx|xls)$/i.test(file.name) && (
+                        <>
+                          <div className="flex items-center gap-2 pl-1">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0">
+                              {language === 'TH' ? 'หน้าที่จะอ่าน:' : 'Pages to read:'}
+                            </span>
+                            <div className="flex items-center gap-0.5 bg-white border border-slate-200 rounded-[4px] p-0.5 shrink-0">
+                              <button
+                                onClick={() => setReplaceFilePageMode(file.id, 'all')}
+                                className={`px-3 py-1 rounded-[3px] text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
+                                  file.pageMode === 'all' ? 'bg-blue-500 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                                }`}
+                              >
+                                {language === 'TH' ? 'ทั้งหมด' : 'All'}
+                              </button>
+                              <button
+                                onClick={() => setReplaceFilePageMode(file.id, 'custom')}
+                                className={`px-3 py-1 rounded-[3px] text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
+                                  file.pageMode === 'custom' ? 'bg-blue-500 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                                }`}
+                              >
+                                {language === 'TH' ? 'เลือกเอง' : 'Custom'}
+                              </button>
+                            </div>
+                          </div>
+                          {file.pageMode === 'custom' && (
+                            <input
+                              type="text"
+                              value={file.pageRange}
+                              onChange={(e) => setReplaceFilePageRange(file.id, e.target.value)}
+                              placeholder={
+                                language === 'TH'
+                                  ? 'เช่น 1-3, 5, 8-10 (หน้าติดกันใช้ - / ข้ามหน้าใช้ , คั่น)'
+                                  : 'e.g. 1-3, 5, 8-10 (use - for consecutive pages, , to skip)'
+                              }
+                              className="w-full text-xs px-3 py-2 rounded-[4px] border border-slate-200 text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300"
+                            />
+                          )}
+                        </>
                       )}
 
                       {/* Excel files only — which sheet tab to read from, defaults to the first one */}
