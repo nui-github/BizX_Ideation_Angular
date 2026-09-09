@@ -831,6 +831,12 @@ export const DataComparison: React.FC<DataComparisonProps> = ({ language, tracki
   });
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const [collapsedPreviewGroups, setCollapsedPreviewGroups] = useState<Record<string, boolean>>({});
+  // Lets users drag rows (by the grip handle) to reorder fields within a section (Header/
+  // Description/Footer/Summary). Keyed by part -> ordered list of field names; Description's
+  // field-name set repeats once per item group, so one order applies to every item uniformly.
+  const [fieldRowOrder, setFieldRowOrder] = useState<Record<string, string[]>>({});
+  const [draggedFieldRow, setDraggedFieldRow] = useState<{ part: string; fieldName: string } | null>(null);
+  const [dragOverFieldRow, setDragOverFieldRow] = useState<{ part: string; fieldName: string } | null>(null);
   const [logFilter, setLogFilter] = useState<'ALL' | 'JOB' | 'PENDING'>('ALL');
 
   // --- Export Job Modal States ---
