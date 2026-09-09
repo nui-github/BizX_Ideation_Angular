@@ -7242,11 +7242,14 @@ const mockWorkflows: Workflow[] = [
                   {standaloneDocPreview && (
                     <div
                       onMouseDown={handleOcrPanelDragStart}
-                      className="absolute left-0 top-0 bottom-0 w-2.5 -ml-[5px] cursor-col-resize z-20 flex items-center justify-center group/resize"
+                      className="absolute left-0 top-0 bottom-0 w-2.5 -ml-[5px] cursor-col-resize z-20 group/resize"
                     >
-                      <div className="absolute inset-0 group-hover/resize:bg-blue-400/10 transition-colors" />
-                      <Tooltip content={language === 'TH' ? 'ลากเพื่อปรับความกว้างพาเนล' : 'Drag to resize panel'} position="left">
-                        <div className="w-[3px] h-10 rounded-full bg-slate-300 group-hover/resize:bg-[#1f5df9] group-hover/resize:h-14 transition-all duration-200" />
+                      <div className="absolute inset-0 pointer-events-none group-hover/resize:bg-blue-400/10 transition-colors" />
+                      {/* Tooltip must wrap the full-height strip, not just the small decorative
+                          pill below — otherwise hovering anywhere off that ~40px sliver (the
+                          normal case, since the strip runs the whole panel height) never shows it. */}
+                      <Tooltip content={language === 'TH' ? 'ลากเพื่อปรับความกว้างพาเนล' : 'Drag to resize panel'} position="left" className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-[3px] h-10 rounded-full bg-slate-300 group-hover/resize:bg-[#1f5df9] group-hover/resize:h-14 transition-all duration-200 pointer-events-none" />
                       </Tooltip>
                     </div>
                   )}
