@@ -533,6 +533,28 @@ export const DataComparison: React.FC<DataComparisonProps> = ({ language, tracki
   const [diffFilterMode, setDiffFilterMode] = useState<'all' | 'fields'>('all');
   const [diffFilterFields, setDiffFilterFields] = useState<string[]>([]);
   const [diffFieldSearch, setDiffFieldSearch] = useState('');
+  // Per-field value filters (e.g. field "Country of Origin" -> ["china", "cn"]) — only
+  // applied in 'fields' mode, OR'd against a field's source + every target's value.
+  const [diffFilterFieldValues, setDiffFilterFieldValues] = useState<Record<string, string[]>>({});
+  // Which match status to show while the differences filter is active — 'unmatched' preserves
+  // the original single-click behavior (rows with at least one MISMATCH target).
+  const [diffMatchStatusFilter, setDiffMatchStatusFilter] = useState<'unmatched' | 'matched' | 'both'>('unmatched');
+  // The drawer edits a draft copy of the filter and only commits it to the state above when
+  // the user presses "กรองค่า" (Apply) — so picking fields / typing values doesn't re-filter
+  // the table on every keystroke. Synced from the committed state whenever the drawer opens.
+  const [draftFilterMode, setDraftFilterMode] = useState<'all' | 'fields'>('all');
+  const [draftFilterFields, setDraftFilterFields] = useState<string[]>([]);
+  const [draftFieldValues, setDraftFieldValues] = useState<Record<string, string[]>>({});
+  const [draftMatchStatusFilter, setDraftMatchStatusFilter] = useState<'unmatched' | 'matched' | 'both'>('unmatched');
+  const [draftValueInput, setDraftValueInput] = useState<Record<string, string>>({});
+  useEffect(() => {
+    if (!showDiffFilterPanel) return;
+    setDraftFilterMode(diffFilterMode);
+    setDraftFilterFields(diffFilterFields);
+    setDraftFieldValues(diffFilterFieldValues);
+    setDraftMatchStatusFilter(diffMatchStatusFilter);
+    setDraftValueInput({});
+  }, [showDiffFilterPanel]);
   const [searchTerm, setSearchTerm] = useState('');
   const [hoveredField, setHoveredField] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -1787,23 +1809,59 @@ const mockWorkflows: Workflow[] = [
   const hasDatasetSelector = !!(selectedJob?.datasets && selectedJob.datasets.length > 1);
   // Whether a comparison-table row passes the current "show only differences" filter —
   // 'all' mode is the original behavior (any real mismatch), 'fields' scopes it to just the
-  // field names picked in the filter panel.
+  // field names picked in the filter panel, each optionally narrowed further by a per-field
+  // value filter. diffMatchStatusFilter layers on top of both modes.
   const passesDiffFilter = (res: any) => {
     if (!showOnlyDiff) return true;
-    if (diffFilterMode === 'fields') return diffFilterFields.includes(res.fieldName);
-    return res.targets.some((t: any) => t.status === 'MISMATCH');
+    const hasMismatch = res.targets.some((t: any) => t.status === 'MISMATCH');
+    const statusOk = diffMatchStatusFilter === 'both' ? true : diffMatchStatusFilter === 'unmatched' ? hasMismatch : !hasMismatch;
+    if (!statusOk) return false;
+    if (diffFilterMode === 'fields') {
+      if (!diffFilterFields.includes(res.fieldName)) return false;
+      const values = diffFilterFieldValues[res.fieldName];
+      if (values && values.length > 0) {
+        const haystacks = [res.sourceValue, ...res.targets.map((t: any) => t.value)].map((v: any) => String(v ?? '').toLowerCase());
+        return values.some(v => haystacks.some(h => h.includes(v.toLowerCase())));
+      }
+    }
+    return true;
   };
-  const toggleDiffFilterField = (fieldName: string) => {
-    setDiffFilterFields(prev => {
-      const next = prev.includes(fieldName) ? prev.filter(f => f !== fieldName) : [...prev, fieldName];
-      setShowOnlyDiff(next.length > 0);
-      return next;
+  const toggleDraftFilterField = (fieldName: string) => {
+    setDraftFilterFields(prev => prev.includes(fieldName) ? prev.filter(f => f !== fieldName) : [...prev, fieldName]);
+  };
+  const addDraftFieldValue = (fieldName: string) => {
+    const raw = (draftValueInput[fieldName] || '').trim();
+    if (!raw) return;
+    setDraftFieldValues(prev => {
+      const existing = prev[fieldName] || [];
+      if (existing.some(v => v.toLowerCase() === raw.toLowerCase())) return prev;
+      return { ...prev, [fieldName]: [...existing, raw] };
     });
+    setDraftValueInput(prev => ({ ...prev, [fieldName]: '' }));
+  };
+  const removeDraftFieldValue = (fieldName: string, value: string) => {
+    setDraftFieldValues(prev => ({ ...prev, [fieldName]: (prev[fieldName] || []).filter(v => v !== value) }));
+  };
+  const applyDiffFilter = () => {
+    setDiffFilterMode(draftFilterMode);
+    setDiffFilterFields(draftFilterFields);
+    setDiffFilterFieldValues(draftFieldValues);
+    setDiffMatchStatusFilter(draftMatchStatusFilter);
+    const willFilter = draftFilterMode === 'fields' ? draftFilterFields.length > 0 : draftMatchStatusFilter !== 'both';
+    setShowOnlyDiff(willFilter);
+    setShowDiffFilterPanel(false);
   };
   const clearDiffFilter = () => {
     setShowOnlyDiff(false);
     setDiffFilterMode('all');
     setDiffFilterFields([]);
+    setDiffFilterFieldValues({});
+    setDiffMatchStatusFilter('unmatched');
+    setDraftFilterMode('all');
+    setDraftFilterFields([]);
+    setDraftFieldValues({});
+    setDraftMatchStatusFilter('unmatched');
+    setDraftValueInput({});
     setShowDiffFilterPanel(false);
   };
   // Compact dataset-selector row's own height (sticky, right under the doc-header row) — every
@@ -8518,49 +8576,40 @@ const mockWorkflows: Workflow[] = [
                             className="fixed right-0 top-0 bottom-0 w-96 bg-white shadow-2xl z-[701] border-l border-slate-200 flex flex-col select-none"
                           >
                             <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
-                              <div>
-                                <h3 className="font-black text-slate-800 tracking-tight flex items-center gap-2 text-sm">
-                                  <Filter size={16} className="text-blue-600" />
-                                  {language === 'TH' ? 'ตัวกรองข้อมูลที่ต่างกัน' : 'Differences Filter'}
-                                </h3>
-                              </div>
-                              <div className="flex items-center gap-3">
-                                {showOnlyDiff && (
-                                  <button type="button" onClick={clearDiffFilter} className="text-[10px] uppercase tracking-widest text-slate-400 hover:text-rose-500 font-bold cursor-pointer">
-                                    {language === 'TH' ? 'ล้างตัวกรอง' : 'Clear'}
-                                  </button>
-                                )}
-                                <button
-                                  onClick={() => setShowDiffFilterPanel(false)}
-                                  className="w-8 h-8 rounded-[4px] hover:bg-white flex items-center justify-center text-slate-400 hover:text-rose-500 transition-all shadow-sm"
-                                >
-                                  <X size={18} />
-                                </button>
-                              </div>
+                              <h3 className="font-black text-slate-800 tracking-tight flex items-center gap-2 text-sm">
+                                <Filter size={16} className="text-blue-600" />
+                                {language === 'TH' ? 'ตัวกรองข้อมูลที่ต่างกัน' : 'Differences Filter'}
+                              </h3>
+                              <button
+                                onClick={() => setShowDiffFilterPanel(false)}
+                                className="w-8 h-8 rounded-[4px] hover:bg-white flex items-center justify-center text-slate-400 hover:text-rose-500 transition-all shadow-sm"
+                              >
+                                <X size={18} />
+                              </button>
                             </div>
                             <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
                               <div className="flex flex-col gap-1.5">
-                                <label className={`flex items-center gap-2 p-2 rounded-[4px] border text-[13px] font-bold cursor-pointer transition-all ${diffFilterMode === 'all' ? 'bg-blue-50 border-[#1f5df9] text-[#1f5df9]' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
+                                <label className={`flex items-center gap-2 p-2 rounded-[4px] border text-[13px] font-bold cursor-pointer transition-all ${draftFilterMode === 'all' ? 'bg-blue-50 border-[#1f5df9] text-[#1f5df9]' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
                                   <input
                                     type="radio"
-                                    checked={diffFilterMode === 'all'}
-                                    onChange={() => { setDiffFilterMode('all'); setShowOnlyDiff(true); }}
+                                    checked={draftFilterMode === 'all'}
+                                    onChange={() => setDraftFilterMode('all')}
                                     className="cursor-pointer"
                                   />
                                   {language === 'TH' ? 'ดูเฉพาะที่ต่างทั้งหมด' : 'View all differences'}
                                 </label>
-                                <label className={`flex items-center gap-2 p-2 rounded-[4px] border text-[13px] font-bold cursor-pointer transition-all ${diffFilterMode === 'fields' ? 'bg-blue-50 border-[#1f5df9] text-[#1f5df9]' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
+                                <label className={`flex items-center gap-2 p-2 rounded-[4px] border text-[13px] font-bold cursor-pointer transition-all ${draftFilterMode === 'fields' ? 'bg-blue-50 border-[#1f5df9] text-[#1f5df9]' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
                                   <input
                                     type="radio"
-                                    checked={diffFilterMode === 'fields'}
-                                    onChange={() => { setDiffFilterMode('fields'); setShowOnlyDiff(diffFilterFields.length > 0); }}
+                                    checked={draftFilterMode === 'fields'}
+                                    onChange={() => setDraftFilterMode('fields')}
                                     className="cursor-pointer"
                                   />
                                   {language === 'TH' ? 'เลือกเฉพาะบางฟิลด์' : 'Select specific fields'}
                                 </label>
                               </div>
 
-                              {diffFilterMode === 'fields' && (
+                              {draftFilterMode === 'fields' && (
                                 <div className="mt-2 border border-slate-200 rounded-lg overflow-hidden">
                                   <div className="relative p-2 border-b border-slate-100">
                                     <input
@@ -8572,7 +8621,7 @@ const mockWorkflows: Workflow[] = [
                                     />
                                     <Search size={13} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                                   </div>
-                                  <div className="max-h-[calc(100vh-320px)] overflow-y-auto custom-scrollbar">
+                                  <div className="max-h-96 overflow-y-auto custom-scrollbar">
                                     {(['Header', 'Description', 'Footer'] as const).map(part => {
                                       const items = diffFieldOptions[part].filter(f => f.fieldName.toLowerCase().includes(diffFieldSearch.trim().toLowerCase()));
                                       if (items.length === 0) return null;
@@ -8581,24 +8630,61 @@ const mockWorkflows: Workflow[] = [
                                         <div key={part}>
                                           <div className="px-3 py-1.5 text-[10px] font-black text-slate-400 uppercase tracking-wider bg-slate-50">{partLabel}</div>
                                           {items.map(item => {
-                                            const isSelected = diffFilterFields.includes(item.fieldName);
+                                            const isSelected = draftFilterFields.includes(item.fieldName);
+                                            const values = draftFieldValues[item.fieldName] || [];
                                             return (
-                                              <button
-                                                key={item.fieldName}
-                                                type="button"
-                                                onClick={() => toggleDiffFilterField(item.fieldName)}
-                                                className={`w-full text-left px-3 py-2 flex items-center justify-between gap-2 text-[13px] cursor-pointer transition-colors ${
-                                                  isSelected ? 'bg-blue-50 text-[#1f5df9] font-bold' : 'text-slate-700 hover:bg-slate-50 font-medium'
-                                                }`}
-                                              >
-                                                <span className="flex items-center gap-1.5 truncate">
-                                                  {isSelected && <Check size={12} strokeWidth={3} className="shrink-0" />}
-                                                  <span className="truncate">{item.fieldName}</span>
-                                                </span>
-                                                <span className={`shrink-0 text-[11px] ${isSelected ? 'text-[#1f5df9]' : 'text-slate-400'}`}>
-                                                  ({item.count} {language === 'TH' ? 'รายการ' : 'items'})
-                                                </span>
-                                              </button>
+                                              <div key={item.fieldName}>
+                                                <button
+                                                  type="button"
+                                                  onClick={() => toggleDraftFilterField(item.fieldName)}
+                                                  className={`w-full text-left px-3 py-2 flex items-center justify-between gap-2 text-[13px] cursor-pointer transition-colors ${
+                                                    isSelected ? 'bg-blue-50 text-[#1f5df9] font-bold' : 'text-slate-700 hover:bg-slate-50 font-medium'
+                                                  }`}
+                                                >
+                                                  <span className="flex items-center gap-1.5 truncate">
+                                                    {isSelected && <Check size={12} strokeWidth={3} className="shrink-0" />}
+                                                    <span className="truncate">{item.fieldName}</span>
+                                                  </span>
+                                                  <span className={`shrink-0 text-[11px] ${isSelected ? 'text-[#1f5df9]' : 'text-slate-400'}`}>
+                                                    ({item.count} {language === 'TH' ? 'รายการ' : 'items'})
+                                                  </span>
+                                                </button>
+                                                {isSelected && (
+                                                  <div className="px-3 pb-2.5 pt-0.5 bg-blue-50/40">
+                                                    <div className="flex items-center gap-1 mb-1.5">
+                                                      <div className="w-3 h-px bg-blue-200" />
+                                                      <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest">
+                                                        {language === 'TH' ? 'กรองเฉพาะค่า (ถ้ามี)' : 'Filter to values (optional)'}
+                                                      </p>
+                                                    </div>
+                                                    {values.length > 0 && (
+                                                      <div className="flex flex-wrap gap-1 mb-1.5">
+                                                        {values.map(v => (
+                                                          <span key={v} className="inline-flex items-center gap-1 pl-2 pr-1 py-0.5 rounded-full bg-white border border-blue-200 text-[11px] font-bold text-[#1f5df9]">
+                                                            {v}
+                                                            <button
+                                                              type="button"
+                                                              onClick={(e) => { e.stopPropagation(); removeDraftFieldValue(item.fieldName, v); }}
+                                                              className="w-3.5 h-3.5 rounded-full hover:bg-blue-100 flex items-center justify-center cursor-pointer"
+                                                            >
+                                                              <X size={9} strokeWidth={3} />
+                                                            </button>
+                                                          </span>
+                                                        ))}
+                                                      </div>
+                                                    )}
+                                                    <input
+                                                      type="text"
+                                                      value={draftValueInput[item.fieldName] || ''}
+                                                      onClick={(e) => e.stopPropagation()}
+                                                      onChange={(e) => setDraftValueInput(prev => ({ ...prev, [item.fieldName]: e.target.value }))}
+                                                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addDraftFieldValue(item.fieldName); } }}
+                                                      placeholder={language === 'TH' ? 'พิมพ์ค่า แล้วกด Enter เช่น china, cn' : 'Type a value, press Enter — e.g. china, cn'}
+                                                      className="w-full px-2 py-1.5 rounded-md border border-slate-200 bg-white text-[12px] font-semibold text-[#010136] placeholder:text-slate-400 placeholder:font-medium outline-none focus:border-[#1f5df9] focus:ring-2 focus:ring-[#1f5df9]/20 transition-all font-sans"
+                                                    />
+                                                  </div>
+                                                )}
+                                              </div>
                                             );
                                           })}
                                         </div>
@@ -8612,6 +8698,48 @@ const mockWorkflows: Workflow[] = [
                                   </div>
                                 </div>
                               )}
+
+                              <div className="mt-4 pt-4 border-t border-slate-100">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
+                                  {language === 'TH' ? 'สถานะที่ต้องการแสดง' : 'Status to show'}
+                                </p>
+                                <div className="grid grid-cols-3 gap-1.5">
+                                  {([
+                                    { key: 'unmatched' as const, th: 'ไม่ตรงกัน', en: 'Unmatched' },
+                                    { key: 'matched' as const, th: 'ตรงกัน', en: 'Matched' },
+                                    { key: 'both' as const, th: 'ทั้งหมด', en: 'Both' },
+                                  ]).map(opt => (
+                                    <button
+                                      key={opt.key}
+                                      type="button"
+                                      onClick={() => setDraftMatchStatusFilter(opt.key)}
+                                      className={`px-2 py-1.5 rounded-[4px] border text-[12px] font-bold cursor-pointer transition-all ${
+                                        draftMatchStatusFilter === opt.key
+                                          ? 'bg-blue-50 border-[#1f5df9] text-[#1f5df9]'
+                                          : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                                      }`}
+                                    >
+                                      {language === 'TH' ? opt.th : opt.en}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="p-4 border-t border-slate-100 flex items-center gap-2 shrink-0 bg-slate-50/50">
+                              <button
+                                type="button"
+                                onClick={clearDiffFilter}
+                                className="flex-1 px-3 py-2.5 rounded-[4px] border border-slate-200 text-slate-600 text-[13px] font-bold cursor-pointer hover:bg-slate-100 transition-all"
+                              >
+                                {language === 'TH' ? 'ล้างตัวกรอง' : 'Clear filter'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={applyDiffFilter}
+                                className="flex-1 px-3 py-2.5 rounded-[4px] bg-[#1f5df9] text-white text-[13px] font-bold cursor-pointer hover:bg-[#1a4fd6] shadow-sm transition-all"
+                              >
+                                {language === 'TH' ? 'กรองค่า' : 'Apply filter'}
+                              </button>
                             </div>
                           </motion.div>
                         </>
