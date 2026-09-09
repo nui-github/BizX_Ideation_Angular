@@ -8703,8 +8703,10 @@ const mockWorkflows: Workflow[] = [
                         </colgroup>
                         <thead>
                            <tr>
-                              <th className={`bg-slate-50 border-b border-r border-slate-200 px-4 py-1.5 min-w-[180px] flex items-center justify-center uppercase tracking-tighter shadow-[2px_0_5px_rgba(0,0,0,0.02)] sticky left-0 z-40 transition-[height] duration-300 will-change-[height] ${tableScrolledPastTop ? 'h-[48px]' : 'h-[82px]'}`}>
-                                 <h3 className="text-[10px] font-black text-slate-700 uppercase tracking-widest leading-none text-center">{t.masterVsDocs}</h3>
+                              <th className={`bg-slate-50 border-b border-r border-slate-200 px-4 py-1.5 min-w-[180px] uppercase tracking-tighter shadow-[2px_0_5px_rgba(0,0,0,0.02)] sticky left-0 z-40 transition-[height] duration-300 will-change-[height] ${tableScrolledPastTop ? 'h-[48px]' : 'h-[82px]'}`}>
+                                 <div className="w-full h-full flex items-center justify-center">
+                                   <h3 className="text-[10px] font-black text-slate-700 uppercase tracking-widest leading-none text-center">{t.masterVsDocs}</h3>
+                                 </div>
                               </th>
 
                               {comparedDocs.map(docName => {
