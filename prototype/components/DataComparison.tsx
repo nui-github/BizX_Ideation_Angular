@@ -6400,7 +6400,7 @@ const mockWorkflows: Workflow[] = [
                       {/* Excel files only — which sheet tab to read from, defaults to the first one */}
                       {/\.(xlsx|xls)$/i.test(file.name) && (
                         <div className="flex items-center gap-2 pl-1">
-                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0">
+                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0 w-16">
                             {language === 'TH' ? 'Sheet:' : 'Sheet:'}
                           </span>
                           <select
@@ -6420,7 +6420,7 @@ const mockWorkflows: Workflow[] = [
 
                       {/* Per-file template — required, [Brand]_[Doctype] built from the target column */}
                       <div className="flex items-center gap-2 pl-1">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0 w-16">
                           {language === 'TH' ? 'Template:' : 'Template:'}
                         </span>
                         <select
