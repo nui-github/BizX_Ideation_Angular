@@ -525,6 +525,13 @@ export const DataComparison: React.FC<DataComparisonProps> = ({ language, tracki
   const [selectedJob, setSelectedJob] = useState<ComparisonJob | null>(null);
   const [files, setFiles] = useState<ComparisonFile[]>([]);
   const [showOnlyDiff, setShowOnlyDiff] = useState(false);
+  // Clicking the filter button opens a small panel to choose between these two, instead of
+  // immediately toggling showOnlyDiff — 'all' behaves exactly like the old single-click
+  // toggle; 'fields' scopes the same showOnlyDiff filter down to just the picked field names.
+  const [showDiffFilterPanel, setShowDiffFilterPanel] = useState(false);
+  const [diffFilterMode, setDiffFilterMode] = useState<'all' | 'fields'>('all');
+  const [diffFilterFields, setDiffFilterFields] = useState<string[]>([]);
+  const [diffFieldSearch, setDiffFieldSearch] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [hoveredField, setHoveredField] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -1777,6 +1784,27 @@ const mockWorkflows: Workflow[] = [
     datasetScrollRef.current?.scrollBy({ left: delta, behavior: 'smooth' });
   };
   const hasDatasetSelector = !!(selectedJob?.datasets && selectedJob.datasets.length > 1);
+  // Whether a comparison-table row passes the current "show only differences" filter —
+  // 'all' mode is the original behavior (any real mismatch), 'fields' scopes it to just the
+  // field names picked in the filter panel.
+  const passesDiffFilter = (res: any) => {
+    if (!showOnlyDiff) return true;
+    if (diffFilterMode === 'fields') return diffFilterFields.includes(res.fieldName);
+    return res.targets.some((t: any) => t.status === 'MISMATCH');
+  };
+  const toggleDiffFilterField = (fieldName: string) => {
+    setDiffFilterFields(prev => {
+      const next = prev.includes(fieldName) ? prev.filter(f => f !== fieldName) : [...prev, fieldName];
+      setShowOnlyDiff(next.length > 0);
+      return next;
+    });
+  };
+  const clearDiffFilter = () => {
+    setShowOnlyDiff(false);
+    setDiffFilterMode('all');
+    setDiffFilterFields([]);
+    setShowDiffFilterPanel(false);
+  };
   // Compact dataset-selector row's own height (sticky, right under the doc-header row) — every
   // other sticky element further down the table (the HEADER/DESCRIPTION bars, group-row bars)
   // must offset its own `top` by this much extra when the selector is showing, so it doesn't
@@ -5700,6 +5728,29 @@ const mockWorkflows: Workflow[] = [
     }));
   }, [selectedJob, overriddenValues, unvalidatedDocs, confirmedMismatches, standaloneDocPreview, selectedDatasetKey]);
 
+  // Grouped, deduped list of every field that currently has at least one mismatched target,
+  // each with a count of how many mismatched cells it has — powers the "select specific
+  // fields" mode of the differences filter panel.
+  const diffFieldOptions = React.useMemo(() => {
+    const groups: Record<string, { fieldName: string; count: number }[]> = { Header: [], Description: [], Footer: [] };
+    const seen = new Map<string, number>();
+    allComparisonResults.forEach(res => {
+      const part = (res as any).part as 'Header' | 'Description' | 'Footer' | 'Summary';
+      if (part === 'Summary' || !groups[part]) return;
+      const mismatchCount = res.targets.filter((t: any) => t.status === 'MISMATCH').length;
+      if (mismatchCount === 0) return;
+      const key = `${part}::${res.fieldName}`;
+      if (seen.has(key)) {
+        const idx = seen.get(key)!;
+        groups[part][idx].count += mismatchCount;
+      } else {
+        seen.set(key, groups[part].length);
+        groups[part].push({ fieldName: res.fieldName, count: mismatchCount });
+      }
+    });
+    return groups;
+  }, [allComparisonResults]);
+
   const mismatchedFileNames = React.useMemo(() => {
     const set = new Set<string>();
     allComparisonResults.forEach(res => {
@@ -8432,19 +8483,113 @@ const mockWorkflows: Workflow[] = [
               <div className="flex items-center gap-2 p-1.5">
 
                   {/* 1. Show only differences Filter */}
-                  <Tooltip position={isJobPanelFullscreen ? 'bottom' : 'top'} content={showOnlyDiff ? (language === 'TH' ? 'แสดงทั้งหมด' : 'Show All') : (language === 'TH' ? 'ดูเฉพาะที่ต่าง' : 'Show Only Differences')}>
-                    <button 
-                      disabled={isUnassigned}
-                      onClick={() => setShowOnlyDiff(!showOnlyDiff)}
-                      className={`p-2.5 rounded-[4px] transition-all border flex items-center justify-center cursor-pointer shadow-sm disabled:opacity-30 disabled:cursor-not-allowed ${
-                        showOnlyDiff
-                          ? 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 shadow-[0_2px_8px_rgba(31,93,249,0.15)]'
-                          : 'bg-white text-slate-500 border-slate-200/60 hover:bg-slate-50'
-                      }`}
-                    >
-                      <Filter size={15} strokeWidth={2.5} className={showOnlyDiff ? 'text-blue-500' : 'text-slate-400'} />
-                    </button>
-                  </Tooltip>
+                  <div className="relative">
+                    <Tooltip position={isJobPanelFullscreen ? 'bottom' : 'top'} content={showOnlyDiff ? (language === 'TH' ? 'ตัวกรองกำลังใช้งาน' : 'Filter active') : (language === 'TH' ? 'ดูเฉพาะที่ต่าง' : 'Show Only Differences')}>
+                      <button
+                        disabled={isUnassigned}
+                        onClick={() => setShowDiffFilterPanel(v => !v)}
+                        className={`p-2.5 rounded-[4px] transition-all border flex items-center justify-center cursor-pointer shadow-sm disabled:opacity-30 disabled:cursor-not-allowed ${
+                          showOnlyDiff
+                            ? 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 shadow-[0_2px_8px_rgba(31,93,249,0.15)]'
+                            : 'bg-white text-slate-500 border-slate-200/60 hover:bg-slate-50'
+                        }`}
+                      >
+                        <Filter size={15} strokeWidth={2.5} className={showOnlyDiff ? 'text-blue-500' : 'text-slate-400'} />
+                      </button>
+                    </Tooltip>
+
+                    {showDiffFilterPanel && (
+                      <>
+                        <div
+                          className="fixed inset-0 z-[590] cursor-default"
+                          onClick={() => setShowDiffFilterPanel(false)}
+                        />
+                        <div className="absolute left-0 mt-1.5 w-80 bg-white border border-slate-200 rounded-lg shadow-xl p-3 z-[600] select-none">
+                          <p className="text-[10px] font-black text-[#010136] uppercase tracking-widest mb-2 pb-1.5 border-b border-slate-100 flex items-center justify-between">
+                            <span>{language === 'TH' ? 'ตัวกรองข้อมูลที่ต่างกัน' : 'DIFFERENCES FILTER'}</span>
+                            {showOnlyDiff && (
+                              <button type="button" onClick={clearDiffFilter} className="text-slate-400 hover:text-rose-500 font-bold normal-case tracking-normal cursor-pointer">
+                                {language === 'TH' ? 'ล้างตัวกรอง' : 'Clear'}
+                              </button>
+                            )}
+                          </p>
+                          <div className="flex flex-col gap-1.5">
+                            <label className={`flex items-center gap-2 p-2 rounded-[4px] border text-[13px] font-bold cursor-pointer transition-all ${diffFilterMode === 'all' ? 'bg-blue-50 border-[#1f5df9] text-[#1f5df9]' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
+                              <input
+                                type="radio"
+                                checked={diffFilterMode === 'all'}
+                                onChange={() => { setDiffFilterMode('all'); setShowOnlyDiff(true); }}
+                                className="cursor-pointer"
+                              />
+                              {language === 'TH' ? 'ดูเฉพาะที่ต่างทั้งหมด' : 'View all differences'}
+                            </label>
+                            <label className={`flex items-center gap-2 p-2 rounded-[4px] border text-[13px] font-bold cursor-pointer transition-all ${diffFilterMode === 'fields' ? 'bg-blue-50 border-[#1f5df9] text-[#1f5df9]' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
+                              <input
+                                type="radio"
+                                checked={diffFilterMode === 'fields'}
+                                onChange={() => { setDiffFilterMode('fields'); setShowOnlyDiff(diffFilterFields.length > 0); }}
+                                className="cursor-pointer"
+                              />
+                              {language === 'TH' ? 'เลือกเฉพาะบางฟิลด์' : 'Select specific fields'}
+                            </label>
+                          </div>
+
+                          {diffFilterMode === 'fields' && (
+                            <div className="mt-2 border border-slate-200 rounded-lg overflow-hidden">
+                              <div className="relative p-2 border-b border-slate-100">
+                                <input
+                                  type="text"
+                                  value={diffFieldSearch}
+                                  onChange={(e) => setDiffFieldSearch(e.target.value)}
+                                  placeholder={language === 'TH' ? 'เลือกฟิลด์ที่ต้องการยืนยัน...' : 'Search fields...'}
+                                  className="w-full pl-2 pr-7 py-1.5 rounded-md border border-slate-200 text-[13px] font-semibold text-[#010136] placeholder:text-slate-400 placeholder:font-medium outline-none focus:border-[#1f5df9] focus:ring-2 focus:ring-[#1f5df9]/20 transition-all font-sans"
+                                />
+                                <Search size={13} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                              </div>
+                              <div className="max-h-60 overflow-y-auto custom-scrollbar">
+                                {(['Header', 'Description', 'Footer'] as const).map(part => {
+                                  const items = diffFieldOptions[part].filter(f => f.fieldName.toLowerCase().includes(diffFieldSearch.trim().toLowerCase()));
+                                  if (items.length === 0) return null;
+                                  const partLabel = part === 'Header' ? (language === 'TH' ? 'ส่วนหัว (HEADER)' : 'HEADER') : part === 'Description' ? (language === 'TH' ? 'ส่วนรายละเอียด (DESCRIPTION)' : 'DESCRIPTION') : (language === 'TH' ? 'ส่วนท้าย (FOOTER)' : 'FOOTER');
+                                  return (
+                                    <div key={part}>
+                                      <div className="px-3 py-1.5 text-[10px] font-black text-slate-400 uppercase tracking-wider bg-slate-50">{partLabel}</div>
+                                      {items.map(item => {
+                                        const isSelected = diffFilterFields.includes(item.fieldName);
+                                        return (
+                                          <button
+                                            key={item.fieldName}
+                                            type="button"
+                                            onClick={() => toggleDiffFilterField(item.fieldName)}
+                                            className={`w-full text-left px-3 py-2 flex items-center justify-between gap-2 text-[13px] cursor-pointer transition-colors ${
+                                              isSelected ? 'bg-blue-50 text-[#1f5df9] font-bold' : 'text-slate-700 hover:bg-slate-50 font-medium'
+                                            }`}
+                                          >
+                                            <span className="flex items-center gap-1.5 truncate">
+                                              {isSelected && <Check size={12} strokeWidth={3} className="shrink-0" />}
+                                              <span className="truncate">{item.fieldName}</span>
+                                            </span>
+                                            <span className={`shrink-0 text-[11px] ${isSelected ? 'text-[#1f5df9]' : 'text-slate-400'}`}>
+                                              ({item.count} {language === 'TH' ? 'รายการ' : 'items'})
+                                            </span>
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  );
+                                })}
+                                {Object.values(diffFieldOptions).every(list => list.filter(f => f.fieldName.toLowerCase().includes(diffFieldSearch.trim().toLowerCase())).length === 0) && (
+                                  <div className="p-4 text-center text-slate-400 text-[12px] font-semibold">
+                                    {language === 'TH' ? 'ไม่พบฟิลด์ที่ต่างกัน' : 'No differing fields found'}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
 
                   {/* Activity Logs for this job — who on the team did what, on which document/field */}
                   <Tooltip position={isJobPanelFullscreen ? 'bottom' : 'top'} content={language === 'TH' ? 'ดูประวัติกิจกรรมของรายการนี้' : 'View activity logs for this job'}>
@@ -9009,7 +9154,7 @@ const mockWorkflows: Workflow[] = [
                             </p>
                          </div>
                       ) : (
-                            showOnlyDiff && !comparisonResults.some(res => res.targets.some((t: any) => t.status === 'MISMATCH')) ? (
+                            showOnlyDiff && !comparisonResults.some(res => passesDiffFilter(res)) ? (
                               <div className="flex flex-col items-center justify-center py-20 px-4 text-center bg-white border border-slate-200/60 rounded-b-2xl mx-1 my-1 select-none w-full">
                                  <div className="w-16 h-16 rounded-2xl bg-emerald-50 border border-emerald-100/50 flex items-center justify-center text-emerald-500 mb-4 shadow-sm">
                                     <ShieldCheck size={28} className="text-emerald-500" />
@@ -9023,7 +9168,7 @@ const mockWorkflows: Workflow[] = [
                                       : 'No conflicting data values found in this document group. You can toggle off "Show Only Differences" to view all fields.'}
                                  </p>
                                  <button
-                                   onClick={() => setShowOnlyDiff(false)}
+                                   onClick={clearDiffFilter}
                                    className="px-4 py-2 bg-[#1F5DF9] hover:bg-[#104BE3] text-white rounded-[4px] text-xs font-black uppercase tracking-widest transition-all shadow-sm cursor-pointer border-none"
                                  >
                                    {language === 'TH' ? 'ดูข้อมูลทั้งหมด' : 'Show All Data'}
@@ -9032,7 +9177,7 @@ const mockWorkflows: Workflow[] = [
                             ) : ['Header', 'Description', 'Footer', 'Summary'].map(part => {
                               const originalPartResults = comparisonResults.filter(res => (res as any).part === part);
                               const partResults = originalPartResults
-                                .filter(res => !showOnlyDiff || res.targets.some((t: any) => t.status === 'MISMATCH'));
+                                .filter(res => passesDiffFilter(res));
                               
                               if (partResults.length === 0) return null;
 
