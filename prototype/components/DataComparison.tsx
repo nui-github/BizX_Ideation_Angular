@@ -3208,6 +3208,35 @@ const mockWorkflows: Workflow[] = [
   // In the standalone preview tab the viewer is the main attraction — let the
   // OCR fields panel on the right be toggled away so the document can go full width.
   const [showOcrPanel, setShowOcrPanel] = useState(true);
+  // null = default width (1/3 of screen, via CSS %); once the user drags the handle we
+  // switch to a fixed px width, clamped so it never gets narrower than that default.
+  const [ocrPanelWidthPx, setOcrPanelWidthPx] = useState<number | null>(null);
+  const ocrPanelDragRef = useRef<{ startX: number; startWidth: number } | null>(null);
+
+  const handleOcrPanelDragStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const panelEl = document.getElementById('ocr-panel-resizable');
+    const startWidth = panelEl ? panelEl.getBoundingClientRect().width : window.innerWidth / 3;
+    ocrPanelDragRef.current = { startX: e.clientX, startWidth };
+
+    const minWidth = window.innerWidth / 3;
+    const maxWidth = window.innerWidth - 300; // leave room for the document viewer
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      if (!ocrPanelDragRef.current) return;
+      const { startX, startWidth: fromWidth } = ocrPanelDragRef.current;
+      const deltaX = moveEvent.clientX - startX;
+      const newWidth = Math.max(minWidth, Math.min(fromWidth - deltaX, maxWidth));
+      setOcrPanelWidthPx(newWidth);
+    };
+    const onMouseUp = () => {
+      ocrPanelDragRef.current = null;
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+  };
 
   useEffect(() => {
     if (!standaloneDocPreview) return;
@@ -6592,7 +6621,7 @@ const mockWorkflows: Workflow[] = [
                {/* Left Pane: PDF Preview in grey canvas container */}
                {(() => {
                  const isFullWidth = activeBoardTab === 'pending' || (standaloneDocPreview && !showOcrPanel);
-                 const leftWidthClass = isFullWidth ? 'w-full' : (standaloneDocPreview ? 'w-2/3' : 'w-1/2');
+                 const leftWidthClass = isFullWidth ? 'w-full' : (standaloneDocPreview ? 'flex-1 min-w-0' : 'w-1/2');
                  return (
                <div className={`${leftWidthClass} flex flex-col border-[#eaecf0] bg-white ${isFullWidth ? '' : 'border-r'}`}>
                   
@@ -7205,8 +7234,19 @@ const mockWorkflows: Workflow[] = [
 
                {/* Right Pane: Multi Tab view of either Editable Excel layout or Raw JSON with Copy Code */}
                {activeBoardTab !== 'pending' && (!standaloneDocPreview || showOcrPanel) && (
-                 <div className={`${standaloneDocPreview ? 'w-1/3' : 'w-1/2'} flex flex-col bg-white overflow-hidden min-h-0`}>
-                  
+                 <div
+                   id="ocr-panel-resizable"
+                   className={`${standaloneDocPreview ? 'shrink-0 relative' : 'w-1/2'} flex flex-col bg-white overflow-hidden min-h-0`}
+                   style={standaloneDocPreview ? { width: ocrPanelWidthPx ? `${ocrPanelWidthPx}px` : '33.3333%' } : undefined}
+                 >
+                  {standaloneDocPreview && (
+                    <div
+                      onMouseDown={handleOcrPanelDragStart}
+                      className="absolute left-0 top-0 bottom-0 w-1.5 -ml-[3px] cursor-col-resize z-20 hover:bg-blue-400/40 active:bg-blue-500/50 transition-colors"
+                      title={language === 'TH' ? 'ลากเพื่อปรับความกว้างพาเนล' : 'Drag to resize panel'}
+                    />
+                  )}
+
                   {/* Right Tab Headers matching reference image */}
                   <div className="bg-slate-50/50 border-b border-[#eaecf0] flex px-4 shrink-0 h-12">
                     <button 
