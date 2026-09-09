@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Switch } from 'antd';
-import { ArrowLeft, Plus, ShieldCheck, Tag, X, FilePlus, Pencil, Trash2, Check, Copy, ClipboardPaste, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Plus, ShieldCheck, Tag, X, FilePlus, Pencil, Trash2, Check, Copy, ClipboardPaste, ChevronLeft, ChevronRight, AlertCircle, GripVertical } from 'lucide-react';
 import { TRANSLATIONS } from '../translations';
 import { Language } from '../types';
 import { Tooltip } from './Tooltip';
@@ -279,6 +279,23 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
 
   const handleDeleteField = (partIdx: number, rowIdx: number) => {
     setDeletingField({ partIdx, rowIdx });
+  };
+
+  // Drag-to-reorder rows within a single section (Header/Description/Footer) — dragging
+  // across sections is a no-op since a field's part determines which section it renders in.
+  const [draggedRow, setDraggedRow] = useState<{ partIdx: number; rowIdx: number } | null>(null);
+  const [dragOverRowIdx, setDragOverRowIdx] = useState<number | null>(null);
+
+  const handleReorderRow = (partIdx: number, fromIdx: number, toIdx: number) => {
+    if (fromIdx === toIdx) return;
+    setActiveRule((prevRule: any) => {
+      const newParts = [...prevRule.parts];
+      const rows = [...newParts[partIdx].rows];
+      const [moved] = rows.splice(fromIdx, 1);
+      rows.splice(toIdx, 0, moved);
+      newParts[partIdx] = { ...newParts[partIdx], rows };
+      return { ...prevRule, parts: newParts };
+    });
   };
 
   const confirmDelete = () => {
@@ -583,8 +600,25 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                   </tr>
                   {section.rows.map((row: any, rIdx: number) => {
                     const isEditing = editingFieldId === row.id;
+                    const isDragging = draggedRow?.partIdx === sIdx && draggedRow?.rowIdx === rIdx;
+                    const isDragOver = draggedRow?.partIdx === sIdx && dragOverRowIdx === rIdx && !isDragging;
                     return (
-                      <tr key={row.id} className={`${isEditing ? 'bg-blue-50/30' : 'hover:bg-slate-50/50'} transition-colors group`}>
+                      <tr
+                        key={row.id}
+                        className={`${isEditing ? 'bg-blue-50/30' : 'hover:bg-slate-50/50'} transition-colors group ${isDragging ? 'opacity-40' : ''} ${isDragOver ? 'shadow-[inset_0_2px_0_0_#1f5df9]' : ''}`}
+                        onDragOver={(e) => {
+                          if (draggedRow?.partIdx !== sIdx) return;
+                          e.preventDefault();
+                          if (dragOverRowIdx !== rIdx) setDragOverRowIdx(rIdx);
+                        }}
+                        onDrop={(e) => {
+                          if (draggedRow?.partIdx !== sIdx) return;
+                          e.preventDefault();
+                          handleReorderRow(sIdx, draggedRow.rowIdx, rIdx);
+                          setDraggedRow(null);
+                          setDragOverRowIdx(null);
+                        }}
+                      >
                         <td className="px-6 py-4 text-xs font-bold text-slate-700 sticky left-0 bg-white z-[20] shadow-[2px_0_5px_rgba(0,0,0,0.02)] border-r border-slate-100 align-top">
                           {isEditing ? (
                              <div className="flex flex-col gap-2 relative">
@@ -611,8 +645,25 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                                </div>
                              </div>
                           ) : (
-                             <div className="flex items-center justify-between min-h-[24px]">
-                               <span>{language === 'TH' && row.detailTh ? row.detailTh : row.detail}</span>
+                             <div className="flex items-center justify-between min-h-[24px] gap-1">
+                               <div className="flex items-center gap-1.5 min-w-0">
+                                 <span
+                                   draggable
+                                   onDragStart={(e) => {
+                                     e.dataTransfer.effectAllowed = 'move';
+                                     setDraggedRow({ partIdx: sIdx, rowIdx: rIdx });
+                                   }}
+                                   onDragEnd={() => {
+                                     setDraggedRow(null);
+                                     setDragOverRowIdx(null);
+                                   }}
+                                   title={language === 'TH' ? 'ลากเพื่อจัดลำดับ' : 'Drag to reorder'}
+                                   className="shrink-0 text-slate-300 hover:text-slate-500 cursor-grab active:cursor-grabbing touch-none"
+                                 >
+                                   <GripVertical size={14} />
+                                 </span>
+                                 <span className="truncate">{language === 'TH' && row.detailTh ? row.detailTh : row.detail}</span>
+                               </div>
                                <div className="flex items-center gap-1 opacity-100 transition-opacity">
                                  <Tooltip content="แก้ไข">
                                    <button onClick={() => startEdit(row)} className="w-6 h-6 rounded-[4px] flex items-center justify-center text-slate-300 hover:text-blue-600 hover:bg-blue-50 transition-colors">
