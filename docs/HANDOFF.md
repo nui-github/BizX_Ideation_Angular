@@ -64,6 +64,7 @@ follow the `src/app/features/<area>/<name>.component.ts` convention already used
 | `components/ExtractionView.tsx` | `features/exdoc/extraction-view` | ExDoc (detail view) |
 | `components/AgentList.tsx` | `features/agents/agent-list` | (agent.service.ts already exists) |
 | `components/AgentForm.tsx` | `features/agents/agent-form` | (agent.service.ts already exists) |
+| `components/DataComparison.tsx` | `features/data-comparison/job-list` + `features/data-comparison/job-detail` (split recommended — see note) | Data Comparison → รายการงาน (**not started**, missing from this table until now — 10,295 lines, by far the largest single file in `/prototype`; not the same component as `ComparisonWorkflow.tsx` below, which is a separate/unrelated 359-line widget) |
 | `components/CreateJobModal.tsx` | `features/data-comparison/create-job-modal` | Data Comparison → รายการงาน (modal) |
 | `components/GenerateReportModal.tsx` | `features/data-comparison/generate-report-modal` | Data Comparison → รายการงาน (สร้างรายงาน drawer) — new since the last scan: row select/delete/bulk-action toolbar, per-file report management |
 | `components/ComparisonWorkflow.tsx` | `features/data-comparison/comparison-workflow` | Data Comparison |
@@ -77,6 +78,21 @@ follow the `src/app/features/<area>/<name>.component.ts` convention already used
 | `components/JobPresetSettings.tsx` | `features/settings/job-preset-settings` | Settings |
 | `components/WorkflowList.tsx` | `features/exdoc/workflow-list` | ExDoc / generic workflow list |
 | `components/Tooltip.tsx` | `shared/tooltip` | Cross-cutting |
+
+**`DataComparison.tsx` scope note** (added here since the file has no prior entry to attach this
+to): it covers the whole "รายการงาน (Job)" area end to end — job list, shipment grouping (jobs
+sharing a `reference` string) with its own sub-job list view, job detail with the compare table
+(Header/Description/Footer/Summary sections, sticky dataset selector for jobs with multiple
+datasets), the Replace & Merge upload flow (per-file page range or, for `.xlsx`/`.xls`, a sheet-tab
+picker defaulting to the first sheet — pages-to-read doesn't apply to Excel or image uploads),
+activity logs, and report generation. Recent additions (as of 2026-09-11) worth knowing about before
+scoping a port: the differences-filter drawer (portal-rendered, not a dropdown) gained a per-field
+value filter (chip input, OR-matched substring against source + every target value) and a
+Matched/Unmatched/Both status section, both staged in a draft copy and only committed on an
+explicit Apply/Clear pair of buttons; and the shipment title got inline rename (pencil icon →
+input sized to the text via the `size` attribute, Enter/blur commits, Escape cancels, blocked from
+colliding with another shipment's name since that would merge the two groups). Given the size, this
+is a strong candidate to split into multiple Angular components rather than porting 1:1.
 
 Follow the same pattern for each: add a `src/mock-data/*.mock.ts` file (if new data is needed), a
 `src/app/core/services/*.service.ts` wrapping it in an `Observable`, then a standalone
