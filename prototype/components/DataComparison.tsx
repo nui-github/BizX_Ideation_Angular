@@ -754,6 +754,12 @@ export const DataComparison: React.FC<DataComparisonProps> = ({ language, tracki
   const [currentPage, setCurrentPage] = useState(1);
   const [activeBoardTab, setActiveBoardTab] = useState('jobs');
   const [selectedShipment, setSelectedShipment] = useState<string | null>(null);
+  // Inline rename of the shipment title — "shipment" is just every job sharing the same
+  // `reference` string grouped together (see getShipments below), so renaming means updating
+  // that string on every job in the group, plus the selectedShipment key itself since it's
+  // used both as the active filter and as the prefilled reference for new jobs under it.
+  const [editingShipmentName, setEditingShipmentName] = useState(false);
+  const [shipmentNameDraft, setShipmentNameDraft] = useState('');
 
   const getShipments = () => {
     const grouped: Record<string, ComparisonJob[]> = {};
@@ -5114,6 +5120,24 @@ const mockWorkflows: Workflow[] = [
     );
   };
 
+  const startEditingShipmentName = () => {
+    if (!selectedShipment) return;
+    setShipmentNameDraft(selectedShipment);
+    setEditingShipmentName(true);
+  };
+  const commitShipmentRename = () => {
+    const trimmed = shipmentNameDraft.trim();
+    setEditingShipmentName(false);
+    if (!selectedShipment || !trimmed || trimmed === selectedShipment) return;
+    const collides = jobs.some(j => j.reference === trimmed && j.reference !== selectedShipment);
+    if (collides) {
+      alert(language === 'TH' ? `มีชุดงานชื่อ "${trimmed}" อยู่แล้ว กรุณาใช้ชื่ออื่น` : `A shipment named "${trimmed}" already exists — please use a different name.`);
+      return;
+    }
+    setJobs(prev => prev.map(j => j.reference === selectedShipment ? { ...j, reference: trimmed } : j));
+    setSelectedShipment(trimmed);
+  };
+
   const renderShipmentJobList = () => {
     const shipmentJobs = jobs.filter(job => job.reference === selectedShipment);
 
@@ -5218,8 +5242,32 @@ const mockWorkflows: Workflow[] = [
           >
             <ArrowLeft size={20} />
           </button>
-          <div>
-            <h3 className="text-xl md:text-2xl font-black text-[#010136] tracking-tight">{selectedShipment}</h3>
+          <div className="min-w-0">
+            {editingShipmentName ? (
+              <input
+                autoFocus
+                type="text"
+                value={shipmentNameDraft}
+                onChange={(e) => setShipmentNameDraft(e.target.value)}
+                onBlur={commitShipmentRename}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') { e.preventDefault(); (e.target as HTMLInputElement).blur(); }
+                  else if (e.key === 'Escape') { e.preventDefault(); setEditingShipmentName(false); }
+                }}
+                className="text-xl md:text-2xl font-black text-[#010136] tracking-tight bg-blue-50/50 border border-blue-200 rounded-[4px] px-2 -mx-2 outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 w-full max-w-md"
+              />
+            ) : (
+              <div className="flex items-center gap-1.5 group/shipmentName">
+                <h3 className="text-xl md:text-2xl font-black text-[#010136] tracking-tight truncate">{selectedShipment}</h3>
+                <button
+                  onClick={startEditingShipmentName}
+                  className="p-1 rounded-[4px] text-slate-300 hover:text-blue-600 hover:bg-blue-50 opacity-0 group-hover/shipmentName:opacity-100 transition-all shrink-0 cursor-pointer"
+                  title={language === 'TH' ? 'แก้ไขชื่อ Shipment' : 'Rename shipment'}
+                >
+                  <Edit3 size={16} />
+                </button>
+              </div>
+            )}
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">
               {language === 'TH' ? 'สร้างเมื่อ: ' : 'CREATED: '} <span className="text-slate-500">{shipmentCreatedAt ? formatDisplayDate(shipmentCreatedAt) : 'N/A'}</span>
             </p>
