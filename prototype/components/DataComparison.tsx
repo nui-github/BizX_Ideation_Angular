@@ -5254,7 +5254,8 @@ const mockWorkflows: Workflow[] = [
                   if (e.key === 'Enter') { e.preventDefault(); (e.target as HTMLInputElement).blur(); }
                   else if (e.key === 'Escape') { e.preventDefault(); setEditingShipmentName(false); }
                 }}
-                className="text-xl md:text-2xl font-black text-[#010136] tracking-tight bg-blue-50/50 border border-blue-200 rounded-[4px] px-2 -mx-2 outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 w-full max-w-md"
+                size={Math.max(shipmentNameDraft.length, 1)}
+                className="text-xl md:text-2xl font-black text-[#010136] tracking-tight bg-blue-50/50 border border-blue-200 rounded-[4px] px-2 -mx-2 outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 max-w-full"
               />
             ) : (
               <div className="flex items-center gap-1.5 group/shipmentName">
