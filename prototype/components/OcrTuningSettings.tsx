@@ -238,7 +238,17 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
   // so re-uploading isn't required just to resume a saved template.
   const [restoredFileName, setRestoredFileName] = useState<string | null>(null);
   const [showReupload, setShowReupload] = useState(false);
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
   const activeFileName = uploadedFile?.name || restoredFileName || null;
+
+  const handleFileDragOver = (e: React.DragEvent) => { e.preventDefault(); setIsDraggingFile(true); };
+  const handleFileDragLeave = () => setIsDraggingFile(false);
+  const handleFileDrop = (e: React.DragEvent, onFile: (f: File) => void) => {
+    e.preventDefault();
+    setIsDraggingFile(false);
+    const f = e.dataTransfer.files?.[0];
+    if (f) onFile(f);
+  };
 
   const switchToNewTemplate = () => {
     setTemplateMode('new');
@@ -592,7 +602,14 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                   placeholder={t('เช่น Invoice ลูกค้า ABC รอบ 1', 'e.g. ABC Invoice batch 1')}
                   className="w-full px-3 py-2.5 rounded-[4px] border border-slate-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9] mb-4"
                 />
-                <label className="flex flex-col items-center justify-center gap-2 py-10 border-2 border-dashed border-slate-200 rounded-xl cursor-pointer hover:border-[#1f5df9] hover:bg-blue-50/20 transition-all">
+                <label
+                  onDragOver={handleFileDragOver}
+                  onDragLeave={handleFileDragLeave}
+                  onDrop={(e) => handleFileDrop(e, (f) => { setUploadedFile(f); setResults(null); })}
+                  className={`flex flex-col items-center justify-center gap-2 py-10 border-2 border-dashed rounded-xl cursor-pointer transition-all ${
+                    isDraggingFile ? 'border-[#1f5df9] bg-blue-50/40' : 'border-slate-200 hover:border-[#1f5df9] hover:bg-blue-50/20'
+                  }`}
+                >
                   <Upload size={26} className="text-[#1f5df9]" />
                   <span className="text-sm font-bold text-slate-700">
                     {uploadedFile ? uploadedFile.name : t('ลากไฟล์มาวางที่นี่ หรือ คลิกเพื่อเลือกไฟล์', 'Drop a file here, or click to choose one')}
@@ -637,7 +654,14 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                   </div>
                 )}
                 {activeTemplateId && showReupload && (
-                  <label className="flex flex-col items-center justify-center gap-2 py-8 mt-3 border-2 border-dashed border-slate-200 rounded-xl cursor-pointer hover:border-[#1f5df9] hover:bg-blue-50/20 transition-all">
+                  <label
+                    onDragOver={handleFileDragOver}
+                    onDragLeave={handleFileDragLeave}
+                    onDrop={(e) => handleFileDrop(e, (f) => { setUploadedFile(f); setRestoredFileName(null); setResults(null); setShowReupload(false); })}
+                    className={`flex flex-col items-center justify-center gap-2 py-8 mt-3 border-2 border-dashed rounded-xl cursor-pointer transition-all ${
+                      isDraggingFile ? 'border-[#1f5df9] bg-blue-50/40' : 'border-slate-200 hover:border-[#1f5df9] hover:bg-blue-50/20'
+                    }`}
+                  >
                     <Upload size={22} className="text-[#1f5df9]" />
                     <span className="text-sm font-bold text-slate-700">{t('เลือกไฟล์ใหม่', 'Choose a new file')}</span>
                     <input
