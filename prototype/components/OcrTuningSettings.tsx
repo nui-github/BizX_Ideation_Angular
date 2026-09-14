@@ -153,6 +153,19 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
     setSavedOnce(false);
   };
 
+  // Past step 2, a schema draft (and its fields) exists — confirm before throwing it away.
+  const confirmResetAll = () => {
+    if (!draftSchema) { resetAll(); return; }
+    Modal.confirm({
+      title: t('เริ่มใหม่ทั้งหมด?', 'Start over?'),
+      content: t('ข้อมูลที่กรอกไว้ทั้งหมด รวมถึงฟิลด์ที่แก้ไข จะหายไป — การเริ่มใหม่ไม่สามารถย้อนกลับได้', 'Everything entered so far, including edited fields, will be lost — this can\'t be undone.'),
+      okText: t('เริ่มใหม่', 'Start over'),
+      okType: 'danger',
+      cancelText: t('ยกเลิก', 'Cancel'),
+      onOk: resetAll,
+    });
+  };
+
   const switchMode = (next: 'new' | 'edit') => {
     setMode(next);
     setDraftSchema(null);
@@ -389,7 +402,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
             <p className="text-sm text-slate-500 mt-0.5">{t('กำหนดฟิลด์และคำอธิบายฟิลด์/ตำแหน่ง ให้ AI อ่านเอกสารได้ถูกต้อง — ทดสอบก่อนบันทึกได้', 'Define fields and their hints so the AI reads documents correctly — test before saving')}</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <button onClick={resetAll} className="flex items-center gap-1.5 px-3.5 py-2 rounded-[4px] border border-slate-200 bg-white text-slate-500 text-sm font-bold hover:bg-slate-50 cursor-pointer">
+            <button onClick={confirmResetAll} className="flex items-center gap-1.5 px-3.5 py-2 rounded-[4px] border border-slate-200 bg-white text-slate-500 text-sm font-bold hover:bg-slate-50 cursor-pointer">
               <RotateCcw size={14} /> {t('เริ่มใหม่', 'Start over')}
             </button>
             <button
