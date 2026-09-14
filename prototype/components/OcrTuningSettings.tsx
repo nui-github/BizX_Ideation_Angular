@@ -115,7 +115,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
   // --- 2. ชื่อ schema และจุดเริ่มต้น (new mode only) ---
   const [nameDraft, setNameDraft] = useState('');
   const [nameDocTypeId, setNameDocTypeId] = useState<string>(docTypes[0]?.id || '');
-  const [startFrom, setStartFrom] = useState<'copy' | 'dataset' | 'blank'>('copy');
+  const [startFrom, setStartFrom] = useState<'copy' | 'blank'>('copy');
   const [copySourceKey, setCopySourceKey] = useState('');
   const [newConfirmed, setNewConfirmed] = useState(false);
 
@@ -446,8 +446,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
               <div className="flex items-center gap-4 mb-3">
                 {([
                   { key: 'copy' as const, th: 'คัดลอกฟิลด์จาก schema อื่น', en: 'Copy fields from another schema' },
-                  { key: 'dataset' as const, th: 'ฟิลด์จาก dataset', en: 'Fields from a dataset' },
-                  { key: 'blank' as const, th: 'เริ่มว่าง', en: 'Start blank' },
+                  { key: 'blank' as const, th: 'เริ่ม Schema ใหม่', en: 'Start a new schema' },
                 ]).map(opt => (
                   <label key={opt.key} className="flex items-center gap-1.5 text-[13px] font-bold text-slate-600 cursor-pointer">
                     <input type="radio" checked={startFrom === opt.key} onChange={() => { setStartFrom(opt.key); setNewConfirmed(false); }} />
@@ -468,10 +467,6 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                   ))}
                 </select>
               )}
-              {startFrom === 'dataset' && (
-                <p className="text-[11px] font-bold text-slate-400 mb-4">{t('(ตัวอย่าง) ฟีเจอร์นี้อยู่ระหว่างการพัฒนา — จะเริ่มจาก schema ว่างไปก่อน', '(Preview) this is still being built — starts blank for now')}</p>
-              )}
-
               <button
                 onClick={confirmNewSchema}
                 disabled={!nameDraft.trim() || !nameDocTypeId}
