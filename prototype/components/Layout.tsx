@@ -157,20 +157,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentUserRole, onTog
                   </button>
             </div>
 
-            {/* OCR Tuning (Top Level) */}
-            <div className="px-3 mb-2">
-                 <button
-                    onClick={() => { setActiveMenu('settings_ocr_tuning'); onNavigate('SETTINGS_OCR_TUNING'); }}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-[4px] transition-colors font-medium text-sm w-full
-                        ${activeMenu === 'settings_ocr_tuning' ? 'bg-[#1f5df9] text-white shadow-md' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}
-                        ${collapsed ? 'justify-center' : ''}`}
-                    title={collapsed ? (language === 'TH' ? 'ปรับการอ่านเอกสาร' : 'OCR Tuning') : undefined}
-                  >
-                     <ScanText size={18} />
-                     {!collapsed && <span>{language === 'TH' ? 'ปรับการอ่านเอกสาร' : 'OCR Tuning'}</span>}
-                  </button>
-            </div>
-
             {/* Data Comparison Menu Group (Top Level) */}
             <div className="px-3 mb-2">
                  {!collapsed && (
@@ -427,6 +413,19 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentUserRole, onTog
                     <Settings size={16} className="text-slate-400" />
                     <span>{language === 'TH' ? 'ตั้งค่าชุด Shipment เริ่มต้น' : 'Starting Shipment Set Settings'}</span>
                   </button>
+                  {currentUserRole === UserRole.ADMIN && (
+                    <button
+                      onClick={() => {
+                        onNavigate('SETTINGS_OCR_TUNING');
+                        setActiveMenu('settings_ocr_tuning');
+                        setProfileOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 flex items-center gap-2"
+                    >
+                      <ScanText size={16} className="text-slate-400" />
+                      <span>{language === 'TH' ? 'ตั้งค่า OCR Tuning' : 'OCR Tuning Settings'}</span>
+                    </button>
+                  )}
                 </div>
                 <div className="border-t border-slate-100 py-1">
                   <div className="flex items-center justify-between px-4 py-2">
