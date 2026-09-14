@@ -505,7 +505,7 @@ if (typeof window !== 'undefined') {
 
 function App() {
   // Default view: Data Comparison job list (รายการงาน (Job))
-  const [currentView, setCurrentView] = useState<'TRACKING' | 'AGENT_LIST' | 'AGENT_FORM' | 'EXTRACTION' | 'UPLOAD' | 'WORKFLOW_LIST' | 'WORKFLOW_BUILDER' | 'DATA_COMPARISON_JOBS' | 'DATA_COMPARISON_WORKFLOW' | 'DATA_COMPARISON_RULE' | 'DATA_COMPARISON_WORKFLOW_BUILDER' | 'SETTINGS_DOC_TYPE_MASTER' | 'SETTINGS_LABEL_SCHEMA' | 'SETTINGS_MASTER_DATA' | 'SETTINGS_JOB_PRESET'>('DATA_COMPARISON_JOBS');
+  const [currentView, setCurrentView] = useState<'TRACKING' | 'AGENT_LIST' | 'AGENT_FORM' | 'EXTRACTION' | 'UPLOAD' | 'WORKFLOW_LIST' | 'WORKFLOW_BUILDER' | 'DATA_COMPARISON_JOBS' | 'DATA_COMPARISON_WORKFLOW' | 'DATA_COMPARISON_RULE' | 'DATA_COMPARISON_WORKFLOW_BUILDER' | 'SETTINGS_DOC_TYPE_MASTER' | 'SETTINGS_LABEL_SCHEMA' | 'SETTINGS_MASTER_DATA' | 'SETTINGS_JOB_PRESET' | 'SETTINGS_OCR_TUNING'>('DATA_COMPARISON_JOBS');
   const [docTypes, setDocTypes] = useState<DocType[]>([
     { 
       id: 'INV', 
@@ -1201,7 +1201,7 @@ function App() {
       setRole(prev => prev === UserRole.ADMIN ? UserRole.USER : UserRole.ADMIN);
   };
 
-  const handleNavigate = (view: 'TRACKING' | 'AGENT_LIST' | 'UPLOAD' | 'WORKFLOW_LIST' | 'DATA_COMPARISON_JOBS' | 'DATA_COMPARISON_WORKFLOW' | 'DATA_COMPARISON_RULE' | 'DATA_COMPARISON_WORKFLOW_BUILDER' | 'SETTINGS_DOC_TYPE_MASTER' | 'SETTINGS_LABEL_SCHEMA' | 'SETTINGS_MASTER_DATA' | 'SETTINGS_JOB_PRESET') => {
+  const handleNavigate = (view: 'TRACKING' | 'AGENT_LIST' | 'UPLOAD' | 'WORKFLOW_LIST' | 'DATA_COMPARISON_JOBS' | 'DATA_COMPARISON_WORKFLOW' | 'DATA_COMPARISON_RULE' | 'DATA_COMPARISON_WORKFLOW_BUILDER' | 'SETTINGS_DOC_TYPE_MASTER' | 'SETTINGS_LABEL_SCHEMA' | 'SETTINGS_MASTER_DATA' | 'SETTINGS_JOB_PRESET' | 'SETTINGS_OCR_TUNING') => {
       setCurrentView(view);
   };
 
@@ -1258,19 +1258,6 @@ function App() {
       setTrackingItems(prev => [...newItems, ...prev]);
       setCurrentView('TRACKING');
   };
-
-  // Standalone page — no header/sidebar chrome, opened in its own tab from the profile menu
-  // (see Layout.tsx) rather than as an in-app currentView. SPA fallback (vite dev / vercel.json)
-  // routes this path to the same index.html, so the check just happens after mount.
-  if (typeof window !== 'undefined' && window.location.pathname === '/ocr-tuning') {
-    return (
-      <OcrTuningSettings
-        language={language}
-        docTypes={docTypes}
-        onBack={() => window.close()}
-      />
-    );
-  }
 
   return (
       <Layout
@@ -1525,6 +1512,13 @@ function App() {
               }}
             />
           </div>
+        )}
+
+        {currentView === 'SETTINGS_OCR_TUNING' && (
+          <OcrTuningSettings
+            language={language}
+            docTypes={docTypes}
+          />
         )}
 
         {/* Global Toast Notification */}

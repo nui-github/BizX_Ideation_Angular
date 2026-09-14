@@ -14,7 +14,7 @@ interface LayoutProps {
   onToggleRole: () => void;
   language: Language;
   onLanguageChange: (lang: Language) => void;
-  onNavigate: (view: 'TRACKING' | 'AGENT_LIST' | 'UPLOAD' | 'WORKFLOW_LIST' | 'DATA_COMPARISON_JOBS' | 'DATA_COMPARISON_WORKFLOW' | 'DATA_COMPARISON_RULE' | 'DATA_COMPARISON_WORKFLOW_BUILDER' | 'SETTINGS_DOC_TYPE_MASTER' | 'SETTINGS_LABEL_SCHEMA' | 'SETTINGS_MASTER_DATA' | 'SETTINGS_JOB_PRESET') => void;
+  onNavigate: (view: 'TRACKING' | 'AGENT_LIST' | 'UPLOAD' | 'WORKFLOW_LIST' | 'DATA_COMPARISON_JOBS' | 'DATA_COMPARISON_WORKFLOW' | 'DATA_COMPARISON_RULE' | 'DATA_COMPARISON_WORKFLOW_BUILDER' | 'SETTINGS_DOC_TYPE_MASTER' | 'SETTINGS_LABEL_SCHEMA' | 'SETTINGS_MASTER_DATA' | 'SETTINGS_JOB_PRESET' | 'SETTINGS_OCR_TUNING') => void;
   onNotificationClick: (jobId: string) => void;
 }
 
@@ -157,10 +157,24 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentUserRole, onTog
                   </button>
             </div>
 
+            {/* OCR Tuning (Top Level) */}
+            <div className="px-3 mb-2">
+                 <button
+                    onClick={() => { setActiveMenu('settings_ocr_tuning'); onNavigate('SETTINGS_OCR_TUNING'); }}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-[4px] transition-colors font-medium text-sm w-full
+                        ${activeMenu === 'settings_ocr_tuning' ? 'bg-[#1f5df9] text-white shadow-md' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}
+                        ${collapsed ? 'justify-center' : ''}`}
+                    title={collapsed ? (language === 'TH' ? 'ปรับการอ่านเอกสาร' : 'OCR Tuning') : undefined}
+                  >
+                     <ScanText size={18} />
+                     {!collapsed && <span>{language === 'TH' ? 'ปรับการอ่านเอกสาร' : 'OCR Tuning'}</span>}
+                  </button>
+            </div>
+
             {/* Data Comparison Menu Group (Top Level) */}
             <div className="px-3 mb-2">
                  {!collapsed && (
-                   <button 
+                   <button
                      onClick={() => {
                         setComparisonOpen(!comparisonOpen);
                         setActiveMenu('comparison_jobs');
@@ -254,15 +268,15 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentUserRole, onTog
                     {activeMenu === 'comparison_jobs' ? t.jobList : activeMenu === 'comparison_workflow' ? t.manageWorkflow : t.manageRule}
                   </span>
                 </>
-              ) : (activeMenu === 'settings_doc_type' || activeMenu === 'settings_label_schema') ? (
+              ) : (activeMenu === 'settings_doc_type' || activeMenu === 'settings_label_schema' || activeMenu === 'settings_job_preset' || activeMenu === 'settings_master_data') ? (
                 <>
                   <span className="flex items-center gap-1">
                     <Settings size={14} /> {language === 'TH' ? 'ตั้งค่า' : 'Settings'}
                   </span>
                   <span className="mx-2">/</span>
                   <span className="flex items-center gap-1 font-semibold text-slate-800">
-                    {activeMenu === 'settings_doc_type' 
-                      ? (language === 'TH' ? 'ตั้งค่า Doc Type' : 'Doc Type Settings') 
+                    {activeMenu === 'settings_doc_type'
+                      ? (language === 'TH' ? 'ตั้งค่า Doc Type' : 'Doc Type Settings')
                       : activeMenu === 'settings_job_preset'
                       ? (language === 'TH' ? 'ตั้งค่าชุด Shipment เริ่มต้น' : 'Starting Shipment Set Settings')
                       : activeMenu === 'settings_master_data'
@@ -270,6 +284,10 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentUserRole, onTog
                       : (language === 'TH' ? 'ตั้งค่า Label schema' : 'Label Schema Settings')}
                   </span>
                 </>
+              ) : activeMenu === 'settings_ocr_tuning' ? (
+                <span className="flex items-center gap-1 font-semibold text-slate-800">
+                  <ScanText size={14} /> {language === 'TH' ? 'ปรับการอ่านเอกสาร' : 'OCR Tuning'}
+                </span>
               ) : (
                 <span className="flex items-center gap-1 font-semibold text-slate-800">
                   {activeMenu === 'workflow' ? t.datasetBuilder : t.agentManagement}
@@ -409,20 +427,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentUserRole, onTog
                     <Settings size={16} className="text-slate-400" />
                     <span>{language === 'TH' ? 'ตั้งค่าชุด Shipment เริ่มต้น' : 'Starting Shipment Set Settings'}</span>
                   </button>
-                  {currentUserRole === UserRole.ADMIN && (
-                    <button
-                      onClick={() => {
-                        // Standalone page (no header/sidebar) — opened in its own tab rather
-                        // than switching currentView, see App.tsx's path-based early return.
-                        window.open('/ocr-tuning', '_blank', 'noopener,noreferrer');
-                        setProfileOpen(false);
-                      }}
-                      className="w-full text-left px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 flex items-center gap-2"
-                    >
-                      <ScanText size={16} className="text-slate-400" />
-                      <span>{language === 'TH' ? 'ตั้งค่า OCR Tuning' : 'OCR Tuning Settings'}</span>
-                    </button>
-                  )}
                 </div>
                 <div className="border-t border-slate-100 py-1">
                   <div className="flex items-center justify-between px-4 py-2">

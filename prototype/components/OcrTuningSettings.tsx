@@ -1,9 +1,8 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Popover, message } from 'antd';
-import * as XLSX from 'xlsx';
+import React, { useState, useMemo } from 'react';
+import { message } from 'antd';
 import {
-  ArrowLeft, Plus, Trash2, Upload, FileText, Check, X, ChevronRight, ChevronDown,
-  Save, FileSpreadsheet, Download, ArrowUpRight, Play, Search, Loader2, Info, Lightbulb
+  Plus, Trash2, Upload, FileText, FileSpreadsheet, FileCode2, Check, X,
+  ChevronDown, Save, RotateCcw, Search, Sparkles
 } from 'lucide-react';
 import { Language, DocType } from '../types';
 import { LabelSchema, SchemaLabel, DocTypeSchemaConfig, DEFAULT_SCHEMAS } from './LabelSchemaSettings';
@@ -11,11 +10,11 @@ import { LabelSchema, SchemaLabel, DocTypeSchemaConfig, DEFAULT_SCHEMAS } from '
 interface OcrTuningSettingsProps {
   language: Language;
   docTypes: DocType[];
-  onBack: () => void;
 }
 
 type Section = 'Header' | 'Description' | 'Footer';
 const SECTIONS: Section[] = ['Header', 'Description', 'Footer'];
+type ExtractionMethod = 'ai' | 'excel' | 'xml';
 
 const READY_MADE_PHRASES_TH: string[] = [
   'อยู่บริเวณหัวเอกสาร ด้านขวาบน',
@@ -28,14 +27,14 @@ const READY_MADE_PHRASES_TH: string[] = [
 ];
 
 // Deterministic per (field, seed) so re-renders don't jitter results, and re-uploading the
-// same file name against the same schema reproduces the same demo outcome.
+// same file name reproduces the same demo outcome.
 const hashString = (s: string): number => {
   let h = 0;
   for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
   return h;
 };
 
-const buildMockExpectedValue = (field: SchemaLabel, seed: number): string => {
+const buildMockValue = (field: SchemaLabel, seed: number): string => {
   const type = field.type || 'string';
   if (type === 'number') return ((seed % 90000) / 100).toFixed(2);
   if (type === 'boolean') return seed % 2 === 0 ? 'ใช่' : 'ไม่ใช่';
@@ -45,9 +44,8 @@ const buildMockExpectedValue = (field: SchemaLabel, seed: number): string => {
     return `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/2026`;
   }
   if (type === 'array') return `${(seed % 12) + 1} รายการ`;
-  const hint = (field.aiPrompt || '').toLowerCase();
   const name = (field.name || '').toLowerCase();
-  if (hint.includes('invoice') || name.includes('invoice')) return `INV-2026-${String(seed % 9999).padStart(4, '0')}`;
+  if (name.includes('invoice')) return `INV-2026-${String(seed % 9999).padStart(4, '0')}`;
   if (name.includes('tax')) return `01055${String(seed % 99999).padStart(5, '0')}0000`;
   return `${field.name || 'VALUE'}-${seed % 999}`;
 };
@@ -60,136 +58,37 @@ const mutateValue = (value: string, seed: number): string => {
   return chars.join('');
 };
 
-// A same-value-different-format variant — e.g. "1,000.00" -> "1000", "10/07/2026" -> "2026-07-10" —
-// used to demonstrate the "ต่างแค่รูปแบบ" (format-only difference) loose-match case.
-const looseFormatVariant = (value: string, type: string | undefined): string => {
-  const dateMatch = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  if (dateMatch) return `${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`;
-  if (type === 'number') {
-    const n = parseFloat(value.replace(/,/g, ''));
-    if (!isNaN(n)) return Number.isInteger(n) ? String(n) : String(n);
-  }
-  return value;
-};
-
-const normalizeForLooseCompare = (v: string): string => {
-  let s = (v || '').trim().toLowerCase().replace(/,/g, '');
-  s = s.replace(/^(\d+)\.00$/, '$1');
-  const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (m) s = `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
-  return s;
-};
-
-type RowStatus = 'exact' | 'loose' | 'wrong' | 'missing' | 'extra';
-
-interface ResultRow {
-  id: string;
-  page: number;
-  fieldId: string;
-  fieldName: string;
-  friendlyName?: string;
-  section: Section;
-  expected: string;
-  ocrValue: string;
-  isExtra: boolean;
-}
-
-interface TestRun {
-  pageCount: number;
-  elapsedSeconds: number;
-  rows: ResultRow[];
-}
-
-// A named, resumable test session — what "1. เลือกไฟล์เอกสาร" saves/loads via
-// สร้างใหม่/แก้ไขของเดิม. Only the file *name* is kept (see activeFileName below), since this
-// mock never reads real PDF bytes, plus a full snapshot of the schema tuning and any
-// corrections made so far so resuming picks up exactly where it left off.
-interface SavedTemplate {
-  id: string;
-  name: string;
-  updatedAt: string;
-  fileName: string;
-  schemaKey: string;
-  draftSchema: LabelSchema;
-  results: TestRun | null;
-}
-
-const computeRowStatus = (row: ResultRow): RowStatus => {
-  if (row.isExtra) return 'extra';
-  if (!row.ocrValue) return 'missing';
-  if (row.expected === row.ocrValue) return 'exact';
-  if (normalizeForLooseCompare(row.expected) === normalizeForLooseCompare(row.ocrValue)) return 'loose';
-  return 'wrong';
-};
-
-// Builds a full mock test run for a given (schema, docType config, file). Header/Footer fields
-// appear once; Description fields repeat once per "line item" to simulate a multi-page document,
-// plus a couple of stray "extra" rows the OCR found but the schema didn't expect.
-const buildTestRun = (config: DocTypeSchemaConfig, seedBase: string): TestRun => {
-  const baseHash = hashString(seedBase);
-  const pageCount = 3 + (baseHash % 23);
-  const itemRepeats = 4 + (baseHash % 12);
-  const rows: ResultRow[] = [];
-  let rowSeq = 0;
-  config.labels.forEach(field => {
-    const repeats = field.section === 'Description' ? itemRepeats : 1;
-    for (let i = 0; i < repeats; i++) {
-      rowSeq++;
-      const rowSeed = hashString(`${seedBase}|${field.id}|${i}`);
-      const expected = buildMockExpectedValue(field, rowSeed);
-      const bucket = rowSeed % 100;
-      let ocrValue = expected;
-      if (bucket < 70) ocrValue = expected;
-      else if (bucket < 82) ocrValue = looseFormatVariant(expected, field.type);
-      else if (bucket < 94) ocrValue = mutateValue(expected, rowSeed);
-      else ocrValue = '';
-      rows.push({
-        id: `row-${field.id}-${i}`,
-        page: 1 + ((rowSeq * 7 + rowSeed) % pageCount),
-        fieldId: field.id,
-        fieldName: field.name || '—',
-        friendlyName: field.friendlyName,
-        section: field.section || 'Header',
-        expected,
-        ocrValue,
-        isExtra: false,
-      });
-    }
-  });
-  const extraCount = baseHash % 3;
-  const descField = config.labels.find(f => f.section === 'Description');
-  for (let i = 0; i < extraCount; i++) {
-    const seed = hashString(`${seedBase}|extra|${i}`);
-    rows.push({
-      id: `extra-${i}`,
-      page: 1 + (seed % pageCount),
-      fieldId: `extra-${i}`,
-      fieldName: descField?.name || 'Extra item',
-      section: 'Description',
-      expected: '',
-      ocrValue: `${descField?.name || 'VALUE'}-${seed % 999}`,
-      isExtra: true,
-    });
-  }
-  const elapsedSeconds = Math.round((pageCount * (3 + (baseHash % 5)) + (baseHash % 50) / 10) * 10) / 10;
-  return { pageCount, elapsedSeconds, rows };
+interface TestFieldResult { fieldId: string; fieldName: string; friendlyName?: string; value: string; matched: boolean; blank: boolean; }
+const mockTestField = (field: SchemaLabel, seed: string): TestFieldResult => {
+  const h = hashString(field.id + '|' + seed);
+  const expected = buildMockValue(field, h);
+  const bucket = h % 10;
+  if (bucket < 7) return { fieldId: field.id, fieldName: field.name || '—', friendlyName: field.friendlyName, value: expected, matched: true, blank: false };
+  if (bucket < 9) return { fieldId: field.id, fieldName: field.name || '—', friendlyName: field.friendlyName, value: mutateValue(expected, h), matched: false, blank: false };
+  return { fieldId: field.id, fieldName: field.name || '—', friendlyName: field.friendlyName, value: '', matched: false, blank: true };
 };
 
 const TYPE_OPTIONS: { value: string; th: string; en: string }[] = [
-  { value: 'string', th: 'ข้อความ (Text)', en: 'Text (string)' },
-  { value: 'number', th: 'ตัวเลข (Number)', en: 'Number' },
-  { value: 'boolean', th: 'ใช่/ไม่ใช่ (Yes/No)', en: 'Yes/No (boolean)' },
-  { value: 'date', th: 'วันที่ (Date)', en: 'Date' },
-  { value: 'array', th: 'ชุดข้อมูล (Array)', en: 'Table/List (array)' },
+  { value: 'string', th: 'ข้อความ', en: 'Text' },
+  { value: 'number', th: 'ตัวเลข', en: 'Number' },
+  { value: 'boolean', th: 'ใช่/ไม่ใช่', en: 'Yes/No' },
+  { value: 'date', th: 'วันที่', en: 'Date' },
+  { value: 'array', th: 'ชุดข้อมูล', en: 'Array' },
 ];
+
+const SECTION_LABEL = (section: Section, isTh: boolean): string => {
+  if (section === 'Header') return isTh ? 'ส่วนหัว' : 'Header';
+  if (section === 'Description') return isTh ? 'รายการสินค้า' : 'Line items';
+  return isTh ? 'ส่วนท้าย' : 'Footer';
+};
 
 const cloneSchema = (schema: LabelSchema): LabelSchema => JSON.parse(JSON.stringify(schema));
 const genId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-const slugify = (s: string) => s.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
 
-export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, docTypes, onBack }) => {
+export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, docTypes }) => {
   const isTh = language === 'TH';
   const t = (th: string, en: string) => (isTh ? th : en);
+  const docTypeName = (id: string) => docTypes.find(d => d.id === id)?.name || id;
 
   const [schemas, setSchemas] = useState<LabelSchema[]>(() => {
     const saved = typeof window !== 'undefined' ? localStorage.getItem('bizx_label_schemas_v7') : null;
@@ -199,187 +98,93 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
     return DEFAULT_SCHEMAS;
   });
 
-  const docTypeName = (id: string) => docTypes.find(d => d.id === id)?.name || id;
-
-  // Every (schema, docType) pair is its own pickable option in step 2, e.g. "Invoice / Invoice".
+  // Every (schema, docType) pair is its own pickable option — e.g. "Invoice / Invoice".
   const schemaOptions = useMemo(() => {
-    const opts: { key: string; schema: LabelSchema; config: DocTypeSchemaConfig; docTypeName: string; code: string }[] = [];
+    const opts: { key: string; schema: LabelSchema; config: DocTypeSchemaConfig; docTypeName: string }[] = [];
     schemas.forEach(schema => {
       schema.configs.forEach(config => {
-        const dtName = docTypeName(config.docTypeId);
-        opts.push({
-          key: `${schema.id}::${config.docTypeId}`,
-          schema, config, docTypeName: dtName,
-          code: `BIZX_${slugify(schema.name)}_schema__${slugify(dtName)}`,
-        });
+        opts.push({ key: `${schema.id}::${config.docTypeId}`, schema, config, docTypeName: docTypeName(config.docTypeId) });
       });
     });
     return opts;
   }, [schemas, docTypes]);
 
-  // --- Step 1: template (a saved test session — file + schema tuning + in-progress corrections) ---
-  const [savedTemplates, setSavedTemplates] = useState<SavedTemplate[]>(() => {
-    const saved = typeof window !== 'undefined' ? localStorage.getItem('bizx_ocr_tuning_templates_v1') : null;
-    if (saved) {
-      try { return JSON.parse(saved); } catch (e) { console.error('Failed to parse saved templates', e); }
-    }
-    return [];
-  });
-  const persistTemplates = (next: SavedTemplate[]) => {
-    setSavedTemplates(next);
-    if (typeof window !== 'undefined') localStorage.setItem('bizx_ocr_tuning_templates_v1', JSON.stringify(next));
-  };
-  const [templateMode, setTemplateMode] = useState<'new' | 'edit'>('new');
-  const [templateName, setTemplateName] = useState('');
-  const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  // Set instead of uploadedFile when a saved template is loaded — nothing in this mock ever
-  // reads the real file bytes for a PDF (results are generated from the file *name* + schema),
-  // so re-uploading isn't required just to resume a saved template.
-  const [restoredFileName, setRestoredFileName] = useState<string | null>(null);
-  const [showReupload, setShowReupload] = useState(false);
-  const [isDraggingFile, setIsDraggingFile] = useState(false);
-  const activeFileName = uploadedFile?.name || restoredFileName || null;
+  // --- 1. เลือกงาน ---
+  const [mode, setMode] = useState<'new' | 'edit'>('new');
 
-  const handleFileDragOver = (e: React.DragEvent) => { e.preventDefault(); setIsDraggingFile(true); };
-  const handleFileDragLeave = () => setIsDraggingFile(false);
-  const handleFileDrop = (e: React.DragEvent, onFile: (f: File) => void) => {
-    e.preventDefault();
-    setIsDraggingFile(false);
-    const f = e.dataTransfer.files?.[0];
-    if (f) onFile(f);
-  };
+  // --- 2. ชื่อ schema และจุดเริ่มต้น (new mode only) ---
+  const [nameDraft, setNameDraft] = useState('');
+  const [nameDocTypeId, setNameDocTypeId] = useState<string>(docTypes[0]?.id || '');
+  const [startFrom, setStartFrom] = useState<'copy' | 'dataset' | 'blank'>('copy');
+  const [copySourceKey, setCopySourceKey] = useState('');
+  const [newConfirmed, setNewConfirmed] = useState(false);
 
-  const switchToNewTemplate = () => {
-    setTemplateMode('new');
-    setActiveTemplateId(null);
-    setTemplateName('');
-    setUploadedFile(null);
-    setRestoredFileName(null);
-    setShowReupload(false);
-    setSelectedKey('');
-    setDraftSchema(null);
-    setHasUnsavedEdits(false);
-    setResults(null);
-  };
+  // --- แก้ไข schema เดิม (edit mode only) ---
+  const [editKey, setEditKey] = useState('');
 
-  const loadTemplate = (id: string) => {
-    const tpl = savedTemplates.find(x => x.id === id);
-    if (!tpl) return;
-    setActiveTemplateId(tpl.id);
-    setTemplateName(tpl.name);
-    setUploadedFile(null);
-    setRestoredFileName(tpl.fileName);
-    setShowReupload(false);
-    setSelectedKey(tpl.schemaKey);
-    setDraftSchema(cloneSchema(tpl.draftSchema));
-    setHasUnsavedEdits(false);
-    setResults(tpl.results ? (JSON.parse(JSON.stringify(tpl.results)) as TestRun) : null);
-    setResultsFilter('need_fix');
-  };
-
-  // --- Step 2: schema + advanced tuning ---
-  const [selectedKey, setSelectedKey] = useState<string>('');
-  const selectedOption = schemaOptions.find(o => o.key === selectedKey) || null;
-  // Draft copy of the picked schema — edits (hints/fields/JSON) stay local until explicitly
-  // saved back into `schemas`/localStorage via "บันทึก schema เข้า BizX".
+  // --- Working schema (shared by both modes once identified) ---
   const [draftSchema, setDraftSchema] = useState<LabelSchema | null>(null);
-  const [hasUnsavedEdits, setHasUnsavedEdits] = useState(false);
-  const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [advancedTab, setAdvancedTab] = useState<'hints' | 'fields' | 'json'>('hints');
-  const [jsonDraft, setJsonDraft] = useState('');
-  const [jsonError, setJsonError] = useState<string | null>(null);
-  const [openPhraseFieldId, setOpenPhraseFieldId] = useState<string | null>(null);
-  const schemaCardRef = useRef<HTMLDivElement>(null);
+  const [activeDocTypeId, setActiveDocTypeId] = useState<string | null>(null);
 
   const activeConfig: DocTypeSchemaConfig | null = useMemo(() => {
-    if (!draftSchema || !selectedOption) return null;
-    return draftSchema.configs.find(c => c.docTypeId === selectedOption.config.docTypeId) || draftSchema.configs[0] || null;
-  }, [draftSchema, selectedOption]);
+    if (!draftSchema) return null;
+    return draftSchema.configs.find(c => c.docTypeId === activeDocTypeId) || draftSchema.configs[0] || null;
+  }, [draftSchema, activeDocTypeId]);
 
-  const groupedFields = useMemo(() => {
-    const groups: Record<Section, SchemaLabel[]> = { Header: [], Description: [], Footer: [] };
-    (activeConfig?.labels || []).forEach(label => {
-      const section = label.section || 'Header';
-      if (groups[section]) groups[section].push(label);
-    });
-    return groups;
-  }, [activeConfig]);
-
-  const selectSchemaOption = (key: string) => {
-    setSelectedKey(key);
-    const opt = schemaOptions.find(o => o.key === key);
-    setDraftSchema(opt ? cloneSchema(opt.schema) : null);
-    setHasUnsavedEdits(false);
-    setResults(null);
+  const resetAll = () => {
+    setMode('new');
+    setNameDraft('');
+    setNameDocTypeId(docTypes[0]?.id || '');
+    setStartFrom('copy');
+    setCopySourceKey('');
+    setNewConfirmed(false);
+    setEditKey('');
+    setDraftSchema(null);
+    setActiveDocTypeId(null);
+    setActiveSectionTab('Header');
+    setSearchQuery('');
+    setOnlyMissingHints(false);
+    setExpandedHints(false);
+    setNewFieldName(''); setNewFieldThai(''); setNewFieldType('string'); setNewFieldHint('');
+    setTestVisible(true);
+    setTestMethod('ai');
+    setTestFile(null);
+    setTestResults(null);
   };
 
-  const updateField = (fieldId: string, updates: Partial<SchemaLabel>) => {
-    if (!draftSchema || !activeConfig) return;
-    setDraftSchema({
-      ...draftSchema,
-      configs: draftSchema.configs.map(c => c.docTypeId === activeConfig.docTypeId
-        ? { ...c, labels: c.labels.map(l => l.id === fieldId ? { ...l, ...updates } : l) }
-        : c),
-    });
-    setHasUnsavedEdits(true);
+  const switchMode = (next: 'new' | 'edit') => {
+    setMode(next);
+    setDraftSchema(null);
+    setActiveDocTypeId(null);
+    setNewConfirmed(false);
+    setEditKey('');
+    setTestResults(null);
   };
 
-  const removeField = (fieldId: string) => {
-    if (!draftSchema || !activeConfig) return;
-    setDraftSchema({
-      ...draftSchema,
-      configs: draftSchema.configs.map(c => c.docTypeId === activeConfig.docTypeId
-        ? { ...c, labels: c.labels.filter(l => l.id !== fieldId) }
-        : c),
-    });
-    setHasUnsavedEdits(true);
-  };
-
-  const addField = (section: Section) => {
-    if (!draftSchema || !activeConfig) return;
-    const newField: SchemaLabel = { id: genId('field'), name: '', required: true, compare: false, type: 'string', section };
-    setDraftSchema({
-      ...draftSchema,
-      configs: draftSchema.configs.map(c => c.docTypeId === activeConfig.docTypeId
-        ? { ...c, labels: [...c.labels, newField] }
-        : c),
-    });
-    setHasUnsavedEdits(true);
-  };
-
-  const appendPhrase = (fieldId: string, phrase: string) => {
-    if (!activeConfig) return;
-    const field = activeConfig.labels.find(l => l.id === fieldId);
-    if (!field) return;
-    const current = field.aiPrompt || '';
-    updateField(fieldId, { aiPrompt: current ? `${current} ${phrase}` : phrase });
-    setOpenPhraseFieldId(null);
-  };
-
-  const openJsonTab = () => {
-    setAdvancedTab('json');
-    setJsonDraft(activeConfig ? JSON.stringify(activeConfig, null, 2) : '');
-    setJsonError(null);
-  };
-
-  const applyJsonDraft = () => {
-    if (!draftSchema || !activeConfig) return;
-    try {
-      const parsed = JSON.parse(jsonDraft);
-      if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.labels)) {
-        throw new Error(t('รูปแบบ JSON ไม่ถูกต้อง (ต้องมี labels เป็น array)', 'Invalid JSON shape (labels must be an array)'));
-      }
-      setDraftSchema({
-        ...draftSchema,
-        configs: draftSchema.configs.map(c => c.docTypeId === activeConfig.docTypeId ? { ...c, ...parsed, docTypeId: c.docTypeId } : c),
-      });
-      setHasUnsavedEdits(true);
-      setJsonError(null);
-      message.success(t('นำ JSON ไปใช้แล้ว', 'JSON applied'));
-    } catch (e: any) {
-      setJsonError(e.message || t('JSON ไม่ถูกต้อง', 'Invalid JSON'));
+  const confirmNewSchema = () => {
+    if (!nameDraft.trim() || !nameDocTypeId) return;
+    let labels: SchemaLabel[] = [];
+    if (startFrom === 'copy' && copySourceKey) {
+      const src = schemaOptions.find(o => o.key === copySourceKey);
+      if (src) labels = JSON.parse(JSON.stringify(src.config.labels)).map((l: SchemaLabel) => ({ ...l, id: genId('field') }));
     }
+    const config: DocTypeSchemaConfig = { docTypeId: nameDocTypeId, labels, extractionMethod: 'ai' };
+    const schema: LabelSchema = {
+      id: genId('ls'), name: nameDraft.trim(), description: '', docTypes: [nameDocTypeId],
+      workflowIds: [], assignedTeams: ['ALL'], updatedAt: new Date().toISOString(), configs: [config],
+    };
+    setDraftSchema(schema);
+    setActiveDocTypeId(nameDocTypeId);
+    setNewConfirmed(true);
+  };
+
+  const pickEditSchema = (key: string) => {
+    setEditKey(key);
+    const opt = schemaOptions.find(o => o.key === key);
+    if (!opt) { setDraftSchema(null); return; }
+    setDraftSchema(cloneSchema(opt.schema));
+    setActiveDocTypeId(opt.config.docTypeId);
+    setTestResults(null);
   };
 
   const handleSaveSchema = () => {
@@ -390,641 +195,540 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
       if (typeof window !== 'undefined') localStorage.setItem('bizx_label_schemas_v7', JSON.stringify(next));
       return next;
     });
-    setHasUnsavedEdits(false);
-    message.success(isTh ? 'บันทึก Schema เข้า BizX เรียบร้อย' : 'Schema saved to BizX');
+    message.success(isTh ? 'บันทึก Schema เรียบร้อย' : 'Schema saved');
   };
 
-  const goEditHintsThenRetest = () => {
-    setAdvancedOpen(true);
-    setAdvancedTab('hints');
-    schemaCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
+  // --- 3. ฟิลด์และคำอธิบายฟิลด์/ตำแหน่ง ---
+  const [activeSectionTab, setActiveSectionTab] = useState<Section>('Header');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [onlyMissingHints, setOnlyMissingHints] = useState(false);
+  const [expandedHints, setExpandedHints] = useState(false);
+  const [revealedThaiFieldIds, setRevealedThaiFieldIds] = useState<Set<string>>(new Set());
+  const [justAddedFieldId, setJustAddedFieldId] = useState<string | null>(null);
 
-  // --- Step 3: read document ---
-  const [isReading, setIsReading] = useState(false);
-  const [results, setResults] = useState<TestRun | null>(null);
-  const [resultsFilter, setResultsFilter] = useState<'need_fix' | 'all'>('need_fix');
-  const [showWorstFields, setShowWorstFields] = useState(false);
-
-  // Auto-checkpoints the current session (file + schema tuning + results/corrections so far) as
-  // soon as it has a name and a file — so "แก้ไขของเดิม" always has the latest state to resume,
-  // without a separate explicit "save template" step.
-  useEffect(() => {
-    if (!templateName.trim() || !activeFileName) return;
-    const snapshot: SavedTemplate = {
-      id: activeTemplateId || genId('tpl'),
-      name: templateName.trim(),
-      updatedAt: new Date().toISOString(),
-      fileName: activeFileName,
-      schemaKey: selectedKey,
-      draftSchema: draftSchema ? cloneSchema(draftSchema) : ({} as LabelSchema),
-      results: results ? (JSON.parse(JSON.stringify(results)) as TestRun) : null,
-    };
-    if (!activeTemplateId) setActiveTemplateId(snapshot.id);
-    persistTemplates(
-      savedTemplates.some(x => x.id === snapshot.id)
-        ? savedTemplates.map(x => x.id === snapshot.id ? snapshot : x)
-        : [...savedTemplates, snapshot]
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [templateName, activeFileName, selectedKey, draftSchema, results]);
-
-  const canRead = !!activeFileName && !!activeConfig && activeConfig.labels.length > 0;
-
-  const runOcrRead = () => {
-    if (!canRead || !activeConfig || !activeFileName) return;
-    setIsReading(true);
-    setResults(null);
-    window.setTimeout(() => {
-      const run = buildTestRun(activeConfig, `${activeFileName}::${draftSchema?.id}`);
-      setResults(run);
-      setIsReading(false);
-      setResultsFilter('need_fix');
-    }, 700);
-  };
-
-  const updateRowExpected = (rowId: string, value: string) => {
-    setResults(prev => prev ? { ...prev, rows: prev.rows.map(r => r.id === rowId ? { ...r, expected: value } : r) } : prev);
-  };
-
-  // "Extra" rows (OCR found a value the schema never asked for) can't become correct by editing
-  // the expected value — the only resolution is dropping them from the Expected file entirely.
-  const dismissExtraRow = (rowId: string) => {
-    setResults(prev => prev ? { ...prev, rows: prev.rows.filter(r => r.id !== rowId) } : prev);
-  };
-
-  const metrics = useMemo(() => {
-    if (!results) return null;
-    const comparable = results.rows.filter(r => !r.isExtra);
-    const exact = comparable.filter(r => computeRowStatus(r) === 'exact').length;
-    const looseOk = comparable.filter(r => ['exact', 'loose'].includes(computeRowStatus(r))).length;
-    const wrong = comparable.filter(r => computeRowStatus(r) === 'wrong').length;
-    const missing = comparable.filter(r => computeRowStatus(r) === 'missing').length;
-    const extra = results.rows.filter(r => r.isExtra).length;
-    return { total: comparable.length, exact, looseOk, wrong, missing, extra };
-  }, [results]);
-
-  const needFixRows = useMemo(() => results ? results.rows.filter(r => ['wrong', 'missing', 'extra'].includes(computeRowStatus(r))) : [], [results]);
-  const filteredRows = useMemo(() => {
-    if (!results) return [];
-    return resultsFilter === 'all' ? results.rows : needFixRows;
-  }, [results, resultsFilter, needFixRows]);
-
-  const worstFields = useMemo(() => {
-    if (!results) return [];
-    const byField: Record<string, { fieldName: string; total: number; bad: number }> = {};
-    results.rows.filter(r => !r.isExtra).forEach(r => {
-      if (!byField[r.fieldId]) byField[r.fieldId] = { fieldName: r.fieldName, total: 0, bad: 0 };
-      byField[r.fieldId].total++;
-      if (['wrong', 'missing'].includes(computeRowStatus(r))) byField[r.fieldId].bad++;
+  const groupedFields = useMemo(() => {
+    const groups: Record<Section, SchemaLabel[]> = { Header: [], Description: [], Footer: [] };
+    (activeConfig?.labels || []).forEach(label => {
+      const section = label.section || 'Header';
+      if (groups[section]) groups[section].push(label);
     });
-    return Object.values(byField)
-      .filter(f => f.bad > 0)
-      .sort((a, b) => (b.bad / b.total) - (a.bad / a.total))
-      .slice(0, 5);
-  }, [results]);
+    return groups;
+  }, [activeConfig]);
 
-  const readyForDownload = !!results && needFixRows.length === 0;
+  const missingHintCount = useMemo(() => (activeConfig?.labels || []).filter(l => !l.aiPrompt?.trim()).length, [activeConfig]);
 
-  // --- Step 5: download ---
-  const handleDownloadExcel = () => {
-    if (!results) {
-      message.info(t('ให้ระบบอ่านเอกสารก่อน จึงจะดาวน์โหลดได้', 'Read the document first before downloading'));
-      return;
-    }
-    const data = results.rows.map(r => ({
-      [t('หน้า', 'Page')]: r.page,
-      [t('ฟิลด์', 'Field')]: r.fieldName,
-      [t('ค่าที่คาดหวัง (Expected)', 'Expected')]: r.expected,
-      [t('ค่าที่ OCR อ่านได้', 'OCR Read')]: r.ocrValue,
-      [t('ผล', 'Result')]: computeRowStatus(r),
-    }));
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Expected');
-    const baseName = (activeFileName || 'expected').replace(/\.[^.]+$/, '');
-    XLSX.writeFile(wb, `${baseName}_expected.xlsx`);
+  const visibleFields = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return groupedFields[activeSectionTab].filter(f => {
+      if (onlyMissingHints && f.aiPrompt?.trim()) return false;
+      if (!q) return true;
+      return f.name.toLowerCase().includes(q) || (f.friendlyName || '').toLowerCase().includes(q) || (f.aiPrompt || '').toLowerCase().includes(q);
+    });
+  }, [groupedFields, activeSectionTab, searchQuery, onlyMissingHints]);
+
+  const updateField = (fieldId: string, updates: Partial<SchemaLabel>) => {
+    if (!draftSchema || !activeConfig) return;
+    setDraftSchema({
+      ...draftSchema,
+      configs: draftSchema.configs.map(c => c.docTypeId === activeConfig.docTypeId
+        ? { ...c, labels: c.labels.map(l => l.id === fieldId ? { ...l, ...updates } : l) }
+        : c),
+    });
   };
 
-  const openDetailedComparison = () => {
-    message.info(t('หน้าเปรียบเทียบแบบละเอียดอยู่ระหว่างการพัฒนา', 'The detailed comparison page is still being built'));
+  const removeField = (fieldId: string) => {
+    if (!draftSchema || !activeConfig) return;
+    setDraftSchema({
+      ...draftSchema,
+      configs: draftSchema.configs.map(c => c.docTypeId === activeConfig.docTypeId
+        ? { ...c, labels: c.labels.filter(l => l.id !== fieldId) }
+        : c),
+    });
   };
 
-  // --- Step indicator (progress only — every section below stays visible) ---
-  const STEP_LABELS = [
-    { th: 'เลือกเทมเพลต', en: 'Pick template' },
-    { th: 'เลือก schema', en: 'Pick schema' },
-    { th: 'อ่านเอกสาร', en: 'Read document' },
-    { th: 'แก้ให้ถูกต้อง', en: 'Fix values' },
-    { th: 'ดาวน์โหลด', en: 'Download' },
+  const assistWrite = (field: SchemaLabel) => {
+    if (field.aiPrompt?.trim()) return;
+    const phrase = READY_MADE_PHRASES_TH[hashString(field.id) % READY_MADE_PHRASES_TH.length];
+    updateField(field.id, { aiPrompt: phrase });
+  };
+
+  // --- Quick-add field row ---
+  const [newFieldName, setNewFieldName] = useState('');
+  const [newFieldThai, setNewFieldThai] = useState('');
+  const [newFieldType, setNewFieldType] = useState('string');
+  const [newFieldHint, setNewFieldHint] = useState('');
+
+  const addQuickField = (focusHint: boolean) => {
+    if (!draftSchema || !activeConfig || !newFieldName.trim()) return;
+    const newField: SchemaLabel = {
+      id: genId('field'), name: newFieldName.trim(), required: true, compare: false,
+      type: newFieldType, section: activeSectionTab,
+      friendlyName: newFieldThai.trim() || undefined,
+      aiPrompt: newFieldHint.trim() || undefined,
+    };
+    setDraftSchema({
+      ...draftSchema,
+      configs: draftSchema.configs.map(c => c.docTypeId === activeConfig.docTypeId
+        ? { ...c, labels: [...c.labels, newField] }
+        : c),
+    });
+    setNewFieldName(''); setNewFieldThai(''); setNewFieldType('string'); setNewFieldHint('');
+    if (focusHint) setJustAddedFieldId(newField.id);
+  };
+
+  // --- 4. ทดสอบ (ไม่บังคับ) ---
+  const [testVisible, setTestVisible] = useState(true);
+  const [testMethod, setTestMethod] = useState<ExtractionMethod>('ai');
+  const [testFile, setTestFile] = useState<File | null>(null);
+  const [isTesting, setIsTesting] = useState(false);
+  const [testResults, setTestResults] = useState<TestFieldResult[] | null>(null);
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
+
+  const handleFileDragOver = (e: React.DragEvent) => { e.preventDefault(); setIsDraggingFile(true); };
+  const handleFileDragLeave = () => setIsDraggingFile(false);
+  const handleFileDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingFile(false);
+    const f = e.dataTransfer.files?.[0];
+    if (f) { setTestFile(f); setTestResults(null); }
+  };
+
+  const TEST_TABS: { key: ExtractionMethod; th: string; en: string; icon: React.ReactNode; accept: string }[] = [
+    { key: 'ai', th: 'PDF / รูปภาพ', en: 'PDF / Image', icon: <FileText size={13} />, accept: '.pdf,.png,.jpg,.jpeg' },
+    { key: 'excel', th: 'Excel', en: 'Excel', icon: <FileSpreadsheet size={13} />, accept: '.xlsx,.xls,.csv' },
+    { key: 'xml', th: 'XML', en: 'XML', icon: <FileCode2 size={13} />, accept: '.xml' },
   ];
-  const hasTemplateIdentity = templateMode === 'new' ? !!templateName.trim() : !!activeTemplateId;
-  const currentStep = !hasTemplateIdentity ? 1 : !activeConfig ? 2 : !results ? 3 : !readyForDownload ? 4 : 5;
 
-  const STATUS_BADGE: Record<RowStatus, { th: string; en: string; className: string; icon: React.ReactNode }> = {
-    exact: { th: 'ตรงกัน', en: 'Match', className: 'text-emerald-600', icon: <Check size={12} /> },
-    loose: { th: 'ต่างแค่รูปแบบ', en: 'Format only', className: 'text-amber-600', icon: <Check size={12} /> },
-    wrong: { th: 'ไม่ตรงกัน', en: 'Mismatch', className: 'text-rose-600', icon: <X size={12} /> },
-    missing: { th: 'ไม่พบ', en: 'Not found', className: 'text-rose-500', icon: <X size={12} /> },
-    extra: { th: 'เกินมา', en: 'Extra', className: 'text-purple-600', icon: <Plus size={12} /> },
+  const runTest = () => {
+    if (!activeConfig || activeConfig.labels.length === 0 || !testFile) return;
+    setIsTesting(true);
+    setTestResults(null);
+    window.setTimeout(() => {
+      setTestResults(activeConfig.labels.map(f => mockTestField(f, testFile.name)));
+      setIsTesting(false);
+    }, 600);
   };
+
+  const testMetrics = useMemo(() => {
+    if (!testResults) return null;
+    const total = testResults.length;
+    const matched = testResults.filter(r => r.matched).length;
+    return { total, matched, pct: total ? Math.round((matched / total) * 100) : 0 };
+  }, [testResults]);
+
+  // --- Step indicator (decorative — this is a single always-visible page, not a gated wizard) ---
+  const STEP_LABELS = [
+    { th: 'เลือกงาน', en: 'Choose task' },
+    { th: 'ชื่อและต้นแบบ', en: 'Name & base' },
+    { th: 'ฟิลด์และคำอธิบาย', en: 'Fields & hints' },
+    { th: 'ทดสอบ (ไม่บังคับ)', en: 'Test (optional)' },
+    { th: 'บันทึก', en: 'Save' },
+  ];
+
+  // Body cards renumber depending on mode — editing an existing schema skips the "name & base"
+  // card entirely, since the schema already has both.
+  const cardNumbers = mode === 'new' ? { fields: 3, test: 4 } : { fields: 2, test: 3 };
+  const showWorkingCards = !!draftSchema;
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans">
-      <div className="max-w-6xl mx-auto px-6 py-6">
-        {/* Header */}
+    <div className="flex-1 overflow-y-auto bg-slate-50 font-sans">
+      <div className="max-w-6xl mx-auto p-6">
         <div className="flex items-start justify-between gap-4 mb-5">
-          <div className="flex items-start gap-2">
-            <button onClick={onBack} className="p-1.5 mt-0.5 hover:bg-slate-100 rounded-[4px] text-slate-400 hover:text-slate-600 cursor-pointer shrink-0">
-              <ArrowLeft size={16} />
-            </button>
-            <div>
-              <h1 className="text-xl font-black text-slate-900 tracking-tight">{t('สร้างไฟล์คำตอบที่ถูกต้อง (Expected)', 'Build the Expected Answers File')}</h1>
-              <p className="text-sm text-slate-500 mt-0.5">{t('อัปโหลดเอกสาร ให้ระบบอ่านก่อน แล้วคุณแก้ให้ถูกต้อง จากนั้นดาวน์โหลดไปใช้วัดความแม่นยำ', 'Upload a document, let the system read it, correct the results, then download to measure accuracy elsewhere')}</p>
-            </div>
+          <div>
+            <h1 className="text-xl font-black text-slate-900 tracking-tight">{t('ปรับการอ่านเอกสาร', 'OCR Tuning')}</h1>
+            <p className="text-sm text-slate-500 mt-0.5">{t('กำหนดฟิลด์และคำอธิบายฟิลด์/ตำแหน่ง ให้ AI อ่านเอกสารได้ถูกต้อง — ทดสอบก่อนบันทึกได้', 'Define fields and their hints so the AI reads documents correctly — test before saving')}</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <button onClick={handleDownloadExcel} className="flex items-center gap-1.5 px-3.5 py-2 rounded-[4px] border border-slate-200 bg-white text-slate-600 text-sm font-bold hover:bg-slate-50 cursor-pointer">
-              <FileSpreadsheet size={14} /> {t('ไฟล์ Excel', 'Excel file')}
+            <button onClick={resetAll} className="flex items-center gap-1.5 px-3.5 py-2 rounded-[4px] border border-slate-200 bg-white text-slate-500 text-sm font-bold hover:bg-slate-50 cursor-pointer">
+              <RotateCcw size={14} /> {t('เริ่มใหม่', 'Start over')}
+            </button>
+            <button
+              onClick={handleSaveSchema}
+              disabled={!draftSchema}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-[4px] bg-[#1f5df9] text-white text-sm font-bold hover:bg-[#1a4fd6] cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              <Save size={14} /> {t('บันทึก', 'Save')}
             </button>
           </div>
         </div>
 
-        {/* Step indicator */}
-        <div className="flex items-center mb-6 bg-white border border-slate-200 rounded-xl px-5 py-3.5">
+        {/* Step indicator (decorative) */}
+        <div className="flex items-center mb-6 bg-white border border-slate-200 rounded-xl px-5 py-3.5 overflow-x-auto">
           {STEP_LABELS.map((s, i) => {
-            const idx = i + 1;
-            const isCurrent = idx === currentStep;
+            const isLast = i === STEP_LABELS.length - 1;
             return (
               <React.Fragment key={s.th}>
                 <div className="flex items-center gap-2 shrink-0">
                   <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black shrink-0 ${
-                    isCurrent ? 'bg-[#1f5df9] text-white' : 'bg-white border border-slate-300 text-slate-400'
+                    isLast ? 'bg-[#1f5df9] text-white' : 'bg-emerald-50 text-emerald-600 border border-emerald-200'
                   }`}>
-                    {idx}
+                    {isLast ? STEP_LABELS.length : <Check size={12} />}
                   </div>
-                  <span className={`text-sm font-bold whitespace-nowrap ${isCurrent ? 'text-slate-800' : 'text-slate-400'}`}>
+                  <span className={`text-sm font-bold whitespace-nowrap ${isLast ? 'text-slate-800' : 'text-slate-400'}`}>
                     {isTh ? s.th : s.en}
                   </span>
                 </div>
-                {i < STEP_LABELS.length - 1 && <div className="flex-1 h-px bg-slate-200 mx-3" />}
+                {!isLast && <div className="flex-1 h-px bg-slate-200 mx-3 min-w-6" />}
               </React.Fragment>
             );
           })}
         </div>
 
         <div className="space-y-4">
-          {/* Section 1 — template (a saved file + schema-tuning + corrections session) */}
+          {/* 1. เลือกงาน */}
           <div className="bg-white border border-slate-200 rounded-xl p-5">
-            <h3 className="text-[15px] font-black text-slate-800 mb-3">{t('1. เลือกเทมเพลต', '1. Pick a template')}</h3>
-
-            <div className="inline-flex items-center gap-1 p-1 bg-slate-50 border border-slate-200 rounded-[8px] mb-4">
+            <h3 className="text-[15px] font-black text-slate-800 mb-3">{t('1. เลือกงาน', '1. Choose a task')}</h3>
+            <div className="inline-flex items-center gap-1 p-1 bg-slate-50 border border-slate-200 rounded-[8px]">
               <button
-                onClick={switchToNewTemplate}
-                className={`px-3.5 py-1.5 text-xs font-bold rounded-[4px] cursor-pointer transition-all ${templateMode === 'new' ? 'bg-white text-[#1f5df9] border border-slate-200 shadow-sm' : 'text-slate-500'}`}
+                onClick={() => switchMode('new')}
+                className={`px-3.5 py-1.5 text-xs font-bold rounded-[4px] cursor-pointer transition-all ${mode === 'new' ? 'bg-[#1f5df9] text-white shadow-sm' : 'text-slate-500 hover:bg-white'}`}
               >
-                {t('สร้างใหม่', 'Create new')}
+                {t('สร้าง schema ใหม่', 'Create new schema')}
               </button>
               <button
-                onClick={() => setTemplateMode('edit')}
-                className={`px-3.5 py-1.5 text-xs font-bold rounded-[4px] cursor-pointer transition-all ${templateMode === 'edit' ? 'bg-white text-[#1f5df9] border border-slate-200 shadow-sm' : 'text-slate-500'}`}
+                onClick={() => switchMode('edit')}
+                className={`px-3.5 py-1.5 text-xs font-bold rounded-[4px] cursor-pointer transition-all ${mode === 'edit' ? 'bg-[#1f5df9] text-white shadow-sm' : 'text-slate-500 hover:bg-white'}`}
               >
-                {t('แก้ไขของเดิม', 'Edit existing')}
+                {t('แก้ไข schema เดิม', 'Edit existing schema')}
               </button>
             </div>
 
-            {templateMode === 'new' ? (
-              <>
-                <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5">{t('ชื่อเทมเพลต', 'Template name')}</label>
-                <input
-                  type="text"
-                  value={templateName}
-                  onChange={(e) => setTemplateName(e.target.value)}
-                  placeholder={t('เช่น Invoice ลูกค้า ABC รอบ 1', 'e.g. ABC Invoice batch 1')}
-                  className="w-full px-3 py-2.5 rounded-[4px] border border-slate-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
-                />
-                <p className="text-[11px] font-bold text-slate-400 mt-1.5">{t('อัปโหลดไฟล์ที่ขั้นตอนที่ 3 — ตั้งชื่อไว้ก่อน ระบบจะเก็บงานนี้ให้แก้ไขทีหลังได้', 'Upload the file in step 3 — name it now so this session can be saved and resumed later')}</p>
-              </>
-            ) : (
-              <>
-                <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5">{t('เลือกเทมเพลตที่เคยบันทึกไว้', 'Pick a saved template')}</label>
+            {mode === 'edit' && (
+              <div className="mt-4 pt-4 border-t border-slate-100">
+                <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5">{t('schema/ชนิดเอกสารที่จะแก้', 'Schema / document type to edit')}</label>
                 <select
-                  value={activeTemplateId || ''}
-                  onChange={(e) => e.target.value && loadTemplate(e.target.value)}
+                  value={editKey}
+                  onChange={(e) => pickEditSchema(e.target.value)}
                   className="w-full px-3 py-2.5 rounded-[4px] border border-slate-200 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
                 >
-                  <option value="">{t('— เลือกเทมเพลต —', '— Pick a template —')}</option>
-                  {savedTemplates.map(tpl => (
-                    <option key={tpl.id} value={tpl.id}>{tpl.name} ({tpl.fileName})</option>
+                  <option value="">{t('— เลือก schema —', '— Pick a schema —')}</option>
+                  {schemaOptions.map(o => (
+                    <option key={o.key} value={o.key}>{o.schema.name} / {o.docTypeName}</option>
                   ))}
                 </select>
-                {savedTemplates.length === 0 && (
-                  <p className="text-xs text-slate-300 italic mt-2">{t('ยังไม่มีเทมเพลตที่บันทึกไว้ — ไปที่ "สร้างใหม่" แล้วตั้งชื่อเพื่อเริ่มบันทึก', 'No saved templates yet — go to "Create new" and give it a name to start saving one')}</p>
-                )}
-                {activeTemplateId && restoredFileName && (
-                  <div className="mt-3 flex items-center gap-2 p-2.5 bg-slate-50/60 rounded-[8px] border border-slate-200/70 text-sm text-slate-600">
-                    <FileText size={14} className="shrink-0 text-slate-400" />
-                    <span className="truncate">{restoredFileName}</span>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-
-          {/* Section 2 — schema */}
-          <div ref={schemaCardRef} className="bg-white border border-slate-200 rounded-xl p-5">
-            <h3 className="text-[15px] font-black text-slate-800 mb-3">{t('2. เลือก schema', '2. Pick a schema')}</h3>
-            <div className="flex items-start gap-2 p-3 rounded-[8px] bg-blue-50 border border-blue-100 text-[13px] text-blue-700 mb-3">
-              <Info size={15} className="shrink-0 mt-0.5" />
-              <span>{t('schema คือรายการฟิลด์ที่ต้องการดึงออกมา หน้านี้จะแสดงเฉพาะ schema ที่ชื่อมีคำว่า generic เท่านั้น — 1 schema ใช้ได้หลายชนิดเอกสาร กรุณาเลือกชนิดเอกสารให้ตรงกับไฟล์ที่อัปโหลด', 'A schema is the list of fields to extract. 1 schema can serve multiple document types — pick the type matching the file you uploaded.')}</span>
-            </div>
-            <select
-              value={selectedKey}
-              onChange={(e) => selectSchemaOption(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-[4px] border border-slate-200 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
-            >
-              <option value="">{t('— เลือก schema —', '— Pick a schema —')}</option>
-              {schemaOptions.map(o => (
-                <option key={o.key} value={o.key}>{o.schema.name} / {o.docTypeName}</option>
-              ))}
-            </select>
-            {selectedOption && (
-              <p className="text-[11px] font-mono text-slate-400 mt-1.5">{t('รหัสที่ใช้จริง', 'Actual code')}: {selectedOption.code}</p>
-            )}
-
-            {activeConfig && (
-              <div className="mt-4 pt-4 border-t border-slate-100">
-                <button
-                  onClick={() => setAdvancedOpen(v => !v)}
-                  className="flex items-center gap-1.5 text-sm font-bold text-slate-600 hover:text-[#1f5df9] cursor-pointer"
-                >
-                  {advancedOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                  {t('ตั้งค่าขั้นสูง (แก้ฟิลด์และคำใบ้)', 'Advanced settings (edit fields and hints)')}
-                </button>
-
-                {advancedOpen && (
-                  <div className="mt-3">
-                    <div className="flex items-center gap-4 border-b border-slate-200 mb-3">
-                      {([
-                        { key: 'hints' as const, th: 'คำใบ้ (hints)', en: 'Hints' },
-                        { key: 'fields' as const, th: 'ฟิลด์', en: 'Fields' },
-                        { key: 'json' as const, th: 'แก้เป็น JSON', en: 'Edit as JSON' },
-                      ]).map(tab => (
-                        <button
-                          key={tab.key}
-                          onClick={() => tab.key === 'json' ? openJsonTab() : setAdvancedTab(tab.key)}
-                          className={`pb-2 text-sm font-bold cursor-pointer border-b-2 -mb-px transition-all ${
-                            advancedTab === tab.key ? 'border-[#1f5df9] text-[#1f5df9]' : 'border-transparent text-slate-500 hover:text-slate-700'
-                          }`}
-                        >
-                          {isTh ? tab.th : tab.en}
-                        </button>
-                      ))}
-                    </div>
-
-                    {advancedTab === 'hints' && (
-                      <div>
-                        <div className="flex items-start gap-2 p-3 rounded-[8px] bg-blue-50 border border-blue-100 text-[13px] text-blue-700 mb-3">
-                          <Info size={15} className="shrink-0 mt-0.5" />
-                          <span>{t('hints คือคำอธิบายภาษาอังกฤษ บอก AI ว่าฟิลด์นี้อยู่ตรงไหนของเอกสาร และให้อ่านอย่างไร — เขียนยาวหลายบรรทัดได้ ยิ่งอธิบายชัด ยิ่งอ่านแม่น', 'Hints are English descriptions telling the AI where a field sits on the document and how to read it — the more specific, the more accurate the read.')}</span>
-                        </div>
-                        <div className="grid grid-cols-[180px_1fr] gap-x-4 gap-y-1 text-[11px] font-black text-slate-400 uppercase tracking-widest px-1 mb-1">
-                          <span>{t('ฟิลด์', 'Field')}</span>
-                          <span>{t('คำใบ้', 'Hint')}</span>
-                        </div>
-                        <div className="space-y-2">
-                          {(activeConfig.labels.length === 0) && (
-                            <p className="text-xs text-slate-300 italic py-2">{t('ยังไม่มีฟิลด์ในสคีมานี้', 'This schema has no fields yet')}</p>
-                          )}
-                          {activeConfig.labels.map(field => (
-                            <div key={field.id} className="grid grid-cols-[180px_1fr] gap-x-4 items-start group/hintRow">
-                              <div className="pt-2 text-sm font-mono font-semibold text-slate-700 truncate">{field.name || '—'}</div>
-                              <div className="relative">
-                                <textarea
-                                  value={field.aiPrompt || ''}
-                                  onChange={(e) => updateField(field.id, { aiPrompt: e.target.value })}
-                                  placeholder={t('เช่น top right, under the words TAX INVOICE', 'e.g. top right, under the words TAX INVOICE')}
-                                  rows={1}
-                                  className="w-full pl-3 pr-16 py-2 text-sm text-slate-700 bg-white border border-slate-200 rounded-[4px] resize-y focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
-                                />
-                                <div className="absolute right-1.5 top-1.5 flex items-center gap-1 opacity-0 group-hover/hintRow:opacity-100 focus-within:opacity-100 transition-opacity">
-                                  <Popover
-                                    open={openPhraseFieldId === field.id}
-                                    onOpenChange={(open) => setOpenPhraseFieldId(open ? field.id : null)}
-                                    trigger="click"
-                                    placement="bottomRight"
-                                    content={
-                                      <div className="w-64 max-h-64 overflow-y-auto">
-                                        {READY_MADE_PHRASES_TH.map(phrase => (
-                                          <button
-                                            key={phrase}
-                                            onClick={() => appendPhrase(field.id, phrase)}
-                                            className="w-full text-left px-2 py-1.5 text-xs text-slate-600 hover:bg-blue-50 hover:text-[#1f5df9] rounded-[4px] cursor-pointer"
-                                          >
-                                            {phrase}
-                                          </button>
-                                        ))}
-                                      </div>
-                                    }
-                                  >
-                                    <button
-                                      title={t('วลีสำเร็จรูป', 'Ready-made phrases')}
-                                      className="w-6 h-6 rounded-full bg-emerald-50 text-emerald-600 hover:bg-emerald-100 flex items-center justify-center cursor-pointer"
-                                    >
-                                      <Lightbulb size={12} />
-                                    </button>
-                                  </Popover>
-                                  <a
-                                    href={`https://www.google.com/search?q=${encodeURIComponent(field.name || '')}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    title={t('ค้นหาใน Google', 'Search on Google')}
-                                    className="w-6 h-6 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center cursor-pointer"
-                                  >
-                                    <Search size={12} />
-                                  </a>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {advancedTab === 'fields' && (
-                      <div className="space-y-4">
-                        {SECTIONS.map(section => (
-                          <div key={section}>
-                            <div className="flex items-center justify-between mb-2">
-                              <h5 className="text-[11px] font-black text-slate-400 uppercase tracking-widest">
-                                {section === 'Header' ? t('ส่วนหัว (Header)', 'Header') : section === 'Description' ? t('ส่วนรายละเอียด (Description)', 'Description') : t('ส่วนท้าย (Footer)', 'Footer')}
-                              </h5>
-                              <button onClick={() => addField(section)} className="flex items-center gap-1 text-[11px] font-bold text-[#1f5df9] hover:underline cursor-pointer">
-                                <Plus size={12} /> {t('เพิ่มฟิลด์ใหม่', 'Add field')}
-                              </button>
-                            </div>
-                            <div className="space-y-2">
-                              {groupedFields[section].length === 0 && (
-                                <p className="text-xs text-slate-300 italic py-1">{t('ยังไม่มีฟิลด์ในส่วนนี้', 'No fields in this section yet')}</p>
-                              )}
-                              {groupedFields[section].map(field => (
-                                <div key={field.id} className="flex items-center gap-2 p-2 bg-slate-50/60 rounded-[8px] border border-slate-200/70">
-                                  <input
-                                    type="text"
-                                    value={field.name}
-                                    onChange={(e) => updateField(field.id, { name: e.target.value })}
-                                    placeholder={t('ชื่อฟิลด์', 'Field name')}
-                                    className="flex-1 min-w-0 px-3 py-1.5 font-mono text-sm font-semibold border border-slate-200 rounded-[4px] focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
-                                  />
-                                  <select
-                                    value={field.type || 'string'}
-                                    onChange={(e) => updateField(field.id, { type: e.target.value })}
-                                    className="w-40 px-2.5 py-1.5 bg-white border border-slate-200 rounded-[4px] text-xs font-semibold cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-100"
-                                  >
-                                    {TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{isTh ? o.th : o.en}</option>)}
-                                  </select>
-                                  <label className="flex items-center gap-1 text-[11px] font-bold text-slate-500 cursor-pointer shrink-0">
-                                    <input type="checkbox" checked={field.required} onChange={(e) => updateField(field.id, { required: e.target.checked })} /> {t('จำเป็น', 'Required')}
-                                  </label>
-                                  <button onClick={() => removeField(field.id)} className="p-1.5 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-[4px] cursor-pointer shrink-0">
-                                    <Trash2 size={14} />
-                                  </button>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {advancedTab === 'json' && (
-                      <div>
-                        <textarea
-                          value={jsonDraft}
-                          onChange={(e) => setJsonDraft(e.target.value)}
-                          rows={14}
-                          className="w-full px-3 py-2.5 text-xs font-mono text-slate-700 bg-slate-50 border border-slate-200 rounded-[8px] focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
-                        />
-                        {jsonError && <p className="text-xs font-bold text-rose-500 mt-1.5">{jsonError}</p>}
-                        <button
-                          onClick={applyJsonDraft}
-                          className="mt-2 px-3.5 py-2 rounded-[4px] bg-[#1f5df9] text-white text-xs font-bold cursor-pointer hover:bg-[#1a4fd6]"
-                        >
-                          {t('นำ JSON นี้ไปใช้', 'Apply this JSON')}
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                {activeConfig && (
+                  <p className="text-[11px] font-bold text-slate-400 mt-1.5">
+                    {activeConfig.labels.length} {t('ฟิลด์', 'fields')} · {t('บันทึกแล้วจะมีผลกับการอ่านเอกสารจริงทันที', 'once saved, this affects real document reading immediately')}
+                  </p>
                 )}
               </div>
             )}
           </div>
 
-          {/* Section 3 — upload the file (if not already attached) + read document */}
-          <div className="bg-white border border-slate-200 rounded-xl p-5">
-            <h3 className="text-[15px] font-black text-slate-800 mb-3">{t('3. อัปโหลดไฟล์และให้ระบบอ่านเอกสาร', '3. Upload the file and let the system read it')}</h3>
-
-            {(!activeFileName || showReupload) ? (
-              <label
-                onDragOver={handleFileDragOver}
-                onDragLeave={handleFileDragLeave}
-                onDrop={(e) => handleFileDrop(e, (f) => { setUploadedFile(f); setRestoredFileName(null); setResults(null); setShowReupload(false); })}
-                className={`flex flex-col items-center justify-center gap-2 py-10 border-2 border-dashed rounded-xl cursor-pointer transition-all mb-3 ${
-                  isDraggingFile ? 'border-[#1f5df9] bg-blue-50/40' : 'border-slate-200 hover:border-[#1f5df9] hover:bg-blue-50/20'
-                }`}
-              >
-                <Upload size={26} className="text-[#1f5df9]" />
-                <span className="text-sm font-bold text-slate-700">{t('ลากไฟล์มาวางที่นี่ หรือ คลิกเพื่อเลือกไฟล์', 'Drop a file here, or click to choose one')}</span>
-                <span className="text-xs text-slate-400">{t('รองรับไฟล์ PDF', 'Supports PDF files')}</span>
-                <input
-                  type="file"
-                  accept=".pdf"
-                  className="hidden"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) { setUploadedFile(f); setRestoredFileName(null); setResults(null); setShowReupload(false); }
-                  }}
-                />
-              </label>
-            ) : (
-              <div className="flex items-center justify-between p-2.5 mb-3 bg-slate-50/60 rounded-[8px] border border-slate-200/70">
-                <div className="flex items-center gap-2 text-sm text-slate-600 min-w-0">
-                  <FileText size={14} className="shrink-0 text-slate-400" />
-                  <span className="truncate">{activeFileName}</span>
-                </div>
-                <button onClick={() => setShowReupload(true)} className="text-xs font-bold text-[#1f5df9] hover:underline cursor-pointer shrink-0">
-                  {t('เปลี่ยนไฟล์', 'Change file')}
-                </button>
-              </div>
-            )}
-
-            <button
-              onClick={runOcrRead}
-              disabled={!canRead || isReading}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-[4px] bg-[#1f5df9] text-white text-sm font-bold cursor-pointer hover:bg-[#1a4fd6] disabled:opacity-30 disabled:cursor-not-allowed"
-            >
-              {isReading ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} />}
-              {isReading ? t('กำลังอ่าน...', 'Reading...') : t('เริ่มอ่านเอกสาร', 'Start reading')}
-            </button>
-          </div>
-
-          {/* Results */}
-          {results && metrics && (
+          {/* 2. ชื่อ schema และจุดเริ่มต้น (new mode only) */}
+          {mode === 'new' && (
             <div className="bg-white border border-slate-200 rounded-xl p-5">
-              <h3 className="text-[15px] font-black text-slate-800 mb-3">{t('ผลการทดสอบ', 'Test results')}</h3>
+              <h3 className="text-[15px] font-black text-slate-800 mb-3">{t('2. ชื่อ schema และจุดเริ่มต้น', '2. Schema name and starting point')}</h3>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5">{t('ชื่อ schema', 'Schema name')}</label>
+                  <input
+                    type="text"
+                    value={nameDraft}
+                    onChange={(e) => { setNameDraft(e.target.value); setNewConfirmed(false); }}
+                    placeholder={t('เช่น cds-invoice-easyaccess', 'e.g. cds-invoice-easyaccess')}
+                    className="w-full px-3 py-2.5 rounded-[4px] border border-slate-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5">{t('ชนิดเอกสาร', 'Document type')}</label>
+                  <select
+                    value={nameDocTypeId}
+                    onChange={(e) => { setNameDocTypeId(e.target.value); setNewConfirmed(false); }}
+                    className="w-full px-3 py-2.5 rounded-[4px] border border-slate-200 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
+                  >
+                    {docTypes.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                  </select>
+                </div>
+              </div>
 
-              <div className="grid grid-cols-4 border border-slate-200 rounded-[8px] overflow-hidden mb-3">
-                {[
-                  { label: t('ตรงกันเป๊ะ', 'Exact match'), value: `${metrics.total ? Math.round((metrics.exact / metrics.total) * 100) : 0}%`, sub: `${metrics.exact}/${metrics.total}` },
-                  { label: t('ตรงแบบยืดหยุ่น', 'Loose match'), value: `${metrics.total ? Math.round((metrics.looseOk / metrics.total) * 100) : 0}%`, sub: `${metrics.looseOk}/${metrics.total}` },
-                  { label: t('ผิด', 'Wrong'), value: String(metrics.wrong) },
-                  { label: t('ไม่พบ', 'Not found'), value: String(metrics.missing) },
-                  { label: t('เกินมา', 'Extra'), value: String(metrics.extra) },
-                  { label: t('จำนวนหน้า', 'Pages'), value: String(results.pageCount) },
-                  { label: t('เวลาที่ใช้', 'Time taken'), value: `${results.elapsedSeconds} ${t('วินาที', 'sec')}` },
-                  { label: t('ฟิลด์ทั้งหมด', 'Total fields'), value: String(metrics.total) },
-                ].map((cell, i) => (
-                  <div key={i} className="border-b border-r border-slate-200 p-3 [&:nth-child(4n)]:border-r-0 [&:nth-last-child(-n+4)]:border-b-0">
-                    <div className="text-[11px] font-bold text-slate-400 mb-1">{cell.label}</div>
-                    <div className="flex items-baseline gap-1.5">
-                      <span className={`text-lg font-black ${cell.sub ? 'text-emerald-600' : 'text-slate-700'}`}>{cell.value}</span>
-                      {cell.sub && <span className="text-xs font-bold text-slate-400">{cell.sub}</span>}
-                    </div>
-                  </div>
+              <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5">{t('ตั้งต้นจาก', 'Start from')}</label>
+              <div className="flex items-center gap-4 mb-3">
+                {([
+                  { key: 'copy' as const, th: 'คัดลอกฟิลด์จาก schema อื่น', en: 'Copy fields from another schema' },
+                  { key: 'dataset' as const, th: 'ฟิลด์จาก dataset', en: 'Fields from a dataset' },
+                  { key: 'blank' as const, th: 'เริ่มว่าง', en: 'Start blank' },
+                ]).map(opt => (
+                  <label key={opt.key} className="flex items-center gap-1.5 text-[13px] font-bold text-slate-600 cursor-pointer">
+                    <input type="radio" checked={startFrom === opt.key} onChange={() => { setStartFrom(opt.key); setNewConfirmed(false); }} />
+                    {isTh ? opt.th : opt.en}
+                  </label>
                 ))}
               </div>
 
-              <div className="flex items-start gap-2 p-3 rounded-[8px] bg-blue-50 border border-blue-100 text-[13px] text-blue-700 mb-3">
-                <Info size={15} className="shrink-0 mt-0.5" />
-                <span>{t('"ต่างแค่รูปแบบ" = ค่าถูกต้องแต่เขียนคนละแบบ เช่น 1,000.00 กับ 1000 หรือ 10/07/2026 กับ 2026-07-10 ถือว่าใช้ได้ — ถ้าคะแนนยังไม่ดี ให้แก้คำใบ้ด้านบน แล้วกดเริ่มทดสอบอีกครั้ง ไม่ต้องอัปโหลดใหม่', '"Format only" = the value is correct but written differently, e.g. 1,000.00 vs 1000 — if the score isn\'t good, edit the hints above and re-run the test, no need to re-upload')}</span>
-              </div>
-
-              <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
-                <div className="flex items-center gap-1 p-1 bg-slate-50 border border-slate-200 rounded-[8px] w-fit">
-                  <button onClick={() => setResultsFilter('need_fix')} className={`px-3 py-1.5 text-xs font-bold rounded-[4px] cursor-pointer ${resultsFilter === 'need_fix' ? 'bg-white text-[#1f5df9] border border-slate-200 shadow-sm' : 'text-slate-500'}`}>
-                    {t('เฉพาะที่ต้องแก้', 'Needs fixing')} ({needFixRows.length})
-                  </button>
-                  <button onClick={() => setResultsFilter('all')} className={`px-3 py-1.5 text-xs font-bold rounded-[4px] cursor-pointer ${resultsFilter === 'all' ? 'bg-white text-[#1f5df9] border border-slate-200 shadow-sm' : 'text-slate-500'}`}>
-                    {t('ทั้งหมด', 'All')} ({results.rows.length})
-                  </button>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button onClick={goEditHintsThenRetest} className="flex items-center gap-1.5 px-3 py-2 rounded-[4px] border border-slate-200 bg-white text-slate-600 text-xs font-bold hover:bg-slate-50 cursor-pointer">
-                    <FileText size={13} /> {t('แก้คำใบ้แล้วทดสอบใหม่', 'Edit hints & re-test')}
-                  </button>
-                  <button
-                    onClick={handleSaveSchema}
-                    disabled={!hasUnsavedEdits}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-[4px] border border-slate-200 bg-white text-slate-600 text-xs font-bold hover:bg-slate-50 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-white"
-                  >
-                    <Save size={13} /> {t('บันทึก schema เข้า BizX', 'Save schema to BizX')}
-                  </button>
-                </div>
-              </div>
-
-              <div className="border border-slate-200 rounded-[8px] overflow-hidden">
-                <table className="w-full text-left text-sm">
-                  <thead>
-                    <tr className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                      <th className="px-4 py-2.5 w-16">{t('หน้า', 'Page')}</th>
-                      <th className="px-4 py-2.5">{t('ฟิลด์', 'Field')}</th>
-                      <th className="px-4 py-2.5">{t('ค่าที่คาดหวัง', 'Expected')}</th>
-                      <th className="px-4 py-2.5">{t('ค่าที่ OCR อ่านได้', 'OCR read')}</th>
-                      <th className="px-4 py-2.5">{t('ผล', 'Result')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredRows.length === 0 && (
-                      <tr>
-                        <td colSpan={5} className="px-4 py-14">
-                          <div className="flex flex-col items-center gap-2 text-slate-300">
-                            <FileText size={28} />
-                            <span className="text-xs font-bold">No Data</span>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                    {filteredRows.map(r => {
-                      const status = computeRowStatus(r);
-                      const badge = STATUS_BADGE[status];
-                      return (
-                        <tr key={r.id} className="border-t border-slate-100">
-                          <td className="px-4 py-2 align-top text-slate-500 font-mono text-xs">{r.page}</td>
-                          <td className="px-4 py-2 align-top">
-                            <div className="font-bold text-slate-700">{r.fieldName}</div>
-                            {r.friendlyName && <div className="text-[11px] text-slate-400 mt-0.5">{r.friendlyName}</div>}
-                          </td>
-                          <td className="px-4 py-2 align-top">
-                            <input
-                              type="text"
-                              value={r.expected}
-                              onChange={(e) => updateRowExpected(r.id, e.target.value)}
-                              className="w-full px-2 py-1 font-mono text-xs text-slate-700 bg-white border border-slate-200 rounded-[4px] focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
-                            />
-                          </td>
-                          <td className="px-4 py-2 align-top font-mono text-xs text-slate-500">
-                            {r.ocrValue || <span className="italic text-slate-300">{t('(ไม่พบ)', '(not found)')}</span>}
-                          </td>
-                          <td className="px-4 py-2 align-top">
-                            <div className="flex items-center gap-2">
-                              <span className={`inline-flex items-center gap-1 text-xs font-bold ${badge.className}`}>
-                                {badge.icon} {isTh ? badge.th : badge.en}
-                              </span>
-                              {r.isExtra && (
-                                <button
-                                  onClick={() => dismissExtraRow(r.id)}
-                                  title={t('ไม่ใช่ฟิลด์จริง ตัดออกจากไฟล์ Expected', 'Not a real field — drop it from the Expected file')}
-                                  className="text-slate-300 hover:text-rose-500 cursor-pointer"
-                                >
-                                  <Trash2 size={12} />
-                                </button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              {worstFields.length > 0 && (
-                <div className="mt-3">
-                  <button onClick={() => setShowWorstFields(v => !v)} className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-700 cursor-pointer">
-                    {showWorstFields ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                    {t('ฟิลด์ที่แย่ที่สุด (ควรแก้คำใบ้ฟิลด์เหล่านี้ก่อน)', 'Worst fields (fix these hints first)')}
-                  </button>
-                  {showWorstFields && (
-                    <div className="mt-2 space-y-1">
-                      {worstFields.map(f => (
-                        <div key={f.fieldName} className="flex items-center justify-between px-3 py-1.5 bg-rose-50/50 rounded-[4px] text-xs">
-                          <span className="font-bold text-slate-700">{f.fieldName}</span>
-                          <span className="font-mono text-rose-600">{f.bad}/{f.total} {t('ผิด', 'wrong')}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+              {startFrom === 'copy' && (
+                <select
+                  value={copySourceKey}
+                  onChange={(e) => { setCopySourceKey(e.target.value); setNewConfirmed(false); }}
+                  className="w-full px-3 py-2.5 rounded-[4px] border border-slate-200 text-sm font-semibold bg-white mb-4 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
+                >
+                  <option value="">{t('— เลือก schema ต้นทาง —', '— Pick a source schema —')}</option>
+                  {schemaOptions.map(o => (
+                    <option key={o.key} value={o.key}>{o.schema.name} / {o.docTypeName} ({o.config.labels.length} {t('ฟิลด์', 'fields')})</option>
+                  ))}
+                </select>
+              )}
+              {startFrom === 'dataset' && (
+                <p className="text-[11px] font-bold text-slate-400 mb-4">{t('(ตัวอย่าง) ฟีเจอร์นี้อยู่ระหว่างการพัฒนา — จะเริ่มจาก schema ว่างไปก่อน', '(Preview) this is still being built — starts blank for now')}</p>
               )}
 
-              <button onClick={openDetailedComparison} className="flex items-center gap-1 text-xs font-bold text-[#1f5df9] hover:underline cursor-pointer mt-3">
-                {t('เปิดหน้าเปรียบเทียบแบบละเอียด (แท็บใหม่)', 'Open detailed comparison (new tab)')} <ArrowUpRight size={12} />
+              <button
+                onClick={confirmNewSchema}
+                disabled={!nameDraft.trim() || !nameDocTypeId}
+                className="px-4 py-2.5 rounded-[4px] bg-[#1f5df9] text-white text-sm font-bold cursor-pointer hover:bg-[#1a4fd6] disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                {t('ถัดไป: แก้ฟิลด์และคำอธิบาย', 'Next: edit fields & hints')}
               </button>
+
+              {newConfirmed && draftSchema && (
+                <p className="text-[11px] font-bold text-slate-400 mt-2.5">
+                  {t('schema ใหม่', 'New schema')} "{draftSchema.name}" · {docTypeName(nameDocTypeId)} — {t('กด "เริ่มใหม่" ถ้าต้องการเปลี่ยนชื่อหรือจุดเริ่มต้น', 'press "Start over" to change the name or starting point')}
+                </p>
+              )}
             </div>
           )}
 
-          {/* Section 5 — download */}
-          {results && (
+          {/* N. ฟิลด์และคำอธิบายฟิลด์/ตำแหน่ง */}
+          {showWorkingCards && draftSchema && activeConfig && (
             <div className="bg-white border border-slate-200 rounded-xl p-5">
-              <h3 className="text-[15px] font-black text-slate-800 mb-1">{t('5. ดาวน์โหลด', '5. Download')}</h3>
-              <p className="text-xs text-slate-400 mb-3">
-                {readyForDownload
-                  ? t('แก้ค่าคาดหวังครบทุกรายการแล้ว พร้อมดาวน์โหลด', 'Every expected value has been fixed — ready to download')
-                  : t('ยังมีรายการที่ต้องแก้อยู่ — ดาวน์โหลดได้เลยหรือจะแก้ให้ครบก่อนก็ได้', 'Some rows still need fixing — you can download now or finish fixing first')}
-              </p>
-              <button onClick={handleDownloadExcel} className="flex items-center gap-2 px-4 py-2.5 rounded-[4px] bg-[#1f5df9] text-white text-sm font-bold cursor-pointer hover:bg-[#1a4fd6]">
-                <Download size={16} /> {t('ดาวน์โหลดไฟล์ Expected (Excel)', 'Download the Expected file (Excel)')}
-              </button>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-[15px] font-black text-slate-800">{cardNumbers.fields}. {t('ฟิลด์และคำอธิบายฟิลด์/ตำแหน่ง', 'Fields and field/position hints')}</h3>
+                <span className="text-xs font-bold text-slate-400">{draftSchema.name} · {docTypeName(activeConfig.docTypeId)}</span>
+              </div>
+
+              <div className="flex items-center gap-4 border-b border-slate-200 mb-3">
+                {SECTIONS.map(section => (
+                  <button
+                    key={section}
+                    onClick={() => setActiveSectionTab(section)}
+                    className={`pb-2 text-sm font-bold cursor-pointer border-b-2 -mb-px transition-all ${
+                      activeSectionTab === section ? 'border-[#1f5df9] text-[#1f5df9]' : 'border-transparent text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    {SECTION_LABEL(section, isTh)} ({groupedFields[section].length})
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex items-center gap-3 flex-wrap mb-3">
+                <div className="relative flex-1 min-w-[200px]">
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder={t('ค้นหาชื่อฟิลด์หรือความหมาย', 'Search field name or meaning')}
+                    className="w-full pl-8 pr-3 py-2 text-sm border border-slate-200 rounded-[4px] focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
+                  />
+                  <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
+                </div>
+                <label className="flex items-center gap-2 text-[13px] font-bold text-slate-600 cursor-pointer shrink-0">
+                  <input type="checkbox" checked={onlyMissingHints} onChange={(e) => setOnlyMissingHints(e.target.checked)} />
+                  {t('เฉพาะที่ยังไม่มีคำอธิบาย', 'Missing a hint only')}
+                  {missingHintCount > 0 && (
+                    <span className="px-1.5 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-700 text-[11px] font-black">{missingHintCount}</span>
+                  )}
+                </label>
+                <button
+                  onClick={() => setExpandedHints(v => !v)}
+                  className="px-3 py-2 rounded-[4px] border border-slate-200 bg-white text-slate-600 text-xs font-bold hover:bg-slate-50 cursor-pointer shrink-0"
+                >
+                  {expandedHints ? t('ย่อช่องคำอธิบาย', 'Collapse hint box') : t('ขยายช่องคำอธิบาย', 'Expand hint box')}
+                </button>
+              </div>
+
+              <div className="grid grid-cols-[minmax(160px,1fr)_130px_minmax(240px,2fr)_auto_auto] gap-3 items-center text-[11px] font-black text-slate-400 uppercase tracking-widest px-1 mb-1">
+                <span>{t('ชื่อฟิลด์', 'Field name')}</span>
+                <span>{t('ชนิดข้อมูล', 'Data type')}</span>
+                <span>{t('คำอธิบายฟิลด์/ตำแหน่ง', 'Field / position hint')}</span>
+                <span />
+                <span />
+              </div>
+              <div className="space-y-2">
+                {visibleFields.length === 0 && (
+                  <p className="text-xs text-slate-300 italic py-3">{t('ไม่พบฟิลด์ที่ตรงกับเงื่อนไข', 'No fields match')}</p>
+                )}
+                {visibleFields.map(field => {
+                  const showThaiInput = revealedThaiFieldIds.has(field.id) || !!field.friendlyName;
+                  return (
+                    <div key={field.id} className="grid grid-cols-[minmax(160px,1fr)_130px_minmax(240px,2fr)_auto_auto] gap-3 items-start py-1.5 border-b border-slate-50 last:border-b-0">
+                      <div className="pt-2 min-w-0">
+                        <div className="font-mono text-sm font-semibold text-slate-700 truncate">{field.name}</div>
+                        {showThaiInput ? (
+                          <input
+                            type="text"
+                            value={field.friendlyName || ''}
+                            onChange={(e) => updateField(field.id, { friendlyName: e.target.value })}
+                            placeholder={t('ชื่อภาษาไทย', 'Thai name')}
+                            className="w-full mt-1 px-2 py-1 text-xs border border-slate-200 rounded-[4px] focus:outline-none focus:ring-2 focus:ring-blue-100"
+                          />
+                        ) : (
+                          <button
+                            onClick={() => setRevealedThaiFieldIds(prev => new Set(prev).add(field.id))}
+                            className="text-[11px] font-bold text-[#1f5df9] hover:underline cursor-pointer mt-0.5"
+                          >
+                            + {t('ใส่ความหมาย', 'Add meaning')}
+                          </button>
+                        )}
+                      </div>
+                      <select
+                        value={field.type || 'string'}
+                        onChange={(e) => updateField(field.id, { type: e.target.value })}
+                        className="mt-1.5 px-2 py-1.5 bg-white border border-slate-200 rounded-[4px] text-xs font-semibold cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-100"
+                      >
+                        {TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{isTh ? o.th : o.en}</option>)}
+                      </select>
+                      <div className="mt-1.5">
+                        <textarea
+                          autoFocus={field.id === justAddedFieldId}
+                          onFocus={() => { if (field.id === justAddedFieldId) setJustAddedFieldId(null); }}
+                          value={field.aiPrompt || ''}
+                          onChange={(e) => updateField(field.id, { aiPrompt: e.target.value })}
+                          placeholder={t('บอก AI ว่าค่านี้อยู่ตรงไหน หน้าตาเป็นอย่างไร', 'Tell the AI where this value is and what it looks like')}
+                          rows={expandedHints ? 3 : 1}
+                          className="w-full px-3 py-1.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-[4px] resize-y focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
+                        />
+                        {!field.aiPrompt?.trim() && (
+                          <p className="text-[11px] font-bold text-amber-600 mt-0.5">{t('ยังไม่มีคำอธิบาย', 'No hint yet')}</p>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => assistWrite(field)}
+                        className="mt-1.5 flex items-center gap-1 px-2.5 py-1.5 rounded-[4px] border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 cursor-pointer whitespace-nowrap"
+                      >
+                        <Sparkles size={12} /> {t('ช่วยเขียน', 'Assist')}
+                      </button>
+                      <button
+                        onClick={() => removeField(field.id)}
+                        className="mt-1.5 text-xs font-bold text-rose-500 hover:text-rose-700 hover:underline cursor-pointer whitespace-nowrap"
+                      >
+                        {t('ลบ', 'Delete')}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="mt-4 p-3 border border-dashed border-slate-200 rounded-lg">
+                <div className="grid grid-cols-4 gap-3 mb-2.5">
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t('ชื่อฟิลด์ (ภาษาอังกฤษ)', 'Field name (English)')}</label>
+                    <input type="text" value={newFieldName} onChange={(e) => setNewFieldName(e.target.value)} placeholder={t('เช่น buyerName', 'e.g. buyerName')} className="w-full px-2.5 py-1.5 font-mono text-sm border border-slate-200 rounded-[4px] focus:outline-none focus:ring-2 focus:ring-blue-100" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t('ชื่อภาษาไทย', 'Thai name')}</label>
+                    <input type="text" value={newFieldThai} onChange={(e) => setNewFieldThai(e.target.value)} placeholder={t('เช่น ชื่อผู้ซื้อ', 'e.g. buyer')} className="w-full px-2.5 py-1.5 text-sm border border-slate-200 rounded-[4px] focus:outline-none focus:ring-2 focus:ring-blue-100" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t('ชนิดข้อมูล', 'Data type')}</label>
+                    <select value={newFieldType} onChange={(e) => setNewFieldType(e.target.value)} className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-[4px] text-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-100">
+                      {TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{isTh ? o.th : o.en}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t('คำอธิบายฟิลด์/ตำแหน่ง', 'Field / position hint')}</label>
+                    <input type="text" value={newFieldHint} onChange={(e) => setNewFieldHint(e.target.value)} placeholder={t('(ใส่ทีหลังได้)', '(optional, add later)')} className="w-full px-2.5 py-1.5 text-sm border border-slate-200 rounded-[4px] focus:outline-none focus:ring-2 focus:ring-blue-100" />
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => addQuickField(false)}
+                    disabled={!newFieldName.trim()}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-[4px] border border-slate-200 bg-white text-slate-600 text-xs font-bold hover:bg-slate-50 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    <Plus size={13} /> {t('เพิ่มฟิลด์', 'Add field')}
+                  </button>
+                  <button
+                    onClick={() => addQuickField(true)}
+                    disabled={!newFieldName.trim()}
+                    className="px-3 py-2 rounded-[4px] border border-slate-200 bg-white text-slate-600 text-xs font-bold hover:bg-slate-50 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    {t('เพิ่มและใส่คำอธิบาย', 'Add & write hint now')}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* N. ทดสอบ (ไม่บังคับ) */}
+          {showWorkingCards && draftSchema && activeConfig && (
+            <div className="bg-white border border-slate-200 rounded-xl p-5">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-[15px] font-black text-slate-800 flex items-center gap-2">
+                  {cardNumbers.test}. {t('ทดสอบ', 'Test')}
+                  <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[10px] font-black uppercase tracking-wide">{t('ไม่บังคับ', 'Optional')}</span>
+                </h3>
+                <button onClick={() => setTestVisible(v => !v)} className="text-xs font-bold text-slate-400 hover:text-slate-600 cursor-pointer flex items-center gap-1">
+                  {testVisible ? t('ซ่อน', 'Hide') : t('แสดง', 'Show')} <ChevronDown size={13} className={`transition-transform ${testVisible ? '' : '-rotate-90'}`} />
+                </button>
+              </div>
+
+              {testVisible && (
+                <>
+                  <div className="flex items-center gap-1 p-1 bg-slate-50 border border-slate-200 rounded-[8px] w-fit mb-3">
+                    {TEST_TABS.map(tab => (
+                      <button
+                        key={tab.key}
+                        onClick={() => { setTestMethod(tab.key); setTestFile(null); setTestResults(null); }}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-[4px] cursor-pointer transition-all ${testMethod === tab.key ? 'bg-white text-[#1f5df9] border border-slate-200 shadow-sm' : 'text-slate-500'}`}
+                      >
+                        {tab.icon} {isTh ? tab.th : tab.en}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-slate-400 mb-3">{t('ให้ AI อ่านเอกสาร ด้วยฟิลด์และคำอธิบายที่ยังไม่ได้บันทึก', "Reads the document using this draft's fields and hints, even before they're saved")}</p>
+
+                  <label
+                    onDragOver={handleFileDragOver}
+                    onDragLeave={handleFileDragLeave}
+                    onDrop={handleFileDrop}
+                    className={`flex flex-col items-center justify-center gap-2 py-8 border-2 border-dashed rounded-xl cursor-pointer transition-all mb-3 ${
+                      isDraggingFile ? 'border-[#1f5df9] bg-blue-50/40' : 'border-slate-200 hover:border-[#1f5df9] hover:bg-blue-50/20'
+                    }`}
+                  >
+                    <Upload size={22} className="text-[#1f5df9]" />
+                    <span className="text-sm font-bold text-slate-700">{testFile ? testFile.name : t('ลากไฟล์มาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์', 'Drop a file here, or click to choose one')}</span>
+                    <span className="text-xs text-slate-400">{t('รองรับ', 'Supports')} {TEST_TABS.find(t2 => t2.key === testMethod)?.accept}</span>
+                    <input
+                      type="file"
+                      accept={TEST_TABS.find(t2 => t2.key === testMethod)?.accept}
+                      className="hidden"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) { setTestFile(f); setTestResults(null); } }}
+                    />
+                  </label>
+
+                  <button
+                    onClick={runTest}
+                    disabled={!testFile || activeConfig.labels.length === 0 || isTesting}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-[4px] bg-[#1f5df9] text-white text-sm font-bold cursor-pointer hover:bg-[#1a4fd6] disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    {isTesting ? t('กำลังทดสอบ...', 'Testing...') : t('เริ่มทดสอบ', 'Start test')}
+                  </button>
+
+                  {testResults && testMetrics && (
+                    <div className="mt-4">
+                      <p className="text-sm font-bold text-slate-700 mb-2">
+                        {t('อ่านได้ถูกต้อง', 'Read correctly')} {testMetrics.matched}/{testMetrics.total} {t('ฟิลด์', 'fields')} ({testMetrics.pct}%)
+                      </p>
+                      <div className="border border-slate-200 rounded-[8px] overflow-hidden max-h-72 overflow-y-auto">
+                        {testResults.map(r => (
+                          <div key={r.fieldId} className="flex items-center justify-between gap-3 px-3 py-2 border-b border-slate-100 last:border-b-0 text-sm">
+                            <div className="min-w-0">
+                              <span className="font-mono font-semibold text-slate-700">{r.fieldName}</span>
+                              {r.friendlyName && <span className="text-xs text-slate-400 ml-1.5">({r.friendlyName})</span>}
+                            </div>
+                            <div className={`font-mono text-xs shrink-0 ${r.matched ? 'text-slate-600' : r.blank ? 'text-amber-600' : 'text-rose-600'}`}>
+                              {r.blank ? t('(ไม่พบ)', '(not found)') : r.value}
+                            </div>
+                            <span className="shrink-0">
+                              {r.matched ? <Check size={14} className="text-emerald-600" /> : <X size={14} className="text-rose-500" />}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           )}
         </div>
