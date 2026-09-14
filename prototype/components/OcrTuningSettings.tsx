@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Popover, message } from 'antd';
 import * as XLSX from 'xlsx';
 import {
@@ -98,6 +98,20 @@ interface TestRun {
   pageCount: number;
   elapsedSeconds: number;
   rows: ResultRow[];
+}
+
+// A named, resumable test session — what "1. เลือกไฟล์เอกสาร" saves/loads via
+// สร้างใหม่/แก้ไขของเดิม. Only the file *name* is kept (see activeFileName below), since this
+// mock never reads real PDF bytes, plus a full snapshot of the schema tuning and any
+// corrections made so far so resuming picks up exactly where it left off.
+interface SavedTemplate {
+  id: string;
+  name: string;
+  updatedAt: string;
+  fileName: string;
+  schemaKey: string;
+  draftSchema: LabelSchema;
+  results: TestRun | null;
 }
 
 const computeRowStatus = (row: ResultRow): RowStatus => {
@@ -203,8 +217,56 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
     return opts;
   }, [schemas, docTypes]);
 
-  // --- Step 1: file ---
+  // --- Step 1: template (a saved test session — file + schema tuning + in-progress corrections) ---
+  const [savedTemplates, setSavedTemplates] = useState<SavedTemplate[]>(() => {
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('bizx_ocr_tuning_templates_v1') : null;
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) { console.error('Failed to parse saved templates', e); }
+    }
+    return [];
+  });
+  const persistTemplates = (next: SavedTemplate[]) => {
+    setSavedTemplates(next);
+    if (typeof window !== 'undefined') localStorage.setItem('bizx_ocr_tuning_templates_v1', JSON.stringify(next));
+  };
+  const [templateMode, setTemplateMode] = useState<'new' | 'edit'>('new');
+  const [templateName, setTemplateName] = useState('');
+  const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  // Set instead of uploadedFile when a saved template is loaded — nothing in this mock ever
+  // reads the real file bytes for a PDF (results are generated from the file *name* + schema),
+  // so re-uploading isn't required just to resume a saved template.
+  const [restoredFileName, setRestoredFileName] = useState<string | null>(null);
+  const [showReupload, setShowReupload] = useState(false);
+  const activeFileName = uploadedFile?.name || restoredFileName || null;
+
+  const switchToNewTemplate = () => {
+    setTemplateMode('new');
+    setActiveTemplateId(null);
+    setTemplateName('');
+    setUploadedFile(null);
+    setRestoredFileName(null);
+    setShowReupload(false);
+    setSelectedKey('');
+    setDraftSchema(null);
+    setHasUnsavedEdits(false);
+    setResults(null);
+  };
+
+  const loadTemplate = (id: string) => {
+    const tpl = savedTemplates.find(x => x.id === id);
+    if (!tpl) return;
+    setActiveTemplateId(tpl.id);
+    setTemplateName(tpl.name);
+    setUploadedFile(null);
+    setRestoredFileName(tpl.fileName);
+    setShowReupload(false);
+    setSelectedKey(tpl.schemaKey);
+    setDraftSchema(cloneSchema(tpl.draftSchema));
+    setHasUnsavedEdits(false);
+    setResults(tpl.results ? (JSON.parse(JSON.stringify(tpl.results)) as TestRun) : null);
+    setResultsFilter('need_fix');
+  };
 
   // --- Step 2: schema + advanced tuning ---
   const [selectedKey, setSelectedKey] = useState<string>('');
@@ -334,14 +396,37 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
   const [resultsFilter, setResultsFilter] = useState<'need_fix' | 'all'>('need_fix');
   const [showWorstFields, setShowWorstFields] = useState(false);
 
-  const canRead = !!uploadedFile && !!activeConfig && activeConfig.labels.length > 0;
+  // Auto-checkpoints the current session (file + schema tuning + results/corrections so far) as
+  // soon as it has a name and a file — so "แก้ไขของเดิม" always has the latest state to resume,
+  // without a separate explicit "save template" step.
+  useEffect(() => {
+    if (!templateName.trim() || !activeFileName) return;
+    const snapshot: SavedTemplate = {
+      id: activeTemplateId || genId('tpl'),
+      name: templateName.trim(),
+      updatedAt: new Date().toISOString(),
+      fileName: activeFileName,
+      schemaKey: selectedKey,
+      draftSchema: draftSchema ? cloneSchema(draftSchema) : ({} as LabelSchema),
+      results: results ? (JSON.parse(JSON.stringify(results)) as TestRun) : null,
+    };
+    if (!activeTemplateId) setActiveTemplateId(snapshot.id);
+    persistTemplates(
+      savedTemplates.some(x => x.id === snapshot.id)
+        ? savedTemplates.map(x => x.id === snapshot.id ? snapshot : x)
+        : [...savedTemplates, snapshot]
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [templateName, activeFileName, selectedKey, draftSchema, results]);
+
+  const canRead = !!activeFileName && !!activeConfig && activeConfig.labels.length > 0;
 
   const runOcrRead = () => {
-    if (!canRead || !activeConfig || !uploadedFile) return;
+    if (!canRead || !activeConfig || !activeFileName) return;
     setIsReading(true);
     setResults(null);
     window.setTimeout(() => {
-      const run = buildTestRun(activeConfig, `${uploadedFile.name}::${draftSchema?.id}`);
+      const run = buildTestRun(activeConfig, `${activeFileName}::${draftSchema?.id}`);
       setResults(run);
       setIsReading(false);
       setResultsFilter('need_fix');
@@ -407,7 +492,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Expected');
-    const baseName = (uploadedFile?.name || 'expected').replace(/\.[^.]+$/, '');
+    const baseName = (activeFileName || 'expected').replace(/\.[^.]+$/, '');
     XLSX.writeFile(wb, `${baseName}_expected.xlsx`);
   };
 
@@ -423,7 +508,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
     { th: 'แก้ให้ถูกต้อง', en: 'Fix values' },
     { th: 'ดาวน์โหลด', en: 'Download' },
   ];
-  const currentStep = !uploadedFile ? 1 : !activeConfig ? 2 : !results ? 3 : !readyForDownload ? 4 : 5;
+  const currentStep = !activeFileName ? 1 : !activeConfig ? 2 : !results ? 3 : !readyForDownload ? 4 : 5;
 
   const STATUS_BADGE: Record<RowStatus, { th: string; en: string; className: string; icon: React.ReactNode }> = {
     exact: { th: 'ตรงกัน', en: 'Match', className: 'text-emerald-600', icon: <Check size={12} /> },
@@ -478,22 +563,96 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
         </div>
 
         <div className="space-y-4">
-          {/* Section 1 — file */}
+          {/* Section 1 — template (a saved file + schema-tuning + corrections session) */}
           <div className="bg-white border border-slate-200 rounded-xl p-5">
             <h3 className="text-[15px] font-black text-slate-800 mb-3">{t('1. เลือกไฟล์เอกสาร', '1. Pick a document')}</h3>
-            <label className="flex flex-col items-center justify-center gap-2 py-10 border-2 border-dashed border-slate-200 rounded-xl cursor-pointer hover:border-[#1f5df9] hover:bg-blue-50/20 transition-all">
-              <Upload size={26} className="text-[#1f5df9]" />
-              <span className="text-sm font-bold text-slate-700">
-                {uploadedFile ? uploadedFile.name : t('ลากไฟล์มาวางที่นี่ หรือ คลิกเพื่อเลือกไฟล์', 'Drop a file here, or click to choose one')}
-              </span>
-              <span className="text-xs text-slate-400">{t('รองรับไฟล์ PDF', 'Supports PDF files')}</span>
-              <input
-                type="file"
-                accept=".pdf"
-                className="hidden"
-                onChange={(e) => { const f = e.target.files?.[0]; if (f) { setUploadedFile(f); setResults(null); } }}
-              />
-            </label>
+
+            <div className="inline-flex items-center gap-1 p-1 bg-slate-50 border border-slate-200 rounded-[8px] mb-4">
+              <button
+                onClick={switchToNewTemplate}
+                className={`px-3.5 py-1.5 text-xs font-bold rounded-[4px] cursor-pointer transition-all ${templateMode === 'new' ? 'bg-white text-[#1f5df9] border border-slate-200 shadow-sm' : 'text-slate-500'}`}
+              >
+                {t('สร้างใหม่', 'Create new')}
+              </button>
+              <button
+                onClick={() => setTemplateMode('edit')}
+                className={`px-3.5 py-1.5 text-xs font-bold rounded-[4px] cursor-pointer transition-all ${templateMode === 'edit' ? 'bg-white text-[#1f5df9] border border-slate-200 shadow-sm' : 'text-slate-500'}`}
+              >
+                {t('แก้ไขของเดิม', 'Edit existing')}
+              </button>
+            </div>
+
+            {templateMode === 'new' ? (
+              <>
+                <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5">{t('ชื่อเทมเพลต', 'Template name')}</label>
+                <input
+                  type="text"
+                  value={templateName}
+                  onChange={(e) => setTemplateName(e.target.value)}
+                  placeholder={t('เช่น Invoice ลูกค้า ABC รอบ 1', 'e.g. ABC Invoice batch 1')}
+                  className="w-full px-3 py-2.5 rounded-[4px] border border-slate-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9] mb-4"
+                />
+                <label className="flex flex-col items-center justify-center gap-2 py-10 border-2 border-dashed border-slate-200 rounded-xl cursor-pointer hover:border-[#1f5df9] hover:bg-blue-50/20 transition-all">
+                  <Upload size={26} className="text-[#1f5df9]" />
+                  <span className="text-sm font-bold text-slate-700">
+                    {uploadedFile ? uploadedFile.name : t('ลากไฟล์มาวางที่นี่ หรือ คลิกเพื่อเลือกไฟล์', 'Drop a file here, or click to choose one')}
+                  </span>
+                  <span className="text-xs text-slate-400">{t('รองรับไฟล์ PDF', 'Supports PDF files')}</span>
+                  <input
+                    type="file"
+                    accept=".pdf"
+                    className="hidden"
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) { setUploadedFile(f); setResults(null); } }}
+                  />
+                </label>
+                {!templateName.trim() && uploadedFile && (
+                  <p className="text-[11px] font-bold text-amber-600 mt-2">{t('ตั้งชื่อเทมเพลตด้วย เพื่อให้ระบบเก็บงานนี้ไว้ให้แก้ไขทีหลังได้', 'Give it a name so this session can be saved and resumed later')}</p>
+                )}
+              </>
+            ) : (
+              <>
+                <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5">{t('เลือกเทมเพลตที่เคยบันทึกไว้', 'Pick a saved template')}</label>
+                <select
+                  value={activeTemplateId || ''}
+                  onChange={(e) => e.target.value && loadTemplate(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-[4px] border border-slate-200 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
+                >
+                  <option value="">{t('— เลือกเทมเพลต —', '— Pick a template —')}</option>
+                  {savedTemplates.map(tpl => (
+                    <option key={tpl.id} value={tpl.id}>{tpl.name} ({tpl.fileName})</option>
+                  ))}
+                </select>
+                {savedTemplates.length === 0 && (
+                  <p className="text-xs text-slate-300 italic mt-2">{t('ยังไม่มีเทมเพลตที่บันทึกไว้ — ไปที่ "สร้างใหม่" แล้วตั้งชื่อเพื่อเริ่มบันทึก', 'No saved templates yet — go to "Create new" and give it a name to start saving one')}</p>
+                )}
+                {activeTemplateId && restoredFileName && (
+                  <div className="mt-3 flex items-center justify-between p-2.5 bg-slate-50/60 rounded-[8px] border border-slate-200/70">
+                    <div className="flex items-center gap-2 text-sm text-slate-600 min-w-0">
+                      <FileText size={14} className="shrink-0 text-slate-400" />
+                      <span className="truncate">{restoredFileName}</span>
+                    </div>
+                    <button onClick={() => setShowReupload(v => !v)} className="text-xs font-bold text-[#1f5df9] hover:underline cursor-pointer shrink-0">
+                      {t('เปลี่ยนไฟล์', 'Change file')}
+                    </button>
+                  </div>
+                )}
+                {activeTemplateId && showReupload && (
+                  <label className="flex flex-col items-center justify-center gap-2 py-8 mt-3 border-2 border-dashed border-slate-200 rounded-xl cursor-pointer hover:border-[#1f5df9] hover:bg-blue-50/20 transition-all">
+                    <Upload size={22} className="text-[#1f5df9]" />
+                    <span className="text-sm font-bold text-slate-700">{t('เลือกไฟล์ใหม่', 'Choose a new file')}</span>
+                    <input
+                      type="file"
+                      accept=".pdf"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) { setUploadedFile(f); setRestoredFileName(null); setResults(null); setShowReupload(false); }
+                      }}
+                    />
+                  </label>
+                )}
+              </>
+            )}
           </div>
 
           {/* Section 2 — schema */}
