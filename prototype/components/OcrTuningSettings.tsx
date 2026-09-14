@@ -150,6 +150,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
     setTestMethod('ai');
     setTestFile(null);
     setTestResults(null);
+    setSavedOnce(false);
   };
 
   const switchMode = (next: 'new' | 'edit') => {
@@ -159,6 +160,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
     setNewConfirmed(false);
     setEditKey('');
     setTestResults(null);
+    setSavedOnce(false);
   };
 
   const confirmNewSchema = () => {
@@ -176,6 +178,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
     setDraftSchema(schema);
     setActiveDocTypeId(nameDocTypeId);
     setNewConfirmed(true);
+    setSavedOnce(false);
   };
 
   const pickEditSchema = (key: string) => {
@@ -185,8 +188,10 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
     setDraftSchema(cloneSchema(opt.schema));
     setActiveDocTypeId(opt.config.docTypeId);
     setTestResults(null);
+    setSavedOnce(false);
   };
 
+  const [savedOnce, setSavedOnce] = useState(false);
   const handleSaveSchema = () => {
     if (!draftSchema) return;
     const toSave: LabelSchema = { ...draftSchema, updatedAt: new Date().toISOString() };
@@ -195,6 +200,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
       if (typeof window !== 'undefined') localStorage.setItem('bizx_label_schemas_v7', JSON.stringify(next));
       return next;
     });
+    setSavedOnce(true);
     message.success(isTh ? 'บันทึก Schema เรียบร้อย' : 'Schema saved');
   };
 
@@ -316,7 +322,10 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
     return { total, matched, pct: total ? Math.round((matched / total) * 100) : 0 };
   }, [testResults]);
 
-  // --- Step indicator (decorative — this is a single always-visible page, not a gated wizard) ---
+  // --- Step indicator (decorative — this is a single always-visible page, not a gated wizard —
+  // but it should still reflect real progress: step 1 active and the rest disabled on a fresh
+  // load, advancing/checking off as the user actually does each thing, rather than always
+  // showing everything but the last step as already done). ---
   const STEP_LABELS = [
     { th: 'เลือกงาน', en: 'Choose task' },
     { th: 'ชื่อและต้นแบบ', en: 'Name & base' },
@@ -324,6 +333,12 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
     { th: 'ทดสอบ (ไม่บังคับ)', en: 'Test (optional)' },
     { th: 'บันทึก', en: 'Save' },
   ];
+  const hasChosenTask = mode === 'new' ? !!nameDraft.trim() : !!editKey;
+  const currentStep = savedOnce ? 5
+    : !hasChosenTask ? 1
+    : !draftSchema ? 2
+    : !testResults ? 3
+    : 4;
 
   // Body cards renumber depending on mode — editing an existing schema skips the "name & base"
   // card entirely, since the schema already has both.
@@ -355,16 +370,21 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
         {/* Step indicator (decorative) */}
         <div className="flex items-center mb-6 bg-white border border-slate-200 rounded-xl px-5 py-3.5 overflow-x-auto">
           {STEP_LABELS.map((s, i) => {
+            const stepNum = i + 1;
+            const isDone = stepNum < currentStep;
+            const isCurrent = stepNum === currentStep;
             const isLast = i === STEP_LABELS.length - 1;
             return (
               <React.Fragment key={s.th}>
                 <div className="flex items-center gap-2 shrink-0">
                   <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black shrink-0 ${
-                    isLast ? 'bg-[#1f5df9] text-white' : 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+                    isDone ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+                      : isCurrent ? 'bg-[#1f5df9] text-white'
+                      : 'bg-white text-slate-300 border border-slate-200'
                   }`}>
-                    {isLast ? STEP_LABELS.length : <Check size={12} />}
+                    {isDone ? <Check size={12} /> : stepNum}
                   </div>
-                  <span className={`text-sm font-bold whitespace-nowrap ${isLast ? 'text-slate-800' : 'text-slate-400'}`}>
+                  <span className={`text-sm font-bold whitespace-nowrap ${isCurrent ? 'text-slate-800' : isDone ? 'text-slate-400' : 'text-slate-300'}`}>
                     {isTh ? s.th : s.en}
                   </span>
                 </div>
