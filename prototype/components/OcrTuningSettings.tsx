@@ -512,13 +512,14 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
 
   // --- Step indicator (progress only — every section below stays visible) ---
   const STEP_LABELS = [
-    { th: 'เลือกไฟล์', en: 'Pick file' },
+    { th: 'เลือกเทมเพลต', en: 'Pick template' },
     { th: 'เลือก schema', en: 'Pick schema' },
     { th: 'อ่านเอกสาร', en: 'Read document' },
     { th: 'แก้ให้ถูกต้อง', en: 'Fix values' },
     { th: 'ดาวน์โหลด', en: 'Download' },
   ];
-  const currentStep = !activeFileName ? 1 : !activeConfig ? 2 : !results ? 3 : !readyForDownload ? 4 : 5;
+  const hasTemplateIdentity = templateMode === 'new' ? !!templateName.trim() : !!activeTemplateId;
+  const currentStep = !hasTemplateIdentity ? 1 : !activeConfig ? 2 : !results ? 3 : !readyForDownload ? 4 : 5;
 
   const STATUS_BADGE: Record<RowStatus, { th: string; en: string; className: string; icon: React.ReactNode }> = {
     exact: { th: 'ตรงกัน', en: 'Match', className: 'text-emerald-600', icon: <Check size={12} /> },
@@ -575,7 +576,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
         <div className="space-y-4">
           {/* Section 1 — template (a saved file + schema-tuning + corrections session) */}
           <div className="bg-white border border-slate-200 rounded-xl p-5">
-            <h3 className="text-[15px] font-black text-slate-800 mb-3">{t('1. เลือกไฟล์เอกสาร', '1. Pick a document')}</h3>
+            <h3 className="text-[15px] font-black text-slate-800 mb-3">{t('1. เลือกเทมเพลต', '1. Pick a template')}</h3>
 
             <div className="inline-flex items-center gap-1 p-1 bg-slate-50 border border-slate-200 rounded-[8px] mb-4">
               <button
@@ -600,31 +601,9 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                   value={templateName}
                   onChange={(e) => setTemplateName(e.target.value)}
                   placeholder={t('เช่น Invoice ลูกค้า ABC รอบ 1', 'e.g. ABC Invoice batch 1')}
-                  className="w-full px-3 py-2.5 rounded-[4px] border border-slate-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9] mb-4"
+                  className="w-full px-3 py-2.5 rounded-[4px] border border-slate-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
                 />
-                <label
-                  onDragOver={handleFileDragOver}
-                  onDragLeave={handleFileDragLeave}
-                  onDrop={(e) => handleFileDrop(e, (f) => { setUploadedFile(f); setResults(null); })}
-                  className={`flex flex-col items-center justify-center gap-2 py-10 border-2 border-dashed rounded-xl cursor-pointer transition-all ${
-                    isDraggingFile ? 'border-[#1f5df9] bg-blue-50/40' : 'border-slate-200 hover:border-[#1f5df9] hover:bg-blue-50/20'
-                  }`}
-                >
-                  <Upload size={26} className="text-[#1f5df9]" />
-                  <span className="text-sm font-bold text-slate-700">
-                    {uploadedFile ? uploadedFile.name : t('ลากไฟล์มาวางที่นี่ หรือ คลิกเพื่อเลือกไฟล์', 'Drop a file here, or click to choose one')}
-                  </span>
-                  <span className="text-xs text-slate-400">{t('รองรับไฟล์ PDF', 'Supports PDF files')}</span>
-                  <input
-                    type="file"
-                    accept=".pdf"
-                    className="hidden"
-                    onChange={(e) => { const f = e.target.files?.[0]; if (f) { setUploadedFile(f); setResults(null); } }}
-                  />
-                </label>
-                {!templateName.trim() && uploadedFile && (
-                  <p className="text-[11px] font-bold text-amber-600 mt-2">{t('ตั้งชื่อเทมเพลตด้วย เพื่อให้ระบบเก็บงานนี้ไว้ให้แก้ไขทีหลังได้', 'Give it a name so this session can be saved and resumed later')}</p>
-                )}
+                <p className="text-[11px] font-bold text-slate-400 mt-1.5">{t('อัปโหลดไฟล์ที่ขั้นตอนที่ 3 — ตั้งชื่อไว้ก่อน ระบบจะเก็บงานนี้ให้แก้ไขทีหลังได้', 'Upload the file in step 3 — name it now so this session can be saved and resumed later')}</p>
               </>
             ) : (
               <>
@@ -643,37 +622,10 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                   <p className="text-xs text-slate-300 italic mt-2">{t('ยังไม่มีเทมเพลตที่บันทึกไว้ — ไปที่ "สร้างใหม่" แล้วตั้งชื่อเพื่อเริ่มบันทึก', 'No saved templates yet — go to "Create new" and give it a name to start saving one')}</p>
                 )}
                 {activeTemplateId && restoredFileName && (
-                  <div className="mt-3 flex items-center justify-between p-2.5 bg-slate-50/60 rounded-[8px] border border-slate-200/70">
-                    <div className="flex items-center gap-2 text-sm text-slate-600 min-w-0">
-                      <FileText size={14} className="shrink-0 text-slate-400" />
-                      <span className="truncate">{restoredFileName}</span>
-                    </div>
-                    <button onClick={() => setShowReupload(v => !v)} className="text-xs font-bold text-[#1f5df9] hover:underline cursor-pointer shrink-0">
-                      {t('เปลี่ยนไฟล์', 'Change file')}
-                    </button>
+                  <div className="mt-3 flex items-center gap-2 p-2.5 bg-slate-50/60 rounded-[8px] border border-slate-200/70 text-sm text-slate-600">
+                    <FileText size={14} className="shrink-0 text-slate-400" />
+                    <span className="truncate">{restoredFileName}</span>
                   </div>
-                )}
-                {activeTemplateId && showReupload && (
-                  <label
-                    onDragOver={handleFileDragOver}
-                    onDragLeave={handleFileDragLeave}
-                    onDrop={(e) => handleFileDrop(e, (f) => { setUploadedFile(f); setRestoredFileName(null); setResults(null); setShowReupload(false); })}
-                    className={`flex flex-col items-center justify-center gap-2 py-8 mt-3 border-2 border-dashed rounded-xl cursor-pointer transition-all ${
-                      isDraggingFile ? 'border-[#1f5df9] bg-blue-50/40' : 'border-slate-200 hover:border-[#1f5df9] hover:bg-blue-50/20'
-                    }`}
-                  >
-                    <Upload size={22} className="text-[#1f5df9]" />
-                    <span className="text-sm font-bold text-slate-700">{t('เลือกไฟล์ใหม่', 'Choose a new file')}</span>
-                    <input
-                      type="file"
-                      accept=".pdf"
-                      className="hidden"
-                      onChange={(e) => {
-                        const f = e.target.files?.[0];
-                        if (f) { setUploadedFile(f); setRestoredFileName(null); setResults(null); setShowReupload(false); }
-                      }}
-                    />
-                  </label>
                 )}
               </>
             )}
@@ -868,9 +820,44 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
             )}
           </div>
 
-          {/* Section 3 — read document */}
+          {/* Section 3 — upload the file (if not already attached) + read document */}
           <div className="bg-white border border-slate-200 rounded-xl p-5">
-            <h3 className="text-[15px] font-black text-slate-800 mb-3">{t('3. ให้ระบบอ่านเอกสาร', '3. Let the system read the document')}</h3>
+            <h3 className="text-[15px] font-black text-slate-800 mb-3">{t('3. อัปโหลดไฟล์และให้ระบบอ่านเอกสาร', '3. Upload the file and let the system read it')}</h3>
+
+            {(!activeFileName || showReupload) ? (
+              <label
+                onDragOver={handleFileDragOver}
+                onDragLeave={handleFileDragLeave}
+                onDrop={(e) => handleFileDrop(e, (f) => { setUploadedFile(f); setRestoredFileName(null); setResults(null); setShowReupload(false); })}
+                className={`flex flex-col items-center justify-center gap-2 py-10 border-2 border-dashed rounded-xl cursor-pointer transition-all mb-3 ${
+                  isDraggingFile ? 'border-[#1f5df9] bg-blue-50/40' : 'border-slate-200 hover:border-[#1f5df9] hover:bg-blue-50/20'
+                }`}
+              >
+                <Upload size={26} className="text-[#1f5df9]" />
+                <span className="text-sm font-bold text-slate-700">{t('ลากไฟล์มาวางที่นี่ หรือ คลิกเพื่อเลือกไฟล์', 'Drop a file here, or click to choose one')}</span>
+                <span className="text-xs text-slate-400">{t('รองรับไฟล์ PDF', 'Supports PDF files')}</span>
+                <input
+                  type="file"
+                  accept=".pdf"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) { setUploadedFile(f); setRestoredFileName(null); setResults(null); setShowReupload(false); }
+                  }}
+                />
+              </label>
+            ) : (
+              <div className="flex items-center justify-between p-2.5 mb-3 bg-slate-50/60 rounded-[8px] border border-slate-200/70">
+                <div className="flex items-center gap-2 text-sm text-slate-600 min-w-0">
+                  <FileText size={14} className="shrink-0 text-slate-400" />
+                  <span className="truncate">{activeFileName}</span>
+                </div>
+                <button onClick={() => setShowReupload(true)} className="text-xs font-bold text-[#1f5df9] hover:underline cursor-pointer shrink-0">
+                  {t('เปลี่ยนไฟล์', 'Change file')}
+                </button>
+              </div>
+            )}
+
             <button
               onClick={runOcrRead}
               disabled={!canRead || isReading}
