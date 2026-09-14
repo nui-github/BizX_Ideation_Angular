@@ -382,7 +382,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
     // gap between it and the header/sidebar, regardless of <main>'s own padding value.
     <div className="-m-4 font-sans">
       <div className="bg-white rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.1)] m-6 p-6">
-      <div className="max-w-6xl mx-auto">
+      <div>
         <div ref={topRef} className="flex items-start justify-between gap-4 mb-5 scroll-mt-24">
           <div>
             <h1 className="text-xl font-black text-slate-900 tracking-tight">{t('ปรับการอ่านเอกสาร', 'OCR Tuning')}</h1>
