@@ -505,7 +505,9 @@ if (typeof window !== 'undefined') {
 
 function App() {
   // Default view: Data Comparison job list (รายการงาน (Job))
-  const [currentView, setCurrentView] = useState<'TRACKING' | 'AGENT_LIST' | 'AGENT_FORM' | 'EXTRACTION' | 'UPLOAD' | 'WORKFLOW_LIST' | 'WORKFLOW_BUILDER' | 'DATA_COMPARISON_JOBS' | 'DATA_COMPARISON_WORKFLOW' | 'DATA_COMPARISON_RULE' | 'DATA_COMPARISON_WORKFLOW_BUILDER' | 'SETTINGS_DOC_TYPE_MASTER' | 'SETTINGS_LABEL_SCHEMA' | 'SETTINGS_MASTER_DATA' | 'SETTINGS_JOB_PRESET' | 'SETTINGS_OCR_TUNING'>('DATA_COMPARISON_JOBS');
+  const [currentView, setCurrentView] = useState<'TRACKING' | 'AGENT_LIST' | 'AGENT_FORM' | 'EXTRACTION' | 'UPLOAD' | 'WORKFLOW_LIST' | 'WORKFLOW_BUILDER' | 'DATA_COMPARISON_JOBS' | 'DATA_COMPARISON_WORKFLOW' | 'DATA_COMPARISON_RULE' | 'DATA_COMPARISON_WORKFLOW_BUILDER' | 'SETTINGS_DOC_TYPE_MASTER' | 'SETTINGS_LABEL_SCHEMA' | 'SETTINGS_MASTER_DATA' | 'SETTINGS_JOB_PRESET' | 'SETTINGS_OCR_TUNING'>(
+    () => (typeof window !== 'undefined' && window.location.pathname === '/ocr-turning' ? 'SETTINGS_OCR_TUNING' : 'DATA_COMPARISON_JOBS')
+  );
   const [docTypes, setDocTypes] = useState<DocType[]>([
     { 
       id: 'INV', 
@@ -1204,6 +1206,29 @@ function App() {
   const handleNavigate = (view: 'TRACKING' | 'AGENT_LIST' | 'UPLOAD' | 'WORKFLOW_LIST' | 'DATA_COMPARISON_JOBS' | 'DATA_COMPARISON_WORKFLOW' | 'DATA_COMPARISON_RULE' | 'DATA_COMPARISON_WORKFLOW_BUILDER' | 'SETTINGS_DOC_TYPE_MASTER' | 'SETTINGS_LABEL_SCHEMA' | 'SETTINGS_MASTER_DATA' | 'SETTINGS_JOB_PRESET' | 'SETTINGS_OCR_TUNING') => {
       setCurrentView(view);
   };
+
+  // Keeps the URL in sync with the OCR Tuning page specifically — it's the only view with its
+  // own address (/ocr-turning) since it's reachable directly from the profile menu.
+  React.useEffect(() => {
+    const isOcrTuningUrl = window.location.pathname === '/ocr-turning';
+    if (currentView === 'SETTINGS_OCR_TUNING' && !isOcrTuningUrl) {
+      window.history.pushState({}, '', '/ocr-turning');
+    } else if (currentView !== 'SETTINGS_OCR_TUNING' && isOcrTuningUrl) {
+      window.history.pushState({}, '', '/');
+    }
+  }, [currentView]);
+
+  React.useEffect(() => {
+    const handlePopState = () => {
+      const onOcrTuningUrl = window.location.pathname === '/ocr-turning';
+      setCurrentView(prev => {
+        if (onOcrTuningUrl) return 'SETTINGS_OCR_TUNING';
+        return prev === 'SETTINGS_OCR_TUNING' ? 'DATA_COMPARISON_JOBS' : prev;
+      });
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   const [notifyTargetJobId, setNotifyTargetJobId] = useState<string | null>(null);
   const handleNotificationClick = (jobId: string) => {

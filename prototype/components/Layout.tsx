@@ -54,7 +54,9 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentUserRole, onTog
   const [profileOpen, setProfileOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState<AppNotification[]>(INITIAL_NOTIFICATIONS);
-  const [activeMenu, setActiveMenu] = useState('comparison_jobs');
+  const [activeMenu, setActiveMenu] = useState(
+    () => (typeof window !== 'undefined' && window.location.pathname === '/ocr-turning' ? 'settings_ocr_tuning' : 'comparison_jobs')
+  );
   const t = TRANSLATIONS[language];
   const unreadCount = notifications.filter(n => !n.read).length;
 
