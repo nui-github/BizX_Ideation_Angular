@@ -163,6 +163,9 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
     setSavedOnce(false);
   };
 
+  // Also used to swap the starting point after the schema's already been created — it
+  // re-clones fields from the newly picked source and replaces the draft's current fields,
+  // keeping the same schema id so it isn't treated as a second, separate schema.
   const confirmNewSchema = () => {
     if (!nameDraft.trim() || !nameDocTypeId) return;
     let labels: SchemaLabel[] = [];
@@ -171,10 +174,12 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
       if (src) labels = JSON.parse(JSON.stringify(src.config.labels)).map((l: SchemaLabel) => ({ ...l, id: genId('field') }));
     }
     const config: DocTypeSchemaConfig = { docTypeId: nameDocTypeId, labels, extractionMethod: 'ai' };
-    const schema: LabelSchema = {
-      id: genId('ls'), name: nameDraft.trim(), description: '', docTypes: [nameDocTypeId],
-      workflowIds: [], assignedTeams: ['ALL'], updatedAt: new Date().toISOString(), configs: [config],
-    };
+    const schema: LabelSchema = draftSchema
+      ? { ...draftSchema, name: nameDraft.trim(), docTypes: [nameDocTypeId], configs: [config] }
+      : {
+          id: genId('ls'), name: nameDraft.trim(), description: '', docTypes: [nameDocTypeId],
+          workflowIds: [], assignedTeams: ['ALL'], updatedAt: new Date().toISOString(), configs: [config],
+        };
     setDraftSchema(schema);
     setActiveDocTypeId(nameDocTypeId);
     setNewConfirmed(true);
@@ -532,12 +537,14 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                 disabled={!nameDraft.trim() || !nameDocTypeId}
                 className="px-4 py-2.5 rounded-[4px] bg-[#1f5df9] text-white text-sm font-bold cursor-pointer hover:bg-[#1a4fd6] disabled:opacity-30 disabled:cursor-not-allowed"
               >
-                {t('ถัดไป: แก้ฟิลด์และคำอธิบาย', 'Next: edit fields & hints')}
+                {draftSchema
+                  ? t('ใช้จุดเริ่มต้นนี้แทนฟิลด์ปัจจุบัน', 'Use this starting point instead of the current fields')
+                  : t('ถัดไป: แก้ฟิลด์และคำอธิบาย', 'Next: edit fields & hints')}
               </button>
 
               {newConfirmed && draftSchema && (
                 <p className="text-[11px] font-bold text-slate-400 mt-2.5">
-                  {t('schema ใหม่', 'New schema')} "{draftSchema.name}" · {docTypeName(nameDocTypeId)} — {t('กด "เริ่มใหม่" ถ้าต้องการเปลี่ยนชื่อหรือจุดเริ่มต้น', 'press "Start over" to change the name or starting point')}
+                  {t('schema ใหม่', 'New schema')} "{draftSchema.name}" · {docTypeName(nameDocTypeId)} — {t('เปลี่ยนจุดเริ่มต้นด้านบนแล้วกดปุ่มนี้อีกครั้งเพื่อแทนที่ฟิลด์ปัจจุบัน', 'change the starting point above and press this button again to replace the current fields')}
                 </p>
               )}
             </div>
