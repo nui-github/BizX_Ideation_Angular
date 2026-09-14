@@ -424,7 +424,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                   className={`flex items-center gap-2 shrink-0 ${isReachable ? 'cursor-pointer' : 'cursor-not-allowed'}`}
                 >
                   <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black shrink-0 ${
-                    isDone ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+                    isDone ? 'bg-blue-50 text-[#1f5df9] border border-blue-200'
                       : isCurrent ? 'bg-[#1f5df9] text-white'
                       : 'bg-white text-slate-300 border border-slate-200'
                   }`}>
