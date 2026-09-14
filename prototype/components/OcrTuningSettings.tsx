@@ -363,7 +363,9 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
   const step2Ref = useRef<HTMLDivElement>(null);
   const fieldsRef = useRef<HTMLDivElement>(null);
   const testRef = useRef<HTMLDivElement>(null);
-  const STEP_REFS = [step1Ref, step2Ref, fieldsRef, testRef, topRef];
+  // Edit mode has no separate "name & base" card — picking the schema in step 1 covers it —
+  // so step 2 anchors back to step 1's card instead of a nonexistent section.
+  const STEP_REFS = [step1Ref, mode === 'new' ? step2Ref : step1Ref, fieldsRef, testRef, topRef];
   const scrollToStep = (stepNum: number) => {
     STEP_REFS[stepNum - 1]?.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
@@ -400,9 +402,8 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
             const isDone = stepNum < currentStep;
             const isCurrent = stepNum === currentStep;
             const isLast = i === STEP_LABELS.length - 1;
-            // Step 2's card only exists in "new" mode; steps 3/4's only once a schema is picked/created.
-            const isReachable = stepNum === 1 || stepNum === 5
-              || (stepNum === 2 && mode === 'new')
+            // Step 2 anchors to its own card in "new" mode, or back to step 1 in edit mode.
+            const isReachable = stepNum === 1 || stepNum === 2 || stepNum === 5
               || ((stepNum === 3 || stepNum === 4) && !!draftSchema);
             return (
               <React.Fragment key={s.th}>
