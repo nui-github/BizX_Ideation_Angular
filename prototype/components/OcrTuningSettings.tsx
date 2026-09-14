@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { message } from 'antd';
 import {
   Plus, Trash2, Upload, FileText, FileSpreadsheet, FileCode2, Check, X,
@@ -345,10 +345,22 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
   const cardNumbers = mode === 'new' ? { fields: 3, test: 4 } : { fields: 2, test: 3 };
   const showWorkingCards = !!draftSchema;
 
+  // Clicking a step in the indicator jumps straight to that section — "บันทึก" has no card of
+  // its own (saving is just the header button), so it scrolls to the top instead.
+  const topRef = useRef<HTMLDivElement>(null);
+  const step1Ref = useRef<HTMLDivElement>(null);
+  const step2Ref = useRef<HTMLDivElement>(null);
+  const fieldsRef = useRef<HTMLDivElement>(null);
+  const testRef = useRef<HTMLDivElement>(null);
+  const STEP_REFS = [step1Ref, step2Ref, fieldsRef, testRef, topRef];
+  const scrollToStep = (stepNum: number) => {
+    STEP_REFS[stepNum - 1]?.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   return (
     <div className="flex-1 bg-slate-50 font-sans">
       <div className="max-w-6xl mx-auto p-6">
-        <div className="flex items-start justify-between gap-4 mb-5">
+        <div ref={topRef} className="flex items-start justify-between gap-4 mb-5 scroll-mt-24">
           <div>
             <h1 className="text-xl font-black text-slate-900 tracking-tight">{t('ปรับการอ่านเอกสาร', 'OCR Tuning')}</h1>
             <p className="text-sm text-slate-500 mt-0.5">{t('กำหนดฟิลด์และคำอธิบายฟิลด์/ตำแหน่ง ให้ AI อ่านเอกสารได้ถูกต้อง — ทดสอบก่อนบันทึกได้', 'Define fields and their hints so the AI reads documents correctly — test before saving')}</p>
@@ -374,9 +386,18 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
             const isDone = stepNum < currentStep;
             const isCurrent = stepNum === currentStep;
             const isLast = i === STEP_LABELS.length - 1;
+            // Step 2's card only exists in "new" mode; steps 3/4's only once a schema is picked/created.
+            const isReachable = stepNum === 1 || stepNum === 5
+              || (stepNum === 2 && mode === 'new')
+              || ((stepNum === 3 || stepNum === 4) && !!draftSchema);
             return (
               <React.Fragment key={s.th}>
-                <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => isReachable && scrollToStep(stepNum)}
+                  disabled={!isReachable}
+                  className={`flex items-center gap-2 shrink-0 ${isReachable ? 'cursor-pointer' : 'cursor-not-allowed'}`}
+                >
                   <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black shrink-0 ${
                     isDone ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
                       : isCurrent ? 'bg-[#1f5df9] text-white'
@@ -387,7 +408,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                   <span className={`text-sm font-bold whitespace-nowrap ${isCurrent ? 'text-slate-800' : isDone ? 'text-slate-400' : 'text-slate-300'}`}>
                     {isTh ? s.th : s.en}
                   </span>
-                </div>
+                </button>
                 {!isLast && <div className="flex-1 h-px bg-slate-200 mx-3 min-w-6" />}
               </React.Fragment>
             );
@@ -396,7 +417,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
 
         <div className="space-y-4">
           {/* 1. เลือกงาน */}
-          <div className="bg-white border border-slate-200 rounded-xl p-5">
+          <div ref={step1Ref} className="bg-white border border-slate-200 rounded-xl p-5 scroll-mt-24">
             <h3 className="text-[15px] font-black text-slate-800 mb-3">{t('1. เลือกงาน', '1. Choose a task')}</h3>
             <div className="inline-flex items-center gap-1 p-1 bg-slate-50 border border-slate-200 rounded-[8px]">
               <button
@@ -437,7 +458,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
 
           {/* 2. ชื่อ schema และจุดเริ่มต้น (new mode only) */}
           {mode === 'new' && (
-            <div className="bg-white border border-slate-200 rounded-xl p-5">
+            <div ref={step2Ref} className="bg-white border border-slate-200 rounded-xl p-5 scroll-mt-24">
               <h3 className="text-[15px] font-black text-slate-800 mb-3">{t('2. ชื่อ schema และจุดเริ่มต้น', '2. Schema name and starting point')}</h3>
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
@@ -507,7 +528,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
 
           {/* N. ฟิลด์และคำอธิบายฟิลด์/ตำแหน่ง */}
           {showWorkingCards && draftSchema && activeConfig && (
-            <div className="bg-white border border-slate-200 rounded-xl p-5">
+            <div ref={fieldsRef} className="bg-white border border-slate-200 rounded-xl p-5 scroll-mt-24">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-[15px] font-black text-slate-800">{cardNumbers.fields}. {t('ฟิลด์และคำอธิบายฟิลด์/ตำแหน่ง', 'Fields and field/position hints')}</h3>
                 <span className="text-xs font-bold text-slate-400">{draftSchema.name} · {docTypeName(activeConfig.docTypeId)}</span>
@@ -668,7 +689,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
 
           {/* N. ทดสอบ (ไม่บังคับ) */}
           {showWorkingCards && draftSchema && activeConfig && (
-            <div className="bg-white border border-slate-200 rounded-xl p-5">
+            <div ref={testRef} className="bg-white border border-slate-200 rounded-xl p-5 scroll-mt-24">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-[15px] font-black text-slate-800 flex items-center gap-2">
                   {cardNumbers.test}. {t('ทดสอบ', 'Test')}
