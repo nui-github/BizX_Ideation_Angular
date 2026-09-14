@@ -346,7 +346,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
   const showWorkingCards = !!draftSchema;
 
   return (
-    <div className="flex-1 overflow-y-auto bg-slate-50 font-sans">
+    <div className="flex-1 bg-slate-50 font-sans">
       <div className="max-w-6xl mx-auto p-6">
         <div className="flex items-start justify-between gap-4 mb-5">
           <div>
@@ -367,8 +367,8 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
           </div>
         </div>
 
-        {/* Step indicator (decorative) */}
-        <div className="flex items-center mb-6 bg-white border border-slate-200 rounded-xl px-5 py-3.5 overflow-x-auto">
+        {/* Step indicator — sticks to the top of the scroll area while scrolling down */}
+        <div className="sticky top-0 z-20 flex items-center mb-6 bg-white border border-slate-200 rounded-xl px-5 py-3.5 overflow-x-auto shadow-sm">
           {STEP_LABELS.map((s, i) => {
             const stepNum = i + 1;
             const isDone = stepNum < currentStep;
