@@ -411,10 +411,6 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
     XLSX.writeFile(wb, `${baseName}_expected.xlsx`);
   };
 
-  const goToAccuracyPage = () => {
-    message.info(t('หน้าวัดความแม่นยำอยู่ระหว่างการพัฒนา', 'The accuracy page is still being built'));
-  };
-
   const openDetailedComparison = () => {
     message.info(t('หน้าเปรียบเทียบแบบละเอียดอยู่ระหว่างการพัฒนา', 'The detailed comparison page is still being built'));
   };
@@ -454,9 +450,6 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
           <div className="flex items-center gap-2 shrink-0">
             <button onClick={handleDownloadExcel} className="flex items-center gap-1.5 px-3.5 py-2 rounded-[4px] border border-slate-200 bg-white text-slate-600 text-sm font-bold hover:bg-slate-50 cursor-pointer">
               <FileSpreadsheet size={14} /> {t('ไฟล์ Excel', 'Excel file')}
-            </button>
-            <button onClick={goToAccuracyPage} className="flex items-center gap-1.5 px-3.5 py-2 rounded-[4px] border border-slate-200 bg-white text-slate-600 text-sm font-bold hover:bg-slate-50 cursor-pointer">
-              {t('ไปหน้าวัดความแม่นยำ', 'Go to accuracy page')} <ArrowUpRight size={14} />
             </button>
           </div>
         </div>
