@@ -381,7 +381,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
     // -m-4 cancels Layout's <main> padding so this box's own 24px margin (m-6) is the only
     // gap between it and the header/sidebar, regardless of <main>'s own padding value.
     <div className="-m-4 font-sans">
-      <div className="bg-white rounded-lg shadow-sm m-6 p-6">
+      <div className="bg-white rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.1)] m-6 p-6">
       <div className="max-w-6xl mx-auto">
         <div ref={topRef} className="flex items-start justify-between gap-4 mb-5 scroll-mt-24">
           <div>
