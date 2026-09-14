@@ -395,7 +395,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
             <button
               onClick={handleSaveSchema}
               disabled={!draftSchema}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-[4px] bg-[#1f5df9] text-white text-sm font-bold hover:bg-[#1a4fd6] cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-[4px] bg-[#1f5df9] text-white text-sm font-bold hover:bg-[#1a4fd6] cursor-pointer disabled:bg-slate-200 disabled:text-slate-400 disabled:hover:bg-slate-200 disabled:cursor-not-allowed"
             >
               <Save size={14} /> {t('บันทึก', 'Save')}
             </button>
@@ -538,7 +538,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
               <button
                 onClick={confirmNewSchema}
                 disabled={!nameDraft.trim() || !nameDocTypeId}
-                className="px-4 py-2.5 rounded-[4px] bg-[#1f5df9] text-white text-sm font-bold cursor-pointer hover:bg-[#1a4fd6] disabled:opacity-30 disabled:cursor-not-allowed"
+                className="px-4 py-2.5 rounded-[4px] bg-[#1f5df9] text-white text-sm font-bold cursor-pointer hover:bg-[#1a4fd6] disabled:bg-slate-200 disabled:text-slate-400 disabled:hover:bg-slate-200 disabled:cursor-not-allowed"
               >
                 {draftSchema
                   ? t('ใช้จุดเริ่มต้นนี้แทนฟิลด์ปัจจุบัน', 'Use this starting point instead of the current fields')
@@ -764,7 +764,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                   <button
                     onClick={runTest}
                     disabled={!testFile || activeConfig.labels.length === 0 || isTesting}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-[4px] bg-[#1f5df9] text-white text-sm font-bold cursor-pointer hover:bg-[#1a4fd6] disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-[4px] bg-[#1f5df9] text-white text-sm font-bold cursor-pointer hover:bg-[#1a4fd6] disabled:bg-slate-200 disabled:text-slate-400 disabled:hover:bg-slate-200 disabled:cursor-not-allowed"
                   >
                     {isTesting ? t('กำลังทดสอบ...', 'Testing...') : t('เริ่มทดสอบ', 'Start test')}
                   </button>
