@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Bot, Users, ShieldAlert, Settings, LogOut,
   Globe, Menu, Home, Folder, ChevronDown, User as UserIcon,
   FileText, Upload, HardDrive, List, Layers, ArrowLeftRight, Database,
-  Bell, PackagePlus, Undo2
+  Bell, PackagePlus, Undo2, ScanText
 } from 'lucide-react';
 import { UserRole, Language } from '../types';
 import { TRANSLATIONS } from '../translations';
@@ -14,7 +14,7 @@ interface LayoutProps {
   onToggleRole: () => void;
   language: Language;
   onLanguageChange: (lang: Language) => void;
-  onNavigate: (view: 'TRACKING' | 'AGENT_LIST' | 'UPLOAD' | 'WORKFLOW_LIST' | 'DATA_COMPARISON_JOBS' | 'DATA_COMPARISON_WORKFLOW' | 'DATA_COMPARISON_RULE' | 'DATA_COMPARISON_WORKFLOW_BUILDER' | 'SETTINGS_DOC_TYPE_MASTER' | 'SETTINGS_LABEL_SCHEMA' | 'SETTINGS_MASTER_DATA') => void;
+  onNavigate: (view: 'TRACKING' | 'AGENT_LIST' | 'UPLOAD' | 'WORKFLOW_LIST' | 'DATA_COMPARISON_JOBS' | 'DATA_COMPARISON_WORKFLOW' | 'DATA_COMPARISON_RULE' | 'DATA_COMPARISON_WORKFLOW_BUILDER' | 'SETTINGS_DOC_TYPE_MASTER' | 'SETTINGS_LABEL_SCHEMA' | 'SETTINGS_MASTER_DATA' | 'SETTINGS_JOB_PRESET') => void;
   onNotificationClick: (jobId: string) => void;
 }
 
@@ -409,6 +409,20 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentUserRole, onTog
                     <Settings size={16} className="text-slate-400" />
                     <span>{language === 'TH' ? 'ตั้งค่าชุด Shipment เริ่มต้น' : 'Starting Shipment Set Settings'}</span>
                   </button>
+                  {currentUserRole === UserRole.ADMIN && (
+                    <button
+                      onClick={() => {
+                        // Standalone page (no header/sidebar) — opened in its own tab rather
+                        // than switching currentView, see App.tsx's path-based early return.
+                        window.open('/ocr-tuning', '_blank', 'noopener,noreferrer');
+                        setProfileOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 flex items-center gap-2"
+                    >
+                      <ScanText size={16} className="text-slate-400" />
+                      <span>{language === 'TH' ? 'ตั้งค่า OCR Tuning' : 'OCR Tuning Settings'}</span>
+                    </button>
+                  )}
                 </div>
                 <div className="border-t border-slate-100 py-1">
                   <div className="flex items-center justify-between px-4 py-2">

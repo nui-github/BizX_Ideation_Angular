@@ -19,6 +19,11 @@ export interface SchemaLabel {
   subLabels?: SchemaLabel[];
   section?: 'Header' | 'Description' | 'Footer';
   aiPrompt?: string;
+  // Added for the OCR Tuning self-service page (OcrTuningSettings.tsx) — optional so existing
+  // schemas/consumers of this interface are unaffected.
+  friendlyName?: string; // plain-language field description for non-technical users
+  excelCellRef?: string; // e.g. "Sheet1!B4" — used when extractionMethod === 'excel'
+  xmlPath?: string; // e.g. "/Invoice/Header/InvoiceNo" — used when extractionMethod === 'xml'
 }
 
 export interface DocTypeSchemaConfig {

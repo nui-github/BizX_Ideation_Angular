@@ -15,6 +15,7 @@ import { DocTypeMaster } from './components/DocTypeMaster';
 import { JobPresetSettings } from './components/JobPresetSettings';
 import { LabelSchemaSettings } from './components/LabelSchemaSettings';
 import { MasterDataSettings } from './components/MasterDataSettings';
+import { OcrTuningSettings } from './components/OcrTuningSettings';
 import { Agent, AgentStatus, AgentType, AuditLog, UserRole, Language, TrackingItem, TrackingSource, ReviewStatus, SendStatus, Workflow, DocType, JobPreset } from './types';
 import { TRANSLATIONS } from './translations';
 import { MOCK_PRESETS } from './mock-data/preset.mock';
@@ -1200,7 +1201,7 @@ function App() {
       setRole(prev => prev === UserRole.ADMIN ? UserRole.USER : UserRole.ADMIN);
   };
 
-  const handleNavigate = (view: 'TRACKING' | 'AGENT_LIST' | 'UPLOAD' | 'WORKFLOW_LIST' | 'DATA_COMPARISON_JOBS' | 'DATA_COMPARISON_WORKFLOW' | 'DATA_COMPARISON_RULE' | 'DATA_COMPARISON_WORKFLOW_BUILDER' | 'SETTINGS_DOC_TYPE_MASTER' | 'SETTINGS_LABEL_SCHEMA' | 'SETTINGS_MASTER_DATA') => {
+  const handleNavigate = (view: 'TRACKING' | 'AGENT_LIST' | 'UPLOAD' | 'WORKFLOW_LIST' | 'DATA_COMPARISON_JOBS' | 'DATA_COMPARISON_WORKFLOW' | 'DATA_COMPARISON_RULE' | 'DATA_COMPARISON_WORKFLOW_BUILDER' | 'SETTINGS_DOC_TYPE_MASTER' | 'SETTINGS_LABEL_SCHEMA' | 'SETTINGS_MASTER_DATA' | 'SETTINGS_JOB_PRESET') => {
       setCurrentView(view);
   };
 
@@ -1258,8 +1259,21 @@ function App() {
       setCurrentView('TRACKING');
   };
 
+  // Standalone page — no header/sidebar chrome, opened in its own tab from the profile menu
+  // (see Layout.tsx) rather than as an in-app currentView. SPA fallback (vite dev / vercel.json)
+  // routes this path to the same index.html, so the check just happens after mount.
+  if (typeof window !== 'undefined' && window.location.pathname === '/ocr-tuning') {
+    return (
+      <OcrTuningSettings
+        language={language}
+        docTypes={docTypes}
+        onBack={() => window.close()}
+      />
+    );
+  }
+
   return (
-      <Layout 
+      <Layout
         currentUserRole={role} 
         onToggleRole={toggleRole} 
         language={language} 
@@ -1504,7 +1518,7 @@ function App() {
 
         {currentView === 'SETTINGS_MASTER_DATA' && (
           <div className="flex-1 overflow-y-auto">
-            <MasterDataSettings 
+            <MasterDataSettings
               language={language}
               onBack={() => {
                 setCurrentView('TRACKING');
