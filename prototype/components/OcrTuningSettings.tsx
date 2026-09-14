@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef } from 'react';
-import { message } from 'antd';
+import { message, Modal } from 'antd';
 import {
   Plus, Trash2, Upload, FileText, FileSpreadsheet, FileCode2, Check, X,
   ChevronDown, Save, RotateCcw, Search, Sparkles
@@ -249,6 +249,17 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
       configs: draftSchema.configs.map(c => c.docTypeId === activeConfig.docTypeId
         ? { ...c, labels: c.labels.filter(l => l.id !== fieldId) }
         : c),
+    });
+  };
+
+  const confirmRemoveField = (field: SchemaLabel) => {
+    Modal.confirm({
+      title: t('ลบฟิลด์นี้?', 'Delete this field?'),
+      content: t(`ต้องการลบฟิลด์ "${field.name || '—'}" ใช่หรือไม่ — การลบไม่สามารถย้อนกลับได้`, `Delete the field "${field.name || '—'}"? This can't be undone.`),
+      okText: t('ลบ', 'Delete'),
+      okType: 'danger',
+      cancelText: t('ยกเลิก', 'Cancel'),
+      onOk: () => removeField(field.id),
     });
   };
 
@@ -636,7 +647,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                         <Sparkles size={12} /> {t('ช่วยเขียน', 'Assist')}
                       </button>
                       <button
-                        onClick={() => removeField(field.id)}
+                        onClick={() => confirmRemoveField(field)}
                         className="mt-1.5 text-xs font-bold text-rose-500 hover:text-rose-700 hover:underline cursor-pointer whitespace-nowrap"
                       >
                         {t('ลบ', 'Delete')}
