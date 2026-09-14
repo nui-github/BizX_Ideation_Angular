@@ -391,7 +391,10 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
         </div>
 
         {/* Step indicator — sticks to the top of the scroll area while scrolling down */}
-        <div className="sticky top-0 z-20 flex items-center mb-6 bg-white border border-slate-200 rounded-xl px-5 py-3.5 overflow-x-auto shadow-sm">
+        {/* Layout's <main> scroll container has its own p-4, which sticky offsets are computed
+            against — top-0 would leave a permanent 16px gap under the header even when stuck,
+            so this cancels that out to sit flush against it instead. */}
+        <div className="sticky -top-4 z-20 flex items-center mb-6 bg-white border border-slate-200 rounded-xl px-5 py-3.5 overflow-x-auto shadow-sm">
           {STEP_LABELS.map((s, i) => {
             const stepNum = i + 1;
             const isDone = stepNum < currentStep;
