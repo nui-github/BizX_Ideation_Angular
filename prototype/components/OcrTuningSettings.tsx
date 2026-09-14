@@ -425,17 +425,19 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                   <input
                     type="text"
                     value={nameDraft}
-                    onChange={(e) => { setNameDraft(e.target.value); setNewConfirmed(false); }}
+                    onChange={(e) => { setNameDraft(e.target.value.slice(0, 200)); setNewConfirmed(false); }}
+                    maxLength={200}
                     placeholder={t('เช่น cds-invoice-easyaccess', 'e.g. cds-invoice-easyaccess')}
-                    className="w-full px-3 py-2.5 rounded-[4px] border border-slate-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
+                    className="w-full h-[42px] px-3 rounded-[4px] border border-slate-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
                   />
+                  <p className="text-[10px] font-bold text-slate-300 text-right mt-1">{nameDraft.length}/200</p>
                 </div>
                 <div>
                   <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5">{t('ชนิดเอกสาร', 'Document type')}</label>
                   <select
                     value={nameDocTypeId}
                     onChange={(e) => { setNameDocTypeId(e.target.value); setNewConfirmed(false); }}
-                    className="w-full px-3 py-2.5 rounded-[4px] border border-slate-200 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
+                    className="w-full h-[42px] px-3 rounded-[4px] border border-slate-200 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
                   >
                     {docTypes.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                   </select>
