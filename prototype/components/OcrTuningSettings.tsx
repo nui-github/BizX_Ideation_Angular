@@ -367,7 +367,9 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
   // so step 2 anchors back to step 1's card instead of a nonexistent section.
   const STEP_REFS = [step1Ref, mode === 'new' ? step2Ref : step1Ref, fieldsRef, testRef, topRef];
   const scrollToStep = (stepNum: number) => {
-    STEP_REFS[stepNum - 1]?.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Instant, not smooth — leftover trackpad/wheel momentum from the scroll that led to this
+    // click can cancel a mid-flight smooth scrollIntoView, landing short of the target section.
+    STEP_REFS[stepNum - 1]?.current?.scrollIntoView({ behavior: 'auto', block: 'start' });
   };
 
   return (
