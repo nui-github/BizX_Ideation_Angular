@@ -474,6 +474,8 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
     setTestPage(1);
     setRetestNonce(0);
   };
+  const formatFileSize = (bytes: number) => `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  const step1FileInputRef = useRef<HTMLInputElement>(null);
 
   // Mock page count for the uploaded file — purely for the "หน้า" selector, doesn't change
   // values. Always at least 3 pages, since a real multi-page document is the common case.
@@ -620,39 +622,63 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
           <div ref={step1Ref} className="bg-white border border-slate-200 rounded-xl p-5 scroll-mt-24">
             <h3 className="text-[15px] font-black text-slate-800 mb-3">{t('1. อัปโหลดไฟล์และเลือกงาน', '1. Upload a file & choose a task')}</h3>
 
-            <label
-              onDragOver={handleFileDragOver}
-              onDragLeave={handleFileDragLeave}
-              onDrop={handleFileDrop}
-              className={`flex flex-col items-center justify-center gap-2 py-8 border-2 border-dashed rounded-xl cursor-pointer transition-all mb-4 ${
-                isDraggingFile ? 'border-[#1f5df9] bg-blue-50/40' : 'border-slate-200 hover:border-[#1f5df9] hover:bg-blue-50/20'
-              }`}
-            >
-              {testFile ? (
-                <>
-                  {(() => {
-                    const icon = TEST_TABS.find(t2 => t2.key === testMethod)?.icon;
-                    return icon ? React.cloneElement(icon as React.ReactElement<{ size?: number; className?: string }>, { size: 26, className: 'text-[#1f5df9]' }) : null;
-                  })()}
-                  <span className="text-sm font-bold text-slate-700 font-mono">{testFile.name}</span>
-                  <span className="text-xs font-bold text-[#1f5df9] hover:underline">{t('เปลี่ยนไฟล์', 'Change file')}</span>
-                </>
-              ) : (
-                <>
-                  <Upload size={22} className="text-[#1f5df9]" />
-                  <span className="text-sm font-bold text-slate-700">{t('ลากไฟล์มาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์', 'Drop a file here, or click to choose one')}</span>
-                </>
-              )}
-              <span className="text-xs text-slate-400">
-                {t('PDF, รูปภาพ, Excel หรือ XML — ใช้ทดสอบในขั้นตอนที่ 3', 'PDF, image, Excel, or XML — used for testing in step 3')}
-              </span>
-              <input
-                type="file"
-                accept={ALL_FILE_ACCEPT}
-                className="hidden"
-                onChange={(e) => { const f = e.target.files?.[0]; if (f) pickTestFile(f); }}
-              />
-            </label>
+            {testFile ? (
+              <div className="flex items-center justify-between gap-4 p-4 bg-emerald-50/50 border border-emerald-200 rounded-xl mb-4">
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="px-2 py-0.5 rounded-full border border-rose-300 text-rose-500 text-[10px] font-black uppercase tracking-wide shrink-0">
+                    {TEST_TABS.find(t2 => t2.key === testMethod)?.[isTh ? 'th' : 'en']}
+                  </span>
+                  <div className="min-w-0">
+                    <div className="text-sm font-bold text-slate-800 font-mono truncate">{testFile.name}</div>
+                    <div className="text-xs text-slate-400">
+                      {formatFileSize(testFile.size)} · {t('พร้อมใช้ทดสอบในขั้นตอนที่ 3', 'Ready to test in step 3')}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => step1FileInputRef.current?.click()}
+                    className="px-3 py-1.5 rounded-[4px] border border-slate-200 bg-white text-slate-600 text-xs font-bold hover:bg-slate-50 cursor-pointer"
+                  >
+                    {t('เปลี่ยนไฟล์', 'Change file')}
+                  </button>
+                  <button
+                    onClick={() => setTestFile(null)}
+                    className="px-3 py-1.5 rounded-[4px] border border-rose-200 bg-white text-rose-500 text-xs font-bold hover:bg-rose-50 cursor-pointer"
+                  >
+                    {t('ลบไฟล์', 'Remove file')}
+                  </button>
+                </div>
+                <input
+                  ref={step1FileInputRef}
+                  type="file"
+                  accept={ALL_FILE_ACCEPT}
+                  className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) pickTestFile(f); }}
+                />
+              </div>
+            ) : (
+              <label
+                onDragOver={handleFileDragOver}
+                onDragLeave={handleFileDragLeave}
+                onDrop={handleFileDrop}
+                className={`flex flex-col items-center justify-center gap-2 py-8 border-2 border-dashed rounded-xl cursor-pointer transition-all mb-4 ${
+                  isDraggingFile ? 'border-[#1f5df9] bg-blue-50/40' : 'border-slate-200 hover:border-[#1f5df9] hover:bg-blue-50/20'
+                }`}
+              >
+                <Upload size={22} className="text-[#1f5df9]" />
+                <span className="text-sm font-bold text-slate-700">{t('ลากไฟล์มาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์', 'Drop a file here, or click to choose one')}</span>
+                <span className="text-xs text-slate-400">
+                  {t('PDF, รูปภาพ, Excel หรือ XML — ใช้ทดสอบในขั้นตอนที่ 3', 'PDF, image, Excel, or XML — used for testing in step 3')}
+                </span>
+                <input
+                  type="file"
+                  accept={ALL_FILE_ACCEPT}
+                  className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) pickTestFile(f); }}
+                />
+              </label>
+            )}
 
             <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5">{t('งานที่จะทำ', 'Task')}</label>
             <div className="inline-flex items-center gap-1 p-1 bg-slate-50 border border-slate-200 rounded-[8px]">
