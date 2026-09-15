@@ -853,20 +853,23 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                 </p>
               )}
 
-              {/* Floating navbar card, sticky flush against the header, but back to the original
-                  underline-tab button style rather than solid pill buttons. */}
-              <div className="sticky -top-4 z-20 bg-white border border-slate-200 rounded-xl px-5 py-2.5 shadow-sm mb-3 flex items-center gap-4">
-                {SECTIONS.map(section => (
-                  <button
-                    key={section}
-                    onClick={() => setActiveSectionTab(section)}
-                    className={`tab-underline pb-1 text-sm font-bold cursor-pointer border-b-2 transition-all ${
-                      activeSectionTab === section ? 'border-[#1f5df9] text-[#1f5df9]' : 'border-transparent text-slate-500 hover:text-slate-700'
-                    }`}
-                  >
-                    {SECTION_LABEL(section, isTh)} ({groupedFields[section].length})
-                  </button>
-                ))}
+              {/* Floating navbar, sticky flush against the header — no border of its own, just a
+                  shadow to lift it, with a proper tab-bar baseline (shared border-b, tabs
+                  overlapping it with -mb-px) instead of each tab floating its own underline. */}
+              <div className="sticky -top-4 z-20 bg-white rounded-xl px-5 pt-2.5 shadow-sm mb-3">
+                <div className="flex items-center gap-4 border-b border-slate-200">
+                  {SECTIONS.map(section => (
+                    <button
+                      key={section}
+                      onClick={() => setActiveSectionTab(section)}
+                      className={`tab-underline pb-2 text-sm font-bold cursor-pointer border-b-2 -mb-px transition-all ${
+                        activeSectionTab === section ? 'border-[#1f5df9] text-[#1f5df9]' : 'border-transparent text-slate-500 hover:text-slate-700'
+                      }`}
+                    >
+                      {SECTION_LABEL(section, isTh)} ({groupedFields[section].length})
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="flex items-center gap-3 flex-wrap mb-3">
