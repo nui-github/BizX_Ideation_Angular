@@ -321,7 +321,6 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
   const [onlyMissingHints, setOnlyMissingHints] = useState(false);
   const [expandedHints, setExpandedHints] = useState(false);
   const [revealedThaiFieldIds, setRevealedThaiFieldIds] = useState<Set<string>>(new Set());
-  const [justAddedFieldId, setJustAddedFieldId] = useState<string | null>(null);
   const [lineItemTableHint, setLineItemTableHint] = useState('');
   const [lineItemHintRevealed, setLineItemHintRevealed] = useState(false);
 
@@ -407,7 +406,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
   const [newFieldType, setNewFieldType] = useState('string');
   const [newFieldHint, setNewFieldHint] = useState('');
 
-  const addQuickField = (focusHint: boolean) => {
+  const addQuickField = () => {
     if (!draftSchema || !activeConfig || !newFieldName.trim()) return;
     const newField: SchemaLabel = {
       id: genId('field'), name: newFieldName.trim(), required: true, compare: false,
@@ -422,7 +421,6 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
         : c),
     });
     setNewFieldName(''); setNewFieldThai(''); setNewFieldType('string'); setNewFieldHint('');
-    if (focusHint) setJustAddedFieldId(newField.id);
   };
 
   // --- 3. ทดสอบและปรับคำอธิบาย — file lives here, but every field row shows its own live
@@ -949,8 +947,6 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                       </div>
                       <div className="mt-1.5">
                         <textarea
-                          autoFocus={field.id === justAddedFieldId}
-                          onFocus={() => { if (field.id === justAddedFieldId) setJustAddedFieldId(null); }}
                           value={field.aiPrompt || ''}
                           onChange={(e) => updateField(field.id, { aiPrompt: e.target.value })}
                           placeholder={t('บอก AI ว่าค่านี้อยู่ตรงไหน หน้าตาเป็นอย่างไร', 'Tell the AI where this value is and what it looks like')}
@@ -1003,18 +999,11 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                 </div>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => addQuickField(false)}
+                    onClick={addQuickField}
                     disabled={!newFieldName.trim()}
                     className="flex items-center gap-1.5 px-3 py-2 rounded-[4px] border border-slate-200 bg-white text-slate-600 text-xs font-bold hover:bg-slate-50 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     <Plus size={13} /> {t('เพิ่มฟิลด์', 'Add field')}
-                  </button>
-                  <button
-                    onClick={() => addQuickField(true)}
-                    disabled={!newFieldName.trim()}
-                    className="px-3 py-2 rounded-[4px] border border-slate-200 bg-white text-slate-600 text-xs font-bold hover:bg-slate-50 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
-                  >
-                    {t('เพิ่มและใส่คำอธิบาย', 'Add & write hint now')}
                   </button>
                 </div>
               </div>
