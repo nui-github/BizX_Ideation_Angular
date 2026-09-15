@@ -119,6 +119,13 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
   const [copySourceKey, setCopySourceKey] = useState('');
   const [newConfirmed, setNewConfirmed] = useState(false);
 
+  // The "copy fields from" source list only makes sense scoped to the doc type being created —
+  // copying a Bill of Lading schema's fields onto an Invoice schema isn't a real starting point.
+  const copySourceOptions = useMemo(
+    () => schemaOptions.filter(o => o.config.docTypeId === nameDocTypeId),
+    [schemaOptions, nameDocTypeId]
+  );
+
   // --- แก้ไข schema เดิม (edit mode only) ---
   const [editKey, setEditKey] = useState('');
 
@@ -529,7 +536,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                   <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5">{t('ชนิดเอกสาร', 'Document type')}</label>
                   <select
                     value={nameDocTypeId}
-                    onChange={(e) => { setNameDocTypeId(e.target.value); setNewConfirmed(false); }}
+                    onChange={(e) => { setNameDocTypeId(e.target.value); setCopySourceKey(''); setNewConfirmed(false); }}
                     className="w-full h-[42px] px-3 rounded-[4px] border border-slate-200 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
                   >
                     {docTypes.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
@@ -557,8 +564,8 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                   className="w-full px-3 py-2.5 rounded-[4px] border border-slate-200 text-sm font-semibold bg-white mb-4 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
                 >
                   <option value="">{t('— เลือก schema ต้นทาง —', '— Pick a source schema —')}</option>
-                  {schemaOptions.map(o => (
-                    <option key={o.key} value={o.key}>{o.schema.name} / {o.docTypeName} ({o.config.labels.length} {t('ฟิลด์', 'fields')})</option>
+                  {copySourceOptions.map(o => (
+                    <option key={o.key} value={o.key}>{o.schema.name} ({o.config.labels.length} {t('ฟิลด์', 'fields')})</option>
                   ))}
                 </select>
               )}
