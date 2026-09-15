@@ -600,7 +600,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                   <button
                     key={section}
                     onClick={() => setActiveSectionTab(section)}
-                    className={`pb-2 text-sm font-bold cursor-pointer border-b-2 -mb-px transition-all ${
+                    className={`tab-underline pb-2 text-sm font-bold cursor-pointer border-b-2 -mb-px transition-all ${
                       activeSectionTab === section ? 'border-[#1f5df9] text-[#1f5df9]' : 'border-transparent text-slate-500 hover:text-slate-700'
                     }`}
                   >
