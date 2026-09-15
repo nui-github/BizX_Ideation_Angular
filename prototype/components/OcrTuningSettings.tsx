@@ -575,11 +575,8 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
           </div>
         </div>
 
-        {/* Step indicator — sticks to the top of the scroll area while scrolling down */}
-        {/* Layout's <main> scroll container has its own p-4, which sticky offsets are computed
-            against — top-0 would leave a permanent 16px gap under the header even when stuck,
-            so this cancels that out to sit flush against it instead. */}
-        <div className="sticky -top-4 z-20 flex items-center mb-6 bg-white border border-slate-200 rounded-xl px-5 py-3.5 overflow-x-auto shadow-sm">
+        {/* Step indicator — no longer sticky; the field-section tabs stick instead (see below) */}
+        <div className="flex items-center mb-6 bg-white border border-slate-200 rounded-xl px-5 py-3.5 overflow-x-auto shadow-sm">
           {STEP_LABELS.map((s, i) => {
             const stepNum = i + 1;
             const isDone = stepNum < currentStep;
@@ -824,7 +821,10 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                 </p>
               )}
 
-              <div className="flex items-center gap-4 border-b border-slate-200 mb-3">
+              {/* Section tabs stick to the top of the scroll area instead of the step indicator —
+                  same -top-4 trick to sit flush against the header, since it's Layout's <main>
+                  padding being cancelled here, not anything of this card's own. */}
+              <div className="sticky -top-4 z-10 bg-white flex items-center gap-4 border-b border-slate-200 mb-3 pt-1">
                 {SECTIONS.map(section => (
                   <button
                     key={section}
