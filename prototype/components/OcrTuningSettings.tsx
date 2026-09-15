@@ -898,7 +898,9 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                 </button>
               </div>
 
-              <div className="grid grid-cols-[minmax(180px,1.2fr)_minmax(160px,1fr)_minmax(220px,2fr)_auto_auto] gap-3 items-center text-[11px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 rounded-[4px] px-2 py-2 mb-1">
+              {/* Sticks flush right under the nav tab bar above (24px = that bar's own 40px
+                  height minus its own -16px offset) instead of scrolling away with the rows. */}
+              <div className="sticky top-6 z-10 grid grid-cols-[minmax(180px,1.2fr)_minmax(160px,1fr)_minmax(220px,2fr)_auto_auto] gap-3 items-center text-[11px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 rounded-[4px] px-2 py-2 mb-1">
                 <span>{t('ชื่อฟิลด์', 'Field name')}</span>
                 <span>{t('ค่าที่อ่านได้', 'Value read')}</span>
                 <span>{t('คำอธิบายฟิลด์/ตำแหน่ง', 'Field / position hint')}</span>
