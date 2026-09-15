@@ -728,11 +728,20 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                 {t('ฟิลด์ตั้งต้นคัดลอกจาก template generic ของชนิดเอกสารนี้', "Starting fields are copied from this document type's generic template")}
               </p>
               <button
-                onClick={confirmNewSchema}
+                onClick={() => {
+                  const wasFirstTime = !draftSchema;
+                  confirmNewSchema();
+                  // First time, the combined test/hint card doesn't exist in the DOM yet at
+                  // this point — setDraftSchema hasn't committed — so wait a frame for it to
+                  // mount before jumping to it.
+                  if (wasFirstTime) requestAnimationFrame(() => requestAnimationFrame(() => scrollToStep(3)));
+                }}
                 disabled={!nameDraft.trim() || !nameDocTypeId}
                 className="px-4 py-2.5 rounded-[4px] bg-[#1f5df9] text-white text-sm font-bold cursor-pointer hover:bg-[#1a4fd6] disabled:bg-slate-200 disabled:text-slate-400 disabled:hover:bg-slate-200 disabled:cursor-not-allowed"
               >
-                {t('ใช้ template นี้แทนฟิลด์ปัจจุบัน', 'Use this template instead of the current fields')}
+                {draftSchema
+                  ? t('ใช้ template นี้แทนฟิลด์ปัจจุบัน', 'Use this template instead of the current fields')
+                  : t('ถัดไป: ทดสอบและปรับคำอธิบาย', 'Next: test & adjust hints')}
               </button>
 
               {newConfirmed && draftSchema && (
