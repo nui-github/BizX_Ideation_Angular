@@ -821,16 +821,16 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                 </p>
               )}
 
-              {/* Section tabs stick to the top of the scroll area instead of the step indicator —
-                  same -top-4 trick to sit flush against the header, since it's Layout's <main>
-                  padding being cancelled here, not anything of this card's own. */}
-              <div className="sticky -top-4 z-10 bg-white flex items-center gap-4 border-b border-slate-200 mb-3 pt-1">
+              {/* A proper navbar-styled bar (its own card, not the plain underline-tab look) so
+                  it reads as a distinct floating nav once stuck, instead of an underlined tab
+                  row awkwardly pinned in place. Same -top-4 trick to sit flush against the header. */}
+              <div className="sticky -top-4 z-20 bg-white border border-slate-200 rounded-xl px-5 py-2.5 shadow-sm mb-3 flex items-center gap-4">
                 {SECTIONS.map(section => (
                   <button
                     key={section}
                     onClick={() => setActiveSectionTab(section)}
-                    className={`tab-underline pb-2 text-sm font-bold cursor-pointer border-b-2 -mb-px transition-all ${
-                      activeSectionTab === section ? 'border-[#1f5df9] text-[#1f5df9]' : 'border-transparent text-slate-500 hover:text-slate-700'
+                    className={`px-3 py-1.5 rounded-[4px] text-sm font-bold cursor-pointer transition-all ${
+                      activeSectionTab === section ? 'bg-[#1f5df9] text-white' : 'text-slate-500 hover:bg-slate-50'
                     }`}
                   >
                     {SECTION_LABEL(section, isTh)} ({groupedFields[section].length})
