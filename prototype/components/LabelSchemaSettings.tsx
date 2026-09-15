@@ -102,7 +102,10 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
           { id: 'l-bl-2', name: 'Shipper Name', required: true, compare: false, section: 'Header', type: 'string' },
           { id: 'l-bl-3', name: 'Consignee Name', required: true, compare: true, section: 'Header', type: 'string' },
           { id: 'l-bl-4', name: 'Vessel Name', required: false, compare: false, section: 'Header', type: 'string' },
-          { id: 'l-bl-5', name: 'Port of Loading', required: false, compare: true, section: 'Header', type: 'string' }
+          { id: 'l-bl-5', name: 'Port of Loading', required: false, compare: true, section: 'Header', type: 'string' },
+          { id: 'l-bl-6', name: 'Item Description', required: true, compare: false, section: 'Description', type: 'string' },
+          { id: 'l-bl-7', name: 'Quantity', required: true, compare: false, section: 'Description', type: 'number' },
+          { id: 'l-bl-8', name: 'Total Quantity', required: false, compare: false, section: 'Footer', type: 'number' }
         ]
       }
     ]
@@ -121,6 +124,8 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
         docTypeId: 'PL',
         labels: [
           { id: 'l-pl-1', name: 'Packing List No', required: false, compare: true, section: 'Header', type: 'string' },
+          { id: 'l-pl-3', name: 'Item Description', required: true, compare: false, section: 'Description', type: 'string' },
+          { id: 'l-pl-4', name: 'Quantity', required: true, compare: false, section: 'Description', type: 'number' },
           { id: 'l-pl-2', name: 'Total Packages', required: true, compare: true, section: 'Footer', type: 'number' }
         ]
       }
@@ -141,6 +146,8 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
         labels: [
           { id: 'l-po-1', name: 'PO Number', required: true, compare: true, section: 'Header', type: 'string' },
           { id: 'l-po-2', name: 'PO Date', required: true, compare: false, section: 'Header', type: 'date' },
+          { id: 'l-po-4', name: 'Item Description', required: true, compare: false, section: 'Description', type: 'string' },
+          { id: 'l-po-5', name: 'Quantity', required: true, compare: false, section: 'Description', type: 'number' },
           { id: 'l-po-3', name: 'Total Amount', required: false, compare: true, section: 'Footer', type: 'number' }
         ]
       }
@@ -160,7 +167,10 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
         docTypeId: 'CO',
         labels: [
           { id: 'l-co-1', name: 'Certificate No', required: true, compare: true, section: 'Header', type: 'string' },
-          { id: 'l-co-2', name: 'Origin Country', required: true, compare: true, section: 'Header', type: 'string' }
+          { id: 'l-co-2', name: 'Origin Country', required: true, compare: true, section: 'Header', type: 'string' },
+          { id: 'l-co-3', name: 'Item Description', required: true, compare: false, section: 'Description', type: 'string' },
+          { id: 'l-co-4', name: 'Quantity', required: true, compare: false, section: 'Description', type: 'number' },
+          { id: 'l-co-5', name: 'Total Quantity', required: false, compare: false, section: 'Footer', type: 'number' }
         ]
       }
     ]
@@ -180,6 +190,8 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
         labels: [
           { id: 'l-do-1', name: 'DO Number', required: true, compare: true, section: 'Header', type: 'string' },
           { id: 'l-do-2', name: 'Consignee Name', required: true, compare: false, section: 'Header', type: 'string' },
+          { id: 'l-do-4', name: 'Item Description', required: true, compare: false, section: 'Description', type: 'string' },
+          { id: 'l-do-5', name: 'Quantity', required: true, compare: false, section: 'Description', type: 'number' },
           { id: 'l-do-3', name: 'Release Date', required: false, compare: false, section: 'Footer', type: 'date' }
         ]
       }
@@ -200,6 +212,8 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
         labels: [
           { id: 'l-popi-1', name: 'PO/PI Number', required: true, compare: true, section: 'Header', type: 'string' },
           { id: 'l-popi-2', name: 'PO/PI Date', required: true, compare: false, section: 'Header', type: 'date' },
+          { id: 'l-popi-4', name: 'Item Description', required: true, compare: false, section: 'Description', type: 'string' },
+          { id: 'l-popi-5', name: 'Quantity', required: true, compare: false, section: 'Description', type: 'number' },
           { id: 'l-popi-3', name: 'Total Value', required: false, compare: true, section: 'Footer', type: 'number' }
         ]
       }
@@ -220,6 +234,8 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
         labels: [
           { id: 'l-frt-1', name: 'Freight Invoice No', required: true, compare: true, section: 'Header', type: 'string' },
           { id: 'l-frt-2', name: 'Carrier Name', required: false, compare: false, section: 'Header', type: 'string' },
+          { id: 'l-frt-4', name: 'Item Description', required: true, compare: false, section: 'Description', type: 'string' },
+          { id: 'l-frt-5', name: 'Quantity', required: true, compare: false, section: 'Description', type: 'number' },
           { id: 'l-frt-3', name: 'Freight Amount', required: true, compare: true, section: 'Footer', type: 'number' }
         ]
       }
@@ -239,7 +255,8 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
         docTypeId: 'HS',
         labels: [
           { id: 'l-hs-1', name: 'HS Code', required: true, compare: true, section: 'Header', type: 'string' },
-          { id: 'l-hs-2', name: 'Product Description', required: false, compare: false, section: 'Description', type: 'string' }
+          { id: 'l-hs-2', name: 'Product Description', required: false, compare: false, section: 'Description', type: 'string' },
+          { id: 'l-hs-3', name: 'Total Quantity', required: false, compare: false, section: 'Footer', type: 'number' }
         ]
       }
     ]
@@ -258,7 +275,10 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
         docTypeId: 'FTAD',
         labels: [
           { id: 'l-ftad-1', name: 'FTA Form No', required: true, compare: true, section: 'Header', type: 'string' },
-          { id: 'l-ftad-2', name: 'Origin Country', required: false, compare: true, section: 'Header', type: 'string' }
+          { id: 'l-ftad-2', name: 'Origin Country', required: false, compare: true, section: 'Header', type: 'string' },
+          { id: 'l-ftad-3', name: 'Item Description', required: true, compare: false, section: 'Description', type: 'string' },
+          { id: 'l-ftad-4', name: 'Quantity', required: true, compare: false, section: 'Description', type: 'number' },
+          { id: 'l-ftad-5', name: 'Total Quantity', required: false, compare: false, section: 'Footer', type: 'number' }
         ]
       }
     ]
@@ -277,7 +297,10 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
         docTypeId: 'FTAO',
         labels: [
           { id: 'l-ftao-1', name: 'FTA Form No', required: true, compare: true, section: 'Header', type: 'string' },
-          { id: 'l-ftao-2', name: 'Certificate Date', required: false, compare: false, section: 'Header', type: 'date' }
+          { id: 'l-ftao-2', name: 'Certificate Date', required: false, compare: false, section: 'Header', type: 'date' },
+          { id: 'l-ftao-3', name: 'Item Description', required: true, compare: false, section: 'Description', type: 'string' },
+          { id: 'l-ftao-4', name: 'Quantity', required: true, compare: false, section: 'Description', type: 'number' },
+          { id: 'l-ftao-5', name: 'Total Quantity', required: false, compare: false, section: 'Footer', type: 'number' }
         ]
       }
     ]
@@ -296,6 +319,8 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
         docTypeId: 'INS',
         labels: [
           { id: 'l-ins-1', name: 'Policy No', required: true, compare: true, section: 'Header', type: 'string' },
+          { id: 'l-ins-3', name: 'Item Description', required: true, compare: false, section: 'Description', type: 'string' },
+          { id: 'l-ins-4', name: 'Quantity', required: true, compare: false, section: 'Description', type: 'number' },
           { id: 'l-ins-2', name: 'Insured Value', required: false, compare: true, section: 'Footer', type: 'number' }
         ]
       }
@@ -316,7 +341,10 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
         labels: [
           { id: 'l-lic-1', name: 'License No', required: true, compare: true, section: 'Header', type: 'string' },
           { id: 'l-lic-2', name: 'Issue Date', required: false, compare: false, section: 'Header', type: 'date' },
-          { id: 'l-lic-3', name: 'Expiry Date', required: false, compare: false, section: 'Header', type: 'date' }
+          { id: 'l-lic-3', name: 'Expiry Date', required: false, compare: false, section: 'Header', type: 'date' },
+          { id: 'l-lic-4', name: 'Item Description', required: true, compare: false, section: 'Description', type: 'string' },
+          { id: 'l-lic-5', name: 'Quantity', required: true, compare: false, section: 'Description', type: 'number' },
+          { id: 'l-lic-6', name: 'Total Quantity', required: false, compare: false, section: 'Footer', type: 'number' }
         ]
       }
     ]
@@ -334,7 +362,10 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
       {
         docTypeId: 'LPI',
         labels: [
-          { id: 'l-lpi-1', name: 'LPI No', required: true, compare: true, section: 'Header', type: 'string' }
+          { id: 'l-lpi-1', name: 'LPI No', required: true, compare: true, section: 'Header', type: 'string' },
+          { id: 'l-lpi-2', name: 'Item Description', required: true, compare: false, section: 'Description', type: 'string' },
+          { id: 'l-lpi-3', name: 'Quantity', required: true, compare: false, section: 'Description', type: 'number' },
+          { id: 'l-lpi-4', name: 'Total Quantity', required: false, compare: false, section: 'Footer', type: 'number' }
         ]
       }
     ]
@@ -352,7 +383,10 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
       {
         docTypeId: 'OTH',
         labels: [
-          { id: 'l-oth-1', name: 'Document Title', required: false, compare: false, section: 'Header', type: 'string' }
+          { id: 'l-oth-1', name: 'Document Title', required: false, compare: false, section: 'Header', type: 'string' },
+          { id: 'l-oth-2', name: 'Item Description', required: true, compare: false, section: 'Description', type: 'string' },
+          { id: 'l-oth-3', name: 'Quantity', required: true, compare: false, section: 'Description', type: 'number' },
+          { id: 'l-oth-4', name: 'Total Quantity', required: false, compare: false, section: 'Footer', type: 'number' }
         ]
       }
     ]
