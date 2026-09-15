@@ -2,8 +2,8 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { message, Modal } from 'antd';
 import {
-  Plus, Trash2, Upload, FileText, FileSpreadsheet, FileCode2, Check, X,
-  ChevronDown, Save, RotateCcw, Search, Sparkles
+  Plus, Upload, FileText, FileSpreadsheet, FileCode2, Check,
+  Save, RotateCcw, Search, Sparkles
 } from 'lucide-react';
 import { Language, DocType } from '../types';
 import { LabelSchema, SchemaLabel, DocTypeSchemaConfig, DEFAULT_SCHEMAS } from './LabelSchemaSettings';
@@ -179,10 +179,9 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
   // --- 1. เลือกงาน ---
   const [mode, setMode] = useState<'new' | 'edit'>('new');
 
-  // --- 2. ชื่อ schema และจุดเริ่มต้น (new mode only) ---
+  // --- 2. ชื่อ schema ชนิดเอกสาร และ template (new mode only) ---
   const [nameDraft, setNameDraft] = useState('');
   const [nameDocTypeId, setNameDocTypeId] = useState<string>(docTypes[0]?.id || '');
-  const [startFrom, setStartFrom] = useState<'copy' | 'blank'>('copy');
   const [copySourceKey, setCopySourceKey] = useState('');
   const [newConfirmed, setNewConfirmed] = useState(false);
 
@@ -209,7 +208,6 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
     setMode('new');
     setNameDraft('');
     setNameDocTypeId(docTypes[0]?.id || '');
-    setStartFrom('copy');
     setCopySourceKey('');
     setNewConfirmed(false);
     setEditKey('');
@@ -220,10 +218,12 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
     setOnlyMissingHints(false);
     setExpandedHints(false);
     setNewFieldName(''); setNewFieldThai(''); setNewFieldType('string'); setNewFieldHint('');
-    setTestVisible(true);
     setTestMethod('ai');
     setTestFile(null);
-    setTestResults(null);
+    setRetestNonce(0);
+    setTestPage(1);
+    setLineItemTableHint('');
+    setLineItemHintRevealed(false);
     setSavedOnce(false);
   };
 
@@ -246,7 +246,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
     setActiveDocTypeId(null);
     setNewConfirmed(false);
     setEditKey('');
-    setTestResults(null);
+    setRetestNonce(0);
     setSavedOnce(false);
   };
 
@@ -270,7 +270,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
   const confirmNewSchema = () => {
     if (!nameDraft.trim() || !nameDocTypeId) return;
     let labels: SchemaLabel[] = [];
-    if (startFrom === 'copy' && copySourceKey) {
+    if (copySourceKey) {
       const src = schemaOptions.find(o => o.key === copySourceKey);
       if (src) labels = JSON.parse(JSON.stringify(src.config.labels)).map((l: SchemaLabel) => ({ ...l, id: genId('field') }));
     }
@@ -293,7 +293,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
     if (!opt) { setDraftSchema(null); return; }
     setDraftSchema(cloneSchema(opt.schema));
     setActiveDocTypeId(opt.config.docTypeId);
-    setTestResults(null);
+    setRetestNonce(0);
     setSavedOnce(false);
   };
 
@@ -317,6 +317,8 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
   const [expandedHints, setExpandedHints] = useState(false);
   const [revealedThaiFieldIds, setRevealedThaiFieldIds] = useState<Set<string>>(new Set());
   const [justAddedFieldId, setJustAddedFieldId] = useState<string | null>(null);
+  const [lineItemTableHint, setLineItemTableHint] = useState('');
+  const [lineItemHintRevealed, setLineItemHintRevealed] = useState(false);
 
   const groupedFields = useMemo(() => {
     const groups: Record<Section, SchemaLabel[]> = { Header: [], Description: [], Footer: [] };
@@ -399,12 +401,16 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
   const [newFieldThai, setNewFieldThai] = useState('');
   const [newFieldType, setNewFieldType] = useState('string');
   const [newFieldHint, setNewFieldHint] = useState('');
+  // Which field/table group the quick-add row appends to — defaults to whichever section tab
+  // is open, but can target a different one without switching tabs first.
+  const [quickAddTargetSection, setQuickAddTargetSection] = useState<Section>('Header');
+  useEffect(() => { setQuickAddTargetSection(activeSectionTab); }, [activeSectionTab]);
 
   const addQuickField = (focusHint: boolean) => {
     if (!draftSchema || !activeConfig || !newFieldName.trim()) return;
     const newField: SchemaLabel = {
       id: genId('field'), name: newFieldName.trim(), required: true, compare: false,
-      type: newFieldType, section: activeSectionTab,
+      type: newFieldType, section: quickAddTargetSection,
       friendlyName: newFieldThai.trim() || undefined,
       aiPrompt: newFieldHint.trim() || undefined,
     };
@@ -418,13 +424,18 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
     if (focusHint) setJustAddedFieldId(newField.id);
   };
 
-  // --- 4. ทดสอบ (ไม่บังคับ) ---
-  const [testVisible, setTestVisible] = useState(true);
+  // --- 3. ทดสอบและปรับคำอธิบาย — file lives here, but every field row shows its own live
+  // "ค่าที่อ่านได้" inline rather than a separate results panel, so testing and editing hints
+  // happen in the same place. ---
   const [testMethod, setTestMethod] = useState<ExtractionMethod>('ai');
   const [testFile, setTestFile] = useState<File | null>(null);
   const [isTesting, setIsTesting] = useState(false);
-  const [testResults, setTestResults] = useState<TestFieldResult[] | null>(null);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
+  // Bumped by "ทดสอบอีกครั้ง" to vary the mock hash — simulates a fresh read without needing a
+  // real OCR backend.
+  const [retestNonce, setRetestNonce] = useState(0);
+  const [testPage, setTestPage] = useState(1);
+  const changeFileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileDragOver = (e: React.DragEvent) => { e.preventDefault(); setIsDraggingFile(true); };
   const handleFileDragLeave = () => setIsDraggingFile(false);
@@ -432,7 +443,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
     e.preventDefault();
     setIsDraggingFile(false);
     const f = e.dataTransfer.files?.[0];
-    if (f) { setTestFile(f); setTestResults(null); }
+    if (f) { setTestFile(f); setTestPage(1); setRetestNonce(0); }
   };
 
   const TEST_TABS: { key: ExtractionMethod; th: string; en: string; icon: React.ReactNode; accept: string }[] = [
@@ -441,44 +452,68 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
     { key: 'xml', th: 'XML', en: 'XML', icon: <FileCode2 size={13} />, accept: '.xml' },
   ];
 
-  const runTest = () => {
-    if (!activeConfig || activeConfig.labels.length === 0 || !testFile) return;
+  // Mock page count for the uploaded file — purely for the "หน้า" selector, doesn't change values.
+  const testPageOptions = useMemo(() => {
+    if (!testFile) return [1];
+    const n = (hashString(testFile.name) % 3) + 1;
+    return Array.from({ length: n }, (_, i) => i + 1);
+  }, [testFile]);
+
+  const retest = () => {
+    if (!testFile) return;
     setIsTesting(true);
-    setTestResults(null);
-    window.setTimeout(() => {
-      setTestResults(activeConfig.labels.map(f => mockTestField(f, testFile.name)));
-      setIsTesting(false);
-    }, 600);
+    window.setTimeout(() => { setRetestNonce(n => n + 1); setIsTesting(false); }, 500);
   };
 
-  const testMetrics = useMemo(() => {
-    if (!testResults) return null;
-    const total = testResults.length;
-    const matched = testResults.filter(r => r.matched).length;
-    return { total, matched, pct: total ? Math.round((matched / total) * 100) : 0 };
-  }, [testResults]);
+  // Every field across every section, tested live against the uploaded file — this is what
+  // fills in each row's "ค่าที่อ่านได้" column.
+  const fieldResultsById = useMemo(() => {
+    const map: Record<string, TestFieldResult> = {};
+    if (!activeConfig || !testFile) return map;
+    const seed = `${testFile.name}|${testPage}|${retestNonce}`;
+    activeConfig.labels.forEach(f => { map[f.id] = mockTestField(f, seed); });
+    return map;
+  }, [activeConfig, testFile, testPage, retestNonce]);
+
+  const unreadableCount = useMemo(
+    () => Object.values(fieldResultsById).filter(r => r.blank).length,
+    [fieldResultsById]
+  );
+
+  // Mock preview grid for the line-items table — a plausible row count plus one row of values
+  // per Description-section field, so "ผลการอ่านตาราง" has something believable to show.
+  const lineItemRowCount = useMemo(() => {
+    if (!testFile) return 0;
+    return 15 + (hashString(testFile.name + '|rows') % 16);
+  }, [testFile]);
+
+  const lineItemPreviewRows = useMemo(() => {
+    const cols = groupedFields.Description;
+    if (!testFile || cols.length === 0 || lineItemRowCount === 0) return [];
+    return Array.from({ length: Math.min(lineItemRowCount, 12) }, (_, rowIdx) =>
+      cols.map(col => buildMockValue(col, hashString(`${testFile.name}|${retestNonce}|row${rowIdx}|${col.id}`)))
+    );
+  }, [testFile, groupedFields, lineItemRowCount, retestNonce]);
 
   // --- Step indicator (decorative — this is a single always-visible page, not a gated wizard —
   // but it should still reflect real progress: step 1 active and the rest disabled on a fresh
   // load, advancing/checking off as the user actually does each thing, rather than always
   // showing everything but the last step as already done). ---
   const STEP_LABELS = [
-    { th: 'เลือกงาน', en: 'Choose task' },
-    { th: 'ชื่อและต้นแบบ', en: 'Name & base' },
-    { th: 'ฟิลด์และคำอธิบาย', en: 'Fields & hints' },
-    { th: 'ทดสอบ (ไม่บังคับ)', en: 'Test (optional)' },
+    { th: 'อัปโหลดไฟล์และเลือกงาน', en: 'Upload file & choose task' },
+    { th: 'ชื่อ ชนิดเอกสาร template', en: 'Name, doc type & template' },
+    { th: 'ทดสอบและปรับคำอธิบาย', en: 'Test & adjust hints' },
     { th: 'บันทึก', en: 'Save' },
   ];
-  const hasChosenTask = mode === 'new' ? !!nameDraft.trim() : !!editKey;
-  const currentStep = savedOnce ? 5
+  const hasChosenTask = (mode === 'new' ? !!nameDraft.trim() : !!editKey) && !!testFile;
+  const currentStep = savedOnce ? 4
     : !hasChosenTask ? 1
     : !draftSchema ? 2
-    : !testResults ? 3
-    : 4;
+    : 3;
 
-  // Body cards renumber depending on mode — editing an existing schema skips the "name & base"
-  // card entirely, since the schema already has both.
-  const cardNumbers = mode === 'new' ? { fields: 3, test: 4 } : { fields: 2, test: 3 };
+  // Body cards renumber depending on mode — editing an existing schema skips the "name, doc
+  // type & template" card entirely, since the schema already has both.
+  const cardNumbers = { combined: mode === 'new' ? 3 : 2 };
   const showWorkingCards = !!draftSchema;
 
   // Clicking a step in the indicator jumps straight to that section — "บันทึก" has no card of
@@ -486,11 +521,10 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
   const topRef = useRef<HTMLDivElement>(null);
   const step1Ref = useRef<HTMLDivElement>(null);
   const step2Ref = useRef<HTMLDivElement>(null);
-  const fieldsRef = useRef<HTMLDivElement>(null);
-  const testRef = useRef<HTMLDivElement>(null);
-  // Edit mode has no separate "name & base" card — picking the schema in step 1 covers it —
+  const combinedRef = useRef<HTMLDivElement>(null);
+  // Edit mode has no separate "name & template" card — picking the schema in step 1 covers it —
   // so step 2 anchors back to step 1's card instead of a nonexistent section.
-  const STEP_REFS = [step1Ref, mode === 'new' ? step2Ref : step1Ref, fieldsRef, testRef, topRef];
+  const STEP_REFS = [step1Ref, mode === 'new' ? step2Ref : step1Ref, combinedRef, topRef];
   const scrollToStep = (stepNum: number) => {
     // Instant, not smooth — leftover trackpad/wheel momentum from the scroll that led to this
     // click can cancel a mid-flight smooth scrollIntoView, landing short of the target section.
@@ -534,8 +568,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
             const isCurrent = stepNum === currentStep;
             const isLast = i === STEP_LABELS.length - 1;
             // Step 2 anchors to its own card in "new" mode, or back to step 1 in edit mode.
-            const isReachable = stepNum === 1 || stepNum === 2 || stepNum === 5
-              || ((stepNum === 3 || stepNum === 4) && !!draftSchema);
+            const isReachable = stepNum === 1 || stepNum === 2 || stepNum === 4 || (stepNum === 3 && !!draftSchema);
             return (
               <React.Fragment key={s.th}>
                 <button
@@ -562,9 +595,49 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
         </div>
 
         <div className="space-y-4">
-          {/* 1. เลือกงาน */}
+          {/* 1. อัปโหลดไฟล์และเลือกงาน */}
           <div ref={step1Ref} className="bg-white border border-slate-200 rounded-xl p-5 scroll-mt-24">
-            <h3 className="text-[15px] font-black text-slate-800 mb-3">{t('1. เลือกงาน', '1. Choose a task')}</h3>
+            <h3 className="text-[15px] font-black text-slate-800 mb-3">{t('1. อัปโหลดไฟล์และเลือกงาน', '1. Upload a file & choose a task')}</h3>
+
+            <div className="flex items-center gap-1 p-1 bg-slate-50 border border-slate-200 rounded-[8px] w-fit mb-3">
+              {TEST_TABS.map(tab => (
+                <button
+                  key={tab.key}
+                  onClick={() => { setTestMethod(tab.key); setTestFile(null); setRetestNonce(0); }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-[4px] cursor-pointer transition-all ${testMethod === tab.key ? 'bg-white text-[#1f5df9] border border-slate-200 shadow-sm' : 'text-slate-500'}`}
+                >
+                  {tab.icon} {isTh ? tab.th : tab.en}
+                </button>
+              ))}
+            </div>
+            <label
+              onDragOver={handleFileDragOver}
+              onDragLeave={handleFileDragLeave}
+              onDrop={handleFileDrop}
+              className={`flex flex-col items-center justify-center gap-2 py-8 border-2 border-dashed rounded-xl cursor-pointer transition-all mb-4 ${
+                isDraggingFile ? 'border-[#1f5df9] bg-blue-50/40' : 'border-slate-200 hover:border-[#1f5df9] hover:bg-blue-50/20'
+              }`}
+            >
+              {testFile ? (
+                <span className="text-sm font-bold text-slate-700 font-mono">{testFile.name}</span>
+              ) : (
+                <>
+                  <Upload size={22} className="text-[#1f5df9]" />
+                  <span className="text-sm font-bold text-slate-700">{t('ลากไฟล์มาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์', 'Drop a file here, or click to choose one')}</span>
+                </>
+              )}
+              <span className="text-xs text-slate-400">
+                {t('PDF, รูปภาพ, Excel หรือ XML — ใช้ทดสอบในขั้นตอนที่ 3', 'PDF, image, Excel, or XML — used for testing in step 3')}
+              </span>
+              <input
+                type="file"
+                accept={TEST_TABS.find(t2 => t2.key === testMethod)?.accept}
+                className="hidden"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) { setTestFile(f); setTestPage(1); setRetestNonce(0); } }}
+              />
+            </label>
+
+            <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5">{t('งานที่จะทำ', 'Task')}</label>
             <div className="inline-flex items-center gap-1 p-1 bg-slate-50 border border-slate-200 rounded-[8px]">
               <button
                 onClick={() => confirmSwitchMode('new')}
@@ -602,10 +675,10 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
             )}
           </div>
 
-          {/* 2. ชื่อ schema และจุดเริ่มต้น (new mode only) */}
+          {/* 2. ชื่อ schema ชนิดเอกสาร และ template (new mode only) */}
           {mode === 'new' && (
             <div ref={step2Ref} className="bg-white border border-slate-200 rounded-xl p-5 scroll-mt-24">
-              <h3 className="text-[15px] font-black text-slate-800 mb-3">{t('2. ชื่อ schema และจุดเริ่มต้น', '2. Schema name and starting point')}</h3>
+              <h3 className="text-[15px] font-black text-slate-800 mb-3">{t('2. ชื่อ schema ชนิดเอกสาร และ template', '2. Schema name, document type & template')}</h3>
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                   <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5">{t('ชื่อ schema', 'Schema name')}</label>
@@ -631,56 +704,102 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                 </div>
               </div>
 
-              <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5">{t('ตั้งต้นจาก', 'Start from')}</label>
-              <div className="flex items-center gap-4 mb-3">
-                {([
-                  { key: 'copy' as const, th: 'คัดลอกฟิลด์จาก schema อื่น', en: 'Copy fields from another schema' },
-                  { key: 'blank' as const, th: 'เริ่ม Schema ใหม่', en: 'Start a new schema' },
-                ]).map(opt => (
-                  <label key={opt.key} className="flex items-center gap-1.5 text-[13px] font-bold text-slate-600 cursor-pointer">
-                    <input type="radio" checked={startFrom === opt.key} onChange={() => { setStartFrom(opt.key); setNewConfirmed(false); }} />
-                    {isTh ? opt.th : opt.en}
-                  </label>
+              <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5">{t('template', 'template')}</label>
+              <select
+                value={copySourceKey}
+                onChange={(e) => { setCopySourceKey(e.target.value); setNewConfirmed(false); }}
+                className="w-full px-3 py-2.5 rounded-[4px] border border-slate-200 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
+              >
+                <option value="">{t('— เริ่ม schema ว่าง —', '— Start blank —')}</option>
+                {copySourceOptions.map(o => (
+                  <option key={o.key} value={o.key}>{o.schema.name} ({o.config.labels.length} {t('ฟิลด์', 'fields')})</option>
                 ))}
-              </div>
-
-              {startFrom === 'copy' && (
-                <select
-                  value={copySourceKey}
-                  onChange={(e) => { setCopySourceKey(e.target.value); setNewConfirmed(false); }}
-                  className="w-full px-3 py-2.5 rounded-[4px] border border-slate-200 text-sm font-semibold bg-white mb-4 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
-                >
-                  <option value="">{t('— เลือก schema ต้นทาง —', '— Pick a source schema —')}</option>
-                  {copySourceOptions.map(o => (
-                    <option key={o.key} value={o.key}>{o.schema.name} ({o.config.labels.length} {t('ฟิลด์', 'fields')})</option>
-                  ))}
-                </select>
-              )}
+              </select>
+              <p className="text-[11px] font-bold text-slate-400 mt-1.5 mb-4">
+                {t('ฟิลด์ตั้งต้นคัดลอกจาก template generic ของชนิดเอกสารนี้', "Starting fields are copied from this document type's generic template")}
+              </p>
               <button
                 onClick={confirmNewSchema}
                 disabled={!nameDraft.trim() || !nameDocTypeId}
                 className="px-4 py-2.5 rounded-[4px] bg-[#1f5df9] text-white text-sm font-bold cursor-pointer hover:bg-[#1a4fd6] disabled:bg-slate-200 disabled:text-slate-400 disabled:hover:bg-slate-200 disabled:cursor-not-allowed"
               >
-                {draftSchema
-                  ? t('ใช้จุดเริ่มต้นนี้แทนฟิลด์ปัจจุบัน', 'Use this starting point instead of the current fields')
-                  : t('ถัดไป: แก้ฟิลด์และคำอธิบาย', 'Next: edit fields & hints')}
+                {t('ใช้ template นี้แทนฟิลด์ปัจจุบัน', 'Use this template instead of the current fields')}
               </button>
 
               {newConfirmed && draftSchema && (
                 <p className="text-[11px] font-bold text-slate-400 mt-2.5">
-                  {t('schema ใหม่', 'New schema')} "{draftSchema.name}" · {docTypeName(nameDocTypeId)} — {t('เปลี่ยนจุดเริ่มต้นด้านบนแล้วกดปุ่มนี้อีกครั้งเพื่อแทนที่ฟิลด์ปัจจุบัน', 'change the starting point above and press this button again to replace the current fields')}
+                  {t('schema ใหม่', 'New schema')} "{draftSchema.name}" · {docTypeName(nameDocTypeId)} — {t('เปลี่ยน template ด้านบนแล้วกดปุ่มนี้อีกครั้งเพื่อแทนที่ฟิลด์ปัจจุบัน', 'change the template above and press this button again to replace the current fields')}
                 </p>
               )}
             </div>
           )}
 
-          {/* N. ฟิลด์และคำอธิบายฟิลด์/ตำแหน่ง */}
+          {/* N. ทดสอบและปรับคำอธิบาย — file, live test values, and field/hint editing all in one place */}
           {showWorkingCards && draftSchema && activeConfig && (
-            <div ref={fieldsRef} className="bg-white border border-slate-200 rounded-xl p-5 scroll-mt-24">
+            <div ref={combinedRef} className="bg-white border border-slate-200 rounded-xl p-5 scroll-mt-24">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-[15px] font-black text-slate-800">{cardNumbers.fields}. {t('ฟิลด์และคำอธิบายฟิลด์/ตำแหน่ง', 'Fields and field/position hints')}</h3>
+                <h3 className="text-[15px] font-black text-slate-800">{cardNumbers.combined}. {t('ทดสอบและปรับคำอธิบาย', 'Test & adjust hints')}</h3>
                 <span className="text-xs font-bold text-slate-400">{draftSchema.name} · {docTypeName(activeConfig.docTypeId)}</span>
               </div>
+
+              <div className="flex items-center gap-3 flex-wrap mb-1">
+                <span className="text-xs font-black text-slate-400 uppercase tracking-widest shrink-0">{t('ไฟล์ทดสอบ', 'Test file')}</span>
+                {testFile ? (
+                  <>
+                    <span className="text-sm font-bold text-slate-700 font-mono">{testFile.name}</span>
+                    <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[10px] font-black uppercase tracking-wide">
+                      {TEST_TABS.find(tab => tab.key === testMethod)?.[isTh ? 'th' : 'en']}
+                    </span>
+                    <button
+                      onClick={() => changeFileInputRef.current?.click()}
+                      className="px-3 py-1.5 rounded-[4px] border border-slate-200 bg-white text-slate-600 text-xs font-bold hover:bg-slate-50 cursor-pointer"
+                    >
+                      {t('เปลี่ยนไฟล์', 'Change file')}
+                    </button>
+                    <button
+                      onClick={retest}
+                      disabled={isTesting}
+                      className="px-3 py-1.5 rounded-[4px] bg-[#1f5df9] text-white text-xs font-bold hover:bg-[#1a4fd6] cursor-pointer disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed"
+                    >
+                      {isTesting ? t('กำลังทดสอบ...', 'Testing...') : t('ทดสอบอีกครั้ง', 'Test again')}
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => changeFileInputRef.current?.click()}
+                    className="px-3 py-1.5 rounded-[4px] border border-slate-200 bg-white text-slate-600 text-xs font-bold hover:bg-slate-50 cursor-pointer"
+                  >
+                    {t('อัปโหลดไฟล์ทดสอบ', 'Upload a test file')}
+                  </button>
+                )}
+                <input
+                  ref={changeFileInputRef}
+                  type="file"
+                  accept={TEST_TABS.find(t2 => t2.key === testMethod)?.accept}
+                  className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) { setTestFile(f); setTestPage(1); setRetestNonce(0); } }}
+                />
+              </div>
+              <p className="text-xs text-slate-400 mb-3">{t('ให้ AI อ่านเอกสาร ด้วยฟิลด์และคำอธิบายที่ยังไม่ได้บันทึก — แก้คำอธิบายในตารางด้านล่างแล้วทดสอบอีกครั้งได้', "Reads the document using this draft's fields and hints, even before they're saved — adjust hints below then test again")}</p>
+
+              {testFile && (
+                <div className="mb-3 max-w-xs">
+                  <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5">{t('หน้า', 'Page')}</label>
+                  <select
+                    value={testPage}
+                    onChange={(e) => setTestPage(Number(e.target.value))}
+                    className="w-full px-3 py-2 rounded-[4px] border border-slate-200 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
+                  >
+                    {testPageOptions.map(p => <option key={p} value={p}>{t(`หน้า ${p}`, `Page ${p}`)}</option>)}
+                  </select>
+                </div>
+              )}
+
+              {testFile && unreadableCount > 0 && (
+                <p className="inline-block px-2.5 py-1 rounded-[4px] bg-rose-50 border border-rose-200 text-rose-600 text-xs font-bold mb-3">
+                  {t(`อ่านไม่ได้ ${unreadableCount} ฟิลด์`, `${unreadableCount} field(s) unreadable`)}
+                </p>
+              )}
 
               <div className="flex items-center gap-4 border-b border-slate-200 mb-3">
                 {SECTIONS.map(section => (
@@ -722,13 +841,42 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                 </button>
               </div>
 
-              <div className="grid grid-cols-[minmax(160px,1fr)_130px_minmax(240px,2fr)_auto_auto] gap-3 items-center text-[11px] font-black text-slate-400 uppercase tracking-widest px-1 mb-1">
+              <div className="grid grid-cols-[minmax(180px,1.2fr)_minmax(160px,1fr)_minmax(220px,2fr)_auto_auto] gap-3 items-center text-[11px] font-black text-slate-400 uppercase tracking-widest px-1 mb-1">
                 <span>{t('ชื่อฟิลด์', 'Field name')}</span>
-                <span>{t('ชนิดข้อมูล', 'Data type')}</span>
+                <span>{t('ค่าที่อ่านได้', 'Value read')}</span>
                 <span>{t('คำอธิบายฟิลด์/ตำแหน่ง', 'Field / position hint')}</span>
                 <span />
                 <span />
               </div>
+
+              {activeSectionTab === 'Description' && groupedFields.Description.length > 0 && (
+                <div className="grid grid-cols-[minmax(180px,1.2fr)_minmax(160px,1fr)_minmax(220px,2fr)_auto_auto] gap-3 items-start py-1.5 border-b border-slate-100 bg-slate-50/60 -mx-1 px-1 rounded-[4px] mb-1">
+                  <div className="pt-1.5 min-w-0">
+                    <div className="font-mono text-sm font-black text-slate-800">{t('ตาราง: items', 'Table: items')}</div>
+                    {lineItemHintRevealed ? (
+                      <input
+                        type="text"
+                        value={lineItemTableHint}
+                        onChange={(e) => setLineItemTableHint(e.target.value)}
+                        placeholder={t('ความหมายของตารางนี้', "What this table means")}
+                        className="w-full mt-1 px-2 py-1 text-xs border border-slate-200 rounded-[4px] focus:outline-none focus:ring-2 focus:ring-blue-100"
+                      />
+                    ) : (
+                      <button onClick={() => setLineItemHintRevealed(true)} className="text-[11px] font-bold text-[#1f5df9] hover:underline cursor-pointer mt-0.5">
+                        + {t('ใส่ความหมาย', 'Add meaning')}
+                      </button>
+                    )}
+                    <div className="text-[11px] text-slate-400 mt-0.5">{t('ตาราง', 'Table')}</div>
+                  </div>
+                  <div className="pt-1.5 text-sm font-bold text-slate-600">
+                    {testFile ? t(`${lineItemRowCount} แถว`, `${lineItemRowCount} rows`) : '—'}
+                  </div>
+                  <div className="pt-1.5 text-xs text-slate-400">
+                    {t(`${groupedFields.Description.length} คอลัมน์ — ใส่คำอธิบายที่คอลัมน์ด้านล่าง`, `${groupedFields.Description.length} columns — add hints on the columns below`)}
+                  </div>
+                  <div /><div />
+                </div>
+              )}
               <div className="space-y-2">
                 {visibleFields.length === 0 && (
                   <p className="text-xs text-slate-300 italic py-3">{t('ไม่พบฟิลด์ที่ตรงกับเงื่อนไข', 'No fields match')}</p>
@@ -736,8 +884,9 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                 {visibleFields.map(field => {
                   const glossary = FIELD_GLOSSARY[(field.name || '').trim().toLowerCase()];
                   const showThaiInput = revealedThaiFieldIds.has(field.id) || !!field.friendlyName;
+                  const result = fieldResultsById[field.id];
                   return (
-                    <div key={field.id} className="grid grid-cols-[minmax(160px,1fr)_130px_minmax(240px,2fr)_auto_auto] gap-3 items-start py-1.5 border-b border-slate-50 last:border-b-0">
+                    <div key={field.id} className="grid grid-cols-[minmax(180px,1.2fr)_minmax(160px,1fr)_minmax(220px,2fr)_auto_auto] gap-3 items-start py-1.5 border-b border-slate-50 last:border-b-0">
                       <div className="pt-2 min-w-0">
                         <div className="font-mono text-sm font-semibold text-slate-700 truncate">{field.name}</div>
                         {glossary ? (
@@ -761,14 +910,24 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                             + {t('ใส่ความหมาย', 'Add meaning')}
                           </button>
                         )}
+                        <select
+                          value={field.type || 'string'}
+                          onChange={(e) => updateField(field.id, { type: e.target.value })}
+                          className="mt-1.5 px-2 py-1.5 bg-white border border-slate-200 rounded-[4px] text-xs font-semibold cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-100"
+                        >
+                          {TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{isTh ? o.th : o.en}</option>)}
+                        </select>
                       </div>
-                      <select
-                        value={field.type || 'string'}
-                        onChange={(e) => updateField(field.id, { type: e.target.value })}
-                        className="mt-1.5 px-2 py-1.5 bg-white border border-slate-200 rounded-[4px] text-xs font-semibold cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-100"
-                      >
-                        {TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{isTh ? o.th : o.en}</option>)}
-                      </select>
+                      <div className="pt-2 min-w-0">
+                        {activeSectionTab === 'Description' && <div className="text-[11px] text-slate-400 mb-0.5">{t('ค่าในแถวแรก', 'Value in the first row')}</div>}
+                        {!testFile ? (
+                          <span className="text-sm text-slate-300">—</span>
+                        ) : result?.blank ? (
+                          <span className="text-sm font-bold text-rose-600">{t('อ่านไม่ได้ / ไม่พบ', 'Unreadable / not found')}</span>
+                        ) : (
+                          <span className="text-sm font-mono text-slate-700 break-words">{result?.value}</span>
+                        )}
+                      </div>
                       <div className="mt-1.5">
                         <textarea
                           autoFocus={field.id === justAddedFieldId}
@@ -803,7 +962,13 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
               </div>
 
               <div className="mt-4 p-3 border border-dashed border-slate-200 rounded-lg">
-                <div className="grid grid-cols-4 gap-3 mb-2.5">
+                <div className="grid grid-cols-5 gap-3 mb-2.5">
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t('เพิ่มเป็น', 'Add to')}</label>
+                    <select value={quickAddTargetSection} onChange={(e) => setQuickAddTargetSection(e.target.value as Section)} className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-[4px] text-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-100">
+                      {SECTIONS.map(s => <option key={s} value={s}>{SECTION_LABEL(s, isTh)}</option>)}
+                    </select>
+                  </div>
                   <div>
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t('ชื่อฟิลด์ (ภาษาอังกฤษ)', 'Field name (English)')}</label>
                     <input type="text" value={newFieldName} onChange={(e) => setNewFieldName(e.target.value)} placeholder={t('เช่น buyerName', 'e.g. buyerName')} className="w-full px-2.5 py-1.5 font-mono text-sm border border-slate-200 rounded-[4px] focus:outline-none focus:ring-2 focus:ring-blue-100" />
@@ -840,88 +1005,46 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                   </button>
                 </div>
               </div>
-            </div>
-          )}
 
-          {/* N. ทดสอบ (ไม่บังคับ) */}
-          {showWorkingCards && draftSchema && activeConfig && (
-            <div ref={testRef} className="bg-white border border-slate-200 rounded-xl p-5 scroll-mt-24">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-[15px] font-black text-slate-800 flex items-center gap-2">
-                  {cardNumbers.test}. {t('ทดสอบ', 'Test')}
-                  <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[10px] font-black uppercase tracking-wide">{t('ไม่บังคับ', 'Optional')}</span>
-                </h3>
-                <button onClick={() => setTestVisible(v => !v)} className="text-xs font-bold text-slate-400 hover:text-slate-600 cursor-pointer flex items-center gap-1">
-                  {testVisible ? t('ซ่อน', 'Hide') : t('แสดง', 'Show')} <ChevronDown size={13} className={`transition-transform ${testVisible ? '' : '-rotate-90'}`} />
-                </button>
-              </div>
-
-              {testVisible && (
-                <>
-                  <div className="flex items-center gap-1 p-1 bg-slate-50 border border-slate-200 rounded-[8px] w-fit mb-3">
-                    {TEST_TABS.map(tab => (
-                      <button
-                        key={tab.key}
-                        onClick={() => { setTestMethod(tab.key); setTestFile(null); setTestResults(null); }}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-[4px] cursor-pointer transition-all ${testMethod === tab.key ? 'bg-white text-[#1f5df9] border border-slate-200 shadow-sm' : 'text-slate-500'}`}
-                      >
-                        {tab.icon} {isTh ? tab.th : tab.en}
-                      </button>
-                    ))}
-                  </div>
-                  <p className="text-xs text-slate-400 mb-3">{t('ให้ AI อ่านเอกสาร ด้วยฟิลด์และคำอธิบายที่ยังไม่ได้บันทึก', "Reads the document using this draft's fields and hints, even before they're saved")}</p>
-
-                  <label
-                    onDragOver={handleFileDragOver}
-                    onDragLeave={handleFileDragLeave}
-                    onDrop={handleFileDrop}
-                    className={`flex flex-col items-center justify-center gap-2 py-8 border-2 border-dashed rounded-xl cursor-pointer transition-all mb-3 ${
-                      isDraggingFile ? 'border-[#1f5df9] bg-blue-50/40' : 'border-slate-200 hover:border-[#1f5df9] hover:bg-blue-50/20'
-                    }`}
-                  >
-                    <Upload size={22} className="text-[#1f5df9]" />
-                    <span className="text-sm font-bold text-slate-700">{testFile ? testFile.name : t('ลากไฟล์มาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์', 'Drop a file here, or click to choose one')}</span>
-                    <span className="text-xs text-slate-400">{t('รองรับ', 'Supports')} {TEST_TABS.find(t2 => t2.key === testMethod)?.accept}</span>
-                    <input
-                      type="file"
-                      accept={TEST_TABS.find(t2 => t2.key === testMethod)?.accept}
-                      className="hidden"
-                      onChange={(e) => { const f = e.target.files?.[0]; if (f) { setTestFile(f); setTestResults(null); } }}
-                    />
-                  </label>
-
-                  <button
-                    onClick={runTest}
-                    disabled={!testFile || activeConfig.labels.length === 0 || isTesting}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-[4px] bg-[#1f5df9] text-white text-sm font-bold cursor-pointer hover:bg-[#1a4fd6] disabled:bg-slate-200 disabled:text-slate-400 disabled:hover:bg-slate-200 disabled:cursor-not-allowed"
-                  >
-                    {isTesting ? t('กำลังทดสอบ...', 'Testing...') : t('เริ่มทดสอบ', 'Start test')}
-                  </button>
-
-                  {testResults && testMetrics && (
-                    <div className="mt-4">
-                      <p className="text-sm font-bold text-slate-700 mb-2">
-                        {t('อ่านได้ถูกต้อง', 'Read correctly')} {testMetrics.matched}/{testMetrics.total} {t('ฟิลด์', 'fields')} ({testMetrics.pct}%)
-                      </p>
-                      <div className="border border-slate-200 rounded-[8px] overflow-hidden max-h-72 overflow-y-auto">
-                        {testResults.map(r => (
-                          <div key={r.fieldId} className="flex items-center justify-between gap-3 px-3 py-2 border-b border-slate-100 last:border-b-0 text-sm">
-                            <div className="min-w-0">
-                              <span className="font-mono font-semibold text-slate-700">{r.fieldName}</span>
-                              {r.friendlyName && <span className="text-xs text-slate-400 ml-1.5">({r.friendlyName})</span>}
-                            </div>
-                            <div className={`font-mono text-xs shrink-0 ${r.matched ? 'text-slate-600' : r.blank ? 'text-amber-600' : 'text-rose-600'}`}>
-                              {r.blank ? t('(ไม่พบ)', '(not found)') : r.value}
-                            </div>
-                            <span className="shrink-0">
-                              {r.matched ? <Check size={14} className="text-emerald-600" /> : <X size={14} className="text-rose-500" />}
-                            </span>
-                          </div>
+              {activeSectionTab === 'Description' && testFile && groupedFields.Description.length > 0 && (
+                <div className="mt-5">
+                  <h4 className="text-sm font-black text-slate-800 mb-2">
+                    {t(`ผลการอ่านตาราง items (${lineItemRowCount} แถว)`, `Table read result: items (${lineItemRowCount} rows)`)}
+                  </h4>
+                  <div className="overflow-x-auto border border-slate-200 rounded-[8px]">
+                    <table className="min-w-full text-xs">
+                      <thead>
+                        <tr className="bg-slate-50 border-b border-slate-200">
+                          <th className="px-2 py-2 text-left font-black text-slate-400">#</th>
+                          {groupedFields.Description.map(col => {
+                            const g = FIELD_GLOSSARY[(col.name || '').trim().toLowerCase()];
+                            return (
+                              <th key={col.id} className="px-3 py-2 text-left whitespace-nowrap">
+                                <div className="font-mono font-bold text-slate-700">{col.name}</div>
+                                {(g || col.friendlyName) && (
+                                  <div className="text-slate-400 font-normal">{g ? `${g.th} – ${g.desc}` : col.friendlyName}</div>
+                                )}
+                                {!col.aiPrompt?.trim() && (
+                                  <div className="text-amber-600 font-bold font-normal">{t('ยังไม่มีคำอธิบาย...', 'No hint yet...')}</div>
+                                )}
+                              </th>
+                            );
+                          })}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {lineItemPreviewRows.map((row, i) => (
+                          <tr key={i} className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50/60">
+                            <td className="px-2 py-1.5 text-slate-400 font-bold">{i + 1}</td>
+                            {row.map((val, ci) => (
+                              <td key={ci} className="px-3 py-1.5 font-mono text-slate-700 whitespace-nowrap">{val}</td>
+                            ))}
+                          </tr>
                         ))}
-                      </div>
-                    </div>
-                  )}
-                </>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               )}
             </div>
           )}
