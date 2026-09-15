@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { message, Modal } from 'antd';
 import {
   Plus, Trash2, Upload, FileText, FileSpreadsheet, FileCode2, Check, X,
@@ -16,14 +17,38 @@ type Section = 'Header' | 'Description' | 'Footer';
 const SECTIONS: Section[] = ['Header', 'Description', 'Footer'];
 type ExtractionMethod = 'ai' | 'excel' | 'xml';
 
-const READY_MADE_PHRASES_TH: string[] = [
-  'อยู่บริเวณหัวเอกสาร ด้านขวาบน',
-  'อยู่ใต้คำว่า "เลขที่" หรือ "No."',
-  'เป็นตัวเลขที่มีทศนิยม 2 ตำแหน่ง มักมีเครื่องหมาย , คั่นหลักพัน',
-  'อยู่ในตารางรายการสินค้า คอลัมน์ขวาสุด',
-  'เป็นวันที่ รูปแบบ วัน/เดือน/ปี',
-  'อยู่ท้ายเอกสาร ใกล้ลายเซ็นหรือตราประทับ',
-  'เป็นชื่อบริษัทหรือชื่อคู่ค้า อยู่บรรทัดแรกของเอกสาร',
+interface AssistPhrase { th: string; en: string; }
+interface AssistCategory { title: { th: string; en: string }; phrases: AssistPhrase[]; }
+const ASSIST_PHRASE_CATEGORIES: AssistCategory[] = [
+  {
+    title: { th: 'อยู่ตรงไหน', en: 'Where it is' },
+    phrases: [
+      { th: 'อยู่มุมขวาบนของเอกสาร', en: 'In the top-right corner of the document' },
+      { th: 'อยู่ส่วนหัวของเอกสาร ใต้ชื่อบริษัท', en: 'In the header, below the company name' },
+      { th: 'อยู่หลังคำว่า "{คำที่อยู่ข้างหน้า}"', en: 'Right after the label "{preceding word}"' },
+      { th: 'อยู่ในกล่องที่มีหัวข้อ "{หัวข้อกล่อง}"', en: 'Inside the box titled "{box heading}"' },
+      { th: 'อยู่ในคอลัมน์ "{ชื่อหัวคอลัมน์}" ของตาราง', en: 'In the "{column header}" column of the table' },
+      { th: 'อยู่ท้ายเอกสาร ใกล้ช่องลายเซ็น', en: 'Near the bottom, close to the signature box' },
+    ],
+  },
+  {
+    title: { th: 'หน้าตาของค่า', en: 'What it looks like' },
+    phrases: [
+      { th: 'เป็นตัวเลขอย่างเดียว ไม่ต้องใส่หน่วยหรือสกุลเงิน', en: 'Digits only — no unit or currency symbol' },
+      { th: 'เป็นวันที่ ให้อ่านตามที่เขียนในเอกสาร', en: 'A date — read it exactly as written' },
+      { th: 'ขึ้นต้นด้วย "{ตัวอักษรขึ้นต้น}"', en: 'Starts with "{leading characters}"' },
+      { th: 'ถ้าเขียนไว้หลายบรรทัด ให้รวมเป็นบรรทัดเดียว', en: 'If it spans multiple lines, join them into one' },
+    ],
+  },
+  {
+    title: { th: 'สิ่งที่ไม่ต้องอ่าน', en: "What to skip" },
+    phrases: [
+      { th: 'ไม่ต้องรวมชื่อบริษัท เอาเฉพาะที่อยู่', en: "Don't include the company name, address only" },
+      { th: 'ไม่ใช่ยอดรวมท้ายตาราง', en: 'Not the total row at the bottom of the table' },
+      { th: 'ไม่ต้องอ่านแถวยอดรวม (TOTAL)', en: 'Skip the TOTAL row' },
+      { th: 'ถ้าไม่มีในเอกสาร ให้เว้นว่าง', en: "Leave blank if it's not in the document" },
+    ],
+  },
 ];
 
 // Deterministic per (field, seed) so re-renders don't jitter results, and re-uploading the
@@ -36,14 +61,14 @@ const hashString = (s: string): number => {
 
 const buildMockValue = (field: SchemaLabel, seed: number): string => {
   const type = field.type || 'string';
-  if (type === 'number') return ((seed % 90000) / 100).toFixed(2);
+  if (type === 'number') return String(seed % 9000);
+  if (type === 'decimal') return ((seed % 90000) / 100).toFixed(2);
   if (type === 'boolean') return seed % 2 === 0 ? 'ใช่' : 'ไม่ใช่';
   if (type === 'date') {
     const day = (seed % 28) + 1;
     const month = (Math.floor(seed / 28) % 12) + 1;
     return `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/2026`;
   }
-  if (type === 'array') return `${(seed % 12) + 1} รายการ`;
   const name = (field.name || '').toLowerCase();
   if (name.includes('invoice')) return `INV-2026-${String(seed % 9999).padStart(4, '0')}`;
   if (name.includes('tax')) return `01055${String(seed % 99999).padStart(5, '0')}0000`;
@@ -71,9 +96,9 @@ const mockTestField = (field: SchemaLabel, seed: string): TestFieldResult => {
 const TYPE_OPTIONS: { value: string; th: string; en: string }[] = [
   { value: 'string', th: 'ข้อความ', en: 'Text' },
   { value: 'number', th: 'ตัวเลข', en: 'Number' },
-  { value: 'boolean', th: 'ใช่/ไม่ใช่', en: 'Yes/No' },
+  { value: 'decimal', th: 'ทศนิยม', en: 'Decimal' },
   { value: 'date', th: 'วันที่', en: 'Date' },
-  { value: 'array', th: 'ชุดข้อมูล', en: 'Array' },
+  { value: 'boolean', th: 'ใช่/ไม่ใช่', en: 'Yes/No' },
 ];
 
 const SECTION_LABEL = (section: Section, isTh: boolean): string => {
@@ -302,11 +327,28 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
     });
   };
 
-  const assistWrite = (field: SchemaLabel) => {
-    if (field.aiPrompt?.trim()) return;
-    const phrase = READY_MADE_PHRASES_TH[hashString(field.id) % READY_MADE_PHRASES_TH.length];
-    updateField(field.id, { aiPrompt: phrase });
+  // "ช่วยเขียน" opens a picker of ready-made example hints, grouped by category, instead of
+  // guessing and inserting one — the picker's own language toggle is independent of the page's.
+  const [assistFieldId, setAssistFieldId] = useState<string | null>(null);
+  const [assistAnchorRect, setAssistAnchorRect] = useState<DOMRect | null>(null);
+  const [assistLang, setAssistLang] = useState<'TH' | 'EN'>(isTh ? 'TH' : 'EN');
+
+  const openAssistPicker = (field: SchemaLabel, e: React.MouseEvent<HTMLButtonElement>) => {
+    setAssistAnchorRect(e.currentTarget.getBoundingClientRect());
+    setAssistFieldId(prev => (prev === field.id ? null : field.id));
   };
+
+  const pickAssistPhrase = (phrase: AssistPhrase) => {
+    if (assistFieldId) updateField(assistFieldId, { aiPrompt: assistLang === 'TH' ? phrase.th : phrase.en });
+    setAssistFieldId(null);
+  };
+
+  useEffect(() => {
+    if (!assistFieldId) return;
+    const onKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') setAssistFieldId(null); };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [assistFieldId]);
 
   // --- Quick-add field row ---
   const [newFieldName, setNewFieldName] = useState('');
@@ -412,8 +454,9 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
   };
 
   return (
-    // -m-4 cancels Layout's <main> padding so this box's own 24px margin (m-6) is the only
-    // gap between it and the header/sidebar, regardless of <main>'s own padding value.
+    <>
+    {/* -m-4 cancels Layout's <main> padding so this box's own 24px margin (m-6) is the only
+        gap between it and the header/sidebar, regardless of <main>'s own padding value. */}
     <div className="-m-4 font-sans">
       <div className="bg-white rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.1)] m-6 p-6">
       <div>
@@ -691,8 +734,10 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                         )}
                       </div>
                       <button
-                        onClick={() => assistWrite(field)}
-                        className="mt-1.5 flex items-center gap-1 px-2.5 py-1.5 rounded-[4px] border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 cursor-pointer whitespace-nowrap"
+                        onClick={(e) => openAssistPicker(field, e)}
+                        className={`mt-1.5 flex items-center gap-1 px-2.5 py-1.5 rounded-[4px] border text-xs font-bold cursor-pointer whitespace-nowrap ${
+                          assistFieldId === field.id ? 'border-[#1f5df9] text-[#1f5df9] bg-blue-50' : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                        }`}
                       >
                         <Sparkles size={12} /> {t('ช่วยเขียน', 'Assist')}
                       </button>
@@ -834,5 +879,55 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
       </div>
       </div>
     </div>
+    {assistFieldId && assistAnchorRect && createPortal(
+      <>
+        <div className="fixed inset-0 z-40" onClick={() => setAssistFieldId(null)} />
+        <div
+          className="fixed z-50 bg-white border border-slate-200 rounded-xl shadow-lg p-4 w-[560px] max-h-[70vh] overflow-y-auto"
+          style={{
+            top: Math.min(assistAnchorRect.bottom + 6, window.innerHeight - 24),
+            left: Math.min(Math.max(assistAnchorRect.left, 12), window.innerWidth - 580),
+          }}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-sm font-black text-slate-800">{t('เลือกประโยคตัวอย่าง', 'Pick an example sentence')}</h4>
+            <div className="inline-flex items-center gap-1 p-1 bg-slate-50 border border-slate-200 rounded-[8px]">
+              <button
+                onClick={() => setAssistLang('TH')}
+                className={`px-2.5 py-1 text-xs font-bold rounded-[4px] cursor-pointer ${assistLang === 'TH' ? 'bg-[#1f5df9] text-white' : 'text-slate-500 hover:bg-white'}`}
+              >
+                {t('ไทย', 'ไทย')}
+              </button>
+              <button
+                onClick={() => setAssistLang('EN')}
+                className={`px-2.5 py-1 text-xs font-bold rounded-[4px] cursor-pointer ${assistLang === 'EN' ? 'bg-[#1f5df9] text-white' : 'text-slate-500 hover:bg-white'}`}
+              >
+                English
+              </button>
+            </div>
+          </div>
+          <div className="space-y-4">
+            {ASSIST_PHRASE_CATEGORIES.map(cat => (
+              <div key={cat.title.th}>
+                <p className="text-xs font-black text-slate-500 mb-2">{assistLang === 'TH' ? cat.title.th : cat.title.en}</p>
+                <div className="flex flex-wrap gap-2">
+                  {cat.phrases.map(ph => (
+                    <button
+                      key={ph.th}
+                      onClick={() => pickAssistPhrase(ph)}
+                      className="px-3 py-1.5 rounded-[6px] border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:border-[#1f5df9] hover:text-[#1f5df9] hover:bg-blue-50 cursor-pointer text-left"
+                    >
+                      {assistLang === 'TH' ? ph.th : ph.en}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </>,
+      document.body
+    )}
+    </>
   );
 };
