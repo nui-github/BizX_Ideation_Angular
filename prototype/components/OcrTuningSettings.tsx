@@ -856,7 +856,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
               {/* Floating navbar, sticky flush against the header — no border of its own, just a
                   shadow to lift it, with a proper tab-bar baseline (shared border-b, tabs
                   overlapping it with -mb-px) instead of each tab floating its own underline. */}
-              <div className="sticky -top-4 z-20 bg-white rounded-xl px-5 pt-2.5 shadow-sm mb-3">
+              <div className="sticky -top-4 z-20 bg-white rounded-xl pt-2.5 shadow-sm mb-3">
                 <div className="flex items-center gap-4 border-b border-slate-200">
                   {SECTIONS.map(section => (
                     <button
