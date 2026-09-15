@@ -406,16 +406,12 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
   const [newFieldThai, setNewFieldThai] = useState('');
   const [newFieldType, setNewFieldType] = useState('string');
   const [newFieldHint, setNewFieldHint] = useState('');
-  // Which field/table group the quick-add row appends to — defaults to whichever section tab
-  // is open, but can target a different one without switching tabs first.
-  const [quickAddTargetSection, setQuickAddTargetSection] = useState<Section>('Header');
-  useEffect(() => { setQuickAddTargetSection(activeSectionTab); }, [activeSectionTab]);
 
   const addQuickField = (focusHint: boolean) => {
     if (!draftSchema || !activeConfig || !newFieldName.trim()) return;
     const newField: SchemaLabel = {
       id: genId('field'), name: newFieldName.trim(), required: true, compare: false,
-      type: newFieldType, section: quickAddTargetSection,
+      type: newFieldType, section: activeSectionTab,
       friendlyName: newFieldThai.trim() || undefined,
       aiPrompt: newFieldHint.trim() || undefined,
     };
@@ -985,19 +981,13 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
               </div>
 
               <div className="mt-4 p-3 border border-dashed border-slate-200 rounded-lg">
-                <div className="grid grid-cols-5 gap-3 mb-2.5">
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t('เพิ่มเป็น', 'Add to')}</label>
-                    <select value={quickAddTargetSection} onChange={(e) => setQuickAddTargetSection(e.target.value as Section)} className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-[4px] text-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-100">
-                      {SECTIONS.map(s => <option key={s} value={s}>{SECTION_LABEL(s, isTh)}</option>)}
-                    </select>
-                  </div>
+                <div className="grid grid-cols-4 gap-3 mb-2.5">
                   <div>
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t('ชื่อฟิลด์ (ภาษาอังกฤษ)', 'Field name (English)')}</label>
                     <input type="text" value={newFieldName} onChange={(e) => setNewFieldName(e.target.value)} placeholder={t('เช่น buyerName', 'e.g. buyerName')} className="w-full px-2.5 py-1.5 font-mono text-sm border border-slate-200 rounded-[4px] focus:outline-none focus:ring-2 focus:ring-blue-100" />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t('ชื่อภาษาไทย', 'Thai name')}</label>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t('ความหมาย', 'Meaning')}</label>
                     <input type="text" value={newFieldThai} onChange={(e) => setNewFieldThai(e.target.value)} placeholder={t('เช่น ชื่อผู้ซื้อ', 'e.g. buyer')} className="w-full px-2.5 py-1.5 text-sm border border-slate-200 rounded-[4px] focus:outline-none focus:ring-2 focus:ring-blue-100" />
                   </div>
                   <div>
