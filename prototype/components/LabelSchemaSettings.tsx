@@ -75,7 +75,12 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
           { id: 'l-inv-2', name: 'Invoice Date', required: true, compare: false, section: 'Header', type: 'date' },
           { id: 'l-inv-3', name: 'Vendor Name', required: false, compare: false, section: 'Header', type: 'string' },
           { id: 'l-inv-4', name: 'Tax ID', required: false, compare: true, section: 'Header', type: 'string' },
-          { id: 'l-inv-5', name: 'Total Amount', required: true, compare: true, section: 'Footer', type: 'number' }
+          { id: 'l-inv-6', name: 'Item Description', required: true, compare: false, section: 'Description', type: 'string' },
+          { id: 'l-inv-7', name: 'Quantity', required: true, compare: false, section: 'Description', type: 'number' },
+          { id: 'l-inv-8', name: 'Unit Price', required: true, compare: false, section: 'Description', type: 'decimal' },
+          { id: 'l-inv-9', name: 'Line Amount', required: true, compare: true, section: 'Description', type: 'decimal' },
+          { id: 'l-inv-5', name: 'Total Amount', required: true, compare: true, section: 'Footer', type: 'number' },
+          { id: 'l-inv-10', name: 'Total Quantity', required: false, compare: false, section: 'Footer', type: 'number' }
         ]
       }
     ]

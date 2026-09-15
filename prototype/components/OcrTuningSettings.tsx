@@ -147,6 +147,11 @@ const FIELD_GLOSSARY: Record<string, GlossaryEntry> = {
   'expiry date': { th: 'วันหมดอายุ', desc: 'วันที่เอกสารหรือใบอนุญาตหมดอายุ' },
   'lpi no': { th: 'เลขที่ LPI', desc: 'เลขที่เอกสาร Letter of Products Identification' },
   'document title': { th: 'ชื่อเอกสาร', desc: 'ชื่อหัวเรื่องของเอกสาร' },
+  'item description': { th: 'รายละเอียดสินค้า', desc: 'ชื่อและคำอธิบายของสินค้าในรายการนี้' },
+  'quantity': { th: 'จำนวน', desc: 'จำนวนสินค้าของรายการนี้' },
+  'unit price': { th: 'ราคาต่อหน่วย', desc: 'ราคาต่อหน่วยของสินค้า' },
+  'line amount': { th: 'มูลค่ารวมรายการ', desc: 'มูลค่ารวมของรายการนี้ (จำนวน × ราคาต่อหน่วย)' },
+  'total quantity': { th: 'จำนวนรวม', desc: 'จำนวนสินค้ารวมทั้งหมดในเอกสาร' },
 };
 
 const cloneSchema = (schema: LabelSchema): LabelSchema => JSON.parse(JSON.stringify(schema));
