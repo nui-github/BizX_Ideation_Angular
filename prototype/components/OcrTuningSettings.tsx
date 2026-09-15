@@ -197,6 +197,17 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
     [schemaOptions, nameDocTypeId]
   );
 
+  // Locked to that doc type's own generic template — prefer one literally named "generic",
+  // otherwise fall back to whichever template exists for it.
+  const genericTemplateOption = useMemo(() => {
+    if (copySourceOptions.length === 0) return null;
+    return copySourceOptions.find(o => o.schema.name.toLowerCase().includes('generic')) || copySourceOptions[0];
+  }, [copySourceOptions]);
+
+  useEffect(() => {
+    setCopySourceKey(genericTemplateOption?.key || '');
+  }, [genericTemplateOption]);
+
   // --- แก้ไข schema เดิม (edit mode only) ---
   const [editKey, setEditKey] = useState('');
 
@@ -701,7 +712,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                   <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5">{t('ชนิดเอกสาร', 'Document type')}</label>
                   <select
                     value={nameDocTypeId}
-                    onChange={(e) => { setNameDocTypeId(e.target.value); setCopySourceKey(''); setNewConfirmed(false); }}
+                    onChange={(e) => { setNameDocTypeId(e.target.value); setNewConfirmed(false); }}
                     className="w-full h-[42px] px-3 rounded-[4px] border border-slate-200 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
                   >
                     {docTypes.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
@@ -712,10 +723,10 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
               <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5">{t('template', 'template')}</label>
               <select
                 value={copySourceKey}
-                onChange={(e) => { setCopySourceKey(e.target.value); setNewConfirmed(false); }}
-                className="w-full px-3 py-2.5 rounded-[4px] border border-slate-200 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
+                disabled
+                className="w-full px-3 py-2.5 rounded-[4px] border border-slate-200 text-sm font-semibold bg-slate-50 text-slate-500 cursor-not-allowed"
               >
-                <option value="">{t('— เริ่ม schema ว่าง —', '— Start blank —')}</option>
+                {!genericTemplateOption && <option value="">{t('— ไม่มี template สำหรับชนิดเอกสารนี้ —', '— No template for this document type —')}</option>}
                 {copySourceOptions.map(o => (
                   <option key={o.key} value={o.key}>{o.schema.name} ({o.config.labels.length} {t('ฟิลด์', 'fields')})</option>
                 ))}
