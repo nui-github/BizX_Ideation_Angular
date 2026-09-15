@@ -775,7 +775,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
               >
                 {draftSchema
                   ? t('ใช้ template นี้แทนฟิลด์ปัจจุบัน', 'Use this template instead of the current fields')
-                  : t('ถัดไป: ทดสอบและปรับคำอธิบาย', 'Next: test & adjust hints')}
+                  : t('ทดสอบ', 'Test')}
               </button>
 
               {newConfirmed && draftSchema && (
