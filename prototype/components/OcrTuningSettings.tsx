@@ -443,7 +443,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
     e.preventDefault();
     setIsDraggingFile(false);
     const f = e.dataTransfer.files?.[0];
-    if (f) { setTestFile(f); setTestPage(1); setRetestNonce(0); }
+    if (f) pickTestFile(f);
   };
 
   const TEST_TABS: { key: ExtractionMethod; th: string; en: string; icon: React.ReactNode; accept: string }[] = [
@@ -451,6 +451,19 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
     { key: 'excel', th: 'Excel', en: 'Excel', icon: <FileSpreadsheet size={13} />, accept: '.xlsx,.xls,.csv' },
     { key: 'xml', th: 'XML', en: 'XML', icon: <FileCode2 size={13} />, accept: '.xml' },
   ];
+  const ALL_FILE_ACCEPT = TEST_TABS.map(t2 => t2.accept).join(',');
+  const detectMethodFromFileName = (name: string): ExtractionMethod => {
+    const ext = name.split('.').pop()?.toLowerCase() || '';
+    if (['xlsx', 'xls', 'csv'].includes(ext)) return 'excel';
+    if (ext === 'xml') return 'xml';
+    return 'ai';
+  };
+  const pickTestFile = (f: File) => {
+    setTestFile(f);
+    setTestMethod(detectMethodFromFileName(f.name));
+    setTestPage(1);
+    setRetestNonce(0);
+  };
 
   // Mock page count for the uploaded file — purely for the "หน้า" selector, doesn't change values.
   const testPageOptions = useMemo(() => {
@@ -599,17 +612,6 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
           <div ref={step1Ref} className="bg-white border border-slate-200 rounded-xl p-5 scroll-mt-24">
             <h3 className="text-[15px] font-black text-slate-800 mb-3">{t('1. อัปโหลดไฟล์และเลือกงาน', '1. Upload a file & choose a task')}</h3>
 
-            <div className="flex items-center gap-1 p-1 bg-slate-50 border border-slate-200 rounded-[8px] w-fit mb-3">
-              {TEST_TABS.map(tab => (
-                <button
-                  key={tab.key}
-                  onClick={() => { setTestMethod(tab.key); setTestFile(null); setRetestNonce(0); }}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-[4px] cursor-pointer transition-all ${testMethod === tab.key ? 'bg-white text-[#1f5df9] border border-slate-200 shadow-sm' : 'text-slate-500'}`}
-                >
-                  {tab.icon} {isTh ? tab.th : tab.en}
-                </button>
-              ))}
-            </div>
             <label
               onDragOver={handleFileDragOver}
               onDragLeave={handleFileDragLeave}
@@ -619,7 +621,14 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
               }`}
             >
               {testFile ? (
-                <span className="text-sm font-bold text-slate-700 font-mono">{testFile.name}</span>
+                <>
+                  {(() => {
+                    const icon = TEST_TABS.find(t2 => t2.key === testMethod)?.icon;
+                    return icon ? React.cloneElement(icon as React.ReactElement<{ size?: number; className?: string }>, { size: 26, className: 'text-[#1f5df9]' }) : null;
+                  })()}
+                  <span className="text-sm font-bold text-slate-700 font-mono">{testFile.name}</span>
+                  <span className="text-xs font-bold text-[#1f5df9] hover:underline">{t('เปลี่ยนไฟล์', 'Change file')}</span>
+                </>
               ) : (
                 <>
                   <Upload size={22} className="text-[#1f5df9]" />
@@ -631,9 +640,9 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
               </span>
               <input
                 type="file"
-                accept={TEST_TABS.find(t2 => t2.key === testMethod)?.accept}
+                accept={ALL_FILE_ACCEPT}
                 className="hidden"
-                onChange={(e) => { const f = e.target.files?.[0]; if (f) { setTestFile(f); setTestPage(1); setRetestNonce(0); } }}
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) pickTestFile(f); }}
               />
             </label>
 
@@ -775,9 +784,9 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                 <input
                   ref={changeFileInputRef}
                   type="file"
-                  accept={TEST_TABS.find(t2 => t2.key === testMethod)?.accept}
+                  accept={ALL_FILE_ACCEPT}
                   className="hidden"
-                  onChange={(e) => { const f = e.target.files?.[0]; if (f) { setTestFile(f); setTestPage(1); setRetestNonce(0); } }}
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) pickTestFile(f); }}
                 />
               </div>
               <p className="text-xs text-slate-400 mb-3">{t('ให้ AI อ่านเอกสาร ด้วยฟิลด์และคำอธิบายที่ยังไม่ได้บันทึก — แก้คำอธิบายในตารางด้านล่างแล้วทดสอบอีกครั้งได้', "Reads the document using this draft's fields and hints, even before they're saved — adjust hints below then test again")}</p>
