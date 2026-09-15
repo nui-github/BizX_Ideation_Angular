@@ -1,9 +1,9 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { message, Modal } from 'antd';
+import { message, Modal, Tooltip } from 'antd';
 import {
   Plus, Upload, FileText, FileSpreadsheet, FileCode2, Check,
-  Save, RotateCcw, Search, Sparkles
+  Save, RotateCcw, Search, Sparkles, Trash2
 } from 'lucide-react';
 import { Language, DocType } from '../types';
 import { LabelSchema, SchemaLabel, DocTypeSchemaConfig, DEFAULT_SCHEMAS } from './LabelSchemaSettings';
@@ -995,20 +995,26 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                           <p className="text-[11px] font-bold text-amber-600 mt-0.5">{t('ยังไม่มีคำอธิบาย', 'No hint yet')}</p>
                         )}
                       </div>
-                      <button
-                        onClick={(e) => openAssistPicker(field, e)}
-                        className={`mt-1.5 flex items-center gap-1 px-2.5 py-1.5 rounded-[4px] border text-xs font-bold cursor-pointer whitespace-nowrap ${
-                          assistFieldId === field.id ? 'border-[#1f5df9] text-[#1f5df9] bg-blue-50' : 'border-slate-200 text-slate-600 hover:bg-slate-50'
-                        }`}
-                      >
-                        <Sparkles size={12} /> {t('ช่วยเขียน', 'Assist')}
-                      </button>
-                      <button
-                        onClick={() => confirmRemoveField(field)}
-                        className="mt-1.5 text-xs font-bold text-rose-500 hover:text-rose-700 hover:underline cursor-pointer whitespace-nowrap"
-                      >
-                        {t('ลบ', 'Delete')}
-                      </button>
+                      <Tooltip title={t('ช่วยเขียน', 'Assist')}>
+                        <button
+                          onClick={(e) => openAssistPicker(field, e)}
+                          aria-label={t('ช่วยเขียน', 'Assist')}
+                          className={`mt-1.5 flex items-center justify-center w-8 h-8 rounded-[4px] border cursor-pointer ${
+                            assistFieldId === field.id ? 'border-[#1f5df9] text-[#1f5df9] bg-blue-50' : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                          }`}
+                        >
+                          <Sparkles size={14} />
+                        </button>
+                      </Tooltip>
+                      <Tooltip title={t('ลบ', 'Delete')}>
+                        <button
+                          onClick={() => confirmRemoveField(field)}
+                          aria-label={t('ลบ', 'Delete')}
+                          className="mt-1.5 flex items-center justify-center w-8 h-8 rounded-[4px] text-rose-500 hover:bg-rose-50 cursor-pointer"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </Tooltip>
                     </div>
                   );
                 })}
