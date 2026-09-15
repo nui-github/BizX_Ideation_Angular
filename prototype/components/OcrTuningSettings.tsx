@@ -475,10 +475,11 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
     setRetestNonce(0);
   };
 
-  // Mock page count for the uploaded file — purely for the "หน้า" selector, doesn't change values.
+  // Mock page count for the uploaded file — purely for the "หน้า" selector, doesn't change
+  // values. Always at least 3 pages, since a real multi-page document is the common case.
   const testPageOptions = useMemo(() => {
     if (!testFile) return [1];
-    const n = (hashString(testFile.name) % 3) + 1;
+    const n = (hashString(testFile.name) % 3) + 3;
     return Array.from({ length: n }, (_, i) => i + 1);
   }, [testFile]);
 
