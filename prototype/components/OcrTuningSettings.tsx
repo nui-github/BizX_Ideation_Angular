@@ -107,6 +107,48 @@ const SECTION_LABEL = (section: Section, isTh: boolean): string => {
   return isTh ? 'ส่วนท้าย' : 'Footer';
 };
 
+// Common fields (the ones our mock/default schemas already ship with) get a fixed Thai name +
+// description straight out of this glossary — no input, nothing to edit. Anything not in here
+// falls back to the old editable "+ ใส่ความหมาย" flow, since there's no mock meaning to show.
+interface GlossaryEntry { th: string; desc: string; }
+const FIELD_GLOSSARY: Record<string, GlossaryEntry> = {
+  'invoice number': { th: 'เลขที่ใบแจ้งหนี้', desc: 'เลขที่เอกสารใบแจ้งหนี้ ใช้อ้างอิงการซื้อขาย' },
+  'invoice date': { th: 'วันที่ออกใบแจ้งหนี้', desc: 'วันที่ที่ออกเอกสารใบแจ้งหนี้' },
+  'vendor name': { th: 'ชื่อผู้ขาย', desc: 'ชื่อบริษัทหรือบุคคลที่ขายสินค้า' },
+  'tax id': { th: 'เลขประจำตัวผู้เสียภาษี', desc: 'เลขประจำตัวผู้เสียภาษีของผู้ขายหรือผู้ซื้อ' },
+  'total amount': { th: 'ยอดรวมทั้งหมด', desc: 'ยอดเงินรวมสุทธิของเอกสาร' },
+  'b/l number': { th: 'เลขที่ใบตราส่งสินค้า', desc: 'เลขที่เอกสาร Bill of Lading' },
+  'shipper name': { th: 'ชื่อผู้ส่งสินค้า', desc: 'ชื่อบริษัทหรือบุคคลที่เป็นผู้ส่งสินค้า' },
+  'consignee name': { th: 'ชื่อผู้รับสินค้า', desc: 'ชื่อบริษัทหรือบุคคลที่เป็นผู้รับสินค้าปลายทาง' },
+  'vessel name': { th: 'ชื่อเรือ', desc: 'ชื่อเรือหรือพาหนะที่ใช้ขนส่งสินค้า' },
+  'port of loading': { th: 'ท่าเรือต้นทาง', desc: 'ท่าเรือที่สินค้าถูกบรรทุกขึ้นเรือ' },
+  'packing list no': { th: 'เลขที่บัญชีรายการบรรจุหีบห่อ', desc: 'เลขที่เอกสาร Packing List' },
+  'total packages': { th: 'จำนวนหีบห่อรวม', desc: 'จำนวนหีบห่อทั้งหมดในรายการสินค้า' },
+  'po number': { th: 'เลขที่ใบสั่งซื้อ', desc: 'เลขที่เอกสาร Purchase Order' },
+  'po date': { th: 'วันที่ใบสั่งซื้อ', desc: 'วันที่ที่ออกเอกสารใบสั่งซื้อ' },
+  'certificate no': { th: 'เลขที่ใบรับรอง', desc: 'เลขที่เอกสารใบรับรองแหล่งกำเนิดสินค้า' },
+  'origin country': { th: 'ประเทศแหล่งกำเนิดสินค้า', desc: 'ประเทศที่เป็นแหล่งกำเนิดของสินค้า' },
+  'do number': { th: 'เลขที่ใบส่งของ', desc: 'เลขที่เอกสาร Delivery Order' },
+  'release date': { th: 'วันที่ปล่อยสินค้า', desc: 'วันที่สินค้าถูกปล่อยออกจากคลัง' },
+  'po/pi number': { th: 'เลขที่ PO/PI', desc: 'เลขที่เอกสารใบสั่งซื้อหรือใบเสนอราคาสินค้า' },
+  'po/pi date': { th: 'วันที่ PO/PI', desc: 'วันที่ที่ออกเอกสาร PO/PI' },
+  'total value': { th: 'มูลค่ารวม', desc: 'มูลค่ารวมทั้งหมดของสินค้าในเอกสาร' },
+  'freight invoice no': { th: 'เลขที่ใบแจ้งหนี้ค่าขนส่ง', desc: 'เลขที่เอกสารใบแจ้งหนี้ค่าระวางขนส่ง' },
+  'carrier name': { th: 'ชื่อผู้ขนส่ง', desc: 'ชื่อบริษัทผู้ให้บริการขนส่งสินค้า' },
+  'freight amount': { th: 'ค่าระวางขนส่ง', desc: 'จำนวนเงินค่าขนส่งสินค้า' },
+  'hs code': { th: 'พิกัดศุลกากร', desc: 'รหัสพิกัดศุลกากรของสินค้า (HS Code)' },
+  'product description': { th: 'รายละเอียดสินค้า', desc: 'คำอธิบายลักษณะหรือชนิดของสินค้า' },
+  'fta form no': { th: 'เลขที่แบบฟอร์ม FTA', desc: 'เลขที่เอกสารแบบฟอร์มสิทธิพิเศษทางการค้า' },
+  'certificate date': { th: 'วันที่ออกใบรับรอง', desc: 'วันที่ที่ออกเอกสารใบรับรอง' },
+  'policy no': { th: 'เลขที่กรมธรรม์', desc: 'เลขที่เอกสารกรมธรรม์ประกันภัย' },
+  'insured value': { th: 'มูลค่าที่เอาประกัน', desc: 'มูลค่าสินค้าที่ทำประกันภัย' },
+  'license no': { th: 'เลขที่ใบอนุญาต', desc: 'เลขที่เอกสารใบอนุญาตนำเข้า/ส่งออก' },
+  'issue date': { th: 'วันที่ออกเอกสาร', desc: 'วันที่ที่เอกสารนี้ถูกออก' },
+  'expiry date': { th: 'วันหมดอายุ', desc: 'วันที่เอกสารหรือใบอนุญาตหมดอายุ' },
+  'lpi no': { th: 'เลขที่ LPI', desc: 'เลขที่เอกสาร Letter of Products Identification' },
+  'document title': { th: 'ชื่อเอกสาร', desc: 'ชื่อหัวเรื่องของเอกสาร' },
+};
+
 const cloneSchema = (schema: LabelSchema): LabelSchema => JSON.parse(JSON.stringify(schema));
 const genId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
@@ -292,7 +334,9 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
     return groupedFields[activeSectionTab].filter(f => {
       if (onlyMissingHints && f.aiPrompt?.trim()) return false;
       if (!q) return true;
-      return f.name.toLowerCase().includes(q) || (f.friendlyName || '').toLowerCase().includes(q) || (f.aiPrompt || '').toLowerCase().includes(q);
+      const glossary = FIELD_GLOSSARY[(f.name || '').trim().toLowerCase()];
+      return f.name.toLowerCase().includes(q) || (f.friendlyName || '').toLowerCase().includes(q) || (f.aiPrompt || '').toLowerCase().includes(q)
+        || (glossary ? glossary.th.includes(q) || glossary.desc.includes(q) : false);
     });
   }, [groupedFields, activeSectionTab, searchQuery, onlyMissingHints]);
 
@@ -690,12 +734,18 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                   <p className="text-xs text-slate-300 italic py-3">{t('ไม่พบฟิลด์ที่ตรงกับเงื่อนไข', 'No fields match')}</p>
                 )}
                 {visibleFields.map(field => {
+                  const glossary = FIELD_GLOSSARY[(field.name || '').trim().toLowerCase()];
                   const showThaiInput = revealedThaiFieldIds.has(field.id) || !!field.friendlyName;
                   return (
                     <div key={field.id} className="grid grid-cols-[minmax(160px,1fr)_130px_minmax(240px,2fr)_auto_auto] gap-3 items-start py-1.5 border-b border-slate-50 last:border-b-0">
                       <div className="pt-2 min-w-0">
                         <div className="font-mono text-sm font-semibold text-slate-700 truncate">{field.name}</div>
-                        {showThaiInput ? (
+                        {glossary ? (
+                          <>
+                            <div className="text-xs text-slate-500 mt-0.5">{glossary.th}</div>
+                            <div className="text-[11px] text-slate-400 mt-0.5">{glossary.desc}</div>
+                          </>
+                        ) : showThaiInput ? (
                           <input
                             type="text"
                             value={field.friendlyName || ''}
