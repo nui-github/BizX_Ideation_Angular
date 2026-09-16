@@ -511,14 +511,23 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
 
   // Accuracy is scoped to the currently active section tab — switching tabs updates the badge
   // to reflect what's actually on screen.
+  // Scored across every field on the page — header, description, and footer together —
+  // regardless of which section tab happens to be active.
   const accuracyStats = useMemo(() => {
-    if (!testFile) return { total: 0, matchedCount: 0 };
-    const fields = groupedFields[activeSectionTab];
+    if (!testFile || !activeConfig) return { total: 0, matchedCount: 0 };
+    const fields = activeConfig.labels;
     const matchedCount = fields.filter(f => fieldResultsById[f.id]?.matched).length;
     return { total: fields.length, matchedCount };
-  }, [testFile, groupedFields, activeSectionTab, fieldResultsById]);
+  }, [testFile, activeConfig, fieldResultsById]);
   const accuracyPct = accuracyStats.total > 0 ? Math.round((accuracyStats.matchedCount / accuracyStats.total) * 100) : 0;
-  const mismatchCount = accuracyStats.total - accuracyStats.matchedCount;
+
+  // The "show mismatches only" filter only ever hides/reveals rows in the active tab, so its
+  // count stays scoped to that tab rather than the page-wide accuracy badge above.
+  const mismatchCount = useMemo(() => {
+    const fields = groupedFields[activeSectionTab];
+    const matchedCount = fields.filter(f => fieldResultsById[f.id]?.matched).length;
+    return fields.length - matchedCount;
+  }, [groupedFields, activeSectionTab, fieldResultsById]);
 
   const finalVisibleFields = useMemo(() => {
     if (!onlyMismatched || !testFile) return visibleFields;
