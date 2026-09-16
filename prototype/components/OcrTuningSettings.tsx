@@ -552,34 +552,36 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
     <div className="-m-4 font-sans">
       <div className="bg-white rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.1)] m-6 p-6">
       <div>
-        <div ref={topRef} className="flex items-start justify-between gap-4 mb-5 scroll-mt-24">
-          <div>
-            {onBack && (
-              <button
-                onClick={onBack}
-                className="flex items-center gap-1.5 px-3 -ml-3 py-2 rounded-[4px] text-slate-600 text-sm font-bold hover:bg-slate-100 transition-colors shrink-0 cursor-pointer"
-              >
-                <ArrowLeft size={16} /> {t('กลับหน้ารายการ', 'Back to list')}
-              </button>
-            )}
-            <h1 className="text-xl font-black text-slate-900 tracking-tight">
-              {editFromTracking
-                ? t(`แก้ไข schema · ${draftSchema?.name || ''}`, `Edit schema · ${draftSchema?.name || ''}`)
-                : t('สร้าง schema ใหม่', 'Create new schema')}
-            </h1>
-            <p className="text-sm text-slate-500 mt-0.5">{t('กำหนดฟิลด์และคำอธิบายฟิลด์/ตำแหน่ง ให้ AI อ่านเอกสารได้ถูกต้อง — ทดสอบก่อนบันทึกได้', 'Define fields and their hints so the AI reads documents correctly — test before saving')}</p>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <button onClick={confirmResetAll} className="flex items-center gap-1.5 px-3.5 py-2 rounded-[4px] border border-slate-200 bg-white text-slate-500 text-sm font-bold hover:bg-slate-50 cursor-pointer">
-              <RotateCcw size={14} /> {t('เริ่มใหม่', 'Start over')}
-            </button>
+        <div ref={topRef} className="mb-5 scroll-mt-24">
+          {onBack && (
             <button
-              onClick={handleSaveSchema}
-              disabled={!showWorkingCards}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-[4px] bg-[#1f5df9] text-white text-sm font-bold hover:bg-[#1a4fd6] cursor-pointer disabled:bg-slate-200 disabled:text-slate-400 disabled:hover:bg-slate-200 disabled:cursor-not-allowed"
+              onClick={onBack}
+              className="flex items-center gap-1.5 px-3 -ml-3 py-2 mb-3 rounded-[4px] text-slate-600 text-sm font-bold hover:bg-slate-100 transition-colors cursor-pointer"
             >
-              <Save size={14} /> {t('บันทึก', 'Save')}
+              <ArrowLeft size={16} /> {t('กลับหน้ารายการ', 'Back to list')}
             </button>
+          )}
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-xl font-black text-slate-900 tracking-tight">
+                {editFromTracking
+                  ? t(`แก้ไข schema · ${draftSchema?.name || ''}`, `Edit schema · ${draftSchema?.name || ''}`)
+                  : t('สร้าง schema ใหม่', 'Create new schema')}
+              </h1>
+              <p className="text-sm text-slate-500 mt-0.5">{t('กำหนดฟิลด์และคำอธิบายฟิลด์/ตำแหน่ง ให้ AI อ่านเอกสารได้ถูกต้อง — ทดสอบก่อนบันทึกได้', 'Define fields and their hints so the AI reads documents correctly — test before saving')}</p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button onClick={confirmResetAll} className="flex items-center gap-1.5 px-3.5 py-2 rounded-[4px] border border-slate-200 bg-white text-slate-500 text-sm font-bold hover:bg-slate-50 cursor-pointer">
+                <RotateCcw size={14} /> {t('เริ่มใหม่', 'Start over')}
+              </button>
+              <button
+                onClick={handleSaveSchema}
+                disabled={!showWorkingCards}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-[4px] bg-[#1f5df9] text-white text-sm font-bold hover:bg-[#1a4fd6] cursor-pointer disabled:bg-slate-200 disabled:text-slate-400 disabled:hover:bg-slate-200 disabled:cursor-not-allowed"
+              >
+                <Save size={14} /> {t('บันทึก', 'Save')}
+              </button>
+            </div>
           </div>
         </div>
 
