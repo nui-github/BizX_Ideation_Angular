@@ -50,6 +50,7 @@ export interface LabelSchema {
   assignedTeams: string[]; // team values (see MOCK_TEAMS)
   createdBy?: string; // display name of the user who created this schema
   createdByTeam?: string; // team value (see MOCK_TEAMS) of the creator — used to scope the OCR Tuning tracking list to "my team's schemas"
+  createdAt?: string;
   updatedAt: string;
   configs: DocTypeSchemaConfig[];
 }
@@ -75,6 +76,7 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     assignedTeams: ['ALL'],
     createdBy: 'Kunawut W.',
     createdByTeam: 'operation',
+    createdAt: '2026-05-12T09:00:00Z',
     updatedAt: '2026-06-01T09:00:00Z',
     configs: [
       {
@@ -104,6 +106,7 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     assignedTeams: ['ALL'],
     createdBy: 'Somchai P.',
     createdByTeam: 'logistics',
+    createdAt: '2026-05-13T09:00:00Z',
     updatedAt: '2026-06-02T09:00:00Z',
     configs: [
       {
@@ -131,6 +134,7 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     assignedTeams: ['ALL'],
     createdBy: 'Somchai P.',
     createdByTeam: 'logistics',
+    createdAt: '2026-05-14T09:00:00Z',
     updatedAt: '2026-06-03T09:00:00Z',
     configs: [
       {
@@ -154,6 +158,7 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     assignedTeams: ['ALL'],
     createdBy: 'Kunawut W.',
     createdByTeam: 'operation',
+    createdAt: '2026-05-15T09:00:00Z',
     updatedAt: '2026-06-04T09:00:00Z',
     configs: [
       {
@@ -178,6 +183,7 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     assignedTeams: ['ALL'],
     createdBy: 'Nattaya S.',
     createdByTeam: 'customs',
+    createdAt: '2026-05-16T09:00:00Z',
     updatedAt: '2026-06-05T09:00:00Z',
     configs: [
       {
@@ -202,6 +208,7 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     assignedTeams: ['ALL'],
     createdBy: 'Kunawut W.',
     createdByTeam: 'operation',
+    createdAt: '2026-05-17T09:00:00Z',
     updatedAt: '2026-06-06T09:00:00Z',
     configs: [
       {
@@ -226,6 +233,7 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     assignedTeams: ['ALL'],
     createdBy: 'Preecha T.',
     createdByTeam: 'accounting',
+    createdAt: '2026-05-18T09:00:00Z',
     updatedAt: '2026-06-07T09:00:00Z',
     configs: [
       {
@@ -250,6 +258,7 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     assignedTeams: ['ALL'],
     createdBy: 'Somchai P.',
     createdByTeam: 'logistics',
+    createdAt: '2026-05-19T09:00:00Z',
     updatedAt: '2026-06-08T09:00:00Z',
     configs: [
       {
@@ -274,6 +283,7 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     assignedTeams: ['ALL'],
     createdBy: 'Nattaya S.',
     createdByTeam: 'customs',
+    createdAt: '2026-05-20T09:00:00Z',
     updatedAt: '2026-06-09T09:00:00Z',
     configs: [
       {
@@ -296,6 +306,7 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     assignedTeams: ['ALL'],
     createdBy: 'Nattaya S.',
     createdByTeam: 'customs',
+    createdAt: '2026-05-21T09:00:00Z',
     updatedAt: '2026-06-10T09:00:00Z',
     configs: [
       {
@@ -320,6 +331,7 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     assignedTeams: ['ALL'],
     createdBy: 'Nattaya S.',
     createdByTeam: 'customs',
+    createdAt: '2026-05-22T09:00:00Z',
     updatedAt: '2026-06-11T09:00:00Z',
     configs: [
       {
@@ -344,6 +356,7 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     assignedTeams: ['ALL'],
     createdBy: 'Preecha T.',
     createdByTeam: 'accounting',
+    createdAt: '2026-05-23T09:00:00Z',
     updatedAt: '2026-06-12T09:00:00Z',
     configs: [
       {
@@ -367,6 +380,7 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     assignedTeams: ['ALL'],
     createdBy: 'Nattaya S.',
     createdByTeam: 'customs',
+    createdAt: '2026-05-24T09:00:00Z',
     updatedAt: '2026-06-13T09:00:00Z',
     configs: [
       {
@@ -392,6 +406,7 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     assignedTeams: ['ALL'],
     createdBy: 'Preecha T.',
     createdByTeam: 'accounting',
+    createdAt: '2026-05-25T09:00:00Z',
     updatedAt: '2026-06-14T09:00:00Z',
     configs: [
       {
@@ -415,6 +430,7 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     assignedTeams: ['ALL'],
     createdBy: 'Kunawut W.',
     createdByTeam: 'operation',
+    createdAt: '2026-05-26T09:00:00Z',
     updatedAt: '2026-06-15T09:00:00Z',
     configs: [
       {

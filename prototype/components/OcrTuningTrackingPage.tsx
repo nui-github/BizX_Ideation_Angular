@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Modal, Tooltip } from 'antd';
+import { Modal, Drawer, Tooltip } from 'antd';
 import { Plus, Search, Layers, History, Pencil, Trash2, Inbox } from 'lucide-react';
 import { Language, DocType } from '../types';
 import { LabelSchema, DEFAULT_SCHEMAS, CURRENT_USER_TEAM } from './LabelSchemaSettings';
@@ -166,7 +166,10 @@ export const OcrTuningTrackingPage: React.FC<OcrTuningTrackingPageProps> = ({ la
                         {schema.docTypes.map(id => docTypeName(id)).join(', ') || '-'}
                       </td>
                       <td className="px-6 py-4 text-sm text-slate-600 font-medium">{fieldCount(schema)}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600 font-medium">{schema.createdBy || '-'}</td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-slate-600 font-medium">{schema.createdBy || '-'}</div>
+                        <div className="text-xs text-slate-400 mt-0.5">{formatDate(schema.createdAt || schema.updatedAt, isTh)}</div>
+                      </td>
                       <td className="px-6 py-4 text-sm text-slate-500 whitespace-nowrap">{formatDate(schema.updatedAt, isTh)}</td>
                       <td className="px-6 py-4 text-right pr-8">
                         <div className="flex items-center justify-end gap-1.5">
@@ -205,13 +208,11 @@ export const OcrTuningTrackingPage: React.FC<OcrTuningTrackingPageProps> = ({ la
         </div>
       </div>
 
-      {/* History log modal */}
-      <Modal
+      {/* History log drawer */}
+      <Drawer
         open={!!historyTarget}
-        onCancel={() => setHistoryTarget(null)}
-        footer={null}
-        width={480}
-        centered
+        onClose={() => setHistoryTarget(null)}
+        width={420}
         title={historyTarget ? t(`ประวัติการแก้ไข: ${historyTarget.name}`, `Edit history: ${historyTarget.name}`) : ''}
       >
         {historyTarget && (
@@ -230,7 +231,7 @@ export const OcrTuningTrackingPage: React.FC<OcrTuningTrackingPageProps> = ({ la
             ))}
           </div>
         )}
-      </Modal>
+      </Drawer>
 
       {/* Delete confirm modal */}
       <Modal

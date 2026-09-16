@@ -274,30 +274,6 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
     });
   };
 
-  const switchMode = (next: 'new' | 'edit') => {
-    setMode(next);
-    setDraftSchema(null);
-    setActiveDocTypeId(null);
-    setNewConfirmed(false);
-    setEditKey('');
-    setRetestNonce(0);
-    setSavedOnce(false);
-  };
-
-  // Past step 2, a draft schema exists — switching "สร้าง/แก้ไข" would silently drop it.
-  const confirmSwitchMode = (next: 'new' | 'edit') => {
-    if (next === mode) return;
-    if (!draftSchema) { switchMode(next); return; }
-    Modal.confirm({
-      title: t('เปลี่ยนโหมด?', 'Switch mode?'),
-      content: t('ข้อมูลที่กรอกไว้ทั้งหมด รวมถึงฟิลด์ที่แก้ไข จะหายไป — การเปลี่ยนโหมดไม่สามารถย้อนกลับได้', 'Everything entered so far, including edited fields, will be lost — this can\'t be undone.'),
-      okText: t('เปลี่ยนโหมด', 'Switch'),
-      okType: 'danger',
-      cancelText: t('ยกเลิก', 'Cancel'),
-      onOk: () => switchMode(next),
-    });
-  };
-
   // Also used to swap the starting point after the schema's already been created — it
   // re-clones fields from the newly picked source and replaces the draft's current fields,
   // keeping the same schema id so it isn't treated as a second, separate schema.
@@ -314,7 +290,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
       : {
           id: genId('ls'), name: nameDraft.trim(), description: '', docTypes: [nameDocTypeId],
           workflowIds: [], assignedTeams: ['ALL'], createdBy: CURRENT_USER_NAME, createdByTeam: CURRENT_USER_TEAM,
-          updatedAt: new Date().toISOString(), configs: [config],
+          createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), configs: [config],
         };
     setDraftSchema(schema);
     setActiveDocTypeId(nameDocTypeId);
@@ -554,7 +530,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
   // load, advancing/checking off as the user actually does each thing, rather than always
   // showing everything but the last step as already done). ---
   const STEP_LABELS = [
-    { th: editFromTracking ? 'อัปโหลดไฟล์' : 'อัปโหลดไฟล์และเลือกงาน', en: editFromTracking ? 'Upload file' : 'Upload file & choose task' },
+    { th: 'อัปโหลดไฟล์', en: 'Upload file' },
     { th: editFromTracking ? 'ชื่อ schema และชนิดเอกสาร' : 'ชื่อ ชนิดเอกสาร template', en: editFromTracking ? 'Schema name & document type' : 'Name, doc type & template' },
     { th: 'ทดสอบและปรับคำอธิบาย', en: 'Test & adjust hints' },
     { th: 'บันทึก', en: 'Save' },
@@ -652,11 +628,9 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
         </div>
 
         <div className="space-y-4">
-          {/* 1. อัปโหลดไฟล์และเลือกงาน */}
+          {/* 1. อัปโหลดไฟล์ */}
           <div ref={step1Ref} className="bg-white border border-slate-200 rounded-xl p-5 scroll-mt-24">
-            <h3 className="text-[15px] font-black text-slate-800 mb-3">
-              {editFromTracking ? t('1. อัปโหลดไฟล์', '1. Upload a file') : t('1. อัปโหลดไฟล์และเลือกงาน', '1. Upload a file & choose a task')}
-            </h3>
+            <h3 className="text-[15px] font-black text-slate-800 mb-3">{t('1. อัปโหลดไฟล์', '1. Upload a file')}</h3>
 
             {testFile ? (
               <div className="flex items-center justify-between gap-4 p-4 bg-emerald-50/50 border border-emerald-200 rounded-xl mb-4">
@@ -716,46 +690,6 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
               </label>
             )}
 
-            {!editFromTracking && (
-              <>
-                <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5">{t('งานที่จะทำ', 'Task')}</label>
-                <div className="inline-flex items-center gap-1 p-1 bg-slate-50 border border-slate-200 rounded-[8px]">
-                  <button
-                    onClick={() => confirmSwitchMode('new')}
-                    className={`px-3.5 py-1.5 text-xs font-bold rounded-[4px] cursor-pointer transition-all ${mode === 'new' ? 'bg-[#1f5df9] text-white shadow-sm' : 'text-slate-500 hover:bg-white'}`}
-                  >
-                    {t('สร้าง schema ใหม่', 'Create new schema')}
-                  </button>
-                  <button
-                    onClick={() => confirmSwitchMode('edit')}
-                    className={`px-3.5 py-1.5 text-xs font-bold rounded-[4px] cursor-pointer transition-all ${mode === 'edit' ? 'bg-[#1f5df9] text-white shadow-sm' : 'text-slate-500 hover:bg-white'}`}
-                  >
-                    {t('แก้ไข schema เดิม', 'Edit existing schema')}
-                  </button>
-                </div>
-
-                {mode === 'edit' && (
-                  <div className="mt-4 pt-4 border-t border-slate-100">
-                    <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5">{t('schema/ชนิดเอกสารที่จะแก้', 'Schema / document type to edit')}</label>
-                    <select
-                      value={editKey}
-                      onChange={(e) => pickEditSchema(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-[4px] border border-slate-200 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
-                    >
-                      <option value="">{t('— เลือก schema —', '— Pick a schema —')}</option>
-                      {schemaOptions.map(o => (
-                        <option key={o.key} value={o.key}>{o.schema.name} / {o.docTypeName}</option>
-                      ))}
-                    </select>
-                    {activeConfig && (
-                      <p className="text-[11px] font-bold text-slate-400 mt-1.5">
-                        {activeConfig.labels.length} {t('ฟิลด์', 'fields')} · {t('บันทึกแล้วจะมีผลกับการอ่านเอกสารจริงทันที', 'once saved, this affects real document reading immediately')}
-                      </p>
-                    )}
-                  </div>
-                )}
-              </>
-            )}
           </div>
 
           {/* 2. ชื่อ schema ชนิดเอกสาร และ template (new mode) / ชื่อ schema และชนิดเอกสาร (edit from tracking) */}
