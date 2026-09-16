@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { message, Modal, Tooltip, Drawer } from 'antd';
+import { message, Modal, Tooltip, Drawer, Switch } from 'antd';
 import {
   Plus, Upload, FileText, FileSpreadsheet, FileCode2,
   Save, RotateCcw, Search, Sparkles, Trash2, ArrowLeft, Info
@@ -856,7 +856,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                   <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
                 </div>
                 <label className="flex items-center gap-2 text-[13px] font-bold text-slate-600 cursor-pointer shrink-0">
-                  <input type="checkbox" checked={onlyMissingHints} onChange={(e) => setOnlyMissingHints(e.target.checked)} />
+                  <Switch size="small" checked={onlyMissingHints} onChange={setOnlyMissingHints} />
                   {t('เฉพาะที่ยังไม่มีคำอธิบาย', 'Missing a hint only')}
                   {missingHintCount > 0 && (
                     <span className="px-1.5 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-700 text-[11px] font-black">{missingHintCount}</span>
@@ -883,9 +883,11 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
               </div>
 
               {testFile && unreadableCount > 0 && (
-                <p className="inline-block px-2.5 py-1 rounded-[4px] bg-rose-50 border border-rose-200 text-rose-600 text-xs font-bold mb-3">
-                  {t(`อ่านไม่ได้ ${unreadableCount} ฟิลด์`, `${unreadableCount} field(s) unreadable`)}
-                </p>
+                <div className="flex justify-end mb-3">
+                  <p className="inline-block px-2.5 py-1 rounded-[4px] bg-rose-50 border border-rose-200 text-rose-600 text-xs font-bold">
+                    {t(`อ่านไม่ได้ ${unreadableCount} ฟิลด์`, `${unreadableCount} field(s) unreadable`)}
+                  </p>
+                </div>
               )}
 
               {testFile && (
