@@ -1,9 +1,9 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { message, Modal, Tooltip } from 'antd';
+import { message, Modal, Tooltip, Drawer } from 'antd';
 import {
   Plus, Upload, FileText, FileSpreadsheet, FileCode2,
-  Save, RotateCcw, Search, Sparkles, Trash2, ArrowLeft
+  Save, RotateCcw, Search, Sparkles, Trash2, ArrowLeft, Info
 } from 'lucide-react';
 import { Language, DocType } from '../types';
 import { LabelSchema, SchemaLabel, DocTypeSchemaConfig, DEFAULT_SCHEMAS, CURRENT_USER_NAME, CURRENT_USER_TEAM } from './LabelSchemaSettings';
@@ -87,14 +87,14 @@ const mutateValue = (value: string, seed: number): string => {
   return chars.join('');
 };
 
-interface TestFieldResult { fieldId: string; fieldName: string; friendlyName?: string; value: string; matched: boolean; blank: boolean; }
+interface TestFieldResult { fieldId: string; fieldName: string; friendlyName?: string; expected: string; value: string; matched: boolean; blank: boolean; }
 const mockTestField = (field: SchemaLabel, seed: string): TestFieldResult => {
   const h = hashString(field.id + '|' + seed);
   const expected = buildMockValue(field, h);
   const bucket = h % 10;
-  if (bucket < 7) return { fieldId: field.id, fieldName: field.name || '—', friendlyName: field.friendlyName, value: expected, matched: true, blank: false };
-  if (bucket < 9) return { fieldId: field.id, fieldName: field.name || '—', friendlyName: field.friendlyName, value: mutateValue(expected, h), matched: false, blank: false };
-  return { fieldId: field.id, fieldName: field.name || '—', friendlyName: field.friendlyName, value: '', matched: false, blank: true };
+  if (bucket < 7) return { fieldId: field.id, fieldName: field.name || '—', friendlyName: field.friendlyName, expected, value: expected, matched: true, blank: false };
+  if (bucket < 9) return { fieldId: field.id, fieldName: field.name || '—', friendlyName: field.friendlyName, expected, value: mutateValue(expected, h), matched: false, blank: false };
+  return { fieldId: field.id, fieldName: field.name || '—', friendlyName: field.friendlyName, expected, value: '', matched: false, blank: true };
 };
 
 const TYPE_OPTIONS: { value: string; th: string; en: string }[] = [
@@ -338,6 +338,11 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
   const [revealedThaiFieldIds, setRevealedThaiFieldIds] = useState<Set<string>>(new Set());
   const [lineItemTableHint, setLineItemTableHint] = useState('');
   const [lineItemHintRevealed, setLineItemHintRevealed] = useState(false);
+  const [onlyMismatched, setOnlyMismatched] = useState(false);
+  const [hintInfoOpen, setHintInfoOpen] = useState(false);
+  // User-editable ground-truth override per field, keyed by field id — falls back to the mock
+  // test's own "expected" value until the user types something else in.
+  const [expectedOverrides, setExpectedOverrides] = useState<Record<string, string>>({});
 
   const groupedFields = useMemo(() => {
     const groups: Record<Section, SchemaLabel[]> = { Header: [], Description: [], Footer: [] };
@@ -509,6 +514,22 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
     () => Object.values(fieldResultsById).filter(r => r.blank).length,
     [fieldResultsById]
   );
+
+  // Accuracy is scoped to the currently active section tab — switching tabs updates the badge
+  // to reflect what's actually on screen.
+  const accuracyStats = useMemo(() => {
+    if (!testFile) return { total: 0, matchedCount: 0 };
+    const fields = groupedFields[activeSectionTab];
+    const matchedCount = fields.filter(f => fieldResultsById[f.id]?.matched).length;
+    return { total: fields.length, matchedCount };
+  }, [testFile, groupedFields, activeSectionTab, fieldResultsById]);
+  const accuracyPct = accuracyStats.total > 0 ? Math.round((accuracyStats.matchedCount / accuracyStats.total) * 100) : 0;
+  const mismatchCount = accuracyStats.total - accuracyStats.matchedCount;
+
+  const finalVisibleFields = useMemo(() => {
+    if (!onlyMismatched || !testFile) return visibleFields;
+    return visibleFields.filter(f => !fieldResultsById[f.id]?.matched);
+  }, [visibleFields, onlyMismatched, testFile, fieldResultsById]);
 
   // Mock preview grid for the line-items table — a plausible row count plus one row of values
   // per Description-section field, so "ผลการอ่านตาราง" has something believable to show.
@@ -823,44 +844,6 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
               </div>
               <p className="text-xs text-slate-400 mb-3">{t('ให้ AI อ่านเอกสาร ด้วยฟิลด์และคำอธิบายที่ยังไม่ได้บันทึก — แก้คำอธิบายในตารางด้านล่างแล้วทดสอบอีกครั้งได้', "Reads the document using this draft's fields and hints, even before they're saved — adjust hints below then test again")}</p>
 
-              {testFile && (
-                <div className="mb-3 max-w-xs">
-                  <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5">{t('หน้า', 'Page')}</label>
-                  <select
-                    value={testPage}
-                    onChange={(e) => setTestPage(Number(e.target.value))}
-                    className="w-full px-3 py-2 rounded-[4px] border border-slate-200 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
-                  >
-                    {testPageOptions.map(p => <option key={p} value={p}>{t(`หน้า ${p}`, `Page ${p}`)}</option>)}
-                  </select>
-                </div>
-              )}
-
-              {testFile && unreadableCount > 0 && (
-                <p className="inline-block px-2.5 py-1 rounded-[4px] bg-rose-50 border border-rose-200 text-rose-600 text-xs font-bold mb-3">
-                  {t(`อ่านไม่ได้ ${unreadableCount} ฟิลด์`, `${unreadableCount} field(s) unreadable`)}
-                </p>
-              )}
-
-              {/* Floating navbar, sticky flush against the header — no border of its own, just a
-                  shadow to lift it, with a proper tab-bar baseline (shared border-b, tabs
-                  overlapping it with -mb-px) instead of each tab floating its own underline. */}
-              <div className="sticky -top-4 z-20 bg-white rounded-xl pt-2.5 shadow-sm mb-3">
-                <div className="flex items-center gap-4 border-b border-slate-200">
-                  {SECTIONS.map(section => (
-                    <button
-                      key={section}
-                      onClick={() => setActiveSectionTab(section)}
-                      className={`tab-underline pb-2 text-sm font-bold cursor-pointer border-b-2 -mb-px transition-all ${
-                        activeSectionTab === section ? 'border-[#1f5df9] text-[#1f5df9]' : 'border-transparent text-slate-500 hover:text-slate-700'
-                      }`}
-                    >
-                      {SECTION_LABEL(section, isTh)} ({groupedFields[section].length})
-                    </button>
-                  ))}
-                </div>
-              </div>
-
               <div className="flex items-center gap-3 flex-wrap mb-3">
                 <div className="relative flex-1 min-w-[200px]">
                   <input
@@ -885,20 +868,85 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                 >
                   {expandedHints ? t('ย่อช่องคำอธิบาย', 'Collapse hint box') : t('ขยายช่องคำอธิบาย', 'Expand hint box')}
                 </button>
+                {testFile && (
+                  <div className="shrink-0 ml-auto w-[150px]">
+                    <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1">{t('หน้า', 'Page')}</label>
+                    <select
+                      value={testPage}
+                      onChange={(e) => setTestPage(Number(e.target.value))}
+                      className="w-full px-3 py-2 rounded-[4px] border border-slate-200 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
+                    >
+                      {testPageOptions.map(p => <option key={p} value={p}>{t(`หน้า ${p}`, `Page ${p}`)}</option>)}
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              {testFile && unreadableCount > 0 && (
+                <p className="inline-block px-2.5 py-1 rounded-[4px] bg-rose-50 border border-rose-200 text-rose-600 text-xs font-bold mb-3">
+                  {t(`อ่านไม่ได้ ${unreadableCount} ฟิลด์`, `${unreadableCount} field(s) unreadable`)}
+                </p>
+              )}
+
+              {testFile && (
+                <div className="flex items-center gap-2 mb-3">
+                  <span className={`px-2.5 py-1 rounded-[4px] border text-xs font-bold ${accuracyPct === 100 ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-amber-50 border-amber-200 text-amber-700'}`}>
+                    {t(`ความถูกต้อง ${accuracyStats.matchedCount}/${accuracyStats.total} (${accuracyPct}%)`, `Accuracy ${accuracyStats.matchedCount}/${accuracyStats.total} (${accuracyPct}%)`)}
+                  </span>
+                  <button
+                    onClick={() => setOnlyMismatched(v => !v)}
+                    disabled={mismatchCount === 0}
+                    className={`px-3 py-1.5 rounded-[4px] border text-xs font-bold cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 ${
+                      onlyMismatched ? 'bg-[#1f5df9] border-[#1f5df9] text-white' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    {t(`ดูเฉพาะฟิลด์ที่ไม่ตรง (${mismatchCount})`, `Show mismatches only (${mismatchCount})`)}
+                  </button>
+                </div>
+              )}
+
+              {/* Floating navbar, sticky flush against the header — no border of its own, just a
+                  shadow to lift it, with a proper tab-bar baseline (shared border-b, tabs
+                  overlapping it with -mb-px) instead of each tab floating its own underline. */}
+              <div className="sticky -top-4 z-20 bg-white rounded-xl pt-2.5 shadow-sm mb-3">
+                <div className="flex items-center gap-4 border-b border-slate-200">
+                  {SECTIONS.map(section => (
+                    <button
+                      key={section}
+                      onClick={() => setActiveSectionTab(section)}
+                      className={`tab-underline pb-2 text-sm font-bold cursor-pointer border-b-2 -mb-px transition-all ${
+                        activeSectionTab === section ? 'border-[#1f5df9] text-[#1f5df9]' : 'border-transparent text-slate-500 hover:text-slate-700'
+                      }`}
+                    >
+                      {SECTION_LABEL(section, isTh)} ({groupedFields[section].length})
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Sticks flush right under the nav tab bar above (24px = that bar's own 40px
                   height minus its own -16px offset) instead of scrolling away with the rows. */}
-              <div className="sticky top-6 z-10 grid grid-cols-[minmax(180px,1.2fr)_minmax(160px,1fr)_minmax(220px,2fr)_auto_auto] gap-3 items-center text-[11px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 rounded-[4px] px-2 py-2 mb-1">
+              <div className="sticky top-6 z-10 grid grid-cols-[minmax(160px,1.1fr)_minmax(140px,0.9fr)_minmax(140px,0.9fr)_minmax(220px,2fr)_auto_auto] gap-3 items-center text-[11px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 rounded-[4px] px-2 py-2 mb-1">
                 <span>{t('ชื่อฟิลด์', 'Field name')}</span>
+                <span>{t('ค่าที่คาดหวัง', 'Expected value')}</span>
                 <span>{t('ค่าที่อ่านได้', 'Value read')}</span>
-                <span>{t('คำอธิบายฟิลด์/ตำแหน่ง', 'Field / position hint')}</span>
+                <span className="flex items-center gap-1">
+                  {t('คำอธิบายฟิลด์/ตำแหน่ง', 'Field / position hint')}
+                  <button
+                    type="button"
+                    onClick={() => setHintInfoOpen(true)}
+                    className="text-slate-400 hover:text-[#1f5df9] cursor-pointer"
+                    aria-label={t('แนวทางการปรับ Schema', 'Schema tuning guide')}
+                  >
+                    <Info size={13} />
+                  </button>
+                </span>
                 <span />
                 <span />
               </div>
 
               {activeSectionTab === 'Description' && groupedFields.Description.length > 0 && (
-                <div className="grid grid-cols-[minmax(180px,1.2fr)_minmax(160px,1fr)_minmax(220px,2fr)_auto_auto] gap-3 items-start py-1.5 border-b border-slate-100 bg-slate-50/60 -mx-1 px-1 rounded-[4px] mb-1">
+                <div className="grid grid-cols-[minmax(160px,1.1fr)_minmax(140px,0.9fr)_minmax(140px,0.9fr)_minmax(220px,2fr)_auto_auto] gap-3 items-start py-1.5 border-b border-slate-100 bg-slate-50/60 -mx-1 px-1 rounded-[4px] mb-1">
                   <div className="pt-1.5 min-w-0">
                     <div className="font-mono text-sm font-black text-slate-800">{t('ตาราง: items', 'Table: items')}</div>
                     {lineItemHintRevealed ? (
@@ -916,6 +964,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                     )}
                     <div className="text-[11px] text-slate-400 mt-0.5">{t('ตาราง', 'Table')}</div>
                   </div>
+                  <div />
                   <div className="pt-1.5 text-sm font-bold text-slate-600">
                     {testFile ? t(`${lineItemRowCount} แถว`, `${lineItemRowCount} rows`) : '—'}
                   </div>
@@ -926,15 +975,15 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                 </div>
               )}
               <div className="space-y-2">
-                {visibleFields.length === 0 && (
+                {finalVisibleFields.length === 0 && (
                   <p className="text-xs text-slate-300 italic py-3">{t('ไม่พบฟิลด์ที่ตรงกับเงื่อนไข', 'No fields match')}</p>
                 )}
-                {visibleFields.map(field => {
+                {finalVisibleFields.map(field => {
                   const glossary = FIELD_GLOSSARY[(field.name || '').trim().toLowerCase()];
                   const showThaiInput = revealedThaiFieldIds.has(field.id) || !!field.friendlyName;
                   const result = fieldResultsById[field.id];
                   return (
-                    <div key={field.id} className="grid grid-cols-[minmax(180px,1.2fr)_minmax(160px,1fr)_minmax(220px,2fr)_auto_auto] gap-3 items-start py-1.5 border-b border-slate-50 last:border-b-0">
+                    <div key={field.id} className="grid grid-cols-[minmax(160px,1.1fr)_minmax(140px,0.9fr)_minmax(140px,0.9fr)_minmax(220px,2fr)_auto_auto] gap-3 items-start py-1.5 border-b border-slate-50 last:border-b-0">
                       <div className="pt-2 min-w-0">
                         <div className="font-mono text-sm font-semibold text-slate-700 truncate">{field.name}</div>
                         {glossary ? (
@@ -965,6 +1014,18 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                         >
                           {TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{isTh ? o.th : o.en}</option>)}
                         </select>
+                      </div>
+                      <div className="pt-2 min-w-0">
+                        {!testFile ? (
+                          <span className="text-sm text-slate-300">—</span>
+                        ) : (
+                          <textarea
+                            value={expectedOverrides[field.id] ?? result?.expected ?? ''}
+                            onChange={(e) => setExpectedOverrides(prev => ({ ...prev, [field.id]: e.target.value }))}
+                            rows={1}
+                            className="w-full px-2 py-1.5 text-sm font-mono text-slate-700 bg-white border border-slate-200 rounded-[4px] resize-y focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
+                          />
+                        )}
                       </div>
                       <div className="pt-2 min-w-0">
                         {activeSectionTab === 'Description' && <div className="text-[11px] text-slate-400 mb-0.5">{t('ค่าในแถวแรก', 'Value in the first row')}</div>}
@@ -1091,6 +1152,70 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
       </div>
       </div>
     </div>
+
+    <Drawer
+      title={t('แนวทางการปรับ Schema เพื่อ Tune Prompt', 'Guide to tuning the schema prompt')}
+      open={hintInfoOpen}
+      onClose={() => setHintInfoOpen(false)}
+      width={480}
+    >
+      <div className="space-y-4 text-sm text-slate-700 leading-relaxed">
+        <div>
+          <h4 className="font-black text-slate-800 mb-2">{t('สิ่งที่แก้ไขได้ใน Schema', 'What you can edit in the schema')}</h4>
+          <ul className="list-disc pl-5 space-y-1">
+            <li><span className="font-bold">{t('ชื่อ Field', 'Field name')}</span> — {t('เพิ่ม ลบ หรือเปลี่ยนชื่อ', 'add, remove, or rename it')}</li>
+            <li><span className="font-bold">Datatype</span> — {t('ชนิดของค่า เช่น ข้อความ ตัวเลข วันที่', 'the value type, e.g. text, number, date')}</li>
+            <li><span className="font-bold">Description</span> — {t('คำอธิบายฟิลด์/ตำแหน่ง', "the field's hint / position description")}</li>
+            <li><span className="font-bold">Schema Structure</span> — {t('ฟิลด์อยู่ส่วนไหน หรืออยู่ในตารางรายการ', 'which section it belongs to, or whether it sits in the line-item table')}</li>
+          </ul>
+        </div>
+
+        <div>
+          <p className="font-bold text-slate-800">{t('ถ้า AI อ่านค่าไม่ถูก ให้ลองแก้ตามลำดับนี้', "If the AI reads a value wrong, try fixing it in this order")}</p>
+          <p className="text-xs text-slate-400 mb-3">{t('เริ่มจากข้อ 1 ถ้ายังไม่ได้ผลค่อยไปข้อถัดไป', 'Start with step 1 — move to the next one only if it doesn\'t help')}</p>
+
+          <h4 className="font-black text-slate-800 mb-1.5">{t('1. ตั้งชื่อ Field และกำหนด Datatype', '1. Name the field and set its datatype')}</h4>
+          <ul className="list-disc pl-5 space-y-1 mb-4">
+            <li><span className="font-bold">Meaningful Naming:</span> {t('ตั้งชื่อ Field ให้สื่อความหมายชัดเจนและตรงตามบริบทของข้อมูล', 'name the field so it clearly conveys its meaning and matches the data\'s context')}</li>
+            <li><span className="font-bold">Appropriate Datatype:</span> {t('เลือก Datatype ให้เหมาะกับค่าที่ต้องการ ช่วยให้ Model เข้าใจขอบเขตและระบุค่าที่ถูกต้องได้ง่ายขึ้น', "pick a datatype that fits the value — it helps the model understand the boundary and pick out the right value more easily")}</li>
+          </ul>
+
+          <h4 className="font-black text-slate-800 mb-1.5">{t('2. เมื่อ Field ดึงข้อมูลข้ามประเภท', '2. When a field pulls in the wrong kind of data')}</h4>
+          <ul className="list-disc pl-5 space-y-1 mb-4">
+            <li><span className="font-bold">{t('ปัญหา:', 'Problem:')}</span> {t('Field หนึ่งไปดึงข้อมูลของอีก Field มาแทน เช่น ', 'one field pulls in another field\'s data instead — e.g. ')}<i>Incoterm</i> {t('ไปดึงค่า', 'pulling in the value of')} <i>Payment Term</i></li>
+            <li>
+              <span className="font-bold">{t('วิธีแก้:', 'Fix:')}</span> {t('เพิ่ม Field ของข้อมูลที่สับสนนั้นเข้ามาใน Schema (เช่น เพิ่ม', 'add a field for that confused piece of data into the schema (e.g. add')} <code className="font-mono bg-slate-100 px-1 rounded text-[13px]">PaymentTerm</code> {t('ต่างหาก) ให้ Model มีช่องลงข้อมูลที่ถูกต้อง และลดการสับสนระหว่าง Field', "separately) so the model has the right slot to put it in, reducing confusion between fields")}
+            </li>
+          </ul>
+
+          <h4 className="font-black text-slate-800 mb-1.5">{t('3. เพิ่ม Description ระบุบริบท (ทางเลือกสุดท้าย)', '3. Add a Description for context (last resort)')}</h4>
+          <ul className="list-disc pl-5 space-y-1">
+            <li>{t('ถ้าทำข้อ 1 และ 2 แล้วยังสกัดข้อมูลไม่ถูก ให้เพิ่ม', 'If steps 1 and 2 still don\'t extract it correctly, add a')} <code className="font-mono bg-slate-100 px-1 rounded text-[13px]">Description</code> {t('ใน Field นั้น เพื่อระบุรายละเอียดและความหมายให้ชัดเจน', 'on that field to spell out its detail and meaning clearly')}</li>
+            <li><span className="font-bold">{t('ข้อควรระวัง:', 'Careful:')}</span> {t('อย่ายกตัวอย่างชี้นำหรือเจาะจงเกินไป (Over-specification) — Model จะยึดติดกับตัวอย่างและพลาดข้อมูลจริงที่มีรูปแบบอื่น (Overfitting)', "don't give overly leading or specific examples (over-specification) — the model will latch onto the example and miss real data in a different format (overfitting)")}</li>
+          </ul>
+        </div>
+
+        <div className="pt-3 border-t border-slate-100 space-y-3">
+          <div>
+            <p className="font-bold text-rose-600">{t('ไม่ดี — เจาะจง/ชี้นำเกินไป', 'Bad — too specific / leading')}</p>
+            <p className="italic text-slate-500 mt-1">"The invoice number of the document, usually starting with 'INV-' followed by 6 digits like INV-123456 or INV-999999"</p>
+            <p className="text-xs text-slate-400 mt-1">
+              {t('ความเสี่ยง: ถ้าเอกสารจริงเป็น', 'Risk: if the real document reads')} <code className="font-mono bg-slate-100 px-1 rounded">BILL/2026/001</code> {t('หรือ', 'or')} <code className="font-mono bg-slate-100 px-1 rounded">INV-123</code> {t('Model อาจไม่ดึงข้อมูลเลย เพราะไม่ตรงกับตัวอย่าง', "the model may not extract it at all, since it doesn't match the example")}
+            </p>
+          </div>
+          <div>
+            <p className="font-bold text-emerald-600">{t('ดี — กระชับและบอกบริบท', 'Good — concise and gives context')}</p>
+            <p className="italic text-slate-500 mt-1">"The unique identifier for the invoice document"</p>
+          </div>
+          <div className="text-xs text-slate-500 space-y-1 pt-1">
+            <p>"Product Description Without HSCode"</p>
+            <p><span className="font-mono font-bold">VoyNo:</span> "Voyage Number Separate from VesselOrCarrier Name"</p>
+            <p><span className="font-mono font-bold">ShippingMark:</span> "MARKS AND NUMBERS"</p>
+          </div>
+        </div>
+      </div>
+    </Drawer>
+
     {assistFieldId && assistAnchorRect && createPortal(
       <>
         <div className="fixed inset-0 z-40" onClick={() => setAssistFieldId(null)} />
