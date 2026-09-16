@@ -28,13 +28,32 @@ const hashString = (s: string): number => {
   for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
   return h;
 };
-interface MockHistoryEntry { action: string; user: string; timestamp: string; }
-const buildMockHistory = (schema: LabelSchema): MockHistoryEntry[] => {
+interface MockHistoryEntry { action: 'created' | 'updated'; user: string; timestamp: string; detail: string[]; }
+const buildMockHistory = (schema: LabelSchema, isTh: boolean): MockHistoryEntry[] => {
   const updated = new Date(schema.updatedAt).getTime();
   const h = hashString(schema.id);
   const editors = ['Kunawut W.', 'Somchai P.', 'Nattaya S.', 'Preecha T.'];
+  const allFieldNames = schema.configs.flatMap(c => c.labels.map(l => l.name)).filter(Boolean);
+  const totalFields = allFieldNames.length;
+
+  const editDetail = (seed: number): string[] => {
+    if (allFieldNames.length === 0) return [];
+    if (seed % 2 === 0) {
+      const field = allFieldNames[seed % allFieldNames.length];
+      return [isTh ? `เพิ่มฟิลด์: ${field}` : `Added field: ${field}`];
+    }
+    const picked = [0, 1, 2].map(i => allFieldNames[(seed + i) % allFieldNames.length]);
+    const unique = Array.from(new Set(picked));
+    return [isTh ? `แก้ไขคำอธิบาย: ${unique.join(', ')}` : `Edited hints: ${unique.join(', ')}`];
+  };
+
   const entries: MockHistoryEntry[] = [
-    { action: 'created', user: schema.createdBy || editors[h % editors.length], timestamp: new Date(updated - (3 + (h % 10)) * 86400000).toISOString() },
+    {
+      action: 'created',
+      user: schema.createdBy || editors[h % editors.length],
+      timestamp: new Date(updated - (3 + (h % 10)) * 86400000).toISOString(),
+      detail: [isTh ? `ฟิลด์ตั้งต้น ${totalFields} ฟิลด์` : `${totalFields} initial fields`],
+    },
   ];
   const editCount = 1 + (h % 3);
   for (let i = 0; i < editCount; i++) {
@@ -42,9 +61,15 @@ const buildMockHistory = (schema: LabelSchema): MockHistoryEntry[] => {
       action: 'updated',
       user: editors[(h + i) % editors.length],
       timestamp: new Date(updated - (editCount - i) * 43200000).toISOString(),
+      detail: editDetail(h + i),
     });
   }
-  entries.push({ action: 'updated', user: schema.createdBy || editors[h % editors.length], timestamp: schema.updatedAt });
+  entries.push({
+    action: 'updated',
+    user: schema.createdBy || editors[h % editors.length],
+    timestamp: schema.updatedAt,
+    detail: editDetail(h + editCount),
+  });
   return entries;
 };
 
@@ -216,19 +241,33 @@ export const OcrTuningTrackingPage: React.FC<OcrTuningTrackingPageProps> = ({ la
         title={historyTarget ? t(`ประวัติการแก้ไข: ${historyTarget.name}`, `Edit history: ${historyTarget.name}`) : ''}
       >
         {historyTarget && (
-          <div className="divide-y divide-slate-100 -mx-1">
-            {buildMockHistory(historyTarget).slice().reverse().map((entry, idx) => (
-              <div key={idx} className="flex items-center justify-between gap-3 px-1 py-3">
-                <div className="flex items-center gap-2">
-                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${entry.action === 'created' ? 'bg-emerald-400' : 'bg-blue-400'}`} />
-                  <span className="text-sm font-bold text-slate-700">
-                    {entry.action === 'created' ? t('สร้าง schema', 'Created schema') : t('แก้ไข schema', 'Updated schema')}
-                  </span>
-                  <span className="text-xs text-slate-400">{t('โดย', 'by')} {entry.user}</span>
+          <div>
+            {buildMockHistory(historyTarget, isTh).slice().reverse().map((entry, idx, arr) => {
+              const isCreated = entry.action === 'created';
+              const isLast = idx === arr.length - 1;
+              return (
+                <div key={idx} className="relative pl-6">
+                  {!isLast && <span className="absolute left-[5px] top-3 bottom-0 w-px bg-slate-200" />}
+                  <span className={`absolute left-0 top-1 w-[11px] h-[11px] rounded-full bg-white border-2 ${isCreated ? 'border-emerald-400' : 'border-blue-400'}`} />
+                  <div className={`pb-5 ${isLast ? '' : ''}`}>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={`px-2 py-0.5 rounded-[4px] border text-xs font-bold ${isCreated ? 'border-emerald-300 text-emerald-600 bg-emerald-50' : 'border-blue-300 text-blue-600 bg-blue-50'}`}>
+                        {isCreated ? t('สร้าง', 'Created') : t('แก้ไข', 'Edited')}
+                      </span>
+                      <span className="text-sm font-bold text-slate-800">{entry.user}</span>
+                      <span className="text-xs text-slate-400">{formatDate(entry.timestamp, isTh)}</span>
+                    </div>
+                    {entry.detail.length > 0 && (
+                      <div className="mt-1.5 space-y-0.5">
+                        {entry.detail.map((line, i) => (
+                          <p key={i} className="text-xs text-slate-500">{line}</p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <span className="text-xs text-slate-400 whitespace-nowrap">{formatDate(entry.timestamp, isTh)}</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </Drawer>
