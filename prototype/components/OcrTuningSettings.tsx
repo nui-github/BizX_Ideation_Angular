@@ -255,8 +255,6 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
     setTestFile(null);
     setRetestNonce(0);
     setTestPage(1);
-    setLineItemTableHint('');
-    setLineItemHintRevealed(false);
     setSavedOnce(false);
   };
 
@@ -334,8 +332,6 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
   const [searchQuery, setSearchQuery] = useState('');
   const [onlyMissingHints, setOnlyMissingHints] = useState(false);
   const [revealedThaiFieldIds, setRevealedThaiFieldIds] = useState<Set<string>>(new Set());
-  const [lineItemTableHint, setLineItemTableHint] = useState('');
-  const [lineItemHintRevealed, setLineItemHintRevealed] = useState(false);
   const [onlyMismatched, setOnlyMismatched] = useState(false);
   const [hintInfoOpen, setHintInfoOpen] = useState(false);
   // User-editable ground-truth override per field, keyed by field id — falls back to the mock
@@ -842,9 +838,42 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
               </div>
               <p className="text-xs text-slate-400 mb-3">{t('ให้ AI อ่านเอกสาร ด้วยฟิลด์และคำอธิบายที่ยังไม่ได้บันทึก — แก้คำอธิบายในตารางด้านล่างแล้วทดสอบอีกครั้งได้', "Reads the document using this draft's fields and hints, even before they're saved — adjust hints below then test again")}</p>
 
-              <div className="flex items-center gap-3 flex-wrap mb-3">
-                <div className="flex items-center gap-3 w-1/2 min-w-[280px]">
-                  <div className="relative flex-1 min-w-[160px]">
+              <div className="flex flex-col lg:flex-row lg:items-center gap-3 mb-3">
+                {testFile && (
+                  <div className="flex flex-col gap-2 w-full lg:w-[calc(50%-6px)]">
+                    <div className="flex items-center gap-2 shrink-0">
+                      <label className="text-xs font-black text-slate-500 uppercase tracking-widest shrink-0">{t('เลือกหน้า', 'Page')}</label>
+                      <select
+                        value={testPage}
+                        onChange={(e) => setTestPage(Number(e.target.value))}
+                        className="h-[38px] px-3 rounded-[4px] border border-slate-200 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
+                      >
+                        {testPageOptions.map(p => <option key={p} value={p}>{t(`หน้า ${p}`, `Page ${p}`)}</option>)}
+                      </select>
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {unreadableCount > 0 && (
+                        <p className="inline-block px-2.5 py-1 rounded-[4px] bg-rose-50 border border-rose-200 text-rose-600 text-xs font-bold whitespace-nowrap shrink-0">
+                          {t(`อ่านไม่ได้ ${unreadableCount} ฟิลด์`, `${unreadableCount} field(s) unreadable`)}
+                        </p>
+                      )}
+                      <span className={`px-2.5 py-1 rounded-[4px] border text-xs font-bold whitespace-nowrap shrink-0 ${accuracyPct === 100 ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-amber-50 border-amber-200 text-amber-700'}`}>
+                        {t(`ความถูกต้อง ${accuracyStats.matchedCount}/${accuracyStats.total} (${accuracyPct}%)`, `Accuracy ${accuracyStats.matchedCount}/${accuracyStats.total} (${accuracyPct}%)`)}
+                      </span>
+                      <button
+                        onClick={() => setOnlyMismatched(v => !v)}
+                        disabled={mismatchCount === 0}
+                        className={`px-3 py-1.5 rounded-[4px] border text-xs font-bold cursor-pointer whitespace-nowrap shrink-0 disabled:cursor-not-allowed disabled:opacity-60 ${
+                          onlyMismatched ? 'bg-[#1f5df9] border-[#1f5df9] text-white' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                        }`}
+                      >
+                        {t(`ดูเฉพาะฟิลด์ที่ไม่ตรง (${mismatchCount})`, `Show mismatches only (${mismatchCount})`)}
+                      </button>
+                    </div>
+                  </div>
+                )}
+                <div className="flex flex-col items-end gap-2 w-full lg:w-[calc(50%-6px)] lg:ml-auto">
+                  <div className="relative w-full">
                     <input
                       type="text"
                       value={searchQuery}
@@ -862,44 +891,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                     )}
                   </label>
                 </div>
-                {testFile && (
-                  <div className="flex items-center gap-2 ml-auto w-1/4 min-w-[160px]">
-                    <label className="text-xs font-black text-slate-500 uppercase tracking-widest shrink-0">{t('เลือกหน้า', 'Page')}</label>
-                    <select
-                      value={testPage}
-                      onChange={(e) => setTestPage(Number(e.target.value))}
-                      className="w-full px-3 py-2 rounded-[4px] border border-slate-200 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
-                    >
-                      {testPageOptions.map(p => <option key={p} value={p}>{t(`หน้า ${p}`, `Page ${p}`)}</option>)}
-                    </select>
-                  </div>
-                )}
               </div>
-
-              {testFile && unreadableCount > 0 && (
-                <div className="flex justify-end mb-3">
-                  <p className="inline-block px-2.5 py-1 rounded-[4px] bg-rose-50 border border-rose-200 text-rose-600 text-xs font-bold">
-                    {t(`อ่านไม่ได้ ${unreadableCount} ฟิลด์`, `${unreadableCount} field(s) unreadable`)}
-                  </p>
-                </div>
-              )}
-
-              {testFile && (
-                <div className="flex items-center gap-2 mb-3">
-                  <span className={`px-2.5 py-1 rounded-[4px] border text-xs font-bold ${accuracyPct === 100 ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-amber-50 border-amber-200 text-amber-700'}`}>
-                    {t(`ความถูกต้อง ${accuracyStats.matchedCount}/${accuracyStats.total} (${accuracyPct}%)`, `Accuracy ${accuracyStats.matchedCount}/${accuracyStats.total} (${accuracyPct}%)`)}
-                  </span>
-                  <button
-                    onClick={() => setOnlyMismatched(v => !v)}
-                    disabled={mismatchCount === 0}
-                    className={`px-3 py-1.5 rounded-[4px] border text-xs font-bold cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 ${
-                      onlyMismatched ? 'bg-[#1f5df9] border-[#1f5df9] text-white' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                    }`}
-                  >
-                    {t(`ดูเฉพาะฟิลด์ที่ไม่ตรง (${mismatchCount})`, `Show mismatches only (${mismatchCount})`)}
-                  </button>
-                </div>
-              )}
 
               {/* Floating navbar, sticky flush against the header — no border of its own, just a
                   shadow to lift it, with a proper tab-bar baseline (shared border-b, tabs
@@ -945,19 +937,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                 <div className="grid grid-cols-[minmax(160px,1.1fr)_minmax(140px,0.9fr)_minmax(140px,0.9fr)_minmax(220px,2fr)_auto_auto] gap-3 items-start py-1.5 border-b border-slate-100 bg-slate-50/60 -mx-1 px-1 rounded-[4px] mb-1">
                   <div className="pt-1.5 min-w-0">
                     <div className="font-mono text-sm font-black text-slate-800">{t('ตาราง: items', 'Table: items')}</div>
-                    {lineItemHintRevealed ? (
-                      <input
-                        type="text"
-                        value={lineItemTableHint}
-                        onChange={(e) => setLineItemTableHint(e.target.value)}
-                        placeholder={t('ความหมายของตารางนี้', "What this table means")}
-                        className="w-full mt-1 px-2 py-1 text-xs border border-slate-200 rounded-[4px] focus:outline-none focus:ring-2 focus:ring-blue-100"
-                      />
-                    ) : (
-                      <button onClick={() => setLineItemHintRevealed(true)} className="text-[11px] font-bold text-[#1f5df9] hover:underline cursor-pointer mt-0.5">
-                        + {t('ใส่ความหมาย', 'Add meaning')}
-                      </button>
-                    )}
+                    <div className="text-xs text-slate-500 mt-0.5">{t('รายการสินค้าในเอกสาร', 'The line items listed in the document')}</div>
                     <div className="text-[11px] text-slate-400 mt-0.5">{t('ตาราง', 'Table')}</div>
                   </div>
                   <div />
