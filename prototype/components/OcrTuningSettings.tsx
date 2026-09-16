@@ -819,6 +819,16 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                     >
                       {isTesting ? t('กำลังทดสอบ...', 'Testing...') : t('ทดสอบอีกครั้ง', 'Test again')}
                     </button>
+                    <div className="flex items-center gap-2 ml-auto shrink-0">
+                      <label className="text-xs font-black text-slate-500 uppercase tracking-widest shrink-0">{t('เลือกหน้า', 'Page')}</label>
+                      <select
+                        value={testPage}
+                        onChange={(e) => setTestPage(Number(e.target.value))}
+                        className="h-[38px] px-3 rounded-[4px] border border-slate-200 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
+                      >
+                        {testPageOptions.map(p => <option key={p} value={p}>{t(`หน้า ${p}`, `Page ${p}`)}</option>)}
+                      </select>
+                    </div>
                   </>
                 ) : (
                   <button
@@ -838,59 +848,45 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
               </div>
               <p className="text-xs text-slate-400 mb-3">{t('ให้ AI อ่านเอกสาร ด้วยฟิลด์และคำอธิบายที่ยังไม่ได้บันทึก — แก้คำอธิบายในตารางด้านล่างแล้วทดสอบอีกครั้งได้', "Reads the document using this draft's fields and hints, even before they're saved — adjust hints below then test again")}</p>
 
-              <div className="flex flex-col lg:flex-row lg:items-center gap-3 mb-3">
-                {testFile && (
-                  <div className="flex flex-col gap-2 w-full lg:w-[calc(50%-6px)]">
-                    <div className="flex items-center gap-2 shrink-0">
-                      <label className="text-xs font-black text-slate-500 uppercase tracking-widest shrink-0">{t('เลือกหน้า', 'Page')}</label>
-                      <select
-                        value={testPage}
-                        onChange={(e) => setTestPage(Number(e.target.value))}
-                        className="h-[38px] px-3 rounded-[4px] border border-slate-200 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
-                      >
-                        {testPageOptions.map(p => <option key={p} value={p}>{t(`หน้า ${p}`, `Page ${p}`)}</option>)}
-                      </select>
-                    </div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {unreadableCount > 0 && (
-                        <p className="inline-block px-2.5 py-1 rounded-[4px] bg-rose-50 border border-rose-200 text-rose-600 text-xs font-bold whitespace-nowrap shrink-0">
-                          {t(`อ่านไม่ได้ ${unreadableCount} ฟิลด์`, `${unreadableCount} field(s) unreadable`)}
-                        </p>
-                      )}
-                      <span className={`px-2.5 py-1 rounded-[4px] border text-xs font-bold whitespace-nowrap shrink-0 ${accuracyPct === 100 ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-amber-50 border-amber-200 text-amber-700'}`}>
-                        {t(`ความถูกต้อง ${accuracyStats.matchedCount}/${accuracyStats.total} (${accuracyPct}%)`, `Accuracy ${accuracyStats.matchedCount}/${accuracyStats.total} (${accuracyPct}%)`)}
-                      </span>
-                      <button
-                        onClick={() => setOnlyMismatched(v => !v)}
-                        disabled={mismatchCount === 0}
-                        className={`px-3 py-1.5 rounded-[4px] border text-xs font-bold cursor-pointer whitespace-nowrap shrink-0 disabled:cursor-not-allowed disabled:opacity-60 ${
-                          onlyMismatched ? 'bg-[#1f5df9] border-[#1f5df9] text-white' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                        }`}
-                      >
-                        {t(`ดูเฉพาะฟิลด์ที่ไม่ตรง (${mismatchCount})`, `Show mismatches only (${mismatchCount})`)}
-                      </button>
-                    </div>
-                  </div>
-                )}
-                <div className="flex flex-col items-end gap-2 w-full lg:w-[calc(50%-6px)] lg:ml-auto">
-                  <div className="relative w-full">
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder={t('ค้นหาชื่อฟิลด์หรือความหมาย', 'Search field name or meaning')}
-                      className="w-full pl-8 pr-3 py-2 text-sm border border-slate-200 rounded-[4px] focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
-                    />
-                    <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
-                  </div>
-                  <label className="flex items-center gap-2 text-[13px] font-bold text-slate-600 cursor-pointer shrink-0">
-                    <Switch size="small" checked={onlyMissingHints} onChange={setOnlyMissingHints} />
-                    {t('เฉพาะที่ยังไม่มีคำอธิบาย', 'Missing a hint only')}
-                    {missingHintCount > 0 && (
-                      <span className="px-1.5 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-700 text-[11px] font-black">{missingHintCount}</span>
-                    )}
-                  </label>
+              <div className="flex items-center gap-3 flex-wrap mb-3">
+                <div className="relative flex-1 min-w-[200px]">
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder={t('ค้นหาชื่อฟิลด์หรือความหมาย', 'Search field name or meaning')}
+                    className="w-full pl-8 pr-3 py-2 text-sm border border-slate-200 rounded-[4px] focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
+                  />
+                  <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
                 </div>
+                <label className="flex items-center gap-2 text-[13px] font-bold text-slate-600 cursor-pointer shrink-0">
+                  <Switch size="small" checked={onlyMissingHints} onChange={setOnlyMissingHints} />
+                  {t('เฉพาะที่ยังไม่มีคำอธิบาย', 'Missing a hint only')}
+                  {missingHintCount > 0 && (
+                    <span className="px-1.5 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-700 text-[11px] font-black">{missingHintCount}</span>
+                  )}
+                </label>
+                {testFile && (
+                  <>
+                    {unreadableCount > 0 && (
+                      <p className="inline-block px-2.5 py-1 rounded-[4px] bg-rose-50 border border-rose-200 text-rose-600 text-xs font-bold whitespace-nowrap shrink-0">
+                        {t(`อ่านไม่ได้ ${unreadableCount} ฟิลด์`, `${unreadableCount} field(s) unreadable`)}
+                      </p>
+                    )}
+                    <span className={`px-2.5 py-1 rounded-[4px] border text-xs font-bold whitespace-nowrap shrink-0 ${accuracyPct === 100 ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-amber-50 border-amber-200 text-amber-700'}`}>
+                      {t(`ความถูกต้อง ${accuracyStats.matchedCount}/${accuracyStats.total} (${accuracyPct}%)`, `Accuracy ${accuracyStats.matchedCount}/${accuracyStats.total} (${accuracyPct}%)`)}
+                    </span>
+                    <button
+                      onClick={() => setOnlyMismatched(v => !v)}
+                      disabled={mismatchCount === 0}
+                      className={`px-3 py-1.5 rounded-[4px] border text-xs font-bold cursor-pointer whitespace-nowrap shrink-0 disabled:cursor-not-allowed disabled:opacity-60 ${
+                        onlyMismatched ? 'bg-[#1f5df9] border-[#1f5df9] text-white' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      {t(`ดูเฉพาะฟิลด์ที่ไม่ตรง (${mismatchCount})`, `Show mismatches only (${mismatchCount})`)}
+                    </button>
+                  </>
+                )}
               </div>
 
               {/* Floating navbar, sticky flush against the header — no border of its own, just a
