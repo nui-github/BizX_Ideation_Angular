@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { message, Modal, Tooltip } from 'antd';
 import {
-  Plus, Upload, FileText, FileSpreadsheet, FileCode2, Check,
+  Plus, Upload, FileText, FileSpreadsheet, FileCode2,
   Save, RotateCcw, Search, Sparkles, Trash2, ArrowLeft
 } from 'lucide-react';
 import { Language, DocType } from '../types';
@@ -525,22 +525,6 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
     );
   }, [testFile, groupedFields, lineItemRowCount, retestNonce]);
 
-  // --- Step indicator (decorative — this is a single always-visible page, not a gated wizard —
-  // but it should still reflect real progress: step 1 active and the rest disabled on a fresh
-  // load, advancing/checking off as the user actually does each thing, rather than always
-  // showing everything but the last step as already done). ---
-  const STEP_LABELS = [
-    { th: 'อัปโหลดไฟล์', en: 'Upload file' },
-    { th: editFromTracking ? 'ชื่อ schema และชนิดเอกสาร' : 'ชื่อ ชนิดเอกสาร template', en: editFromTracking ? 'Schema name & document type' : 'Name, doc type & template' },
-    { th: 'ทดสอบและปรับคำอธิบาย', en: 'Test & adjust hints' },
-    { th: 'บันทึก', en: 'Save' },
-  ];
-  const hasChosenTask = (mode === 'new' ? !!nameDraft.trim() : !!editKey) && !!testFile;
-  const currentStep = savedOnce ? 4
-    : !hasChosenTask ? 1
-    : (editFromTracking ? !trackingEditConfirmed : !draftSchema) ? 2
-    : 3;
-
   // Body cards renumber depending on mode — editing an existing schema (outside the tracking
   // flow) skips the "name, doc type & template" card entirely, since the schema already has both.
   const cardNumbers = { combined: (mode === 'new' || editFromTracking) ? 3 : 2 };
@@ -569,15 +553,21 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
       <div className="bg-white rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.1)] m-6 p-6">
       <div>
         <div ref={topRef} className="flex items-start justify-between gap-4 mb-5 scroll-mt-24">
-          <div className="flex items-center gap-3">
+          <div>
             {onBack && (
               <button
                 onClick={onBack}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-[4px] text-slate-600 text-sm font-bold hover:bg-slate-100 transition-colors shrink-0 cursor-pointer"
+                className="flex items-center gap-1.5 px-3 -ml-3 py-2 rounded-[4px] text-slate-600 text-sm font-bold hover:bg-slate-100 transition-colors shrink-0 cursor-pointer"
               >
                 <ArrowLeft size={16} /> {t('กลับหน้ารายการ', 'Back to list')}
               </button>
             )}
+            <h1 className="text-xl font-black text-slate-900 tracking-tight">
+              {editFromTracking
+                ? t(`แก้ไข schema · ${draftSchema?.name || ''}`, `Edit schema · ${draftSchema?.name || ''}`)
+                : t('สร้าง schema ใหม่', 'Create new schema')}
+            </h1>
+            <p className="text-sm text-slate-500 mt-0.5">{t('กำหนดฟิลด์และคำอธิบายฟิลด์/ตำแหน่ง ให้ AI อ่านเอกสารได้ถูกต้อง — ทดสอบก่อนบันทึกได้', 'Define fields and their hints so the AI reads documents correctly — test before saving')}</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <button onClick={confirmResetAll} className="flex items-center gap-1.5 px-3.5 py-2 rounded-[4px] border border-slate-200 bg-white text-slate-500 text-sm font-bold hover:bg-slate-50 cursor-pointer">
@@ -593,44 +583,13 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
           </div>
         </div>
 
-        {/* Step indicator — no longer sticky; the field-section tabs stick instead (see below) */}
-        <div className="flex items-center mb-6 bg-white border border-slate-200 rounded-xl px-5 py-3.5 overflow-x-auto shadow-sm">
-          {STEP_LABELS.map((s, i) => {
-            const stepNum = i + 1;
-            const isDone = stepNum < currentStep;
-            const isCurrent = stepNum === currentStep;
-            const isLast = i === STEP_LABELS.length - 1;
-            // Step 2 anchors to its own card in "new" mode, or back to step 1 in edit mode.
-            const isReachable = stepNum === 1 || stepNum === 2 || stepNum === 4 || (stepNum === 3 && showWorkingCards);
-            return (
-              <React.Fragment key={s.th}>
-                <button
-                  type="button"
-                  onClick={() => isReachable && scrollToStep(stepNum)}
-                  disabled={!isReachable}
-                  className={`flex items-center gap-2 shrink-0 ${isReachable ? 'cursor-pointer' : 'cursor-not-allowed'}`}
-                >
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black shrink-0 ${
-                    isDone ? 'bg-blue-50 text-[#1f5df9] border border-blue-200'
-                      : isCurrent ? 'bg-[#1f5df9] text-white'
-                      : 'bg-white text-slate-300 border border-slate-200'
-                  }`}>
-                    {isDone ? <Check size={12} /> : stepNum}
-                  </div>
-                  <span className={`text-sm font-bold whitespace-nowrap ${isCurrent ? 'text-slate-800' : isDone ? 'text-slate-400' : 'text-slate-300'}`}>
-                    {isTh ? s.th : s.en}
-                  </span>
-                </button>
-                {!isLast && <div className="flex-1 h-px bg-slate-200 mx-3 min-w-6" />}
-              </React.Fragment>
-            );
-          })}
-        </div>
-
         <div className="space-y-4">
           {/* 1. อัปโหลดไฟล์ */}
           <div ref={step1Ref} className="bg-white border border-slate-200 rounded-xl p-5 scroll-mt-24">
-            <h3 className="text-[15px] font-black text-slate-800 mb-3">{t('1. อัปโหลดไฟล์', '1. Upload a file')}</h3>
+            <h3 className="flex items-center gap-2 text-[15px] font-black text-slate-800 mb-3">
+              <span className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black shrink-0 bg-[#1f5df9] text-white">1</span>
+              {t('อัปโหลดไฟล์', 'Upload a file')}
+            </h3>
 
             {testFile ? (
               <div className="flex items-center justify-between gap-4 p-4 bg-emerald-50/50 border border-emerald-200 rounded-xl mb-4">
@@ -695,7 +654,10 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
           {/* 2. ชื่อ schema ชนิดเอกสาร และ template (new mode) / ชื่อ schema และชนิดเอกสาร (edit from tracking) */}
           {mode === 'new' && (
             <div ref={step2Ref} className="bg-white border border-slate-200 rounded-xl p-5 scroll-mt-24">
-              <h3 className="text-[15px] font-black text-slate-800 mb-3">{t('2. ชื่อ schema ชนิดเอกสาร และ template', '2. Schema name, document type & template')}</h3>
+              <h3 className="flex items-center gap-2 text-[15px] font-black text-slate-800 mb-3">
+                <span className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black shrink-0 bg-[#1f5df9] text-white">2</span>
+                {t('ชื่อ schema ชนิดเอกสาร และ template', 'Schema name, document type & template')}
+              </h3>
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                   <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5">{t('ชื่อ schema', 'Schema name')}</label>
@@ -762,7 +724,10 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
 
           {editFromTracking && draftSchema && activeConfig && (
             <div ref={step2Ref} className="bg-white border border-slate-200 rounded-xl p-5 scroll-mt-24">
-              <h3 className="text-[15px] font-black text-slate-800 mb-3">{t('2. ชื่อ schema และชนิดเอกสาร', '2. Schema name & document type')}</h3>
+              <h3 className="flex items-center gap-2 text-[15px] font-black text-slate-800 mb-3">
+                <span className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black shrink-0 bg-[#1f5df9] text-white">2</span>
+                {t('ชื่อ schema และชนิดเอกสาร', 'Schema name & document type')}
+              </h3>
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                   <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5">{t('ชื่อ schema', 'Schema name')}</label>
@@ -809,7 +774,10 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
           {showWorkingCards && draftSchema && activeConfig && (
             <div ref={combinedRef} className="bg-white border border-slate-200 rounded-xl p-5 scroll-mt-24">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-[15px] font-black text-slate-800">{cardNumbers.combined}. {t('ทดสอบและปรับคำอธิบาย', 'Test & adjust hints')}</h3>
+                <h3 className="flex items-center gap-2 text-[15px] font-black text-slate-800">
+                  <span className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black shrink-0 bg-[#1f5df9] text-white">{cardNumbers.combined}</span>
+                  {t('ทดสอบและปรับคำอธิบาย', 'Test & adjust hints')}
+                </h3>
                 <span className="text-xs font-bold text-slate-400">{draftSchema.name} · {docTypeName(activeConfig.docTypeId)}</span>
               </div>
 
