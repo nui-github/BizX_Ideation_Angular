@@ -315,7 +315,43 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
   }, [initialEditKey]);
 
   const [savedOnce, setSavedOnce] = useState(false);
+  const [saveConfirmOpen, setSaveConfirmOpen] = useState(false);
+  const [saveConfirmInput, setSaveConfirmInput] = useState('');
+
+  // Diffed against whatever's currently stored under this schema's id — empty/absent for a
+  // brand-new schema, so every field there just counts as "added".
+  const saveDiffStats = useMemo(() => {
+    const empty = { added: 0, hintChanged: 0, typeChanged: 0, removed: 0, affectedFieldNames: [] as string[] };
+    if (!draftSchema) return empty;
+    const original = schemas.find(s => s.id === draftSchema.id) || null;
+    const currentLabels = draftSchema.configs.flatMap(c => c.labels);
+    const originalLabels: SchemaLabel[] = original ? original.configs.flatMap(c => c.labels) : [];
+    const originalById = new Map(originalLabels.map(l => [l.id, l]));
+    const currentIds = new Set(currentLabels.map(l => l.id));
+
+    let added = 0, hintChanged = 0, typeChanged = 0;
+    const affected: string[] = [];
+    currentLabels.forEach(l => {
+      const orig = originalById.get(l.id);
+      if (!orig) { added++; affected.push(l.name); return; }
+      let touched = false;
+      if ((orig.aiPrompt || '') !== (l.aiPrompt || '')) { hintChanged++; touched = true; }
+      if ((orig.type || 'string') !== (l.type || 'string')) { typeChanged++; touched = true; }
+      if (touched) affected.push(l.name);
+    });
+    const removedLabels = originalLabels.filter(l => !currentIds.has(l.id));
+    removedLabels.forEach(l => affected.push(l.name));
+
+    return { added, hintChanged, typeChanged, removed: removedLabels.length, affectedFieldNames: Array.from(new Set(affected)) };
+  }, [draftSchema, schemas]);
+
   const handleSaveSchema = () => {
+    if (!draftSchema) return;
+    setSaveConfirmInput('');
+    setSaveConfirmOpen(true);
+  };
+
+  const confirmSaveSchema = () => {
     if (!draftSchema) return;
     const toSave: LabelSchema = { ...draftSchema, updatedAt: new Date().toISOString() };
     setSchemas(prev => {
@@ -324,6 +360,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
       return next;
     });
     setSavedOnce(true);
+    setSaveConfirmOpen(false);
     message.success(isTh ? 'บันทึก Schema เรียบร้อย' : 'Schema saved');
   };
 
@@ -1206,6 +1243,76 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
         </div>
       </div>
     </Drawer>
+
+    <Modal
+      open={saveConfirmOpen}
+      onCancel={() => setSaveConfirmOpen(false)}
+      footer={null}
+      title={t('บันทึกลง schema', 'Save to schema')}
+    >
+      {draftSchema && activeConfig && (
+        <div>
+          <p className="text-sm text-slate-700">
+            {editFromTracking || mode === 'edit'
+              ? t('แก้ schema ', 'Editing schema ')
+              : t('สร้าง schema ', 'Creating schema ')}
+            <span className="font-bold font-mono">{draftSchema.name}</span> · {docTypeName(activeConfig.docTypeId)}
+          </p>
+
+          <div className="flex items-center gap-2 flex-wrap mt-3">
+            <span className="px-2.5 py-1 rounded-[4px] border border-emerald-200 text-emerald-600 bg-emerald-50 text-xs font-bold">
+              {t(`เพิ่ม ${saveDiffStats.added} ฟิลด์`, `${saveDiffStats.added} added`)}
+            </span>
+            <span className="px-2.5 py-1 rounded-[4px] border border-blue-200 text-blue-600 bg-blue-50 text-xs font-bold">
+              {t(`แก้คำอธิบาย ${saveDiffStats.hintChanged}`, `${saveDiffStats.hintChanged} hint edits`)}
+            </span>
+            <span className="px-2.5 py-1 rounded-[4px] border border-purple-200 text-purple-600 bg-purple-50 text-xs font-bold">
+              {t(`แก้ชนิด ${saveDiffStats.typeChanged}`, `${saveDiffStats.typeChanged} type changes`)}
+            </span>
+            <span className="px-2.5 py-1 rounded-[4px] border border-rose-200 text-rose-600 bg-rose-50 text-xs font-bold">
+              {t(`ลบ ${saveDiffStats.removed}`, `${saveDiffStats.removed} removed`)}
+            </span>
+          </div>
+
+          {saveDiffStats.affectedFieldNames.length > 0 && (
+            <p className="text-xs text-slate-400 mt-2">
+              {t(
+                `รวมการเปลี่ยนแปลง ${saveDiffStats.affectedFieldNames.length} ฟิลด์: ${saveDiffStats.affectedFieldNames.join(', ')}`,
+                `${saveDiffStats.affectedFieldNames.length} field(s) touched: ${saveDiffStats.affectedFieldNames.join(', ')}`
+              )}
+            </p>
+          )}
+
+          <p className="text-sm text-slate-600 mt-4">
+            {t('การบันทึกจะมีผลกับการอ่านเอกสารจริงทันที พิมพ์ชื่อ schema ', 'Saving takes effect on real document reading immediately. Type the schema name ')}
+            <span className="font-bold">{draftSchema.name}</span> {t('เพื่อยืนยัน', 'to confirm')}
+          </p>
+          <input
+            type="text"
+            value={saveConfirmInput}
+            onChange={(e) => setSaveConfirmInput(e.target.value)}
+            placeholder={draftSchema.name}
+            className="w-full mt-2 px-3 py-2 rounded-[4px] border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
+          />
+
+          <div className="flex justify-end gap-2 mt-6 pt-4 border-t border-slate-100">
+            <button
+              onClick={() => setSaveConfirmOpen(false)}
+              className="px-3.5 py-2 rounded-[4px] border border-slate-200 bg-white text-slate-600 text-sm font-bold hover:bg-slate-50 cursor-pointer"
+            >
+              {t('ยกเลิก', 'Cancel')}
+            </button>
+            <button
+              onClick={confirmSaveSchema}
+              disabled={saveConfirmInput !== draftSchema.name}
+              className="px-3.5 py-2 rounded-[4px] bg-[#1f5df9] text-white text-sm font-bold hover:bg-[#1a4fd6] cursor-pointer disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed"
+            >
+              {t('บันทึก', 'Save')}
+            </button>
+          </div>
+        </div>
+      )}
+    </Modal>
 
     {assistFieldId && assistAnchorRect && createPortal(
       <>
