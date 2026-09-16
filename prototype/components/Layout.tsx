@@ -425,7 +425,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentUserRole, onTog
                       className="w-full text-left px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 flex items-center gap-2"
                     >
                       <ScanText size={16} className="text-slate-400" />
-                      <span>{language === 'TH' ? 'ตั้งค่า OCR Tuning' : 'OCR Tuning Settings'}</span>
+                      <span>{language === 'TH' ? 'ปรับการอ่านเอกสาร' : 'OCR Tuning Settings'}</span>
                     </button>
                   )}
                 </div>
