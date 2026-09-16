@@ -250,7 +250,6 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
     setActiveSectionTab('Header');
     setSearchQuery('');
     setOnlyMissingHints(false);
-    setExpandedHints(false);
     setNewFieldName(''); setNewFieldThai(''); setNewFieldType('string'); setNewFieldHint('');
     setTestMethod('ai');
     setTestFile(null);
@@ -334,7 +333,6 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
   const [activeSectionTab, setActiveSectionTab] = useState<Section>('Header');
   const [searchQuery, setSearchQuery] = useState('');
   const [onlyMissingHints, setOnlyMissingHints] = useState(false);
-  const [expandedHints, setExpandedHints] = useState(false);
   const [revealedThaiFieldIds, setRevealedThaiFieldIds] = useState<Set<string>>(new Set());
   const [lineItemTableHint, setLineItemTableHint] = useState('');
   const [lineItemHintRevealed, setLineItemHintRevealed] = useState(false);
@@ -845,32 +843,28 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
               <p className="text-xs text-slate-400 mb-3">{t('ให้ AI อ่านเอกสาร ด้วยฟิลด์และคำอธิบายที่ยังไม่ได้บันทึก — แก้คำอธิบายในตารางด้านล่างแล้วทดสอบอีกครั้งได้', "Reads the document using this draft's fields and hints, even before they're saved — adjust hints below then test again")}</p>
 
               <div className="flex items-center gap-3 flex-wrap mb-3">
-                <div className="relative flex-1 min-w-[200px]">
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={t('ค้นหาชื่อฟิลด์หรือความหมาย', 'Search field name or meaning')}
-                    className="w-full pl-8 pr-3 py-2 text-sm border border-slate-200 rounded-[4px] focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
-                  />
-                  <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
+                <div className="flex items-center gap-3 w-1/2 min-w-[280px]">
+                  <div className="relative flex-1 min-w-[160px]">
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder={t('ค้นหาชื่อฟิลด์หรือความหมาย', 'Search field name or meaning')}
+                      className="w-full pl-8 pr-3 py-2 text-sm border border-slate-200 rounded-[4px] focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
+                    />
+                    <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
+                  </div>
+                  <label className="flex items-center gap-2 text-[13px] font-bold text-slate-600 cursor-pointer shrink-0">
+                    <Switch size="small" checked={onlyMissingHints} onChange={setOnlyMissingHints} />
+                    {t('เฉพาะที่ยังไม่มีคำอธิบาย', 'Missing a hint only')}
+                    {missingHintCount > 0 && (
+                      <span className="px-1.5 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-700 text-[11px] font-black">{missingHintCount}</span>
+                    )}
+                  </label>
                 </div>
-                <label className="flex items-center gap-2 text-[13px] font-bold text-slate-600 cursor-pointer shrink-0">
-                  <Switch size="small" checked={onlyMissingHints} onChange={setOnlyMissingHints} />
-                  {t('เฉพาะที่ยังไม่มีคำอธิบาย', 'Missing a hint only')}
-                  {missingHintCount > 0 && (
-                    <span className="px-1.5 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-700 text-[11px] font-black">{missingHintCount}</span>
-                  )}
-                </label>
-                <button
-                  onClick={() => setExpandedHints(v => !v)}
-                  className="px-3 py-2 rounded-[4px] border border-slate-200 bg-white text-slate-600 text-xs font-bold hover:bg-slate-50 cursor-pointer shrink-0"
-                >
-                  {expandedHints ? t('ย่อช่องคำอธิบาย', 'Collapse hint box') : t('ขยายช่องคำอธิบาย', 'Expand hint box')}
-                </button>
                 {testFile && (
-                  <div className="shrink-0 ml-auto w-[150px]">
-                    <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1">{t('หน้า', 'Page')}</label>
+                  <div className="flex items-center gap-2 ml-auto w-1/4 min-w-[160px]">
+                    <label className="text-xs font-black text-slate-500 uppercase tracking-widest shrink-0">{t('เลือกหน้า', 'Page')}</label>
                     <select
                       value={testPage}
                       onChange={(e) => setTestPage(Number(e.target.value))}
@@ -984,8 +978,14 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                   const glossary = FIELD_GLOSSARY[(field.name || '').trim().toLowerCase()];
                   const showThaiInput = revealedThaiFieldIds.has(field.id) || !!field.friendlyName;
                   const result = fieldResultsById[field.id];
+                  const isMismatch = !!testFile && !result?.matched;
                   return (
-                    <div key={field.id} className="grid grid-cols-[minmax(160px,1.1fr)_minmax(140px,0.9fr)_minmax(140px,0.9fr)_minmax(220px,2fr)_auto_auto] gap-3 items-start py-1.5 border-b border-slate-50 last:border-b-0">
+                    <div
+                      key={field.id}
+                      className={`grid grid-cols-[minmax(160px,1.1fr)_minmax(140px,0.9fr)_minmax(140px,0.9fr)_minmax(220px,2fr)_auto_auto] gap-3 items-start py-1.5 border-b last:border-b-0 ${
+                        isMismatch ? 'bg-rose-50/60 border-rose-100 -mx-1 px-1 rounded-[4px]' : 'border-slate-50'
+                      }`}
+                    >
                       <div className="pt-2 min-w-0">
                         <div className="font-mono text-sm font-semibold text-slate-700 truncate">{field.name}</div>
                         {glossary ? (
@@ -1028,6 +1028,9 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                             className="w-full px-2 py-1.5 text-sm font-mono text-slate-700 bg-white border border-slate-200 rounded-[4px] resize-y focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
                           />
                         )}
+                        {isMismatch && (
+                          <p className="text-[11px] font-bold text-rose-600 mt-0.5">{t('ไม่ตรงกับค่าที่อ่านได้', "Doesn't match the value read")}</p>
+                        )}
                       </div>
                       <div className="pt-2 min-w-0">
                         {activeSectionTab === 'Description' && <div className="text-[11px] text-slate-400 mb-0.5">{t('ค่าในแถวแรก', 'Value in the first row')}</div>}
@@ -1044,7 +1047,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                           value={field.aiPrompt || ''}
                           onChange={(e) => updateField(field.id, { aiPrompt: e.target.value })}
                           placeholder={t('บอก AI ว่าค่านี้อยู่ตรงไหน หน้าตาเป็นอย่างไร', 'Tell the AI where this value is and what it looks like')}
-                          rows={expandedHints ? 3 : 1}
+                          rows={1}
                           className="w-full px-3 py-1.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-[4px] resize-y focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
                         />
                         {!field.aiPrompt?.trim() && (
