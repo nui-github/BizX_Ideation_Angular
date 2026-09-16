@@ -1,0 +1,276 @@
+import React, { useState, useMemo } from 'react';
+import { Modal, Tooltip } from 'antd';
+import { Plus, Search, Layers, History, Pencil, Trash2, Inbox } from 'lucide-react';
+import { Language, DocType } from '../types';
+import { LabelSchema, DEFAULT_SCHEMAS, CURRENT_USER_TEAM } from './LabelSchemaSettings';
+
+interface OcrTuningTrackingPageProps {
+  language: Language;
+  docTypes: DocType[];
+  onCreateNew: () => void;
+  onEditSchema: (editKey: string) => void;
+}
+
+const formatDate = (dateStr: string, isTh: boolean) => {
+  const d = new Date(dateStr);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  const hours = String(d.getHours()).padStart(2, '0');
+  const mins = String(d.getMinutes()).padStart(2, '0');
+  return isTh ? `${day}/${month}/${year} ${hours}:${mins}` : `${month}/${day}/${year} ${hours}:${mins}`;
+};
+
+// Deterministic mock history entries — this prototype has no real per-schema audit log, so we
+// synthesize a plausible edit trail from the schema's own id/updatedAt instead of storing one.
+const hashString = (s: string): number => {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return h;
+};
+interface MockHistoryEntry { action: string; user: string; timestamp: string; }
+const buildMockHistory = (schema: LabelSchema): MockHistoryEntry[] => {
+  const updated = new Date(schema.updatedAt).getTime();
+  const h = hashString(schema.id);
+  const editors = ['Kunawut W.', 'Somchai P.', 'Nattaya S.', 'Preecha T.'];
+  const entries: MockHistoryEntry[] = [
+    { action: 'created', user: schema.createdBy || editors[h % editors.length], timestamp: new Date(updated - (3 + (h % 10)) * 86400000).toISOString() },
+  ];
+  const editCount = 1 + (h % 3);
+  for (let i = 0; i < editCount; i++) {
+    entries.push({
+      action: 'updated',
+      user: editors[(h + i) % editors.length],
+      timestamp: new Date(updated - (editCount - i) * 43200000).toISOString(),
+    });
+  }
+  entries.push({ action: 'updated', user: schema.createdBy || editors[h % editors.length], timestamp: schema.updatedAt });
+  return entries;
+};
+
+export const OcrTuningTrackingPage: React.FC<OcrTuningTrackingPageProps> = ({ language, docTypes, onCreateNew, onEditSchema }) => {
+  const isTh = language === 'TH';
+  const t = (th: string, en: string) => (isTh ? th : en);
+  const docTypeName = (id: string) => docTypes.find(d => d.id === id)?.name || id;
+
+  const [schemas, setSchemas] = useState<LabelSchema[]>(() => {
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('bizx_label_schemas_v7') : null;
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) { console.error('Failed to parse saved schemas', e); }
+    }
+    return DEFAULT_SCHEMAS;
+  });
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [historyTarget, setHistoryTarget] = useState<LabelSchema | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<LabelSchema | null>(null);
+
+  // Only schemas created by someone on my own team — matches Layout's hardcoded "ทีม OPERATION" user.
+  const teamSchemas = useMemo(
+    () => schemas.filter(s => (s.createdByTeam || 'operation') === CURRENT_USER_TEAM),
+    [schemas]
+  );
+
+  const filteredSchemas = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return teamSchemas;
+    return teamSchemas.filter(s =>
+      s.name.toLowerCase().includes(q) ||
+      s.docTypes.some(id => docTypeName(id).toLowerCase().includes(q))
+    );
+  }, [teamSchemas, searchQuery, docTypes]);
+
+  const fieldCount = (schema: LabelSchema) => schema.configs.reduce((n, c) => n + c.labels.length, 0);
+
+  const handleDelete = (schema: LabelSchema) => {
+    setSchemas(prev => {
+      const next = prev.filter(s => s.id !== schema.id);
+      if (typeof window !== 'undefined') localStorage.setItem('bizx_label_schemas_v7', JSON.stringify(next));
+      return next;
+    });
+    setDeleteTarget(null);
+  };
+
+  const handleEdit = (schema: LabelSchema) => {
+    const config = schema.configs[0];
+    if (!config) return;
+    onEditSchema(`${schema.id}::${config.docTypeId}`);
+  };
+
+  return (
+    <div className="-m-4 font-sans">
+      <div className="bg-white rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.1)] m-6 p-6">
+        <div className="flex items-start justify-between gap-4 mb-5">
+          <div>
+            <h1 className="text-xl font-black text-slate-900 tracking-tight">{t('Schema ของทีม', "My Team's Schemas")}</h1>
+            <p className="text-sm text-slate-500 mt-0.5">{t('schema ที่ทีมสร้างจากหน้าปรับการอ่านเอกสาร', "Schemas your team created from the OCR Tuning page")}</p>
+          </div>
+          <button
+            onClick={onCreateNew}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-[4px] bg-[#1f5df9] text-white text-sm font-bold hover:bg-[#1a4fd6] cursor-pointer shrink-0"
+          >
+            <Plus size={14} /> {t('สร้าง schema ใหม่', 'Create new schema')}
+          </button>
+        </div>
+
+        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+          <div className="p-4 border-b border-slate-100">
+            <div className="relative max-w-sm">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+              <input
+                type="text"
+                className="w-full text-sm pl-10 pr-3 py-2 border border-slate-200 rounded-[4px] focus:outline-none focus:ring-1 focus:ring-blue-500/25"
+                placeholder={t('ค้นหาชื่อ schema หรือชนิดเอกสาร', 'Search schema name or document type')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-slate-100">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-black text-slate-400 uppercase tracking-wider">{t('ชื่อ schema', 'Schema name')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-black text-slate-400 uppercase tracking-wider">{t('ชนิดเอกสาร', 'Document type')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-black text-slate-400 uppercase tracking-wider">{t('ฟิลด์', 'Fields')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-black text-slate-400 uppercase tracking-wider">{t('สร้างโดย', 'Created by')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-black text-slate-400 uppercase tracking-wider">{t('แก้ไขล่าสุด', 'Updated')}</th>
+                  <th className="px-6 py-3 text-right text-xs font-black text-slate-400 uppercase tracking-wider pr-8">{t('จัดการ', 'Actions')}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 bg-white">
+                {filteredSchemas.length === 0 ? (
+                  <tr>
+                    <td colSpan={6}>
+                      <div className="flex flex-col items-center justify-center py-16 text-center">
+                        <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mb-4 border border-slate-100">
+                          <Inbox size={28} />
+                        </div>
+                        <p className="text-sm font-bold text-slate-500">{t('ทีมยังไม่มี schema', 'Your team has no schemas yet')}</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredSchemas.map(schema => (
+                    <tr key={schema.id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2.5">
+                          <div className="p-2 bg-blue-50/70 text-[#1f5df9] rounded-[4px] shrink-0">
+                            <Layers size={14} />
+                          </div>
+                          <span className="text-sm font-black text-[#010136]">{schema.name}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-600 font-medium">
+                        {schema.docTypes.map(id => docTypeName(id)).join(', ') || '-'}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-600 font-medium">{fieldCount(schema)}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600 font-medium">{schema.createdBy || '-'}</td>
+                      <td className="px-6 py-4 text-sm text-slate-500 whitespace-nowrap">{formatDate(schema.updatedAt, isTh)}</td>
+                      <td className="px-6 py-4 text-right pr-8">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Tooltip title={t('ดูประวัติ', 'View history')}>
+                            <button
+                              onClick={() => setHistoryTarget(schema)}
+                              className="p-2 hover:bg-slate-50 text-slate-400 hover:text-[#1f5df9] bg-white border border-slate-200 rounded-[4px] transition-all cursor-pointer"
+                            >
+                              <History size={14} />
+                            </button>
+                          </Tooltip>
+                          <Tooltip title={t('แก้ไข schema', 'Edit schema')}>
+                            <button
+                              onClick={() => handleEdit(schema)}
+                              className="p-2 hover:bg-slate-50 text-slate-400 hover:text-[#1f5df9] bg-white border border-slate-200 rounded-[4px] transition-all cursor-pointer"
+                            >
+                              <Pencil size={14} />
+                            </button>
+                          </Tooltip>
+                          <Tooltip title={t('ลบ schema', 'Delete schema')}>
+                            <button
+                              onClick={() => setDeleteTarget(schema)}
+                              className="p-2 hover:bg-rose-50 text-slate-400 hover:text-rose-600 bg-white border border-slate-200 rounded-[4px] transition-all cursor-pointer"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </Tooltip>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* History log modal */}
+      <Modal
+        open={!!historyTarget}
+        onCancel={() => setHistoryTarget(null)}
+        footer={null}
+        width={480}
+        centered
+        title={historyTarget ? t(`ประวัติการแก้ไข: ${historyTarget.name}`, `Edit history: ${historyTarget.name}`) : ''}
+      >
+        {historyTarget && (
+          <div className="divide-y divide-slate-100 -mx-1">
+            {buildMockHistory(historyTarget).slice().reverse().map((entry, idx) => (
+              <div key={idx} className="flex items-center justify-between gap-3 px-1 py-3">
+                <div className="flex items-center gap-2">
+                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${entry.action === 'created' ? 'bg-emerald-400' : 'bg-blue-400'}`} />
+                  <span className="text-sm font-bold text-slate-700">
+                    {entry.action === 'created' ? t('สร้าง schema', 'Created schema') : t('แก้ไข schema', 'Updated schema')}
+                  </span>
+                  <span className="text-xs text-slate-400">{t('โดย', 'by')} {entry.user}</span>
+                </div>
+                <span className="text-xs text-slate-400 whitespace-nowrap">{formatDate(entry.timestamp, isTh)}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </Modal>
+
+      {/* Delete confirm modal */}
+      <Modal
+        open={!!deleteTarget}
+        onCancel={() => setDeleteTarget(null)}
+        footer={null}
+        width={420}
+        centered
+        closable={false}
+      >
+        {deleteTarget && (
+          <div className="p-2 text-center space-y-4">
+            <div className="w-12 h-12 mx-auto bg-rose-50 text-rose-500 rounded-full flex items-center justify-center">
+              <Trash2 size={22} />
+            </div>
+            <div className="space-y-1.5">
+              <h3 className="text-base font-black text-[#010136] tracking-tight">
+                {t(`ต้องการลบ ${deleteTarget.name} ใช่หรือไม่`, `Delete ${deleteTarget.name}?`)}
+              </h3>
+              <p className="text-xs text-slate-500 font-semibold">{t('การลบนี้ไม่สามารถกู้คืนได้', 'This action cannot be undone.')}</p>
+            </div>
+            <div className="pt-1 grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setDeleteTarget(null)}
+                className="px-4 py-2.5 border border-slate-200 text-slate-500 hover:bg-slate-50 font-bold text-sm rounded-[4px] transition-all cursor-pointer"
+              >
+                {t('ยกเลิก', 'Cancel')}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDelete(deleteTarget)}
+                className="px-4 py-2.5 bg-rose-600 text-white hover:bg-rose-700 font-bold text-sm rounded-[4px] transition-all cursor-pointer"
+              >
+                {t('ลบ schema', 'Delete schema')}
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+    </div>
+  );
+};

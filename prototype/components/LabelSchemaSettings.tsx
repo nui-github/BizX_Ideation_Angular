@@ -10,6 +10,11 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Language, DocType, Workflow } from '../types';
 import { MOCK_TEAMS } from '../mock-data/teams.mock';
 
+// The single mocked "logged in" user in this prototype (see Layout.tsx's profile chip) — shared
+// here so any screen that stamps or filters by "who created this" / "my team" agrees on the same values.
+export const CURRENT_USER_NAME = 'Kunawut W.';
+export const CURRENT_USER_TEAM = 'operation';
+
 export interface SchemaLabel {
   id: string;
   name: string;
@@ -43,6 +48,8 @@ export interface LabelSchema {
   docTypes: string[]; // docType IDs
   workflowIds: string[]; // workflow IDs
   assignedTeams: string[]; // team values (see MOCK_TEAMS)
+  createdBy?: string; // display name of the user who created this schema
+  createdByTeam?: string; // team value (see MOCK_TEAMS) of the creator — used to scope the OCR Tuning tracking list to "my team's schemas"
   updatedAt: string;
   configs: DocTypeSchemaConfig[];
 }
@@ -66,6 +73,8 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     docTypes: ['INV'],
     workflowIds: ['cwf-1', 'cwf-po-pi', 'cwf-shipping-doc', 'cwf-import-dec-1'],
     assignedTeams: ['ALL'],
+    createdBy: 'Kunawut W.',
+    createdByTeam: 'operation',
     updatedAt: '2026-06-01T09:00:00Z',
     configs: [
       {
@@ -93,6 +102,8 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     docTypes: ['BL'],
     workflowIds: ['cwf-shipping-doc', 'cwf-import-dec-1'],
     assignedTeams: ['ALL'],
+    createdBy: 'Somchai P.',
+    createdByTeam: 'logistics',
     updatedAt: '2026-06-02T09:00:00Z',
     configs: [
       {
@@ -118,6 +129,8 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     docTypes: ['PL'],
     workflowIds: ['cwf-1', 'cwf-shipping-doc', 'cwf-import-dec-1'],
     assignedTeams: ['ALL'],
+    createdBy: 'Somchai P.',
+    createdByTeam: 'logistics',
     updatedAt: '2026-06-03T09:00:00Z',
     configs: [
       {
@@ -139,6 +152,8 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     docTypes: ['PO'],
     workflowIds: ['cwf-2'],
     assignedTeams: ['ALL'],
+    createdBy: 'Kunawut W.',
+    createdByTeam: 'operation',
     updatedAt: '2026-06-04T09:00:00Z',
     configs: [
       {
@@ -161,6 +176,8 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     docTypes: ['CO'],
     workflowIds: ['cwf-2'],
     assignedTeams: ['ALL'],
+    createdBy: 'Nattaya S.',
+    createdByTeam: 'customs',
     updatedAt: '2026-06-05T09:00:00Z',
     configs: [
       {
@@ -183,6 +200,8 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     docTypes: ['DO'],
     workflowIds: [],
     assignedTeams: ['ALL'],
+    createdBy: 'Kunawut W.',
+    createdByTeam: 'operation',
     updatedAt: '2026-06-06T09:00:00Z',
     configs: [
       {
@@ -205,6 +224,8 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     docTypes: ['POPI'],
     workflowIds: ['cwf-po-pi'],
     assignedTeams: ['ALL'],
+    createdBy: 'Preecha T.',
+    createdByTeam: 'accounting',
     updatedAt: '2026-06-07T09:00:00Z',
     configs: [
       {
@@ -227,6 +248,8 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     docTypes: ['FRT'],
     workflowIds: ['cwf-shipping-doc', 'cwf-import-dec-1'],
     assignedTeams: ['ALL'],
+    createdBy: 'Somchai P.',
+    createdByTeam: 'logistics',
     updatedAt: '2026-06-08T09:00:00Z',
     configs: [
       {
@@ -249,6 +272,8 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     docTypes: ['HS'],
     workflowIds: ['cwf-shipping-doc', 'cwf-import-dec-1'],
     assignedTeams: ['ALL'],
+    createdBy: 'Nattaya S.',
+    createdByTeam: 'customs',
     updatedAt: '2026-06-09T09:00:00Z',
     configs: [
       {
@@ -269,6 +294,8 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     docTypes: ['FTAD'],
     workflowIds: ['cwf-shipping-doc'],
     assignedTeams: ['ALL'],
+    createdBy: 'Nattaya S.',
+    createdByTeam: 'customs',
     updatedAt: '2026-06-10T09:00:00Z',
     configs: [
       {
@@ -291,6 +318,8 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     docTypes: ['FTAO'],
     workflowIds: [],
     assignedTeams: ['ALL'],
+    createdBy: 'Nattaya S.',
+    createdByTeam: 'customs',
     updatedAt: '2026-06-11T09:00:00Z',
     configs: [
       {
@@ -313,6 +342,8 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     docTypes: ['INS'],
     workflowIds: ['cwf-import-dec-1'],
     assignedTeams: ['ALL'],
+    createdBy: 'Preecha T.',
+    createdByTeam: 'accounting',
     updatedAt: '2026-06-12T09:00:00Z',
     configs: [
       {
@@ -334,6 +365,8 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     docTypes: ['LIC'],
     workflowIds: ['cwf-import-dec-2'],
     assignedTeams: ['ALL'],
+    createdBy: 'Nattaya S.',
+    createdByTeam: 'customs',
     updatedAt: '2026-06-13T09:00:00Z',
     configs: [
       {
@@ -357,6 +390,8 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     docTypes: ['LPI'],
     workflowIds: ['cwf-import-dec-2'],
     assignedTeams: ['ALL'],
+    createdBy: 'Preecha T.',
+    createdByTeam: 'accounting',
     updatedAt: '2026-06-14T09:00:00Z',
     configs: [
       {
@@ -378,6 +413,8 @@ export const DEFAULT_SCHEMAS: LabelSchema[] = [
     docTypes: ['OTH'],
     workflowIds: ['cwf-import-dec-2'],
     assignedTeams: ['ALL'],
+    createdBy: 'Kunawut W.',
+    createdByTeam: 'operation',
     updatedAt: '2026-06-15T09:00:00Z',
     configs: [
       {

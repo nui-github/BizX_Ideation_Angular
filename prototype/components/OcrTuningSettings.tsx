@@ -3,14 +3,18 @@ import { createPortal } from 'react-dom';
 import { message, Modal, Tooltip } from 'antd';
 import {
   Plus, Upload, FileText, FileSpreadsheet, FileCode2, Check,
-  Save, RotateCcw, Search, Sparkles, Trash2
+  Save, RotateCcw, Search, Sparkles, Trash2, ArrowLeft
 } from 'lucide-react';
 import { Language, DocType } from '../types';
-import { LabelSchema, SchemaLabel, DocTypeSchemaConfig, DEFAULT_SCHEMAS } from './LabelSchemaSettings';
+import { LabelSchema, SchemaLabel, DocTypeSchemaConfig, DEFAULT_SCHEMAS, CURRENT_USER_NAME, CURRENT_USER_TEAM } from './LabelSchemaSettings';
 
 interface OcrTuningSettingsProps {
   language: Language;
   docTypes: DocType[];
+  onBack?: () => void;
+  // Set when arriving from the "Schema ของทีม" tracking list to edit a specific schema — jumps
+  // straight into edit mode instead of starting fresh at step 1.
+  initialEditKey?: string;
 }
 
 type Section = 'Header' | 'Description' | 'Footer';
@@ -157,7 +161,7 @@ const FIELD_GLOSSARY: Record<string, GlossaryEntry> = {
 const cloneSchema = (schema: LabelSchema): LabelSchema => JSON.parse(JSON.stringify(schema));
 const genId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
-export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, docTypes }) => {
+export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, docTypes, onBack, initialEditKey }) => {
   const isTh = language === 'TH';
   const t = (th: string, en: string) => (isTh ? th : en);
   const docTypeName = (id: string) => docTypes.find(d => d.id === id)?.name || id;
@@ -183,6 +187,12 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
 
   // --- 1. เลือกงาน ---
   const [mode, setMode] = useState<'new' | 'edit'>('new');
+  // Arrived from the tracking list's "แก้ไข schema" action — the schema/doc type is already
+  // decided, so step 1's mode toggle and schema picker are pointless and get hidden.
+  const editFromTracking = !!initialEditKey;
+  // Gates step 3 behind an explicit "ทดสอบ" click in this flow's own step 2, mirroring the "new
+  // schema" flow's confirm-before-test gate instead of revealing test results immediately.
+  const [trackingEditConfirmed, setTrackingEditConfirmed] = useState(false);
 
   // --- 2. ชื่อ schema ชนิดเอกสาร และ template (new mode only) ---
   const [nameDraft, setNameDraft] = useState('');
@@ -221,14 +231,22 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
   }, [draftSchema, activeDocTypeId]);
 
   const resetAll = () => {
-    setMode('new');
-    setNameDraft('');
-    setNameDocTypeId(docTypes[0]?.id || '');
-    setCopySourceKey('');
-    setNewConfirmed(false);
-    setEditKey('');
-    setDraftSchema(null);
-    setActiveDocTypeId(null);
+    if (editFromTracking && initialEditKey) {
+      // Arrived from the tracking list to edit one specific schema — "start over" re-picks that
+      // same schema instead of dropping into the generic "new schema" state.
+      setMode('edit');
+      pickEditSchema(initialEditKey);
+    } else {
+      setMode('new');
+      setNameDraft('');
+      setNameDocTypeId(docTypes[0]?.id || '');
+      setCopySourceKey('');
+      setNewConfirmed(false);
+      setEditKey('');
+      setDraftSchema(null);
+      setActiveDocTypeId(null);
+    }
+    setTrackingEditConfirmed(false);
     setActiveSectionTab('Header');
     setSearchQuery('');
     setOnlyMissingHints(false);
@@ -295,7 +313,8 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
       ? { ...draftSchema, name: nameDraft.trim(), docTypes: [nameDocTypeId], configs: [config] }
       : {
           id: genId('ls'), name: nameDraft.trim(), description: '', docTypes: [nameDocTypeId],
-          workflowIds: [], assignedTeams: ['ALL'], updatedAt: new Date().toISOString(), configs: [config],
+          workflowIds: [], assignedTeams: ['ALL'], createdBy: CURRENT_USER_NAME, createdByTeam: CURRENT_USER_TEAM,
+          updatedAt: new Date().toISOString(), configs: [config],
         };
     setDraftSchema(schema);
     setActiveDocTypeId(nameDocTypeId);
@@ -312,6 +331,15 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
     setRetestNonce(0);
     setSavedOnce(false);
   };
+
+  // Arriving from the tracking list's "แก้ไข schema" action — jump straight into edit mode for
+  // that specific schema instead of landing on step 1's own picker.
+  useEffect(() => {
+    if (!initialEditKey) return;
+    setMode('edit');
+    pickEditSchema(initialEditKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialEditKey]);
 
   const [savedOnce, setSavedOnce] = useState(false);
   const handleSaveSchema = () => {
@@ -526,21 +554,21 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
   // load, advancing/checking off as the user actually does each thing, rather than always
   // showing everything but the last step as already done). ---
   const STEP_LABELS = [
-    { th: 'อัปโหลดไฟล์และเลือกงาน', en: 'Upload file & choose task' },
-    { th: 'ชื่อ ชนิดเอกสาร template', en: 'Name, doc type & template' },
+    { th: editFromTracking ? 'อัปโหลดไฟล์' : 'อัปโหลดไฟล์และเลือกงาน', en: editFromTracking ? 'Upload file' : 'Upload file & choose task' },
+    { th: editFromTracking ? 'ชื่อ schema และชนิดเอกสาร' : 'ชื่อ ชนิดเอกสาร template', en: editFromTracking ? 'Schema name & document type' : 'Name, doc type & template' },
     { th: 'ทดสอบและปรับคำอธิบาย', en: 'Test & adjust hints' },
     { th: 'บันทึก', en: 'Save' },
   ];
   const hasChosenTask = (mode === 'new' ? !!nameDraft.trim() : !!editKey) && !!testFile;
   const currentStep = savedOnce ? 4
     : !hasChosenTask ? 1
-    : !draftSchema ? 2
+    : (editFromTracking ? !trackingEditConfirmed : !draftSchema) ? 2
     : 3;
 
-  // Body cards renumber depending on mode — editing an existing schema skips the "name, doc
-  // type & template" card entirely, since the schema already has both.
-  const cardNumbers = { combined: mode === 'new' ? 3 : 2 };
-  const showWorkingCards = !!draftSchema;
+  // Body cards renumber depending on mode — editing an existing schema (outside the tracking
+  // flow) skips the "name, doc type & template" card entirely, since the schema already has both.
+  const cardNumbers = { combined: (mode === 'new' || editFromTracking) ? 3 : 2 };
+  const showWorkingCards = !!draftSchema && (!editFromTracking || trackingEditConfirmed);
 
   // Clicking a step in the indicator jumps straight to that section — "บันทึก" has no card of
   // its own (saving is just the header button), so it scrolls to the top instead.
@@ -550,7 +578,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
   const combinedRef = useRef<HTMLDivElement>(null);
   // Edit mode has no separate "name & template" card — picking the schema in step 1 covers it —
   // so step 2 anchors back to step 1's card instead of a nonexistent section.
-  const STEP_REFS = [step1Ref, mode === 'new' ? step2Ref : step1Ref, combinedRef, topRef];
+  const STEP_REFS = [step1Ref, (mode === 'new' || editFromTracking) ? step2Ref : step1Ref, combinedRef, topRef];
   const scrollToStep = (stepNum: number) => {
     // Instant, not smooth — leftover trackpad/wheel momentum from the scroll that led to this
     // click can cancel a mid-flight smooth scrollIntoView, landing short of the target section.
@@ -565,9 +593,15 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
       <div className="bg-white rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.1)] m-6 p-6">
       <div>
         <div ref={topRef} className="flex items-start justify-between gap-4 mb-5 scroll-mt-24">
-          <div>
-            <h1 className="text-xl font-black text-slate-900 tracking-tight">{t('ปรับการอ่านเอกสาร', 'OCR Tuning')}</h1>
-            <p className="text-sm text-slate-500 mt-0.5">{t('กำหนดฟิลด์และคำอธิบายฟิลด์/ตำแหน่ง ให้ AI อ่านเอกสารได้ถูกต้อง — ทดสอบก่อนบันทึกได้', 'Define fields and their hints so the AI reads documents correctly — test before saving')}</p>
+          <div className="flex items-center gap-3">
+            {onBack && (
+              <button
+                onClick={onBack}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-[4px] text-slate-600 text-sm font-bold hover:bg-slate-100 transition-colors shrink-0 cursor-pointer"
+              >
+                <ArrowLeft size={16} /> {t('กลับหน้ารายการ', 'Back to list')}
+              </button>
+            )}
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <button onClick={confirmResetAll} className="flex items-center gap-1.5 px-3.5 py-2 rounded-[4px] border border-slate-200 bg-white text-slate-500 text-sm font-bold hover:bg-slate-50 cursor-pointer">
@@ -575,7 +609,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
             </button>
             <button
               onClick={handleSaveSchema}
-              disabled={!draftSchema}
+              disabled={!showWorkingCards}
               className="flex items-center gap-1.5 px-3.5 py-2 rounded-[4px] bg-[#1f5df9] text-white text-sm font-bold hover:bg-[#1a4fd6] cursor-pointer disabled:bg-slate-200 disabled:text-slate-400 disabled:hover:bg-slate-200 disabled:cursor-not-allowed"
             >
               <Save size={14} /> {t('บันทึก', 'Save')}
@@ -591,7 +625,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
             const isCurrent = stepNum === currentStep;
             const isLast = i === STEP_LABELS.length - 1;
             // Step 2 anchors to its own card in "new" mode, or back to step 1 in edit mode.
-            const isReachable = stepNum === 1 || stepNum === 2 || stepNum === 4 || (stepNum === 3 && !!draftSchema);
+            const isReachable = stepNum === 1 || stepNum === 2 || stepNum === 4 || (stepNum === 3 && showWorkingCards);
             return (
               <React.Fragment key={s.th}>
                 <button
@@ -620,7 +654,9 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
         <div className="space-y-4">
           {/* 1. อัปโหลดไฟล์และเลือกงาน */}
           <div ref={step1Ref} className="bg-white border border-slate-200 rounded-xl p-5 scroll-mt-24">
-            <h3 className="text-[15px] font-black text-slate-800 mb-3">{t('1. อัปโหลดไฟล์และเลือกงาน', '1. Upload a file & choose a task')}</h3>
+            <h3 className="text-[15px] font-black text-slate-800 mb-3">
+              {editFromTracking ? t('1. อัปโหลดไฟล์', '1. Upload a file') : t('1. อัปโหลดไฟล์และเลือกงาน', '1. Upload a file & choose a task')}
+            </h3>
 
             {testFile ? (
               <div className="flex items-center justify-between gap-4 p-4 bg-emerald-50/50 border border-emerald-200 rounded-xl mb-4">
@@ -680,45 +716,49 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
               </label>
             )}
 
-            <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5">{t('งานที่จะทำ', 'Task')}</label>
-            <div className="inline-flex items-center gap-1 p-1 bg-slate-50 border border-slate-200 rounded-[8px]">
-              <button
-                onClick={() => confirmSwitchMode('new')}
-                className={`px-3.5 py-1.5 text-xs font-bold rounded-[4px] cursor-pointer transition-all ${mode === 'new' ? 'bg-[#1f5df9] text-white shadow-sm' : 'text-slate-500 hover:bg-white'}`}
-              >
-                {t('สร้าง schema ใหม่', 'Create new schema')}
-              </button>
-              <button
-                onClick={() => confirmSwitchMode('edit')}
-                className={`px-3.5 py-1.5 text-xs font-bold rounded-[4px] cursor-pointer transition-all ${mode === 'edit' ? 'bg-[#1f5df9] text-white shadow-sm' : 'text-slate-500 hover:bg-white'}`}
-              >
-                {t('แก้ไข schema เดิม', 'Edit existing schema')}
-              </button>
-            </div>
+            {!editFromTracking && (
+              <>
+                <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5">{t('งานที่จะทำ', 'Task')}</label>
+                <div className="inline-flex items-center gap-1 p-1 bg-slate-50 border border-slate-200 rounded-[8px]">
+                  <button
+                    onClick={() => confirmSwitchMode('new')}
+                    className={`px-3.5 py-1.5 text-xs font-bold rounded-[4px] cursor-pointer transition-all ${mode === 'new' ? 'bg-[#1f5df9] text-white shadow-sm' : 'text-slate-500 hover:bg-white'}`}
+                  >
+                    {t('สร้าง schema ใหม่', 'Create new schema')}
+                  </button>
+                  <button
+                    onClick={() => confirmSwitchMode('edit')}
+                    className={`px-3.5 py-1.5 text-xs font-bold rounded-[4px] cursor-pointer transition-all ${mode === 'edit' ? 'bg-[#1f5df9] text-white shadow-sm' : 'text-slate-500 hover:bg-white'}`}
+                  >
+                    {t('แก้ไข schema เดิม', 'Edit existing schema')}
+                  </button>
+                </div>
 
-            {mode === 'edit' && (
-              <div className="mt-4 pt-4 border-t border-slate-100">
-                <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5">{t('schema/ชนิดเอกสารที่จะแก้', 'Schema / document type to edit')}</label>
-                <select
-                  value={editKey}
-                  onChange={(e) => pickEditSchema(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-[4px] border border-slate-200 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
-                >
-                  <option value="">{t('— เลือก schema —', '— Pick a schema —')}</option>
-                  {schemaOptions.map(o => (
-                    <option key={o.key} value={o.key}>{o.schema.name} / {o.docTypeName}</option>
-                  ))}
-                </select>
-                {activeConfig && (
-                  <p className="text-[11px] font-bold text-slate-400 mt-1.5">
-                    {activeConfig.labels.length} {t('ฟิลด์', 'fields')} · {t('บันทึกแล้วจะมีผลกับการอ่านเอกสารจริงทันที', 'once saved, this affects real document reading immediately')}
-                  </p>
+                {mode === 'edit' && (
+                  <div className="mt-4 pt-4 border-t border-slate-100">
+                    <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5">{t('schema/ชนิดเอกสารที่จะแก้', 'Schema / document type to edit')}</label>
+                    <select
+                      value={editKey}
+                      onChange={(e) => pickEditSchema(e.target.value)}
+                      className="w-full px-3 py-2.5 rounded-[4px] border border-slate-200 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
+                    >
+                      <option value="">{t('— เลือก schema —', '— Pick a schema —')}</option>
+                      {schemaOptions.map(o => (
+                        <option key={o.key} value={o.key}>{o.schema.name} / {o.docTypeName}</option>
+                      ))}
+                    </select>
+                    {activeConfig && (
+                      <p className="text-[11px] font-bold text-slate-400 mt-1.5">
+                        {activeConfig.labels.length} {t('ฟิลด์', 'fields')} · {t('บันทึกแล้วจะมีผลกับการอ่านเอกสารจริงทันที', 'once saved, this affects real document reading immediately')}
+                      </p>
+                    )}
+                  </div>
                 )}
-              </div>
+              </>
             )}
           </div>
 
-          {/* 2. ชื่อ schema ชนิดเอกสาร และ template (new mode only) */}
+          {/* 2. ชื่อ schema ชนิดเอกสาร และ template (new mode) / ชื่อ schema และชนิดเอกสาร (edit from tracking) */}
           {mode === 'new' && (
             <div ref={step2Ref} className="bg-white border border-slate-200 rounded-xl p-5 scroll-mt-24">
               <h3 className="text-[15px] font-black text-slate-800 mb-3">{t('2. ชื่อ schema ชนิดเอกสาร และ template', '2. Schema name, document type & template')}</h3>
@@ -783,6 +823,51 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                   {t('schema ใหม่', 'New schema')} "{draftSchema.name}" · {docTypeName(nameDocTypeId)} — {t('เปลี่ยน template ด้านบนแล้วกดปุ่มนี้อีกครั้งเพื่อแทนที่ฟิลด์ปัจจุบัน', 'change the template above and press this button again to replace the current fields')}
                 </p>
               )}
+            </div>
+          )}
+
+          {editFromTracking && draftSchema && activeConfig && (
+            <div ref={step2Ref} className="bg-white border border-slate-200 rounded-xl p-5 scroll-mt-24">
+              <h3 className="text-[15px] font-black text-slate-800 mb-3">{t('2. ชื่อ schema และชนิดเอกสาร', '2. Schema name & document type')}</h3>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5">{t('ชื่อ schema', 'Schema name')}</label>
+                  <input
+                    type="text"
+                    value={draftSchema.name}
+                    onChange={(e) => {
+                      const value = e.target.value.slice(0, 200);
+                      setDraftSchema(prev => prev ? { ...prev, name: value } : prev);
+                    }}
+                    maxLength={200}
+                    className="w-full h-[42px] px-3 rounded-[4px] border border-slate-200 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5">{t('ชนิดเอกสาร', 'Document type')}</label>
+                  <select
+                    value={activeConfig.docTypeId}
+                    disabled
+                    className="w-full h-[42px] px-3 rounded-[4px] border border-slate-200 text-sm font-semibold bg-slate-50 text-slate-500 cursor-not-allowed"
+                  >
+                    <option value={activeConfig.docTypeId}>{docTypeName(activeConfig.docTypeId)}</option>
+                  </select>
+                </div>
+              </div>
+              <p className="text-[11px] font-bold text-slate-400 mt-1.5 mb-4">
+                {activeConfig.labels.length} {t('ฟิลด์', 'fields')} · {t('บันทึกแล้วจะมีผลกับการอ่านเอกสารจริงทันที', 'once saved, this affects real document reading immediately')}
+              </p>
+              <button
+                onClick={() => {
+                  const wasFirstTime = !trackingEditConfirmed;
+                  setTrackingEditConfirmed(true);
+                  if (wasFirstTime) requestAnimationFrame(() => requestAnimationFrame(() => scrollToStep(3)));
+                }}
+                disabled={!draftSchema.name.trim()}
+                className="px-4 py-2.5 rounded-[4px] bg-[#1f5df9] text-white text-sm font-bold cursor-pointer hover:bg-[#1a4fd6] disabled:bg-slate-200 disabled:text-slate-400 disabled:hover:bg-slate-200 disabled:cursor-not-allowed"
+              >
+                {t('ทดสอบ', 'Test')}
+              </button>
             </div>
           )}
 

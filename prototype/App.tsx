@@ -16,6 +16,7 @@ import { JobPresetSettings } from './components/JobPresetSettings';
 import { LabelSchemaSettings } from './components/LabelSchemaSettings';
 import { MasterDataSettings } from './components/MasterDataSettings';
 import { OcrTuningSettings } from './components/OcrTuningSettings';
+import { OcrTuningTrackingPage } from './components/OcrTuningTrackingPage';
 import { Agent, AgentStatus, AgentType, AuditLog, UserRole, Language, TrackingItem, TrackingSource, ReviewStatus, SendStatus, Workflow, DocType, JobPreset } from './types';
 import { TRANSLATIONS } from './translations';
 import { MOCK_PRESETS } from './mock-data/preset.mock';
@@ -505,9 +506,10 @@ if (typeof window !== 'undefined') {
 
 function App() {
   // Default view: Data Comparison job list (รายการงาน (Job))
-  const [currentView, setCurrentView] = useState<'TRACKING' | 'AGENT_LIST' | 'AGENT_FORM' | 'EXTRACTION' | 'UPLOAD' | 'WORKFLOW_LIST' | 'WORKFLOW_BUILDER' | 'DATA_COMPARISON_JOBS' | 'DATA_COMPARISON_WORKFLOW' | 'DATA_COMPARISON_RULE' | 'DATA_COMPARISON_WORKFLOW_BUILDER' | 'SETTINGS_DOC_TYPE_MASTER' | 'SETTINGS_LABEL_SCHEMA' | 'SETTINGS_MASTER_DATA' | 'SETTINGS_JOB_PRESET' | 'SETTINGS_OCR_TUNING'>(
-    () => (typeof window !== 'undefined' && window.location.pathname === '/ocr-turning' ? 'SETTINGS_OCR_TUNING' : 'DATA_COMPARISON_JOBS')
+  const [currentView, setCurrentView] = useState<'TRACKING' | 'AGENT_LIST' | 'AGENT_FORM' | 'EXTRACTION' | 'UPLOAD' | 'WORKFLOW_LIST' | 'WORKFLOW_BUILDER' | 'DATA_COMPARISON_JOBS' | 'DATA_COMPARISON_WORKFLOW' | 'DATA_COMPARISON_RULE' | 'DATA_COMPARISON_WORKFLOW_BUILDER' | 'SETTINGS_DOC_TYPE_MASTER' | 'SETTINGS_LABEL_SCHEMA' | 'SETTINGS_MASTER_DATA' | 'SETTINGS_JOB_PRESET' | 'SETTINGS_OCR_TUNING_TRACKING' | 'SETTINGS_OCR_TUNING'>(
+    () => (typeof window !== 'undefined' && window.location.pathname === '/ocr-turning' ? 'SETTINGS_OCR_TUNING_TRACKING' : 'DATA_COMPARISON_JOBS')
   );
+  const [ocrTuningEditKey, setOcrTuningEditKey] = useState<string | undefined>(undefined);
   const [docTypes, setDocTypes] = useState<DocType[]>([
     { 
       id: 'INV', 
@@ -1203,17 +1205,19 @@ function App() {
       setRole(prev => prev === UserRole.ADMIN ? UserRole.USER : UserRole.ADMIN);
   };
 
-  const handleNavigate = (view: 'TRACKING' | 'AGENT_LIST' | 'UPLOAD' | 'WORKFLOW_LIST' | 'DATA_COMPARISON_JOBS' | 'DATA_COMPARISON_WORKFLOW' | 'DATA_COMPARISON_RULE' | 'DATA_COMPARISON_WORKFLOW_BUILDER' | 'SETTINGS_DOC_TYPE_MASTER' | 'SETTINGS_LABEL_SCHEMA' | 'SETTINGS_MASTER_DATA' | 'SETTINGS_JOB_PRESET' | 'SETTINGS_OCR_TUNING') => {
+  const handleNavigate = (view: 'TRACKING' | 'AGENT_LIST' | 'UPLOAD' | 'WORKFLOW_LIST' | 'DATA_COMPARISON_JOBS' | 'DATA_COMPARISON_WORKFLOW' | 'DATA_COMPARISON_RULE' | 'DATA_COMPARISON_WORKFLOW_BUILDER' | 'SETTINGS_DOC_TYPE_MASTER' | 'SETTINGS_LABEL_SCHEMA' | 'SETTINGS_MASTER_DATA' | 'SETTINGS_JOB_PRESET' | 'SETTINGS_OCR_TUNING_TRACKING' | 'SETTINGS_OCR_TUNING') => {
       setCurrentView(view);
   };
 
-  // Keeps the URL in sync with the OCR Tuning page specifically — it's the only view with its
-  // own address (/ocr-turning) since it's reachable directly from the profile menu.
+  // Keeps the URL in sync with the OCR Tuning pages — the tracking list is the landing page
+  // reachable from the profile menu, the wizard is reached from within it; both share the one
+  // address (/ocr-turning) since only the tracking list needs to be a real navigation target.
   React.useEffect(() => {
     const isOcrTuningUrl = window.location.pathname === '/ocr-turning';
-    if (currentView === 'SETTINGS_OCR_TUNING' && !isOcrTuningUrl) {
+    const isOcrTuningView = currentView === 'SETTINGS_OCR_TUNING_TRACKING' || currentView === 'SETTINGS_OCR_TUNING';
+    if (isOcrTuningView && !isOcrTuningUrl) {
       window.history.pushState({}, '', '/ocr-turning');
-    } else if (currentView !== 'SETTINGS_OCR_TUNING' && isOcrTuningUrl) {
+    } else if (!isOcrTuningView && isOcrTuningUrl) {
       window.history.pushState({}, '', '/');
     }
   }, [currentView]);
@@ -1222,8 +1226,9 @@ function App() {
     const handlePopState = () => {
       const onOcrTuningUrl = window.location.pathname === '/ocr-turning';
       setCurrentView(prev => {
-        if (onOcrTuningUrl) return 'SETTINGS_OCR_TUNING';
-        return prev === 'SETTINGS_OCR_TUNING' ? 'DATA_COMPARISON_JOBS' : prev;
+        if (onOcrTuningUrl) return prev === 'SETTINGS_OCR_TUNING' ? prev : 'SETTINGS_OCR_TUNING_TRACKING';
+        const wasOcrTuningView = prev === 'SETTINGS_OCR_TUNING_TRACKING' || prev === 'SETTINGS_OCR_TUNING';
+        return wasOcrTuningView ? 'DATA_COMPARISON_JOBS' : prev;
       });
     };
     window.addEventListener('popstate', handlePopState);
@@ -1539,10 +1544,21 @@ function App() {
           </div>
         )}
 
+        {currentView === 'SETTINGS_OCR_TUNING_TRACKING' && (
+          <OcrTuningTrackingPage
+            language={language}
+            docTypes={docTypes}
+            onCreateNew={() => { setOcrTuningEditKey(undefined); setCurrentView('SETTINGS_OCR_TUNING'); }}
+            onEditSchema={(key) => { setOcrTuningEditKey(key); setCurrentView('SETTINGS_OCR_TUNING'); }}
+          />
+        )}
+
         {currentView === 'SETTINGS_OCR_TUNING' && (
           <OcrTuningSettings
             language={language}
             docTypes={docTypes}
+            initialEditKey={ocrTuningEditKey}
+            onBack={() => setCurrentView('SETTINGS_OCR_TUNING_TRACKING')}
           />
         )}
 

@@ -14,7 +14,7 @@ interface LayoutProps {
   onToggleRole: () => void;
   language: Language;
   onLanguageChange: (lang: Language) => void;
-  onNavigate: (view: 'TRACKING' | 'AGENT_LIST' | 'UPLOAD' | 'WORKFLOW_LIST' | 'DATA_COMPARISON_JOBS' | 'DATA_COMPARISON_WORKFLOW' | 'DATA_COMPARISON_RULE' | 'DATA_COMPARISON_WORKFLOW_BUILDER' | 'SETTINGS_DOC_TYPE_MASTER' | 'SETTINGS_LABEL_SCHEMA' | 'SETTINGS_MASTER_DATA' | 'SETTINGS_JOB_PRESET' | 'SETTINGS_OCR_TUNING') => void;
+  onNavigate: (view: 'TRACKING' | 'AGENT_LIST' | 'UPLOAD' | 'WORKFLOW_LIST' | 'DATA_COMPARISON_JOBS' | 'DATA_COMPARISON_WORKFLOW' | 'DATA_COMPARISON_RULE' | 'DATA_COMPARISON_WORKFLOW_BUILDER' | 'SETTINGS_DOC_TYPE_MASTER' | 'SETTINGS_LABEL_SCHEMA' | 'SETTINGS_MASTER_DATA' | 'SETTINGS_JOB_PRESET' | 'SETTINGS_OCR_TUNING_TRACKING' | 'SETTINGS_OCR_TUNING') => void;
   onNotificationClick: (jobId: string) => void;
 }
 
@@ -418,7 +418,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentUserRole, onTog
                   {currentUserRole === UserRole.ADMIN && (
                     <button
                       onClick={() => {
-                        onNavigate('SETTINGS_OCR_TUNING');
+                        onNavigate('SETTINGS_OCR_TUNING_TRACKING');
                         setActiveMenu('settings_ocr_tuning');
                         setProfileOpen(false);
                       }}
