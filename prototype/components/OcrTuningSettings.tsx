@@ -88,10 +88,10 @@ const mutateValue = (value: string, seed: number): string => {
 };
 
 interface TestFieldResult { fieldId: string; fieldName: string; friendlyName?: string; expected: string; value: string; matched: boolean; blank: boolean; }
-const mockTestField = (field: SchemaLabel, seed: string): TestFieldResult => {
+const mockTestField = (field: SchemaLabel, seed: string, forcePerfect?: boolean): TestFieldResult => {
   const h = hashString(field.id + '|' + seed);
   const expected = buildMockValue(field, h);
-  const bucket = h % 10;
+  const bucket = forcePerfect ? 0 : h % 10;
   if (bucket < 7) return { fieldId: field.id, fieldName: field.name || '—', friendlyName: field.friendlyName, expected, value: expected, matched: true, blank: false };
   if (bucket < 9) return { fieldId: field.id, fieldName: field.name || '—', friendlyName: field.friendlyName, expected, value: mutateValue(expected, h), matched: false, blank: false };
   return { fieldId: field.id, fieldName: field.name || '—', friendlyName: field.friendlyName, expected, value: '', matched: false, blank: true };
@@ -500,7 +500,8 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
     const map: Record<string, TestFieldResult> = {};
     if (!activeConfig || !testFile) return map;
     const seed = `${testFile.name}|${testPage}|${retestNonce}`;
-    activeConfig.labels.forEach(f => { map[f.id] = mockTestField(f, seed); });
+    // Page 1 always reads perfectly — gives the demo at least one page that hits 100%.
+    activeConfig.labels.forEach(f => { map[f.id] = mockTestField(f, seed, testPage === 1); });
     return map;
   }, [activeConfig, testFile, testPage, retestNonce]);
 
