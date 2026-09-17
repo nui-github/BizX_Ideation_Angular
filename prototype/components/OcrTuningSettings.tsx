@@ -917,17 +917,17 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                       </select>
                     </div>
                     {unreadableCount > 0 && (
-                      <p className="inline-block px-2.5 py-1 rounded-[4px] bg-rose-50 border border-rose-200 text-rose-600 text-xs font-bold whitespace-nowrap shrink-0">
+                      <p className="h-8 inline-flex items-center px-2.5 rounded-[4px] bg-rose-50 border border-rose-200 text-rose-600 text-xs font-bold whitespace-nowrap shrink-0">
                         {t(`อ่านไม่ได้ ${unreadableCount} ฟิลด์`, `${unreadableCount} field(s) unreadable`)}
                       </p>
                     )}
-                    <span className={`px-2.5 py-1 rounded-[4px] border text-xs font-bold whitespace-nowrap shrink-0 ${accuracyPct === 100 ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-amber-50 border-amber-200 text-amber-700'}`}>
+                    <span className={`h-8 inline-flex items-center px-2.5 rounded-[4px] border text-xs font-bold whitespace-nowrap shrink-0 ${accuracyPct === 100 ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-amber-50 border-amber-200 text-amber-700'}`}>
                       {t(`ความถูกต้อง ${accuracyStats.matchedCount}/${accuracyStats.total} (${accuracyPct}%)`, `Accuracy ${accuracyStats.matchedCount}/${accuracyStats.total} (${accuracyPct}%)`)}
                     </span>
                     <button
                       onClick={() => setOnlyMismatched(v => !v)}
                       disabled={mismatchCount === 0}
-                      className={`px-3 py-1.5 rounded-[4px] border text-xs font-bold cursor-pointer whitespace-nowrap shrink-0 disabled:cursor-not-allowed disabled:opacity-60 ${
+                      className={`h-8 px-3 rounded-[4px] border text-xs font-bold cursor-pointer whitespace-nowrap shrink-0 disabled:cursor-not-allowed disabled:opacity-60 ${
                         onlyMismatched ? 'bg-[#1f5df9] border-[#1f5df9] text-white' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                       }`}
                     >
