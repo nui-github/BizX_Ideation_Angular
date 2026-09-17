@@ -866,16 +866,6 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                     >
                       {isTesting ? t('กำลังทดสอบ...', 'Testing...') : t('ทดสอบอีกครั้ง', 'Test again')}
                     </button>
-                    <div className="flex items-center gap-2 ml-auto shrink-0">
-                      <label className="text-xs font-black text-slate-500 uppercase tracking-widest shrink-0">{t('เลือกหน้า', 'Page')}</label>
-                      <select
-                        value={testPage}
-                        onChange={(e) => setTestPage(Number(e.target.value))}
-                        className="h-[38px] px-3 rounded-[4px] border border-slate-200 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
-                      >
-                        {testPageOptions.map(p => <option key={p} value={p}>{t(`หน้า ${p}`, `Page ${p}`)}</option>)}
-                      </select>
-                    </div>
                   </>
                 ) : (
                   <button
@@ -903,7 +893,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder={t('ค้นหาชื่อฟิลด์หรือความหมาย', 'Search field name or meaning')}
-                      className="w-full pl-8 pr-3 py-2 text-sm border border-slate-200 rounded-[4px] focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
+                      className="h-8 w-full pl-8 pr-3 text-sm border border-slate-200 rounded-[4px] focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
                     />
                     <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
                   </div>
@@ -916,7 +906,16 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                   </label>
                 </div>
                 {testFile && (
-                  <div className="flex items-center justify-end gap-2 flex-wrap w-full lg:w-[calc(60%-6px)]">
+                  <div className="flex items-center justify-start lg:justify-end gap-2 flex-wrap w-full lg:w-[calc(60%-6px)]">
+                    <div className="flex items-center gap-2 shrink-0">
+                      <select
+                        value={testPage}
+                        onChange={(e) => setTestPage(Number(e.target.value))}
+                        className="h-8 px-3 rounded-[4px] border border-slate-200 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
+                      >
+                        {testPageOptions.map(p => <option key={p} value={p}>{t(`หน้า ${p}`, `Page ${p}`)}</option>)}
+                      </select>
+                    </div>
                     {unreadableCount > 0 && (
                       <p className="inline-block px-2.5 py-1 rounded-[4px] bg-rose-50 border border-rose-200 text-rose-600 text-xs font-bold whitespace-nowrap shrink-0">
                         {t(`อ่านไม่ได้ ${unreadableCount} ฟิลด์`, `${unreadableCount} field(s) unreadable`)}
