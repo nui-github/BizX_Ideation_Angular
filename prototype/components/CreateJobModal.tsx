@@ -430,7 +430,8 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({
                 type="text"
                 value={shipmentName}
                 onChange={(e) => setShipmentName(e.target.value)}
-                className="w-full bg-white border border-slate-200 rounded-[4px] px-3.5 py-2.5 text-sm font-black text-[#010136] font-sans placeholder:font-normal placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-[#1f5df9]/10 focus:border-[#1f5df9] transition-all"
+                disabled={hasNoPresets}
+                className="w-full bg-white border border-slate-200 rounded-[4px] px-3.5 py-2.5 text-sm font-black text-[#010136] font-sans placeholder:font-normal placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-[#1f5df9]/10 focus:border-[#1f5df9] transition-all disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
                 placeholder={shipmentPlaceholder}
               />
               <p className="text-[10px] text-slate-400 font-bold mt-1.5">
