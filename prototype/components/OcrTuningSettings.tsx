@@ -6,7 +6,7 @@ import {
   Save, RotateCcw, Search, Sparkles, Trash2, ArrowLeft, Info
 } from 'lucide-react';
 import { Language, DocType } from '../types';
-import { LabelSchema, SchemaLabel, DocTypeSchemaConfig, DEFAULT_SCHEMAS, CURRENT_USER_NAME, CURRENT_USER_TEAM } from './LabelSchemaSettings';
+import { LabelSchema, SchemaLabel, DocTypeSchemaConfig, DEFAULT_SCHEMAS, CURRENT_USER_NAME } from './LabelSchemaSettings';
 
 interface OcrTuningSettingsProps {
   language: Language;
@@ -15,6 +15,9 @@ interface OcrTuningSettingsProps {
   // Set when arriving from the "Schema ของทีม" tracking list to edit a specific schema — jumps
   // straight into edit mode instead of starting fresh at step 1.
   initialEditKey?: string;
+  // Team a newly-created schema is stamped with — switchable from the profile menu so QA can
+  // preview the app as a member of any team. Defaults to Operation.
+  currentTeam?: string;
 }
 
 type Section = 'Header' | 'Description' | 'Footer';
@@ -161,7 +164,7 @@ const FIELD_GLOSSARY: Record<string, GlossaryEntry> = {
 const cloneSchema = (schema: LabelSchema): LabelSchema => JSON.parse(JSON.stringify(schema));
 const genId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
-export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, docTypes, onBack, initialEditKey }) => {
+export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, docTypes, onBack, initialEditKey, currentTeam = 'operation' }) => {
   const isTh = language === 'TH';
   const t = (th: string, en: string) => (isTh ? th : en);
   const docTypeName = (id: string) => docTypes.find(d => d.id === id)?.name || id;
@@ -286,7 +289,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
       ? { ...draftSchema, name: nameDraft.trim(), docTypes: [nameDocTypeId], configs: [config] }
       : {
           id: genId('ls'), name: nameDraft.trim(), description: '', docTypes: [nameDocTypeId],
-          workflowIds: [], assignedTeams: ['ALL'], createdBy: CURRENT_USER_NAME, createdByTeam: CURRENT_USER_TEAM,
+          workflowIds: [], assignedTeams: ['ALL'], createdBy: CURRENT_USER_NAME, createdByTeam: currentTeam,
           createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), configs: [config],
         };
     setDraftSchema(schema);

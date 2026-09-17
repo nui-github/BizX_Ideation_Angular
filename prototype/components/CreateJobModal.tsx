@@ -3,7 +3,7 @@ import { Drawer, message } from 'antd';
 import {
   AlertCircle, Plus, Trash2, ArrowRight, CheckCircle,
   User, Layers, HelpCircle, Briefcase, FileText,
-  GripVertical, Link2, Link2Off, X, Sparkles
+  GripVertical, X, Sparkles
 } from 'lucide-react';
 import { ComparisonJob, JobStatus, Workflow, ComparisonDocStatus, JobPreset } from '../types';
 import { MOCK_TEAMS } from '../mock-data/teams.mock';
@@ -42,6 +42,11 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({
   // Shipment creation is locked to the chosen preset — the user can only name the shipment;
   // the child job sequence comes pre-filled and read-only.
   const isPresetLocked = !prefilledReference && !!selectedPreset && selectedPreset.workflows.length > 0;
+
+  // Team has no shipment preset configured at all — only a team admin can set one up (via a
+  // menu regular users can't reach), so block shipment creation entirely instead of letting
+  // them build one manually.
+  const hasNoPresets = !prefilledReference && !!teamPresets && teamPresets.length === 0;
 
   // State for single job mode (used when prefilledReference is present)
   const [singleWorkflowId, setSingleWorkflowId] = useState<string | null>(null);
@@ -135,112 +140,15 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({
     return format;
   };
 
-  // Helper to check workflow relations in multiple child jobs
-  const checkWorkflowRelations = (): { isValid: boolean; errorIndex: number | null; errorMsg: string | null } => {
-    if (prefilledReference) {
-      if (!previousWorkflowId || !singleWorkflowId) {
-        return { isValid: true, errorIndex: null, errorMsg: null };
-      }
-      const prevWf = workflows.find(w => w.id === previousWorkflowId);
-      const newWf = workflows.find(w => w.id === singleWorkflowId);
-      
-      if (!prevWf || !newWf) return { isValid: true, errorIndex: null, errorMsg: null };
-      
-      const sendToNode = prevWf.nodes.find(node => node.type === 'send_to');
-      if (!sendToNode || sendToNode.data?.nextWorkflowId !== newWf.id) {
-        const msg = isTh 
-          ? `เวิร์กโฟลว์ก่อนหน้า "${prevWf.name}" ไม่มีความสัมพันธ์ส่งต่องานไปยัง "${newWf.name}"`
-          : `Previous workflow "${prevWf.name}" does not have a forward node routing to "${newWf.name}"`;
-        return { isValid: false, errorIndex: 0, errorMsg: msg };
-      }
-      return { isValid: true, errorIndex: null, errorMsg: null };
-    }
-
-    for (let i = 0; i < childJobs.length - 1; i++) {
-      const current = childJobs[i];
-      const next = childJobs[i + 1];
-
-      if (!current.workflowId || !next.workflowId) {
-        continue; // Skip check if either is not selected yet
-      }
-
-      const currentWf = workflows.find(w => w.id === current.workflowId);
-      const nextWf = workflows.find(w => w.id === next.workflowId);
-
-      if (!currentWf || !nextWf) continue;
-
-      // Check if currentWf contains a 'send_to' node pointing to nextWf.id
-      const sendToNode = currentWf.nodes.find(node => node.type === 'send_to');
-      const targetWfId = sendToNode?.data?.nextWorkflowId;
-
-      if (!sendToNode || targetWfId !== nextWf.id) {
-        const msg = isTh 
-          ? `เวิร์กโฟลว์ "${currentWf.name}" ไม่มีความสัมพันธ์ส่งต่องานไปยัง "${nextWf.name}"`
-          : `Workflow "${currentWf.name}" does not have a forward node routing to "${nextWf.name}"`;
-        return { isValid: false, errorIndex: i, errorMsg: msg };
-      }
-    }
-
-    return { isValid: true, errorIndex: null, errorMsg: null };
-  };
-
-  const getRelationInfo = (current: ChildJobConfig, next: ChildJobConfig) => {
-    if (!current.workflowId || !next.workflowId) {
-      return {
-        status: 'pending',
-        text: isTh ? 'รอเลือกเวิร์กโฟลว์ของทั้งสองรายการ' : 'Waiting for both workflows to be selected',
-      };
-    }
-
-    const currentWf = workflows.find(w => w.id === current.workflowId);
-    const nextWf = workflows.find(w => w.id === next.workflowId);
-
-    if (!currentWf || !nextWf) {
-      return {
-        status: 'pending',
-        text: isTh ? 'รอเลือกเวิร์กโฟลว์ของทั้งสองรายการ' : 'Waiting for both workflows to be selected',
-      };
-    }
-
-    const sendToNode = currentWf.nodes.find(node => node.type === 'send_to');
-    const targetWfId = sendToNode?.data?.nextWorkflowId;
-
-    if (sendToNode && targetWfId === nextWf.id) {
-      return {
-        status: 'connected',
-        text: isTh 
-          ? `สัมพันธ์กัน: "${currentWf.name}" ➔ ส่งต่อให้ "${nextWf.name}"` 
-          : `Connected: "${currentWf.name}" ➔ routes to "${nextWf.name}"`,
-      };
-    } else {
-      return {
-        status: 'disconnected',
-        text: isTh 
-          ? `ไม่สัมพันธ์กัน: "${currentWf.name}" ไม่สามารถส่งต่อให้ "${nextWf.name}" ได้` 
-          : `Not Connected: "${currentWf.name}" does not route to "${nextWf.name}"`,
-      };
-    }
-  };
-
-  const validationResult = checkWorkflowRelations();
-
-  useEffect(() => {
-    if (!isPresetLocked && !validationResult.isValid && validationResult.errorMsg) {
-      message.error({
-        content: validationResult.errorMsg,
-        key: 'workflow-routing-error',
-        duration: 4,
-      });
-    }
-  }, [isPresetLocked, validationResult.isValid, validationResult.errorMsg]);
-
   // Preset-locked sequences are pre-approved by the team's admin — only the shipment name
-  // needs to be valid; the chain-routing check doesn't gate submission.
+  // needs to be valid.
   const isFormInvalid = prefilledReference
-    ? (!singleWorkflowId || !validationResult.isValid)
+    ? !singleWorkflowId
+    : hasNoPresets
+    ? true
     : isPresetLocked
     ? !shipmentName.trim()
-    : (!validationResult.isValid || !shipmentName.trim() || childJobs.some(j => !j.workflowId));
+    : (!shipmentName.trim() || childJobs.some(j => !j.workflowId));
 
   const handleAddChildJobRow = () => {
     const newId = `cj-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
@@ -335,16 +243,6 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({
         return;
       }
 
-      // Check workflow relations sequence
-      const relationCheck = checkWorkflowRelations();
-      if (!relationCheck.isValid) {
-        message.error(isTh 
-          ? `ไม่สามารถสร้างรายการได้เนื่องจากความสัมพันธ์ของเวิร์กโฟลว์ไม่สัมพันธ์กัน: ${relationCheck.errorMsg}` 
-          : `Cannot create shipment due to workflow incompatibility: ${relationCheck.errorMsg}`
-        );
-        return;
-      }
-
       // Create jobs for each configuration
       const createdJobsList: ComparisonJob[] = [];
       const nowMs = Date.now();
@@ -369,7 +267,9 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({
 
         const docTypes: string[] = createJobNode.data.docTypes;
         const jobName: string = createJobNode.data.jobName || workflow.name;
-        const assigneeValue = config.assignee === 'unassigned' ? undefined : config.assignee;
+        const assignedTeamValue = isPresetLocked
+          ? selectedPreset?.workflows[i]?.assignedTeams?.[0]
+          : (config.assignee === 'unassigned' ? undefined : config.assignee || undefined);
 
         createdJobsList.push({
           id: `job-${nowMs}-${i}`,
@@ -382,8 +282,8 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({
             acc[type] = ComparisonDocStatus.MISSING;
             return acc;
           }, {} as Record<string, any>),
-          assignee: assigneeValue || undefined,
-          assignedTeam: isPresetLocked ? selectedPreset?.workflows[i]?.assignedTeams?.[0] : undefined,
+          assignee: undefined,
+          assignedTeam: assignedTeamValue,
           workflowName: `${jobName} [${extractedPrefix}${finalSuffix}]`,
           progress: 0,
           totalDocs: docTypes.length,
@@ -482,26 +382,6 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({
               </select>
             </div>
 
-            {/* Inline Alert / Warning Banner for Single Job */}
-            {!validationResult.isValid && prefilledReference && (
-              <div className="mt-4 flex items-start gap-2.5 p-3.5 bg-rose-50 border border-rose-100 rounded-[4px] animate-in fade-in slide-in-from-top-1 duration-200">
-                <AlertCircle className="text-rose-500 shrink-0" size={16} />
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-black text-rose-800 uppercase tracking-wider mb-0.5">
-                    {isTh ? 'ตรวจพบความไม่สัมพันธ์กันของเวิร์กโฟลว์' : 'Incompatible Workflow Routing'}
-                  </span>
-                  <span className="text-xs text-rose-700 font-bold leading-relaxed">
-                    {validationResult.errorMsg}
-                  </span>
-                  <span className="text-[10px] text-rose-600 mt-1 font-semibold">
-                    {isTh 
-                      ? 'คำแนะนำ: ตรวจสอบให้มั่นใจว่าเวิร์กโฟลว์ก่อนหน้ามีโหนด "ส่งต่องาน (Send to other app)" ที่ถูกกำหนดให้ส่งไปยังเวิร์กโฟลว์นี้'
-                      : 'Tip: Make sure the previous workflow contains a "Send to other app" node configured to route to this workflow.'}
-                  </span>
-                </div>
-              </div>
-            )}
-
             {singleWorkflowId && workflows.find(w => w.id === singleWorkflowId)?.nodes.some(n => n.type === 'create_job') && (
               <div className="animate-in fade-in slide-in-from-top-2 duration-300 bg-slate-50 p-4 rounded-[8px] border border-slate-100">
                 <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1.5">
@@ -585,6 +465,24 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({
               </div>
             )}
 
+            {/* No preset configured for this team yet — regular users can't reach the admin-only
+                setup menu themselves, so point them to their team admin instead. */}
+            {teamPresets && teamPresets.length === 0 && (
+              <div className="flex items-start gap-2.5 p-3.5 bg-amber-50 border border-amber-200 rounded-[8px]">
+                <AlertCircle className="text-amber-500 shrink-0" size={16} />
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-black text-amber-700 uppercase tracking-wider mb-0.5">
+                    {isTh ? 'ทีมนี้ยังไม่มีชุด Shipment เริ่มต้น' : 'No starting shipment set yet'}
+                  </span>
+                  <span className="text-xs text-amber-800/80 font-bold leading-relaxed">
+                    {isTh
+                      ? 'ให้ติดต่อแอดมินของทีมเพื่อช่วยตั้งค่าชุด Shipment ก่อน — จะช่วยให้สร้างรายการย่อยได้เร็วขึ้นในครั้งถัดไป'
+                      : "Ask your team admin to set one up — it'll make creating shipments faster next time."}
+                  </span>
+                </div>
+              </div>
+            )}
+
             {/* Preset-locked notice */}
             {isPresetLocked && (
               <div className="flex items-start gap-2.5 p-3.5 bg-blue-50 border border-blue-100 rounded-[8px]">
@@ -603,7 +501,7 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({
             )}
 
             {/* Child Jobs Sequence Visualization (Visual Flowchart) */}
-            {!isPresetLocked && (
+            {!isPresetLocked && !hasNoPresets && (
             <div className="border border-slate-100 rounded-[8px] p-4 bg-slate-50/30">
               <div className="flex items-center gap-1.5 mb-3">
                 <Layers size={14} className="text-[#1f5df9]" />
@@ -619,15 +517,6 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({
                     : (isTh ? 'เลือกเวิร์กโฟลว์...' : 'Select Workflow...');
                   
                   const isLast = idx === childJobs.length - 1;
-                  
-                  // Check compatibility with the next workflow
-                  let isNextCompatible = true;
-                  if (!isLast && job.workflowId && childJobs[idx + 1].workflowId) {
-                    const currentWf = workflows.find(w => w.id === job.workflowId);
-                    const nextWf = workflows.find(w => w.id === childJobs[idx + 1].workflowId);
-                    const sendToNode = currentWf?.nodes.find(n => n.type === 'send_to');
-                    isNextCompatible = !!sendToNode && sendToNode.data?.nextWorkflowId === nextWf?.id;
-                  }
 
                   return (
                     <React.Fragment key={job.id}>
@@ -642,7 +531,9 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({
                             <span className="text-[9px] font-bold text-[#1f5df9] mt-0.5 flex items-center gap-1">
                               <User size={10} className="text-[#1f5df9]/70 shrink-0" />
                               <span className="truncate max-w-[140px]">
-                                {job.assignee && job.assignee !== 'unassigned' ? job.assignee : (isTh ? 'ยังไม่กำหนด' : 'Unassigned')}
+                                {job.assignee && job.assignee !== 'unassigned'
+                                  ? (MOCK_TEAMS.find(t => t.value === job.assignee)?.label || job.assignee)
+                                  : (isTh ? 'ยังไม่กำหนด' : 'Unassigned')}
                               </span>
                             </span>
                           )}
@@ -650,46 +541,17 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({
                       </div>
                       
                       {!isLast && (
-                        <div className="flex flex-col items-center">
-                          <ArrowRight 
-                            size={16} 
-                            className={isNextCompatible ? 'text-[#16EA9E]' : 'text-rose-500 animate-pulse'} 
-                          />
-                          {!isNextCompatible && (
-                            <span className="text-[8px] font-black text-rose-500 uppercase tracking-tight px-1 bg-rose-50 border border-rose-100 rounded-[2px] mt-0.5">
-                              {isTh ? 'ไม่สัมพันธ์' : 'Broken'}
-                            </span>
-                          )}
-                        </div>
+                        <ArrowRight size={16} className="text-[#16EA9E]" />
                       )}
                     </React.Fragment>
                   );
                 })}
               </div>
-
-              {/* Inline Alert / Warning Banner */}
-              {!isPresetLocked && !validationResult.isValid && (
-                <div className="mt-4 flex items-start gap-2.5 p-3.5 bg-rose-50 border border-rose-100 rounded-[4px] animate-in fade-in slide-in-from-top-1 duration-200">
-                  <AlertCircle className="text-rose-500 shrink-0" size={16} />
-                  <div className="flex flex-col">
-                    <span className="text-[10px] font-black text-rose-800 uppercase tracking-wider mb-0.5">
-                      {isTh ? 'ตรวจพบความไม่สัมพันธ์กันของเวิร์กโฟลว์' : 'Incompatible Workflow Routing'}
-                    </span>
-                    <span className="text-xs text-rose-700 font-bold leading-relaxed">
-                      {validationResult.errorMsg}
-                    </span>
-                    <span className="text-[10px] text-rose-600 mt-1 font-semibold">
-                      {isTh
-                        ? 'คำแนะนำ: ตรวจสอบให้มั่นใจว่าเวิร์กโฟลว์ก่อนหน้ามีโหนด "ส่งต่องาน (Send to other app)" ที่ถูกกำหนดให้ส่งไปยังเวิร์กโฟลว์ถัดไป'
-                        : 'Tip: Make sure the previous workflow contains a "Send to other app" node configured to route to the next workflow.'}
-                    </span>
-                  </div>
-                </div>
-              )}
             </div>
             )}
 
             {/* Child Jobs Rows Setup */}
+            {!hasNoPresets && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex flex-col">
@@ -809,12 +671,10 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({
                             </div>
                           </div>
 
-                          {/* Assignee: individual user, or the preset's assigned team when locked */}
+                          {/* Assigned team: fixed from the preset when locked, otherwise picked here */}
                           <div className="md:col-span-3">
                             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                              {isPresetLocked
-                                ? (isTh ? 'ทีมที่รับผิดชอบ' : 'Assigned Team')
-                                : (isTh ? 'Assignee (ผู้รับผิดชอบ)' : 'Assignee')}
+                              {isTh ? 'ทีมที่รับผิดชอบ' : 'Assigned Team'}
                             </label>
                             {isPresetLocked ? (
                               <input
@@ -834,9 +694,9 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({
                                 disabled={!job.workflowId}
                               >
                                 <option value="unassigned">{isTh ? 'ยังไม่กำหนด' : 'Unassigned'}</option>
-                                <option value="Kunawut W.">Kunawut W.</option>
-                                <option value="Somchai T.">Somchai T.</option>
-                                <option value="System">System</option>
+                                {MOCK_TEAMS.map(team => (
+                                  <option key={team.value} value={team.value}>{team.label}</option>
+                                ))}
                               </select>
                             )}
                           </div>
@@ -862,38 +722,12 @@ export const CreateJobModal: React.FC<CreateJobModalProps> = ({
                         </div>
                       </div>
 
-                      {/* Connection relation badge between rows */}
-                      {!isPresetLocked && idx < childJobs.length - 1 && (() => {
-                        const rel = getRelationInfo(job, childJobs[idx + 1]);
-                        return (
-                          <div className="flex items-center justify-center my-1 relative py-0.5">
-                            {/* Vertical connecting line */}
-                            <div className="absolute top-[-10px] bottom-[-10px] left-1/2 -translate-x-1/2 w-[2px] border-l-2 border-dashed border-slate-200 -z-0"></div>
-                            
-                            {rel.status === 'connected' ? (
-                              <div className="z-10 flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-[10px] font-bold shadow-sm animate-in zoom-in-95 duration-200">
-                                <Link2 size={12} className="text-emerald-500 shrink-0" />
-                                <span>{rel.text}</span>
-                              </div>
-                            ) : rel.status === 'disconnected' ? (
-                              <div className="z-10 flex items-center gap-1.5 px-3 py-1 bg-rose-50 text-rose-700 border border-rose-200 rounded-full text-[10px] font-bold shadow-sm animate-in zoom-in-95 duration-200 animate-pulse">
-                                <Link2Off size={12} className="text-rose-500 shrink-0" />
-                                <span>{rel.text}</span>
-                              </div>
-                            ) : (
-                              <div className="z-10 flex items-center gap-1.5 px-3 py-1 bg-slate-50 text-slate-400 border border-slate-200 rounded-full text-[10px] font-bold shadow-sm">
-                                <Link2 size={12} className="text-slate-400 shrink-0" />
-                                <span>{rel.text}</span>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })()}
                     </React.Fragment>
                   );
                 })}
               </div>
             </div>
+            )}
           </div>
         )}
       </div>

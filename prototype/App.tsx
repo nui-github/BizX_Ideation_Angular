@@ -896,6 +896,9 @@ function App() {
   const [selectedWorkflow, setSelectedWorkflow] = useState<Workflow | undefined>(undefined);
 
   const [role, setRole] = useState<UserRole>(UserRole.ADMIN);
+  // Which team the signed-in user is acting as — switchable from the profile menu (Layout) so
+  // QA can preview team-scoped views without a real multi-account login.
+  const [currentTeam, setCurrentTeam] = useState<string>('operation');
   const [logs, setLogs] = useState<AuditLog[]>(MOCK_LOGS);
   const [language, setLanguage] = useState<Language>('TH'); // Default to TH based on screenshot
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -1291,12 +1294,14 @@ function App() {
 
   return (
       <Layout
-        currentUserRole={role} 
-        onToggleRole={toggleRole} 
-        language={language} 
+        currentUserRole={role}
+        onToggleRole={toggleRole}
+        language={language}
         onLanguageChange={setLanguage}
         onNavigate={handleNavigate}
         onNotificationClick={handleNotificationClick}
+        currentTeam={currentTeam}
+        onTeamChange={setCurrentTeam}
       >
         {currentView === 'TRACKING' && (
            <TrackingPage 
@@ -1384,6 +1389,7 @@ function App() {
             role={role}
             targetJobId={notifyTargetJobId}
             onConsumeTargetJobId={() => setNotifyTargetJobId(null)}
+            currentTeam={currentTeam}
           />
         )}
 
@@ -1550,6 +1556,7 @@ function App() {
             docTypes={docTypes}
             onCreateNew={() => { setOcrTuningEditKey(undefined); setCurrentView('SETTINGS_OCR_TUNING'); }}
             onEditSchema={(key) => { setOcrTuningEditKey(key); setCurrentView('SETTINGS_OCR_TUNING'); }}
+            currentTeam={currentTeam}
           />
         )}
 
@@ -1559,6 +1566,7 @@ function App() {
             docTypes={docTypes}
             initialEditKey={ocrTuningEditKey}
             onBack={() => setCurrentView('SETTINGS_OCR_TUNING_TRACKING')}
+            currentTeam={currentTeam}
           />
         )}
 

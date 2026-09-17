@@ -28,9 +28,6 @@ import { TRANSLATIONS } from '../translations';
 import { MOCK_PRESETS } from '../mock-data/preset.mock';
 import { MOCK_TEAMS } from '../mock-data/teams.mock';
 
-// Mirrors the "ทีม OPERATION" badge shown in the sidebar profile menu (Layout.tsx) —
-// there's no real auth/session concept yet, so the current user's team is fixed here.
-const CURRENT_USER_TEAM = 'operation';
 const CURRENT_USER_NAME = 'Kunawut W.';
 
 // Mock brand list for the per-file "Template" picker on Replace & Merge uploads —
@@ -261,6 +258,9 @@ interface DataComparisonProps {
   role?: UserRole;
   targetJobId?: string | null;
   onConsumeTargetJobId?: () => void;
+  // Which team's shipment presets etc. to scope this view to — switchable from the profile
+  // menu so QA can preview the app as a member of any team. Defaults to Operation.
+  currentTeam?: string;
 }
 
 export const AVAILABLE_DOC_TYPES = [
@@ -393,7 +393,7 @@ const getDetailedDiffExplanation = (targetVal: string, masterVal: string, lang: 
   return lang === 'TH' ? 'ค่าต่างกันบางส่วน' : 'Partially different value';
 };
 
-export const DataComparison: React.FC<DataComparisonProps> = ({ language, trackingItems, role = UserRole.USER, targetJobId, onConsumeTargetJobId }) => {
+export const DataComparison: React.FC<DataComparisonProps> = ({ language, trackingItems, role = UserRole.USER, targetJobId, onConsumeTargetJobId, currentTeam = 'operation' }) => {
   const t = TRANSLATIONS[language];
   
   const getMismatchRule = (fieldName: string, part: string, ruleTitleOverride?: string, ruleDescOverride?: string) => {
@@ -827,7 +827,7 @@ export const DataComparison: React.FC<DataComparisonProps> = ({ language, tracki
   const [showCreateJobModal, setShowCreateJobModal] = useState(false);
   // Job presets assigned to the current user's team (Job Preset Settings) — a team can match
   // multiple presets, so the user picks a starting one from a dropdown when creating a shipment.
-  const teamPresets = MOCK_PRESETS.filter(p => p.isActive && p.assignedTeams.includes(CURRENT_USER_TEAM));
+  const teamPresets = MOCK_PRESETS.filter(p => p.isActive && p.assignedTeams.includes(currentTeam));
   const [rejectFileTargetDocName, setRejectFileTargetDocName] = useState<string | null>(null);
   const [pendingFilter, setPendingFilter] = useState('All');
   const [collapsedParts, setCollapsedParts] = useState<Record<string, boolean>>({

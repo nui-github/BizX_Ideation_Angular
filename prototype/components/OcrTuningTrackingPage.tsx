@@ -2,13 +2,16 @@ import React, { useState, useMemo } from 'react';
 import { Modal, Drawer, Tooltip } from 'antd';
 import { Plus, Search, Layers, History, Pencil, Trash2, Inbox } from 'lucide-react';
 import { Language, DocType } from '../types';
-import { LabelSchema, DEFAULT_SCHEMAS, CURRENT_USER_TEAM } from './LabelSchemaSettings';
+import { LabelSchema, DEFAULT_SCHEMAS } from './LabelSchemaSettings';
 
 interface OcrTuningTrackingPageProps {
   language: Language;
   docTypes: DocType[];
   onCreateNew: () => void;
   onEditSchema: (editKey: string) => void;
+  // Which team's own schemas to scope this list to — switchable from the profile menu so QA
+  // can preview the app as a member of any team. Defaults to Operation.
+  currentTeam?: string;
 }
 
 const formatDate = (dateStr: string, isTh: boolean) => {
@@ -73,7 +76,7 @@ const buildMockHistory = (schema: LabelSchema, isTh: boolean): MockHistoryEntry[
   return entries;
 };
 
-export const OcrTuningTrackingPage: React.FC<OcrTuningTrackingPageProps> = ({ language, docTypes, onCreateNew, onEditSchema }) => {
+export const OcrTuningTrackingPage: React.FC<OcrTuningTrackingPageProps> = ({ language, docTypes, onCreateNew, onEditSchema, currentTeam = 'operation' }) => {
   const isTh = language === 'TH';
   const t = (th: string, en: string) => (isTh ? th : en);
   const docTypeName = (id: string) => docTypes.find(d => d.id === id)?.name || id;
@@ -90,10 +93,10 @@ export const OcrTuningTrackingPage: React.FC<OcrTuningTrackingPageProps> = ({ la
   const [historyTarget, setHistoryTarget] = useState<LabelSchema | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<LabelSchema | null>(null);
 
-  // Only schemas created by someone on my own team — matches Layout's hardcoded "ทีม OPERATION" user.
+  // Only schemas created by someone on my own team — matches the team picked in the profile menu.
   const teamSchemas = useMemo(
-    () => schemas.filter(s => (s.createdByTeam || 'operation') === CURRENT_USER_TEAM),
-    [schemas]
+    () => schemas.filter(s => (s.createdByTeam || 'operation') === currentTeam),
+    [schemas, currentTeam]
   );
 
   const filteredSchemas = useMemo(() => {
