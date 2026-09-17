@@ -896,25 +896,27 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
               <p className="text-xs text-slate-400 mb-3">{t('ให้ AI อ่านเอกสาร ด้วยฟิลด์และคำอธิบายที่ยังไม่ได้บันทึก — แก้คำอธิบายในตารางด้านล่างแล้วทดสอบอีกครั้งได้', "Reads the document using this draft's fields and hints, even before they're saved — adjust hints below then test again")}</p>
 
               <div className="flex items-center gap-3 flex-wrap mb-3">
-                <div className="relative flex-1 min-w-[200px]">
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={t('ค้นหาชื่อฟิลด์หรือความหมาย', 'Search field name or meaning')}
-                    className="w-full pl-8 pr-3 py-2 text-sm border border-slate-200 rounded-[4px] focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
-                  />
-                  <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
+                <div className="flex items-center gap-3 flex-wrap w-full lg:w-[calc(40%-6px)]">
+                  <div className="relative flex-1 min-w-[160px]">
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder={t('ค้นหาชื่อฟิลด์หรือความหมาย', 'Search field name or meaning')}
+                      className="w-full pl-8 pr-3 py-2 text-sm border border-slate-200 rounded-[4px] focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#1f5df9]"
+                    />
+                    <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
+                  </div>
+                  <label className="flex items-center gap-2 text-[13px] font-bold text-slate-600 cursor-pointer shrink-0">
+                    <Switch size="small" checked={onlyMissingHints} onChange={setOnlyMissingHints} />
+                    {t('เฉพาะที่ยังไม่มีคำอธิบาย', 'Missing a hint only')}
+                    {missingHintCount > 0 && (
+                      <span className="px-1.5 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-700 text-[11px] font-black">{missingHintCount}</span>
+                    )}
+                  </label>
                 </div>
-                <label className="flex items-center gap-2 text-[13px] font-bold text-slate-600 cursor-pointer shrink-0">
-                  <Switch size="small" checked={onlyMissingHints} onChange={setOnlyMissingHints} />
-                  {t('เฉพาะที่ยังไม่มีคำอธิบาย', 'Missing a hint only')}
-                  {missingHintCount > 0 && (
-                    <span className="px-1.5 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-700 text-[11px] font-black">{missingHintCount}</span>
-                  )}
-                </label>
                 {testFile && (
-                  <>
+                  <div className="flex items-center justify-end gap-2 flex-wrap w-full lg:w-[calc(60%-6px)]">
                     {unreadableCount > 0 && (
                       <p className="inline-block px-2.5 py-1 rounded-[4px] bg-rose-50 border border-rose-200 text-rose-600 text-xs font-bold whitespace-nowrap shrink-0">
                         {t(`อ่านไม่ได้ ${unreadableCount} ฟิลด์`, `${unreadableCount} field(s) unreadable`)}
@@ -932,7 +934,7 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                     >
                       {t(`ดูเฉพาะฟิลด์ที่ไม่ตรง (${mismatchCount})`, `Show mismatches only (${mismatchCount})`)}
                     </button>
-                  </>
+                  </div>
                 )}
               </div>
 
