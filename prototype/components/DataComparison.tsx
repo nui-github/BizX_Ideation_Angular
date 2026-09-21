@@ -6328,6 +6328,64 @@ const mockWorkflows: Workflow[] = [
             </div>
 
             <div className="p-6 bg-slate-50/30 flex flex-col gap-6 overflow-y-auto flex-1 min-h-0 custom-scrollbar">
+              {/* Replace vs Merge — only relevant from the 2nd upload onward on this column,
+                  since the first upload has no existing dataset to replace or merge into. */}
+              {replaceIsResubmission && (
+                <div className="flex flex-col gap-2.5">
+                  <h4 className="text-xs font-black text-slate-400 tracking-widest uppercase mb-0.5">
+                    {language === 'TH' ? 'วิธีนำเข้าไฟล์ชุดใหม่' : 'How to import the new files'}
+                  </h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <label
+                      className={`flex flex-col gap-1.5 p-3.5 rounded-xl border-2 cursor-pointer transition-all ${
+                        replaceMode === 'replace' ? 'border-blue-500 bg-blue-50/50 shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="replace-mode"
+                          checked={replaceMode === 'replace'}
+                          onChange={() => setReplaceMode('replace')}
+                          className="w-3.5 h-3.5 text-blue-600 focus:ring-blue-100 cursor-pointer"
+                        />
+                        <span className="text-xs font-black text-slate-800 uppercase tracking-wide">
+                          {language === 'TH' ? 'ทับชุดเดิม' : 'Replace'}
+                        </span>
+                      </div>
+                      <p className="text-[10px] font-bold text-slate-400 leading-relaxed pl-5">
+                        {language === 'TH'
+                          ? 'เอาไฟล์ชุดใหม่ทั้งชุดไปแทนที่ชุดเดิมทั้งหมด ไม่ว่าชุดเก่าหรือชุดใหม่จะมีจำนวนไฟล์เท่ากันหรือไม่'
+                          : 'Replace the entire old set with the new one, regardless of how many files are in either set.'}
+                      </p>
+                    </label>
+                    <label
+                      className={`flex flex-col gap-1.5 p-3.5 rounded-xl border-2 cursor-pointer transition-all ${
+                        replaceMode === 'merge' ? 'border-blue-500 bg-blue-50/50 shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="replace-mode"
+                          checked={replaceMode === 'merge'}
+                          onChange={() => setReplaceMode('merge')}
+                          className="w-3.5 h-3.5 text-blue-600 focus:ring-blue-100 cursor-pointer"
+                        />
+                        <span className="text-xs font-black text-slate-800 uppercase tracking-wide">
+                          {language === 'TH' ? 'รวมกับชุดเดิม' : 'Merge'}
+                        </span>
+                      </div>
+                      <p className="text-[10px] font-bold text-slate-400 leading-relaxed pl-5">
+                        {language === 'TH'
+                          ? 'นำข้อมูลจากไฟล์ชุดใหม่ไปต่อรวมกับชุดข้อมูลเดิมที่อ่านไฟล์ (OCR) ไปแล้ว'
+                          : "Append the new files' data onto the existing dataset that has already been OCR'd."}
+                      </p>
+                    </label>
+                  </div>
+                </div>
+              )}
+
               {/* Drag and Drop Zone */}
               <div
                 onDragOver={handleReplaceDragOver}
@@ -6490,64 +6548,6 @@ const mockWorkflows: Workflow[] = [
                   <div className="text-xs font-bold text-amber-600 bg-amber-50 p-2.5 rounded-lg flex items-center gap-2 mt-2">
                     <Info size={14} />
                     {language === 'TH' ? 'ไฟล์ทั้งหมดที่อัปโหลดด้านบน ข้อมูลที่สกัดออกมาได้จะถูกนำมารวมกันและแสดงอยู่ในคอลัมน์เดียวกัน' : 'The data extracted from all the files uploaded above will be combined and shown in the same column'}
-                  </div>
-                </div>
-              )}
-
-              {/* Replace vs Merge — only relevant from the 2nd upload onward on this column,
-                  since the first upload has no existing dataset to replace or merge into. */}
-              {replaceIsResubmission && (
-                <div className="flex flex-col gap-2.5">
-                  <h4 className="text-xs font-black text-slate-400 tracking-widest uppercase mb-0.5">
-                    {language === 'TH' ? 'วิธีนำเข้าไฟล์ชุดใหม่' : 'How to import the new files'}
-                  </h4>
-                  <div className="grid grid-cols-2 gap-3">
-                    <label
-                      className={`flex flex-col gap-1.5 p-3.5 rounded-xl border-2 cursor-pointer transition-all ${
-                        replaceMode === 'replace' ? 'border-blue-500 bg-blue-50/50 shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="radio"
-                          name="replace-mode"
-                          checked={replaceMode === 'replace'}
-                          onChange={() => setReplaceMode('replace')}
-                          className="w-3.5 h-3.5 text-blue-600 focus:ring-blue-100 cursor-pointer"
-                        />
-                        <span className="text-xs font-black text-slate-800 uppercase tracking-wide">
-                          {language === 'TH' ? 'ทับชุดเดิม' : 'Replace'}
-                        </span>
-                      </div>
-                      <p className="text-[10px] font-bold text-slate-400 leading-relaxed pl-5">
-                        {language === 'TH'
-                          ? 'เอาไฟล์ชุดใหม่ทั้งชุดไปแทนที่ชุดเดิมทั้งหมด ไม่ว่าชุดเก่าหรือชุดใหม่จะมีจำนวนไฟล์เท่ากันหรือไม่'
-                          : 'Replace the entire old set with the new one, regardless of how many files are in either set.'}
-                      </p>
-                    </label>
-                    <label
-                      className={`flex flex-col gap-1.5 p-3.5 rounded-xl border-2 cursor-pointer transition-all ${
-                        replaceMode === 'merge' ? 'border-blue-500 bg-blue-50/50 shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="radio"
-                          name="replace-mode"
-                          checked={replaceMode === 'merge'}
-                          onChange={() => setReplaceMode('merge')}
-                          className="w-3.5 h-3.5 text-blue-600 focus:ring-blue-100 cursor-pointer"
-                        />
-                        <span className="text-xs font-black text-slate-800 uppercase tracking-wide">
-                          {language === 'TH' ? 'รวมกับชุดเดิม' : 'Merge'}
-                        </span>
-                      </div>
-                      <p className="text-[10px] font-bold text-slate-400 leading-relaxed pl-5">
-                        {language === 'TH'
-                          ? 'นำข้อมูลจากไฟล์ชุดใหม่ไปต่อรวมกับชุดข้อมูลเดิมที่อ่านไฟล์ (OCR) ไปแล้ว'
-                          : "Append the new files' data onto the existing dataset that has already been OCR'd."}
-                      </p>
-                    </label>
                   </div>
                 </div>
               )}
