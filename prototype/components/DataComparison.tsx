@@ -7150,14 +7150,14 @@ const mockWorkflows: Workflow[] = [
                                   <div className="flex"><span className="w-6 text-right pr-3 text-slate-600 select-none">{fields.length + 3}</span><span><span className="text-sky-400">{'</'}{rootTag}{'>'}</span></span></div>
                                 </div>
                               ) : (
-                                <div className="bg-white font-sans text-slate-800 overflow-x-auto">
+                                <div className="bg-white font-sans text-slate-800 overflow-auto max-h-[70vh]">
                                   {fields.length > 0 ? (
                                     <table className="border-collapse text-[11px]">
                                       <thead>
                                         <tr className="bg-slate-50 border-b border-slate-200">
-                                          <th className="w-10 px-3 py-2 text-left text-[10px] font-black uppercase tracking-wide text-slate-400 sticky left-0 bg-slate-50">#</th>
+                                          <th className="w-10 px-3 py-2 text-left text-[10px] font-black uppercase tracking-wide text-slate-400 sticky top-0 left-0 z-30 bg-slate-50">#</th>
                                           {fields.map(([field]) => (
-                                            <th key={field} className="px-3 py-2 text-left text-[10px] font-black uppercase tracking-wide text-slate-500 border-l border-slate-200 whitespace-nowrap">
+                                            <th key={field} className="px-3 py-2 text-left text-[10px] font-black uppercase tracking-wide text-slate-500 border-l border-slate-200 whitespace-nowrap sticky top-0 z-20 bg-slate-50">
                                               {field}
                                             </th>
                                           ))}
@@ -7166,7 +7166,7 @@ const mockWorkflows: Workflow[] = [
                                       <tbody>
                                         {xmlMockRows.map((row, rowIdx) => (
                                           <tr key={rowIdx} className="border-b border-slate-100 hover:bg-slate-50/60 transition-colors">
-                                            <td className="px-3 py-2 text-slate-300 font-bold tabular-nums sticky left-0 bg-white">{rowIdx + 1}</td>
+                                            <td className="px-3 py-2 text-slate-300 font-bold tabular-nums sticky left-0 z-10 bg-white">{rowIdx + 1}</td>
                                             {row.map((cellValue, colIdx) => (
                                               <td key={colIdx} className={`px-3 py-2 text-slate-600 border-l border-slate-100 whitespace-nowrap ${isFieldHighlightedByName(fields[colIdx][0]) ? 'bg-amber-50' : ''}`}>
                                                 {cellValue}
