@@ -7027,11 +7027,11 @@ const mockWorkflows: Workflow[] = [
                   {/* Gray PDF Canvas and Layout View — panel-hidden XML gets a tighter 24px
                       gap instead of the usual 32px so the table can use the reclaimed width. */}
                   <div className={`flex-1 bg-[#525659] overflow-auto flex justify-center min-h-0 relative ${
-                    standaloneDocPreview && !showOcrPanel && detectFileFormat(pdfPreviewUrl) === 'xml' ? 'p-6 items-stretch' : 'p-8 items-start'
+                    standaloneDocPreview && detectFileFormat(pdfPreviewUrl) === 'xml' ? 'p-6 items-stretch' : 'p-8 items-start'
                   }`}>
                     <div
                       className={`relative transition-all duration-300 origin-top flex flex-col gap-8 bg-transparent ${
-                        standaloneDocPreview && !showOcrPanel && detectFileFormat(pdfPreviewUrl) === 'xml' ? 'w-full h-full items-center' :
+                        standaloneDocPreview && detectFileFormat(pdfPreviewUrl) === 'xml' ? 'w-full h-full items-center' :
                         detectFileFormat(pdfPreviewUrl) === 'xml' ? 'w-full items-center' : ''
                       }`}
                       style={{
@@ -7103,7 +7103,7 @@ const mockWorkflows: Workflow[] = [
                           );
                           return (
                             <div className={`w-full bg-[#1e1e1e] shadow-xl font-mono text-[12px] rounded-sm overflow-hidden ${
-                              standaloneDocPreview && !showOcrPanel ? 'h-full flex flex-col' : 'max-w-4xl'
+                              standaloneDocPreview ? 'h-full flex flex-col' : 'max-w-4xl'
                             }`}>
                               <div className="bg-[#252526] text-slate-300 px-4 py-2 flex items-center justify-between gap-2 border-b border-black/40 shrink-0">
                                 <div className="flex items-center gap-2 min-w-0">
@@ -7152,7 +7152,7 @@ const mockWorkflows: Workflow[] = [
                                 </div>
                               ) : (
                                 <div className={`bg-white font-sans text-slate-800 overflow-auto ${
-                                  standaloneDocPreview && !showOcrPanel ? 'flex-1 min-h-0' : 'max-h-[70vh]'
+                                  standaloneDocPreview ? 'flex-1 min-h-0' : 'max-h-[70vh]'
                                 }`}>
                                   {fields.length > 0 ? (
                                     <table className="border-collapse text-[11px]">
