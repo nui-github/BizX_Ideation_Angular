@@ -546,6 +546,69 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
   const formatFileSize = (bytes: number) => `${Math.max(1, Math.round(bytes / 1024))} KB`;
   const step1FileInputRef = useRef<HTMLInputElement>(null);
 
+  const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+  // Opens the uploaded file in its own browser tab — a plain viewer only, with no OCR
+  // fields panel, unlike the full doc-preview page in Data Comparison.
+  const openFilePreview = async () => {
+    if (!testFile) return;
+    const ext = testFile.name.split('.').pop()?.toLowerCase() || '';
+    const win = window.open('', '_blank');
+    if (!win) {
+      message.error(t('เบราว์เซอร์บล็อกการเปิดแท็บใหม่', 'The browser blocked opening a new tab'));
+      return;
+    }
+    const title = escapeHtml(testFile.name);
+    const baseStyle = `<style>
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+      .toolbar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: #fff; border-bottom: 1px solid #e2e8f0; font-size: 13px; font-weight: 700; color: #334155; position: sticky; top: 0; }
+    </style>`;
+
+    if (ext === 'pdf' || ['png', 'jpg', 'jpeg'].includes(ext)) {
+      const blobUrl = URL.createObjectURL(testFile);
+      win.document.write(`<!DOCTYPE html><html><head><title>${title}</title>${baseStyle}</head><body>
+        <div class="toolbar">${title}</div>
+        ${ext === 'pdf'
+          ? `<iframe src="${blobUrl}" style="width:100%;height:calc(100vh - 41px);border:0;"></iframe>`
+          : `<div style="display:flex;align-items:center;justify-content:center;height:calc(100vh - 41px);background:#0f172a08;"><img src="${blobUrl}" style="max-width:100%;max-height:100%;object-fit:contain;" /></div>`}
+      </body></html>`);
+      win.document.close();
+      return;
+    }
+
+    if (['xlsx', 'xls', 'csv'].includes(ext)) {
+      const buf = await testFile.arrayBuffer();
+      const workbook = XLSX.read(buf, { type: 'array' });
+      const sheetName = uploadSheetName || workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const tableHtml = sheet ? XLSX.utils.sheet_to_html(sheet) : `<p>${t('ไม่มีข้อมูล', 'No data')}</p>`;
+      win.document.write(`<!DOCTYPE html><html><head><title>${title}</title>${baseStyle}<style>
+        table { border-collapse: collapse; font-size: 12px; }
+        td, th { border: 1px solid #cbd5e1; padding: 4px 8px; white-space: nowrap; }
+      </style></head><body>
+        <div class="toolbar">${title}${sheetName ? ` · ${escapeHtml(sheetName)}` : ''}</div>
+        <div style="overflow:auto;padding:12px;">${tableHtml}</div>
+      </body></html>`);
+      win.document.close();
+      return;
+    }
+
+    if (ext === 'xml') {
+      const text = await testFile.text();
+      win.document.write(`<!DOCTYPE html><html><head><title>${title}</title>${baseStyle}<style>
+        pre { padding: 16px; font-family: ui-monospace, monospace; font-size: 12px; color: #1e293b; white-space: pre-wrap; word-break: break-word; }
+      </style></head><body>
+        <div class="toolbar">${title}</div>
+        <pre>${escapeHtml(text)}</pre>
+      </body></html>`);
+      win.document.close();
+      return;
+    }
+
+    win.close();
+  };
+
   // Mock page count for the uploaded file — purely for the "หน้า" selector, doesn't change
   // values. Always at least 3 pages, since a real multi-page document is the common case.
   const testPageOptions = useMemo(() => {
@@ -698,6 +761,12 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={openFilePreview}
+                    className="px-3 py-1.5 rounded-[4px] border border-slate-200 bg-white text-slate-600 text-xs font-bold hover:bg-slate-50 cursor-pointer"
+                  >
+                    {t('ดูไฟล์', 'View file')}
+                  </button>
                   <button
                     onClick={() => step1FileInputRef.current?.click()}
                     className="px-3 py-1.5 rounded-[4px] border border-slate-200 bg-white text-slate-600 text-xs font-bold hover:bg-slate-50 cursor-pointer"
