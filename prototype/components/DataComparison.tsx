@@ -7124,17 +7124,27 @@ const mockWorkflows: Workflow[] = [
                                   <div className="flex"><span className="w-6 text-right pr-3 text-slate-600 select-none">{fields.length + 3}</span><span><span className="text-sky-400">{'</'}{rootTag}{'>'}</span></span></div>
                                 </div>
                               ) : (
-                                <div className="bg-white font-sans text-slate-800">
-                                  <div className="grid grid-cols-2 text-[10px] font-black uppercase tracking-wide text-[#0f5c31] bg-[#dceee0] border-b border-[#c7d6c9]">
-                                    <div className="px-3 py-1.5 border-r border-[#c7d6c9]">{language === 'TH' ? 'ชื่อฟิลด์' : 'Field'}</div>
-                                    <div className="px-3 py-1.5">{language === 'TH' ? 'ค่า' : 'Value'}</div>
-                                  </div>
-                                  {fields.length > 0 ? fields.map(([field, value]) => (
-                                    <div key={field} className={`grid grid-cols-2 border-b border-slate-100 ${isFieldHighlightedByName(field) ? 'bg-amber-100/70' : ''}`}>
-                                      <div className="px-3 py-2 text-[11px] font-semibold text-slate-700 border-r border-slate-100 truncate">{field}</div>
-                                      <div className="px-3 py-2 text-[11px] text-slate-600 truncate">{String(value)}</div>
-                                    </div>
-                                  )) : (
+                                <div className="bg-white font-sans text-slate-800 overflow-x-auto">
+                                  {fields.length > 0 ? (
+                                    <table className="w-full border-collapse text-[11px]">
+                                      <thead>
+                                        <tr className="bg-slate-50 border-b border-slate-200">
+                                          <th className="w-10 px-3 py-2 text-left text-[10px] font-black uppercase tracking-wide text-slate-400">#</th>
+                                          <th className="px-3 py-2 text-left text-[10px] font-black uppercase tracking-wide text-slate-500 border-l border-slate-200">{language === 'TH' ? 'ชื่อฟิลด์' : 'Field'}</th>
+                                          <th className="px-3 py-2 text-left text-[10px] font-black uppercase tracking-wide text-slate-500 border-l border-slate-200">{language === 'TH' ? 'ค่า' : 'Value'}</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {fields.map(([field, value], i) => (
+                                          <tr key={field} className={`border-b border-slate-100 hover:bg-slate-50/60 transition-colors ${isFieldHighlightedByName(field) ? 'bg-amber-50' : ''}`}>
+                                            <td className="px-3 py-2 text-slate-300 font-bold tabular-nums">{i + 1}</td>
+                                            <td className="px-3 py-2 font-semibold text-slate-700 border-l border-slate-100 whitespace-nowrap">{field}</td>
+                                            <td className="px-3 py-2 text-slate-600 border-l border-slate-100 break-all">{String(value)}</td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  ) : (
                                     <div className="p-6 text-center text-xs text-slate-300 font-bold">{language === 'TH' ? 'ไม่มีข้อมูล' : 'No data'}</div>
                                   )}
                                 </div>
