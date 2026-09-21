@@ -7126,22 +7126,26 @@ const mockWorkflows: Workflow[] = [
                               ) : (
                                 <div className="bg-white font-sans text-slate-800 overflow-x-auto">
                                   {fields.length > 0 ? (
-                                    <table className="w-full border-collapse text-[11px]">
+                                    <table className="border-collapse text-[11px]">
                                       <thead>
                                         <tr className="bg-slate-50 border-b border-slate-200">
-                                          <th className="w-10 px-3 py-2 text-left text-[10px] font-black uppercase tracking-wide text-slate-400">#</th>
-                                          <th className="px-3 py-2 text-left text-[10px] font-black uppercase tracking-wide text-slate-500 border-l border-slate-200">{language === 'TH' ? 'ชื่อฟิลด์' : 'Field'}</th>
-                                          <th className="px-3 py-2 text-left text-[10px] font-black uppercase tracking-wide text-slate-500 border-l border-slate-200">{language === 'TH' ? 'ค่า' : 'Value'}</th>
+                                          <th className="w-10 px-3 py-2 text-left text-[10px] font-black uppercase tracking-wide text-slate-400 sticky left-0 bg-slate-50">#</th>
+                                          {fields.map(([field]) => (
+                                            <th key={field} className="px-3 py-2 text-left text-[10px] font-black uppercase tracking-wide text-slate-500 border-l border-slate-200 whitespace-nowrap">
+                                              {field}
+                                            </th>
+                                          ))}
                                         </tr>
                                       </thead>
                                       <tbody>
-                                        {fields.map(([field, value], i) => (
-                                          <tr key={field} className={`border-b border-slate-100 hover:bg-slate-50/60 transition-colors ${isFieldHighlightedByName(field) ? 'bg-amber-50' : ''}`}>
-                                            <td className="px-3 py-2 text-slate-300 font-bold tabular-nums">{i + 1}</td>
-                                            <td className="px-3 py-2 font-semibold text-slate-700 border-l border-slate-100 whitespace-nowrap">{field}</td>
-                                            <td className="px-3 py-2 text-slate-600 border-l border-slate-100 break-all">{String(value)}</td>
-                                          </tr>
-                                        ))}
+                                        <tr className="border-b border-slate-100 hover:bg-slate-50/60 transition-colors">
+                                          <td className="px-3 py-2 text-slate-300 font-bold tabular-nums sticky left-0 bg-white">1</td>
+                                          {fields.map(([field, value]) => (
+                                            <td key={field} className={`px-3 py-2 text-slate-600 border-l border-slate-100 whitespace-nowrap ${isFieldHighlightedByName(field) ? 'bg-amber-50' : ''}`}>
+                                              {String(value)}
+                                            </td>
+                                          ))}
+                                        </tr>
                                       </tbody>
                                     </table>
                                   ) : (
