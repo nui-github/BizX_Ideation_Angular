@@ -7026,10 +7026,12 @@ const mockWorkflows: Workflow[] = [
 
                   {/* Gray PDF Canvas and Layout View */}
                   <div className="flex-1 bg-[#525659] overflow-auto flex items-start justify-center p-8 min-h-0 relative">
-                    <div 
-                      className="relative transition-all duration-300 origin-top flex flex-col gap-8 bg-transparent"
-                      style={{ 
-                        transform: `scale(${zoomLevel}) rotate(${rotationAngle}deg)`, 
+                    <div
+                      className={`relative transition-all duration-300 origin-top flex flex-col gap-8 bg-transparent ${
+                        detectFileFormat(pdfPreviewUrl) === 'xml' ? 'w-full items-center' : ''
+                      }`}
+                      style={{
+                        transform: `scale(${zoomLevel}) rotate(${rotationAngle}deg)`,
                         marginTop: '0px'
                       }}
                     >
@@ -7075,7 +7077,7 @@ const mockWorkflows: Workflow[] = [
                         if (fileFormat === 'xml') {
                           const rootTag = (docUpper.replace(/[^A-Z0-9]+/g, '') || 'DOCUMENT');
                           return (
-                            <div className="w-[720px] bg-[#1e1e1e] shadow-xl font-mono text-[12px] rounded-sm overflow-hidden">
+                            <div className="w-full max-w-4xl bg-[#1e1e1e] shadow-xl font-mono text-[12px] rounded-sm overflow-hidden">
                               <div className="bg-[#252526] text-slate-300 px-4 py-2 flex items-center justify-between gap-2 border-b border-black/40">
                                 <div className="flex items-center gap-2 min-w-0">
                                   <FileCode size={14} className="text-sky-400 shrink-0" />
