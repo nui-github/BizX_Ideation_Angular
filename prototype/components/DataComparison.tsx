@@ -7024,8 +7024,11 @@ const mockWorkflows: Workflow[] = [
 
                   </div>
 
-                  {/* Gray PDF Canvas and Layout View */}
-                  <div className="flex-1 bg-[#525659] overflow-auto flex items-start justify-center p-8 min-h-0 relative">
+                  {/* Gray PDF Canvas and Layout View — panel-hidden XML gets a tighter 24px
+                      gap instead of the usual 32px so the table can use the reclaimed width. */}
+                  <div className={`flex-1 bg-[#525659] overflow-auto flex items-start justify-center min-h-0 relative ${
+                    standaloneDocPreview && !showOcrPanel && detectFileFormat(pdfPreviewUrl) === 'xml' ? 'p-6' : 'p-8'
+                  }`}>
                     <div
                       className={`relative transition-all duration-300 origin-top flex flex-col gap-8 bg-transparent ${
                         detectFileFormat(pdfPreviewUrl) === 'xml' ? 'w-full items-center' : ''
@@ -7098,7 +7101,9 @@ const mockWorkflows: Workflow[] = [
                             })
                           );
                           return (
-                            <div className="w-full max-w-4xl bg-[#1e1e1e] shadow-xl font-mono text-[12px] rounded-sm overflow-hidden">
+                            <div className={`w-full bg-[#1e1e1e] shadow-xl font-mono text-[12px] rounded-sm overflow-hidden ${
+                              standaloneDocPreview && !showOcrPanel ? '' : 'max-w-4xl'
+                            }`}>
                               <div className="bg-[#252526] text-slate-300 px-4 py-2 flex items-center justify-between gap-2 border-b border-black/40">
                                 <div className="flex items-center gap-2 min-w-0">
                                   <FileCode size={14} className="text-sky-400 shrink-0" />
