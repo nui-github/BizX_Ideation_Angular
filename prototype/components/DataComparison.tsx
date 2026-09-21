@@ -7084,7 +7084,7 @@ const mockWorkflows: Workflow[] = [
                           // since they belong to the whole doc, while line-item-looking fields
                           // (SKU, description, qty, price, amount) vary deterministically per row.
                           const xmlHash = (s: string) => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; };
-                          const XML_ITEM_ROW_COUNT = 20;
+                          const XML_ITEM_ROW_COUNT = 30;
                           const isXmlItemField = (field: string) => /item|sku|product|description|qty|quantity|price|amount|hs.?code|voyage|vessel/i.test(field);
                           const xmlMockRows = Array.from({ length: XML_ITEM_ROW_COUNT }, (_, rowIdx) =>
                             fields.map(([field, value]) => {
