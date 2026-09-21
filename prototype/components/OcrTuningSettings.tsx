@@ -548,6 +548,32 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
 
   const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
+  // Flattens an XML element tree into field/value rows (dotted path -> leaf text or attribute)
+  // so non-technical users can read it as a table instead of raw markup.
+  const flattenXmlToRows = (node: Element, path: string, rows: { path: string; value: string }[]) => {
+    Array.from(node.attributes).forEach(attr => {
+      rows.push({ path: `${path}/@${attr.name}`, value: attr.value });
+    });
+    const children = Array.from(node.children);
+    if (children.length === 0) {
+      const text = (node.textContent || '').trim();
+      if (text) rows.push({ path, value: text });
+      return;
+    }
+    const nameCounts: Record<string, number> = {};
+    children.forEach(child => { nameCounts[child.tagName] = (nameCounts[child.tagName] || 0) + 1; });
+    const nameIndex: Record<string, number> = {};
+    children.forEach(child => {
+      const tag = child.tagName;
+      let childPath = `${path}/${tag}`;
+      if (nameCounts[tag] > 1) {
+        nameIndex[tag] = (nameIndex[tag] || 0) + 1;
+        childPath += `[${nameIndex[tag]}]`;
+      }
+      flattenXmlToRows(child, childPath, rows);
+    });
+  };
+
   // Opens the uploaded file in its own browser tab — a plain viewer only, with no OCR
   // fields panel, unlike the full doc-preview page in Data Comparison.
   const openFilePreview = async () => {
@@ -596,11 +622,53 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
 
     if (ext === 'xml') {
       const text = await testFile.text();
+      let rowsHtml = '';
+      try {
+        const doc = new DOMParser().parseFromString(text, 'application/xml');
+        if (!doc.querySelector('parsererror') && doc.documentElement) {
+          const rows: { path: string; value: string }[] = [];
+          flattenXmlToRows(doc.documentElement, doc.documentElement.tagName, rows);
+          rowsHtml = rows.map(r => `<tr><td>${escapeHtml(r.path)}</td><td>${escapeHtml(r.value)}</td></tr>`).join('');
+        }
+      } catch {
+        // Malformed XML — the table tab just shows the empty state below, code tab still works.
+      }
+      const fieldLabel = t('ฟิลด์', 'Field');
+      const valueLabel = t('ค่า', 'Value');
+      const tableLabel = t('ตาราง', 'Table');
+      const codeLabel = t('โค้ด XML', 'XML code');
+      const emptyLabel = t('ไม่พบข้อมูลที่แปลงเป็นตารางได้', 'No data could be converted to a table');
       win.document.write(`<!DOCTYPE html><html><head><title>${title}</title>${baseStyle}<style>
-        pre { padding: 16px; font-family: ui-monospace, monospace; font-size: 12px; color: #1e293b; white-space: pre-wrap; word-break: break-word; }
+        .tabs { display: flex; gap: 4px; padding: 0 12px; background: #fff; border-bottom: 1px solid #e2e8f0; }
+        .tab-btn { padding: 10px 14px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; }
+        .tab-btn.active { color: #1f5df9; border-bottom-color: #1f5df9; }
+        .view { display: none; }
+        .view.active { display: block; }
+        table { border-collapse: collapse; width: 100%; font-size: 12px; }
+        td, th { border: 1px solid #e2e8f0; padding: 6px 10px; text-align: left; vertical-align: top; }
+        th { background: #f8fafc; text-transform: uppercase; font-size: 10px; letter-spacing: 0.05em; color: #1f5df9; }
+        td:first-child { font-family: ui-monospace, monospace; color: #334155; white-space: nowrap; }
+        pre { padding: 16px; margin: 0; font-family: ui-monospace, monospace; font-size: 12px; color: #1e293b; white-space: pre-wrap; word-break: break-word; }
       </style></head><body>
         <div class="toolbar">${title}</div>
-        <pre>${escapeHtml(text)}</pre>
+        <div class="tabs">
+          <button class="tab-btn active" id="tab-table-btn" onclick="showXmlTab('table')">${tableLabel}</button>
+          <button class="tab-btn" id="tab-code-btn" onclick="showXmlTab('code')">${codeLabel}</button>
+        </div>
+        <div id="view-table" class="view active" style="overflow:auto;">
+          <table><thead><tr><th>${fieldLabel}</th><th>${valueLabel}</th></tr></thead><tbody>${rowsHtml || `<tr><td colspan="2" style="text-align:center;color:#94a3b8;">${emptyLabel}</td></tr>`}</tbody></table>
+        </div>
+        <div id="view-code" class="view" style="overflow:auto;">
+          <pre>${escapeHtml(text)}</pre>
+        </div>
+        <script>
+          function showXmlTab(name) {
+            document.getElementById('view-table').classList.toggle('active', name === 'table');
+            document.getElementById('view-code').classList.toggle('active', name === 'code');
+            document.getElementById('tab-table-btn').classList.toggle('active', name === 'table');
+            document.getElementById('tab-code-btn').classList.toggle('active', name === 'code');
+          }
+        </script>
       </body></html>`);
       win.document.close();
       return;
