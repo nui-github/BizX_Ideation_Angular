@@ -6403,9 +6403,10 @@ const mockWorkflows: Workflow[] = [
                         </div>
                       </div>
 
-                      {/* Excel files pick a sheet instead of a page range, and images are a
-                          single page by nature — "pages to read" doesn't apply to either. */}
-                      {!/\.(xlsx|xls|jpe?g|png)$/i.test(file.name) && (
+                      {/* Excel files pick a sheet instead of a page range, images are a single
+                          page by nature, and XML has no concept of pages — "pages to read"
+                          doesn't apply to any of them. */}
+                      {!/\.(xlsx|xls|jpe?g|png|xml)$/i.test(file.name) && (
                         <>
                           <div className="flex items-center gap-2 pl-1">
                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0">
