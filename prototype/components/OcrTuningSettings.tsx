@@ -1014,6 +1014,12 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                       {TEST_TABS.find(tab => tab.key === testMethod)?.[isTh ? 'th' : 'en']}
                     </span>
                     <button
+                      onClick={openFilePreview}
+                      className="px-3 py-1.5 rounded-[4px] border border-slate-200 bg-white text-slate-600 text-xs font-bold hover:bg-slate-50 cursor-pointer"
+                    >
+                      {t('ดูไฟล์', 'View file')}
+                    </button>
+                    <button
                       onClick={() => changeFileInputRef.current?.click()}
                       className="px-3 py-1.5 rounded-[4px] border border-slate-200 bg-white text-slate-600 text-xs font-bold hover:bg-slate-50 cursor-pointer"
                     >
