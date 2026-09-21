@@ -7076,6 +7076,27 @@ const mockWorkflows: Workflow[] = [
 
                         if (fileFormat === 'xml') {
                           const rootTag = (docUpper.replace(/[^A-Z0-9]+/g, '') || 'DOCUMENT');
+                          // Mocks at least 20 item rows for the table view — document-level fields
+                          // (consignee, incoterm, ports, currency, etc.) stay constant across rows
+                          // since they belong to the whole doc, while line-item-looking fields
+                          // (SKU, description, qty, price, amount) vary deterministically per row.
+                          const xmlHash = (s: string) => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; };
+                          const XML_ITEM_ROW_COUNT = 20;
+                          const isXmlItemField = (field: string) => /item|sku|product|description|qty|quantity|price|amount|hs.?code|voyage|vessel/i.test(field);
+                          const xmlMockRows = Array.from({ length: XML_ITEM_ROW_COUNT }, (_, rowIdx) =>
+                            fields.map(([field, value]) => {
+                              if (rowIdx === 0 || !isXmlItemField(field)) return String(value);
+                              const str = String(value);
+                              const numeric = str.replace(/,/g, '');
+                              if (/^-?\d+(\.\d+)?$/.test(numeric)) {
+                                const base = parseFloat(numeric);
+                                const variance = (xmlHash(`${field}|${rowIdx}`) % 41) - 20;
+                                const scaled = Math.max(0, base * (1 + variance / 100));
+                                return str.includes('.') ? scaled.toFixed(2) : String(Math.round(scaled));
+                              }
+                              return `${str} #${rowIdx + 1}`;
+                            })
+                          );
                           return (
                             <div className="w-full max-w-4xl bg-[#1e1e1e] shadow-xl font-mono text-[12px] rounded-sm overflow-hidden">
                               <div className="bg-[#252526] text-slate-300 px-4 py-2 flex items-center justify-between gap-2 border-b border-black/40">
@@ -7138,14 +7159,16 @@ const mockWorkflows: Workflow[] = [
                                         </tr>
                                       </thead>
                                       <tbody>
-                                        <tr className="border-b border-slate-100 hover:bg-slate-50/60 transition-colors">
-                                          <td className="px-3 py-2 text-slate-300 font-bold tabular-nums sticky left-0 bg-white">1</td>
-                                          {fields.map(([field, value]) => (
-                                            <td key={field} className={`px-3 py-2 text-slate-600 border-l border-slate-100 whitespace-nowrap ${isFieldHighlightedByName(field) ? 'bg-amber-50' : ''}`}>
-                                              {String(value)}
-                                            </td>
-                                          ))}
-                                        </tr>
+                                        {xmlMockRows.map((row, rowIdx) => (
+                                          <tr key={rowIdx} className="border-b border-slate-100 hover:bg-slate-50/60 transition-colors">
+                                            <td className="px-3 py-2 text-slate-300 font-bold tabular-nums sticky left-0 bg-white">{rowIdx + 1}</td>
+                                            {row.map((cellValue, colIdx) => (
+                                              <td key={colIdx} className={`px-3 py-2 text-slate-600 border-l border-slate-100 whitespace-nowrap ${isFieldHighlightedByName(fields[colIdx][0]) ? 'bg-amber-50' : ''}`}>
+                                                {cellValue}
+                                              </td>
+                                            ))}
+                                          </tr>
+                                        ))}
                                       </tbody>
                                     </table>
                                   ) : (
