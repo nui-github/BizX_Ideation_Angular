@@ -1117,7 +1117,9 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                   onChange={(e) => { const f = e.target.files?.[0]; if (f) pickTestFile(f); }}
                 />
               </div>
-              <p className="text-xs text-slate-400 mb-3">{t('ให้ AI อ่านเอกสาร ด้วยฟิลด์และคำอธิบายที่ยังไม่ได้บันทึก — แก้คำอธิบายในตารางด้านล่างแล้วทดสอบอีกครั้งได้', "Reads the document using this draft's fields and hints, even before they're saved — adjust hints below then test again")}</p>
+              <p className="text-xs text-slate-400">{t('ให้ AI อ่านเอกสาร ด้วยฟิลด์และคำอธิบายที่ยังไม่ได้บันทึก — แก้คำอธิบายในตารางด้านล่างแล้วทดสอบอีกครั้งได้', "Reads the document using this draft's fields and hints, even before they're saved — adjust hints below then test again")}</p>
+
+              <div className="border-t border-slate-200 my-2" />
 
               <div className="flex items-center gap-3 flex-wrap mb-3">
                 <div className="flex items-center gap-3 flex-wrap w-full lg:w-[calc(40%-6px)]">
