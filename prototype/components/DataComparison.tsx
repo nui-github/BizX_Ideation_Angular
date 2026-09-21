@@ -9699,22 +9699,27 @@ const mockWorkflows: Workflow[] = [
                                             'text-slate-300'
                                          }`}>
                                             {inlineEditCell?.docName === docName && inlineEditCell?.fieldName === res.fieldName ? (
-                                              <input
-                                                autoFocus
-                                                type="text"
-                                                value={inlineEditValue}
-                                                onChange={(e) => setInlineEditValue(e.target.value)}
-                                                onClick={(e) => e.stopPropagation()}
-                                                onKeyDown={(e) => {
-                                                  if (e.key === 'Enter') {
-                                                    setPendingInlineEdit({ docName, fieldName: res.fieldName, oldValue: inlineEditCell.oldValue, newValue: inlineEditValue });
-                                                  } else if (e.key === 'Escape') {
-                                                    setInlineEditCell(null);
-                                                  }
-                                                }}
-                                                onBlur={() => setInlineEditCell(null)}
-                                                className="w-full text-center text-[11px] font-black text-rose-700 bg-white border border-rose-300 rounded px-1.5 py-0.5 outline-none focus:ring-2 focus:ring-rose-400/30 font-sans"
-                                              />
+                                              <div className="w-full flex flex-col items-center gap-1">
+                                                <input
+                                                  autoFocus
+                                                  type="text"
+                                                  value={inlineEditValue}
+                                                  onChange={(e) => setInlineEditValue(e.target.value)}
+                                                  onClick={(e) => e.stopPropagation()}
+                                                  onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                      setPendingInlineEdit({ docName, fieldName: res.fieldName, oldValue: inlineEditCell.oldValue, newValue: inlineEditValue });
+                                                    } else if (e.key === 'Escape') {
+                                                      setInlineEditCell(null);
+                                                    }
+                                                  }}
+                                                  onBlur={() => setInlineEditCell(null)}
+                                                  className="w-full text-center text-[11px] font-black text-rose-700 bg-white border border-rose-300 rounded px-1.5 py-0.5 outline-none focus:ring-2 focus:ring-rose-400/30 font-sans"
+                                                />
+                                                <span className="text-[9px] font-bold text-slate-400 normal-case tracking-normal leading-tight">
+                                                  {language === 'TH' ? 'กด Enter เพื่อใช้ค่านี้ · คลิกที่อื่นเพื่อยกเลิก' : 'Press Enter to use this value · click elsewhere to cancel'}
+                                                </span>
+                                              </div>
                                             ) : (
                                             <div
                                               className="flex items-center gap-2"
