@@ -7129,28 +7129,67 @@ const mockWorkflows: Workflow[] = [
                                   </button>
                                 </div>
                               </div>
-                              {xmlCanvasViewMode === 'code' ? (
-                                <div className="p-4 leading-relaxed overflow-x-auto">
-                                  <div className="flex"><span className="w-6 text-right pr-3 text-slate-600 select-none">1</span><span><span className="text-slate-500">{'<?xml version="1.0" encoding="UTF-8"?>'}</span></span></div>
-                                  <div className="flex"><span className="w-6 text-right pr-3 text-slate-600 select-none">2</span><span><span className="text-sky-400">{'<'}{rootTag}</span> <span className="text-emerald-400">source</span>=<span className="text-orange-300">"{selectedJob?.type || 'STANDARD_VERIFICATION'}"</span><span className="text-sky-400">{'>'}</span></span></div>
-                                  {fields.length > 0 ? fields.map(([field, value], i) => {
-                                    const tag = field.replace(/[^A-Za-z0-9]+/g, '');
-                                    return (
-                                      <div key={field} className={`flex ${isFieldHighlightedByName(field) ? 'bg-amber-500/10' : ''}`}>
-                                        <span className="w-6 text-right pr-3 text-slate-600 select-none">{i + 3}</span>
-                                        <span className="pl-4">
+                              {xmlCanvasViewMode === 'code' ? (() => {
+                                // Mirrors the table view exactly: header-level fields appear once,
+                                // item-looking fields repeat once per mocked <Item>, using the same
+                                // xmlMockRows values so switching tabs shows the same data.
+                                const itemColIndices = fields.map((_, idx) => idx).filter(idx => isXmlItemField(fields[idx][0]));
+                                const tagFor = (field: string) => field.replace(/[^A-Za-z0-9]+/g, '');
+                                const lines: { indent: number; node: React.ReactNode }[] = [];
+                                lines.push({ indent: 0, node: <span className="text-slate-500">{'<?xml version="1.0" encoding="UTF-8"?>'}</span> });
+                                lines.push({ indent: 0, node: <><span className="text-sky-400">{'<'}{rootTag}</span> <span className="text-emerald-400">source</span>=<span className="text-orange-300">"{selectedJob?.type || 'STANDARD_VERIFICATION'}"</span><span className="text-sky-400">{'>'}</span></> });
+                                if (fields.length === 0) {
+                                  lines.push({ indent: 1, node: <span className="text-slate-500">{language === 'TH' ? '// ไม่มีข้อมูล' : '// no data'}</span> });
+                                } else {
+                                  fields.forEach(([field, value], idx) => {
+                                    if (itemColIndices.includes(idx)) return;
+                                    const tag = tagFor(field);
+                                    lines.push({
+                                      indent: 1,
+                                      node: (
+                                        <span className={isFieldHighlightedByName(field) ? 'bg-amber-500/10' : ''}>
                                           <span className="text-sky-400">{'<'}{tag}{'>'}</span>
                                           <span className="text-slate-200">{String(value)}</span>
                                           <span className="text-sky-400">{'</'}{tag}{'>'}</span>
                                         </span>
+                                      )
+                                    });
+                                  });
+                                  if (itemColIndices.length > 0) {
+                                    lines.push({ indent: 1, node: <span className="text-sky-400">{'<Items>'}</span> });
+                                    xmlMockRows.forEach((row) => {
+                                      lines.push({ indent: 2, node: <span className="text-sky-400">{'<Item>'}</span> });
+                                      itemColIndices.forEach((colIdx) => {
+                                        const field = fields[colIdx][0];
+                                        const tag = tagFor(field);
+                                        lines.push({
+                                          indent: 3,
+                                          node: (
+                                            <span className={isFieldHighlightedByName(field) ? 'bg-amber-500/10' : ''}>
+                                              <span className="text-sky-400">{'<'}{tag}{'>'}</span>
+                                              <span className="text-slate-200">{row[colIdx]}</span>
+                                              <span className="text-sky-400">{'</'}{tag}{'>'}</span>
+                                            </span>
+                                          )
+                                        });
+                                      });
+                                      lines.push({ indent: 2, node: <span className="text-sky-400">{'</Item>'}</span> });
+                                    });
+                                    lines.push({ indent: 1, node: <span className="text-sky-400">{'</Items>'}</span> });
+                                  }
+                                }
+                                lines.push({ indent: 0, node: <span className="text-sky-400">{'</'}{rootTag}{'>'}</span> });
+                                return (
+                                  <div className={`p-4 leading-relaxed overflow-auto ${standaloneDocPreview ? 'flex-1 min-h-0' : ''}`}>
+                                    {lines.map(({ indent, node }, i) => (
+                                      <div key={i} className="flex">
+                                        <span className="w-8 text-right pr-3 text-slate-600 select-none shrink-0">{i + 1}</span>
+                                        <span style={{ paddingLeft: `${indent * 16}px` }}>{node}</span>
                                       </div>
-                                    );
-                                  }) : (
-                                    <div className="flex"><span className="w-6 text-right pr-3 text-slate-600 select-none">3</span><span className="pl-4 text-slate-500">{language === 'TH' ? '// ไม่มีข้อมูล' : '// no data'}</span></div>
-                                  )}
-                                  <div className="flex"><span className="w-6 text-right pr-3 text-slate-600 select-none">{fields.length + 3}</span><span><span className="text-sky-400">{'</'}{rootTag}{'>'}</span></span></div>
-                                </div>
-                              ) : (
+                                    ))}
+                                  </div>
+                                );
+                              })() : (
                                 <div className={`bg-white font-sans text-slate-800 overflow-auto ${
                                   standaloneDocPreview ? 'flex-1 min-h-0' : 'max-h-[70vh]'
                                 }`}>
