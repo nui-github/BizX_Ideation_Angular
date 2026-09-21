@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import * as XLSX from 'xlsx';
 import { message, Modal, Tooltip, Drawer, Switch } from 'antd';
 import {
   Plus, Upload, FileText, FileSpreadsheet, FileCode2,
@@ -489,6 +490,12 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
   const [retestNonce, setRetestNonce] = useState(0);
   const [testPage, setTestPage] = useState(1);
   const changeFileInputRef = useRef<HTMLInputElement>(null);
+  // PDF-only: whether to read every page of the uploaded file, or just a custom range.
+  const [uploadPageMode, setUploadPageMode] = useState<'all' | 'custom'>('all');
+  const [uploadPageRange, setUploadPageRange] = useState('');
+  // Excel-only: which sheet tab to read from, defaults to the first one once parsed.
+  const [uploadSheetNames, setUploadSheetNames] = useState<string[]>([]);
+  const [uploadSheetName, setUploadSheetName] = useState('');
 
   const handleFileDragOver = (e: React.DragEvent) => { e.preventDefault(); setIsDraggingFile(true); };
   const handleFileDragLeave = () => setIsDraggingFile(false);
@@ -516,6 +523,25 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
     setTestMethod(detectMethodFromFileName(f.name));
     setTestPage(1);
     setRetestNonce(0);
+    setUploadPageMode('all');
+    setUploadPageRange('');
+    setUploadSheetNames([]);
+    setUploadSheetName('');
+    if (/\.(xlsx|xls)$/i.test(f.name)) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const data = new Uint8Array(ev.target?.result as ArrayBuffer);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const sheetNames = workbook.SheetNames;
+          setUploadSheetNames(sheetNames);
+          setUploadSheetName(sheetNames[0] || '');
+        } catch {
+          // Unreadable workbook — leave the sheet picker empty rather than blocking upload.
+        }
+      };
+      reader.readAsArrayBuffer(f);
+    }
   };
   const formatFileSize = (bytes: number) => `${Math.max(1, Math.round(bytes / 1024))} KB`;
   const step1FileInputRef = useRef<HTMLInputElement>(null);
@@ -693,7 +719,69 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                   onChange={(e) => { const f = e.target.files?.[0]; if (f) pickTestFile(f); }}
                 />
               </div>
-            ) : (
+            ) : null}
+
+            {/* PDF/image files pick which pages to read; images are a single page by nature so
+                the option is skipped for them. */}
+            {testFile && testMethod === 'ai' && !/\.(jpe?g|png)$/i.test(testFile.name) && (
+              <div className="flex flex-col gap-2 mb-4 p-3 rounded-xl border border-slate-200 bg-slate-50/50">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0">
+                    {t('หน้าที่จะอ่าน:', 'Pages to read:')}
+                  </span>
+                  <div className="flex items-center gap-0.5 bg-white border border-slate-200 rounded-[4px] p-0.5 shrink-0">
+                    <button
+                      onClick={() => setUploadPageMode('all')}
+                      className={`px-3 py-1 rounded-[3px] text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
+                        uploadPageMode === 'all' ? 'bg-blue-500 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                      }`}
+                    >
+                      {t('ทั้งหมด', 'All')}
+                    </button>
+                    <button
+                      onClick={() => setUploadPageMode('custom')}
+                      className={`px-3 py-1 rounded-[3px] text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
+                        uploadPageMode === 'custom' ? 'bg-blue-500 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                      }`}
+                    >
+                      {t('เลือกเอง', 'Custom')}
+                    </button>
+                  </div>
+                </div>
+                {uploadPageMode === 'custom' && (
+                  <input
+                    type="text"
+                    value={uploadPageRange}
+                    onChange={(e) => setUploadPageRange(e.target.value)}
+                    placeholder={t('เช่น 1-3, 5, 8-10 (หน้าติดกันใช้ - / ข้ามหน้าใช้ , คั่น)', 'e.g. 1-3, 5, 8-10 (use - for consecutive pages, , to skip)')}
+                    className="w-full text-xs px-3 py-2 rounded-[4px] border border-slate-200 text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300"
+                  />
+                )}
+              </div>
+            )}
+
+            {/* Excel files only — which sheet tab to read from, defaults to the first one */}
+            {testFile && testMethod === 'excel' && (
+              <div className="flex items-center gap-2 mb-4 p-3 rounded-xl border border-slate-200 bg-slate-50/50">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0">
+                  {t('Sheet:', 'Sheet:')}
+                </span>
+                <select
+                  value={uploadSheetName}
+                  onChange={(e) => setUploadSheetName(e.target.value)}
+                  disabled={uploadSheetNames.length === 0}
+                  className="flex-1 min-w-0 text-xs px-3 py-2 rounded-[4px] border border-slate-200 text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 disabled:bg-slate-50 disabled:text-slate-400"
+                >
+                  {uploadSheetNames.length === 0 ? (
+                    <option value="">{t('กำลังโหลด...', 'Loading...')}</option>
+                  ) : (
+                    uploadSheetNames.map(name => <option key={name} value={name}>{name}</option>)
+                  )}
+                </select>
+              </div>
+            )}
+
+            {!testFile && (
               <label
                 onDragOver={handleFileDragOver}
                 onDragLeave={handleFileDragLeave}
