@@ -7080,26 +7080,14 @@ const mockWorkflows: Workflow[] = [
 
                         if (fileFormat === 'xml') {
                           const rootTag = (docUpper.replace(/[^A-Z0-9]+/g, '') || 'DOCUMENT');
-                          // Mocks at least 20 item rows for the table view — document-level fields
-                          // (consignee, incoterm, ports, currency, etc.) stay constant across rows
-                          // since they belong to the whole doc, while line-item-looking fields
-                          // (SKU, description, qty, price, amount) vary deterministically per row.
-                          const xmlHash = (s: string) => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; };
-                          const XML_ITEM_ROW_COUNT = 30;
-                          const isXmlItemField = (field: string) => /item|sku|product|description|qty|quantity|price|amount|hs.?code|voyage|vessel/i.test(field);
-                          const xmlMockRows = Array.from({ length: XML_ITEM_ROW_COUNT }, (_, rowIdx) =>
-                            fields.map(([field, value]) => {
-                              if (rowIdx === 0 || !isXmlItemField(field)) return String(value);
-                              const str = String(value);
-                              const numeric = str.replace(/,/g, '');
-                              if (/^-?\d+(\.\d+)?$/.test(numeric)) {
-                                const base = parseFloat(numeric);
-                                const variance = (xmlHash(`${field}|${rowIdx}`) % 41) - 20;
-                                const scaled = Math.max(0, base * (1 + variance / 100));
-                                return str.includes('.') ? scaled.toFixed(2) : String(Math.round(scaled));
-                              }
-                              return `${str} #${rowIdx + 1}`;
-                            })
+                          // Item count, field grouping, and values all come straight from the same
+                          // mock comparison data backing the OCR panel on the right, so both the
+                          // XML table and code views show exactly the same count and content.
+                          const xmlItemFieldNames = new Set(allComparisonResults.filter(r => (r as any).group).map(r => r.fieldName));
+                          const isXmlItemField = (field: string) => xmlItemFieldNames.has(field);
+                          const XML_ITEM_ROW_COUNT = new Set(allComparisonResults.filter(r => (r as any).group).map(r => (r as any).group)).size;
+                          const xmlMockRows = Array.from({ length: XML_ITEM_ROW_COUNT }, () =>
+                            fields.map(([, value]) => String(value))
                           );
                           return (
                             <div className={`w-full bg-[#1e1e1e] shadow-xl font-mono text-[12px] rounded-sm overflow-hidden ${
