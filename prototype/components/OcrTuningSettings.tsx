@@ -1194,8 +1194,8 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                   height minus its own -16px offset) instead of scrolling away with the rows. */}
               <div className="sticky top-6 z-10 grid grid-cols-[minmax(160px,1.1fr)_minmax(140px,0.9fr)_minmax(140px,0.9fr)_minmax(220px,2fr)_auto_auto] gap-3 items-center text-[11px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 rounded-[4px] px-2 py-2 mb-1">
                 <span>{t('ชื่อฟิลด์', 'Field name')}</span>
-                <span>{t('ค่าที่คาดหวัง', 'Expected value')}</span>
                 <span>{t('ค่าที่อ่านได้', 'Value read')}</span>
+                <span>{t('ค่าที่คาดหวัง', 'Expected value')}</span>
                 <span className="flex items-center gap-1">
                   {t('คำอธิบายฟิลด์/ตำแหน่ง', 'Field / position hint')}
                   <button
@@ -1218,10 +1218,10 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                     <div className="text-xs text-slate-500 mt-0.5">{t('รายการสินค้าในเอกสาร', 'The line items listed in the document')}</div>
                     <div className="text-[11px] text-slate-400 mt-0.5">{t('ตาราง', 'Table')}</div>
                   </div>
-                  <div />
                   <div className="pt-1.5 text-sm font-bold text-slate-600">
                     {testFile ? t(`${lineItemRowCount} แถว`, `${lineItemRowCount} rows`) : '—'}
                   </div>
+                  <div />
                   <div className="pt-1.5 text-xs text-slate-400">
                     {t(`${groupedFields.Description.length} คอลัมน์ — ใส่คำอธิบายที่คอลัมน์ด้านล่าง`, `${groupedFields.Description.length} columns — add hints on the columns below`)}
                   </div>
@@ -1276,6 +1276,16 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                         </select>
                       </div>
                       <div className="pt-2 min-w-0">
+                        {activeSectionTab === 'Description' && <div className="text-[11px] text-slate-400 mb-0.5">{t('ค่าในแถวแรก', 'Value in the first row')}</div>}
+                        {!testFile ? (
+                          <span className="text-sm text-slate-300">—</span>
+                        ) : result?.blank ? (
+                          <span className="text-sm font-bold text-rose-600">{t('อ่านไม่ได้ / ไม่พบ', 'Unreadable / not found')}</span>
+                        ) : (
+                          <span className="text-sm font-mono text-slate-700 break-words">{result?.value}</span>
+                        )}
+                      </div>
+                      <div className="pt-2 min-w-0">
                         {!testFile ? (
                           <span className="text-sm text-slate-300">—</span>
                         ) : (
@@ -1288,16 +1298,6 @@ export const OcrTuningSettings: React.FC<OcrTuningSettingsProps> = ({ language, 
                         )}
                         {isMismatch && (
                           <p className="text-[11px] font-bold text-rose-600 mt-0.5">{t('ไม่ตรงกับค่าที่อ่านได้', "Doesn't match the value read")}</p>
-                        )}
-                      </div>
-                      <div className="pt-2 min-w-0">
-                        {activeSectionTab === 'Description' && <div className="text-[11px] text-slate-400 mb-0.5">{t('ค่าในแถวแรก', 'Value in the first row')}</div>}
-                        {!testFile ? (
-                          <span className="text-sm text-slate-300">—</span>
-                        ) : result?.blank ? (
-                          <span className="text-sm font-bold text-rose-600">{t('อ่านไม่ได้ / ไม่พบ', 'Unreadable / not found')}</span>
-                        ) : (
-                          <span className="text-sm font-mono text-slate-700 break-words">{result?.value}</span>
                         )}
                       </div>
                       <div className="mt-1.5">
