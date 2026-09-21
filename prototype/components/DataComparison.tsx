@@ -711,6 +711,9 @@ export const DataComparison: React.FC<DataComparisonProps> = ({ language, tracki
   const [rotationAngle, setRotationAngle] = useState<number>(0);
   const [pdfCurrentPage, setPdfCurrentPage] = useState<number>(1);
   const [activeRightTab, setActiveRightTab] = useState<'excel' | 'json'>('excel');
+  // The main XML document canvas defaults to a raw-code view — this lets a non-technical
+  // user flip it to a field/value table instead, same idea as the Excel canvas's grid.
+  const [xmlCanvasViewMode, setXmlCanvasViewMode] = useState<'code' | 'table'>('code');
   const [copiedJson, setCopiedJson] = useState<boolean>(false);
   // Cross-highlighting between the field list (right pane) and the rendered document (left pane):
   // key = `${group}::${fieldName}` so same-named fields in different item groups don't collide.
@@ -7073,30 +7076,67 @@ const mockWorkflows: Workflow[] = [
                           const rootTag = (docUpper.replace(/[^A-Z0-9]+/g, '') || 'DOCUMENT');
                           return (
                             <div className="w-[720px] bg-[#1e1e1e] shadow-xl font-mono text-[12px] rounded-sm overflow-hidden">
-                              <div className="bg-[#252526] text-slate-300 px-4 py-2 flex items-center gap-2 border-b border-black/40">
-                                <FileCode size={14} className="text-sky-400" />
-                                <span className="text-xs font-bold tracking-tight">{pdfPreviewUrl}</span>
+                              <div className="bg-[#252526] text-slate-300 px-4 py-2 flex items-center justify-between gap-2 border-b border-black/40">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <FileCode size={14} className="text-sky-400 shrink-0" />
+                                  <span className="text-xs font-bold tracking-tight truncate">{pdfPreviewUrl}</span>
+                                </div>
+                                <div className="flex items-center gap-0.5 bg-black/30 rounded-[4px] p-0.5 shrink-0">
+                                  <button
+                                    onClick={() => setXmlCanvasViewMode('code')}
+                                    className={`px-2.5 py-1 rounded-[3px] text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
+                                      xmlCanvasViewMode === 'code' ? 'bg-sky-500 text-white' : 'text-slate-400 hover:text-slate-200'
+                                    }`}
+                                  >
+                                    {language === 'TH' ? 'โค้ด' : 'Code'}
+                                  </button>
+                                  <button
+                                    onClick={() => setXmlCanvasViewMode('table')}
+                                    className={`px-2.5 py-1 rounded-[3px] text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
+                                      xmlCanvasViewMode === 'table' ? 'bg-sky-500 text-white' : 'text-slate-400 hover:text-slate-200'
+                                    }`}
+                                  >
+                                    {language === 'TH' ? 'ตาราง' : 'Table'}
+                                  </button>
+                                </div>
                               </div>
-                              <div className="p-4 leading-relaxed overflow-x-auto">
-                                <div className="flex"><span className="w-6 text-right pr-3 text-slate-600 select-none">1</span><span><span className="text-slate-500">{'<?xml version="1.0" encoding="UTF-8"?>'}</span></span></div>
-                                <div className="flex"><span className="w-6 text-right pr-3 text-slate-600 select-none">2</span><span><span className="text-sky-400">{'<'}{rootTag}</span> <span className="text-emerald-400">source</span>=<span className="text-orange-300">"{selectedJob?.type || 'STANDARD_VERIFICATION'}"</span><span className="text-sky-400">{'>'}</span></span></div>
-                                {fields.length > 0 ? fields.map(([field, value], i) => {
-                                  const tag = field.replace(/[^A-Za-z0-9]+/g, '');
-                                  return (
-                                    <div key={field} className={`flex ${isFieldHighlightedByName(field) ? 'bg-amber-500/10' : ''}`}>
-                                      <span className="w-6 text-right pr-3 text-slate-600 select-none">{i + 3}</span>
-                                      <span className="pl-4">
-                                        <span className="text-sky-400">{'<'}{tag}{'>'}</span>
-                                        <span className="text-slate-200">{String(value)}</span>
-                                        <span className="text-sky-400">{'</'}{tag}{'>'}</span>
-                                      </span>
+                              {xmlCanvasViewMode === 'code' ? (
+                                <div className="p-4 leading-relaxed overflow-x-auto">
+                                  <div className="flex"><span className="w-6 text-right pr-3 text-slate-600 select-none">1</span><span><span className="text-slate-500">{'<?xml version="1.0" encoding="UTF-8"?>'}</span></span></div>
+                                  <div className="flex"><span className="w-6 text-right pr-3 text-slate-600 select-none">2</span><span><span className="text-sky-400">{'<'}{rootTag}</span> <span className="text-emerald-400">source</span>=<span className="text-orange-300">"{selectedJob?.type || 'STANDARD_VERIFICATION'}"</span><span className="text-sky-400">{'>'}</span></span></div>
+                                  {fields.length > 0 ? fields.map(([field, value], i) => {
+                                    const tag = field.replace(/[^A-Za-z0-9]+/g, '');
+                                    return (
+                                      <div key={field} className={`flex ${isFieldHighlightedByName(field) ? 'bg-amber-500/10' : ''}`}>
+                                        <span className="w-6 text-right pr-3 text-slate-600 select-none">{i + 3}</span>
+                                        <span className="pl-4">
+                                          <span className="text-sky-400">{'<'}{tag}{'>'}</span>
+                                          <span className="text-slate-200">{String(value)}</span>
+                                          <span className="text-sky-400">{'</'}{tag}{'>'}</span>
+                                        </span>
+                                      </div>
+                                    );
+                                  }) : (
+                                    <div className="flex"><span className="w-6 text-right pr-3 text-slate-600 select-none">3</span><span className="pl-4 text-slate-500">{language === 'TH' ? '// ไม่มีข้อมูล' : '// no data'}</span></div>
+                                  )}
+                                  <div className="flex"><span className="w-6 text-right pr-3 text-slate-600 select-none">{fields.length + 3}</span><span><span className="text-sky-400">{'</'}{rootTag}{'>'}</span></span></div>
+                                </div>
+                              ) : (
+                                <div className="bg-white font-sans text-slate-800">
+                                  <div className="grid grid-cols-2 text-[10px] font-black uppercase tracking-wide text-[#0f5c31] bg-[#dceee0] border-b border-[#c7d6c9]">
+                                    <div className="px-3 py-1.5 border-r border-[#c7d6c9]">{language === 'TH' ? 'ชื่อฟิลด์' : 'Field'}</div>
+                                    <div className="px-3 py-1.5">{language === 'TH' ? 'ค่า' : 'Value'}</div>
+                                  </div>
+                                  {fields.length > 0 ? fields.map(([field, value]) => (
+                                    <div key={field} className={`grid grid-cols-2 border-b border-slate-100 ${isFieldHighlightedByName(field) ? 'bg-amber-100/70' : ''}`}>
+                                      <div className="px-3 py-2 text-[11px] font-semibold text-slate-700 border-r border-slate-100 truncate">{field}</div>
+                                      <div className="px-3 py-2 text-[11px] text-slate-600 truncate">{String(value)}</div>
                                     </div>
-                                  );
-                                }) : (
-                                  <div className="flex"><span className="w-6 text-right pr-3 text-slate-600 select-none">3</span><span className="pl-4 text-slate-500">{language === 'TH' ? '// ไม่มีข้อมูล' : '// no data'}</span></div>
-                                )}
-                                <div className="flex"><span className="w-6 text-right pr-3 text-slate-600 select-none">{fields.length + 3}</span><span><span className="text-sky-400">{'</'}{rootTag}{'>'}</span></span></div>
-                              </div>
+                                  )) : (
+                                    <div className="p-6 text-center text-xs text-slate-300 font-bold">{language === 'TH' ? 'ไม่มีข้อมูล' : 'No data'}</div>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           );
                         }
