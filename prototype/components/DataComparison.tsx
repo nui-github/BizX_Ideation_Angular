@@ -10026,8 +10026,8 @@ const mockWorkflows: Workflow[] = [
                                                   )}
                                                 </div>
                                               }>
-                                                <div className="mt-1 px-2 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200/60 rounded-[4px] text-[11px] font-black tracking-tight shrink-0 shadow-sm flex items-center gap-1.5 w-fit max-w-full cursor-help">
-                                                  <ListFilter size={12} className="text-emerald-600 shrink-0" strokeWidth={3} />
+                                                <div className="mt-1 px-2 py-1 bg-slate-100 text-slate-600 border border-slate-200 rounded-[4px] text-[11px] font-black tracking-tight shrink-0 shadow-sm flex items-center gap-1.5 w-fit max-w-full cursor-help">
+                                                  <ListFilter size={12} className="text-slate-500 shrink-0" strokeWidth={3} />
                                                   <span className="truncate max-w-[200px] leading-tight">{target.ruleTitle}</span>
                                                 </div>
                                               </Tooltip>
