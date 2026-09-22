@@ -3399,17 +3399,21 @@ const mockWorkflows: Workflow[] = [
       assignee: 'Somchai T.',
       status: JobStatus.REVIEW,
       totalFieldsCount: 39,
-      accuracyScore: 100.0,
+      accuracyScore: 94.9,
       docs: {
         'Packing List': ComparisonDocStatus.MATCHED,
         'B / L': ComparisonDocStatus.MATCHED,
-        'Invoice': ComparisonDocStatus.MATCHED,
+        // MISMATCHED, not MATCHED — a doc-level status of MATCHED forcibly resets any
+        // field-level MISMATCH back to MATCH (see "Rule: If document is MATCHED or
+        // LOCKED..." below), which would silently swallow the two fields above that are
+        // meant to demo a conditional substitution ending in a genuine mismatch.
+        'Invoice': ComparisonDocStatus.MISMATCHED,
       },
       progress: 100,
       totalDocs: 3,
       foundDocs: 3,
-      matchedCount: 3,
-      mismatchedCount: 0
+      matchedCount: 2,
+      mismatchedCount: 1
     }
     ];
     // Jobs created via "สร้างรายการใหม่" only ever live in this tab's memory — a doc preview
@@ -3935,6 +3939,9 @@ const mockWorkflows: Workflow[] = [
   // cached here, re-rolled (see handleOCRFiles) whenever that job's docs get (re)read.
   const noRuleFieldsRef = useRef<Record<string, string[]>>({});
   const getNoRuleCellsForJob = (jobId: string, docNames: string[]): Set<string> => {
+    // The Conditional Rule Demo job needs its specific fields reliably visible every load —
+    // skip the random "no rule configured" simulation for it entirely.
+    if (jobId === 'job-conditional-demo') return new Set();
     if (!noRuleFieldsRef.current[jobId]) {
       const count = 2 + Math.floor(Math.random() * 2); // 2-3
       noRuleFieldsRef.current[jobId] = [
@@ -4104,6 +4111,9 @@ const mockWorkflows: Workflow[] = [
           // shows the pattern applies at every level. 'Invoice' is non-primary for both
           // parts in this job (B / L wins "MAIN"), so its override survives isPrimary.
           if (job.reference === 'Conditional Rule Demo') {
+            // The substituted value is then compared against MAIN like any other field —
+            // it can still come out matched (SYNONYM) or genuinely mismatched (MISMATCH).
+            // One example of each per part below.
             if (f.part === 'Header' && f.name === 'Port of Discharge' && docName === 'Invoice') {
               conditionalSourceValue = value;
               conditionalSourceDoc = pickConditionalSourceDoc(docName);
@@ -4112,6 +4122,14 @@ const mockWorkflows: Workflow[] = [
               status = 'SYNONYM';
               ruleTitle = 'เปรียบเทียบตามเงื่อนไข';
               ruleDesc = 'ใช้รหัสท่าเรือจากเอกสารต้นทางแทนชื่อเต็ม';
+            } else if (f.part === 'Header' && f.name === 'Consignee TAX ID' && docName === 'Invoice') {
+              conditionalSourceValue = value;
+              conditionalSourceDoc = pickConditionalSourceDoc(docName);
+              conditionalSourceField = f.name;
+              value = '0105562000099';
+              status = 'MISMATCH';
+              ruleTitle = 'เปรียบเทียบตามเงื่อนไข';
+              ruleDesc = 'เลขประจำตัวที่ดึงมาไม่ตรงกับค่าอ้างอิง';
             } else if (f.part === 'Description' && f.name === 'UOM' && docName === 'Invoice') {
               conditionalSourceValue = value;
               conditionalSourceDoc = pickConditionalSourceDoc(docName);
@@ -4120,6 +4138,14 @@ const mockWorkflows: Workflow[] = [
               status = 'SYNONYM';
               ruleTitle = 'เปรียบเทียบตามเงื่อนไข';
               ruleDesc = 'แปลงหน่วยนับให้ตรงกับเอกสารขนส่ง';
+            } else if (f.part === 'Description' && f.name === 'Price / Unit' && docName === 'Invoice') {
+              conditionalSourceValue = value;
+              conditionalSourceDoc = pickConditionalSourceDoc(docName);
+              conditionalSourceField = f.name;
+              value = (parseFloat(f.source) + 5).toFixed(2);
+              status = 'MISMATCH';
+              ruleTitle = 'เปรียบเทียบตามเงื่อนไข';
+              ruleDesc = 'ราคาที่ดึงมาไม่ตรงกับค่าอ้างอิง';
             }
           }
 
@@ -9987,7 +10013,7 @@ const mockWorkflows: Workflow[] = [
                                               </div>
                                             )}
 
-                                            {target.status === 'SYNONYM' && target.ruleTitle && target.ruleTitle !== 'Master lookup (ฐานข้อมูล)' && target.ruleTitle !== 'ยืนยันโดยผู้ใช้' && target.ruleTitle !== 'Confirmed by User' && target.ruleTitle !== 'ผ่านการตรวจสอบแล้ว' && target.ruleTitle !== 'Verified' && (
+                                            {(target.status === 'SYNONYM' || target.status === 'MISMATCH') && target.ruleTitle && target.ruleTitle !== 'Master lookup (ฐานข้อมูล)' && target.ruleTitle !== 'ยืนยันโดยผู้ใช้' && target.ruleTitle !== 'Confirmed by User' && target.ruleTitle !== 'ผ่านการตรวจสอบแล้ว' && target.ruleTitle !== 'Verified' && (
                                               <Tooltip content={
                                                 <div className="p-0.5 text-left text-[11px] font-sans max-w-[220px]">
                                                   <span className="font-bold text-emerald-400 block">{target.ruleTitle}</span>
