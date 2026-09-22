@@ -336,63 +336,6 @@ const parseDateValue = (dateStr: string | undefined): number => {
   return new Date(dateStr).getTime() || 0;
 };
 
-const getConciseMismatchSummary = (fieldName: string, lang: Language): string => {
-  if (lang === 'TH') {
-    if (fieldName === 'Consignee Name' || fieldName === 'Consignee TAX ID') return 'ข้อมูลคู่ค้าไม่ตรงกับเอกสารหลัก';
-    if (fieldName === 'Port of Loading' || fieldName === 'Port of Discharge') return 'ท่าเรือต้นทาง/ปลายทางไม่ตรงกัน';
-    if (fieldName === "Q'ty by line" || fieldName === 'Total Quantity') return 'จำนวนสินค้าไม่สอดคล้องกัน';
-    if (fieldName === 'Price / Unit' || fieldName === 'Invoice Amount') return 'ราคาต่อหน่วย/มูลค่ารวมไม่สอดคล้องกัน';
-    if (fieldName === 'HS Code') return 'รหัสพิกัดศุลกากร (HS Code) ไม่ตรงกัน';
-    if (fieldName === 'Total Gross Weight (KGS)' || fieldName === 'Total Net Weight (KGS)' || fieldName === 'Total Volume (CBM)') return 'น้ำหนักหรือปริมาตรรวมไม่ตรงกัน';
-    if (fieldName === 'Vessel / Flight' || fieldName === 'Voyage No.') return 'ชื่อพาหนะ/เที่ยวเดินเรือไม่ตรงกัน';
-    if (fieldName === 'Incoterm') return 'เงื่อนไขการส่งมอบ (Incoterm) ไม่ตรงกัน';
-    if (fieldName === 'Freight Charges') return 'เงื่อนไขชำระค่าระวางไม่ตรงกัน';
-    return 'ข้อมูลมีความขัดแย้งกันข้ามเอกสาร';
-  } else {
-    if (fieldName === 'Consignee Name' || fieldName === 'Consignee TAX ID') return 'Consignee/TAX ID mismatch';
-    if (fieldName === 'Port of Loading' || fieldName === 'Port of Discharge') return 'Port mismatch';
-    if (fieldName === "Q'ty by line" || fieldName === 'Total Quantity') return 'Quantity consistency conflict';
-    if (fieldName === 'Price / Unit' || fieldName === 'Invoice Amount') return 'Price/Amount mismatch';
-    if (fieldName === 'HS Code') return 'HS Code mismatch';
-    if (fieldName === 'Total Gross Weight (KGS)' || fieldName === 'Total Net Weight (KGS)' || fieldName === 'Total Volume (CBM)') return 'Weight/Volume mismatch';
-    if (fieldName === 'Vessel / Flight' || fieldName === 'Voyage No.') return 'Vessel/Voyage mismatch';
-    if (fieldName === 'Incoterm') return 'Incoterm consistency conflict';
-    if (fieldName === 'Freight Charges') return 'Freight term mismatch';
-    return 'Data conflict between documents';
-  }
-};
-
-const getDetailedDiffExplanation = (targetVal: string, masterVal: string, lang: Language): string => {
-  if (!targetVal || !masterVal) return '';
-
-  const isNumeric = (val: string) => {
-    const cleanVal = val.replace(/,/g, '').trim();
-    return cleanVal !== '' && !isNaN(Number(cleanVal));
-  };
-
-  if (isNumeric(targetVal) && isNumeric(masterVal)) {
-    return lang === 'TH' ? 'ค่าต่างกัน' : 'Value is different';
-  }
-
-  const diffs = diffChars(String(targetVal), String(masterVal));
-  let unchangedCount = 0;
-  
-  diffs.forEach(part => {
-    if (!part.removed && !part.added) {
-      unchangedCount += part.value.length;
-    }
-  });
-
-  const totalLength = Math.max(String(targetVal).length, String(masterVal).length);
-  const similarity = totalLength > 0 ? unchangedCount / totalLength : 0;
-
-  if (similarity < 0.4) {
-    return lang === 'TH' ? 'เป็นข้อมูลคนละคำกัน' : 'Completely different data';
-  }
-
-  return lang === 'TH' ? 'ค่าต่างกันบางส่วน' : 'Partially different value';
-};
-
 export const DataComparison: React.FC<DataComparisonProps> = ({ language, trackingItems, role = UserRole.USER, targetJobId, onConsumeTargetJobId, currentTeam = 'operation' }) => {
   const t = TRANSLATIONS[language];
   
@@ -9943,31 +9886,13 @@ const mockWorkflows: Workflow[] = [
                                                    )}
                                                 </span>
                                                 {target.status === 'MATCH' && !isSummary && (
-                                                   <Tooltip content="ตรงกัน">
-                                                     <CheckCircle2 size={14} className="text-emerald-500 shrink-0 cursor-help" />
-                                                   </Tooltip>
+                                                   <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />
                                                 )}
                                                 {target.status === 'MISMATCH' && (
-                                                   <Tooltip content={(() => {
-                                                      const summary = getConciseMismatchSummary(res.fieldName, language);
-                                                      const detailedDiff = getDetailedDiffExplanation(String(target.value || ''), String(res.sourceValue || ''), language);
-                                                      return (
-                                                        <div className="p-0.5 text-left text-[11px] font-sans max-w-[220px]">
-                                                          <span className="font-bold text-rose-400 block mb-0.5">{language === 'TH' ? 'ข้อมูลไม่สอดคล้องกัน' : 'Data Mismatch'}</span>
-                                                          <span className="text-slate-200 font-medium block">{summary}</span>
-                                                          {detailedDiff && (
-                                                            <span className="text-rose-300 font-bold block mt-1 border-t border-slate-700/50 pt-1 leading-normal">{detailedDiff}</span>
-                                                          )}
-                                                        </div>
-                                                      );
-                                                   })()}>
-                                                     <AlertCircle size={14} className="text-rose-500 shrink-0 cursor-help" />
-                                                  </Tooltip>
+                                                   <XCircle size={14} className="text-rose-500 shrink-0" />
                                                )}
                                                {target.status === 'SYNONYM' && (
-                                                  <Tooltip content={target.ruleTitle ? `${language === 'TH' ? 'ตรงตามเงื่อนไข:' : 'Matched Condition:'} ${target.ruleTitle}` : "ตรงตามเงื่อนไข"}>
-                                                    <CheckCircle2 size={14} className="text-emerald-500 shrink-0 cursor-help" />
-                                                  </Tooltip>
+                                                  <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />
                                                 )}
                                             </div>
                                             )}
