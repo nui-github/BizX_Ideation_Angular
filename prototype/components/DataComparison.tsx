@@ -4039,6 +4039,12 @@ const mockWorkflows: Workflow[] = [
         let status: 'MATCH' | 'MISMATCH' | 'SYNONYM' | 'NA' = 'MATCH';
         let ruleTitle = '';
         let ruleDesc = '';
+        // Set only when a CONDITIONAL compare rule swaps in a value pulled from another
+        // doc/field — holds what this doc's own OCR read before the substitution, so the
+        // cell can show both: what was actually read here, and what it's being compared
+        // against because the rule's condition matched.
+        let conditionalSourceValue: string | undefined;
+        let conditionalSourceLabel: string | undefined;
 
         // Randomly simulate N/A for certain fields in certain docs
         if ((docName === 'FTA / CO' && f.name === 'Total Quantity')) {
@@ -4156,6 +4162,8 @@ const mockWorkflows: Workflow[] = [
                 value = '25.00';
                 status = 'MISMATCH';
              } else if (f.name === 'Vessel / Flight' && (docName.toUpperCase().includes('FORM') || docName.toUpperCase().includes('B / L') || docName.toUpperCase().includes('WAYBILL'))) {
+                conditionalSourceValue = value;
+                conditionalSourceLabel = 'Booking Confirmation · Vessel Name';
                 value = 'MSC ALICIA V.2';
                 status = 'SYNONYM';
                 ruleTitle = 'เปรียบเทียบตามเงื่อนไข (CONDITIONAL)';
@@ -4220,6 +4228,8 @@ const mockWorkflows: Workflow[] = [
                 value = '440';
                 status = 'MISMATCH';
               } else if (f.name === 'Vessel / Flight' && tIdx % 2 === 1) {
+                conditionalSourceValue = value;
+                conditionalSourceLabel = 'Booking Confirmation · Vessel Name';
                 value = 'MSC ALICIA V.2';
                 status = 'SYNONYM';
                 ruleTitle = 'เปรียบเทียบตามเงื่อนไข (CONDITIONAL)';
@@ -4285,6 +4295,8 @@ const mockWorkflows: Workflow[] = [
           status = 'MATCH';
           ruleTitle = '';
           ruleDesc = '';
+          conditionalSourceValue = undefined;
+          conditionalSourceLabel = undefined;
         }
 
         return {
@@ -4294,6 +4306,8 @@ const mockWorkflows: Workflow[] = [
           status,
           ruleTitle,
           ruleDesc,
+          conditionalSourceValue,
+          conditionalSourceLabel,
           isPrimary
         };
       });
@@ -9844,11 +9858,29 @@ const mockWorkflows: Workflow[] = [
                                                   </Tooltip>
                                                )}
                                                {target.status === 'SYNONYM' && (
-                                                  <Tooltip content={target.ruleTitle ? `${language === 'TH' ? 'ตรงตามเงื่อนไข:' : 'Matched Condition:'} ${target.ruleTitle}` : "ตรงตามเงื่อนไข"}>
+                                                  <Tooltip content={(target as any).conditionalSourceValue ? (
+                                                    <div className="p-0.5 text-left text-[11px] font-sans max-w-[220px]">
+                                                      <span className="font-bold text-emerald-400 block mb-0.5">{target.ruleTitle}</span>
+                                                      <span className="text-slate-200 font-medium block">{target.ruleDesc}</span>
+                                                      <span className="text-slate-300 block mt-1 border-t border-slate-700/50 pt-1 leading-normal">
+                                                        {language === 'TH'
+                                                          ? `ดึงค่าจาก ${(target as any).conditionalSourceLabel} มาใช้แทนค่าที่อ่านได้จากเอกสารนี้`
+                                                          : `Pulled from ${(target as any).conditionalSourceLabel} in place of this document's own read value`}
+                                                      </span>
+                                                    </div>
+                                                  ) : (target.ruleTitle ? `${language === 'TH' ? 'ตรงตามเงื่อนไข:' : 'Matched Condition:'} ${target.ruleTitle}` : "ตรงตามเงื่อนไข")}>
                                                     <CheckCircle2 size={14} className="text-emerald-500 shrink-0 cursor-help" />
                                                   </Tooltip>
                                                 )}
                                             </div>
+                                            )}
+
+                                            {(target as any).conditionalSourceValue && (
+                                              <div className="flex items-center gap-1" title={language === 'TH' ? 'ค่าที่อ่านได้จากเอกสารนี้ก่อนแทนที่ตามเงื่อนไข' : "This document's own read value, before the conditional swap"}>
+                                                <span className="text-[10px] font-semibold text-slate-400 line-through decoration-slate-300">
+                                                  {language === 'TH' ? 'เดิม:' : 'Was:'} {(target as any).conditionalSourceValue}
+                                                </span>
+                                              </div>
                                             )}
 
                                             {(target as any).isPrimary && res.targets.find((t: any) => t.isPrimary) === target && !isSummary && (
