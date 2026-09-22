@@ -9817,7 +9817,7 @@ const mockWorkflows: Workflow[] = [
                                     const isUserConfirmed = target && (target.ruleTitle === 'ยืนยันโดยผู้ใช้' || target.ruleTitle === 'Confirmed by User' || target.ruleTitle === 'ผ่านการตรวจสอบแล้ว' || target.ruleTitle === 'Verified');
                                     const isSummary = (res as any).part === 'Summary';
                                     return (
-                                      <td key={docName} className={`p-0 border-r border-r-slate-100 border-t border-t-slate-200 transition-all ${
+                                      <td key={docName} className={`p-0 border-r border-r-slate-100 border-t border-t-slate-200 transition-all align-top h-px ${
                                          isSummary ? 'bg-purple-50' :
                                          (target as any).isPrimary ? 'bg-blue-50' :
                                          isUserConfirmed ? 'bg-emerald-50/10' :
@@ -9826,7 +9826,7 @@ const mockWorkflows: Workflow[] = [
                                          target.status === 'MISMATCH' ? 'bg-rose-50/30' :
                                          'bg-slate-50/10 opacity-50'
                                       }`}>
-                                         <div className={`px-4 py-4 text-[11px] font-black text-center min-h-full flex flex-col items-center justify-start gap-1.5 group/cell relative overflow-visible ${
+                                         <div className={`px-4 py-4 text-[11px] font-black text-center h-full flex flex-col items-center justify-start gap-1.5 group/cell relative overflow-visible ${
                                             isSummary ? 'text-purple-700' :
                                             isUserConfirmed ? 'text-emerald-700' :
                                             (target.status === 'MATCH' || target.status === 'SYNONYM') ? 'text-slate-600' :
