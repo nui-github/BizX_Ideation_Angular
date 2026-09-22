@@ -4044,7 +4044,8 @@ const mockWorkflows: Workflow[] = [
         // cell can show both: what was actually read here, and what it's being compared
         // against because the rule's condition matched.
         let conditionalSourceValue: string | undefined;
-        let conditionalSourceLabel: string | undefined;
+        let conditionalSourceDoc: string | undefined;
+        let conditionalSourceField: string | undefined;
 
         // Randomly simulate N/A for certain fields in certain docs
         if ((docName === 'FTA / CO' && f.name === 'Total Quantity')) {
@@ -4163,7 +4164,8 @@ const mockWorkflows: Workflow[] = [
                 status = 'MISMATCH';
              } else if (f.name === 'Vessel / Flight' && (docName.toUpperCase().includes('FORM') || docName.toUpperCase().includes('B / L') || docName.toUpperCase().includes('WAYBILL'))) {
                 conditionalSourceValue = value;
-                conditionalSourceLabel = 'Booking Confirmation · Vessel Name';
+                conditionalSourceDoc = 'Booking Confirmation';
+                conditionalSourceField = 'Vessel Name';
                 value = 'MSC ALICIA V.2';
                 status = 'SYNONYM';
                 ruleTitle = 'เปรียบเทียบตามเงื่อนไข';
@@ -4229,7 +4231,8 @@ const mockWorkflows: Workflow[] = [
                 status = 'MISMATCH';
               } else if (f.name === 'Vessel / Flight' && tIdx % 2 === 1) {
                 conditionalSourceValue = value;
-                conditionalSourceLabel = 'Booking Confirmation · Vessel Name';
+                conditionalSourceDoc = 'Booking Confirmation';
+                conditionalSourceField = 'Vessel Name';
                 value = 'MSC ALICIA V.2';
                 status = 'SYNONYM';
                 ruleTitle = 'เปรียบเทียบตามเงื่อนไข';
@@ -4296,7 +4299,8 @@ const mockWorkflows: Workflow[] = [
           ruleTitle = '';
           ruleDesc = '';
           conditionalSourceValue = undefined;
-          conditionalSourceLabel = undefined;
+          conditionalSourceDoc = undefined;
+          conditionalSourceField = undefined;
         }
 
         return {
@@ -4307,7 +4311,8 @@ const mockWorkflows: Workflow[] = [
           ruleTitle,
           ruleDesc,
           conditionalSourceValue,
-          conditionalSourceLabel,
+          conditionalSourceDoc,
+          conditionalSourceField,
           isPrimary
         };
       });
@@ -9910,11 +9915,11 @@ const mockWorkflows: Workflow[] = [
                                               <Tooltip content={
                                                 <div className="p-0.5 text-left text-[11px] font-sans max-w-[220px]">
                                                   <span className="font-bold text-emerald-400 block">{target.ruleTitle}</span>
-                                                  {(target as any).conditionalSourceLabel && (
+                                                  {(target as any).conditionalSourceDoc && (
                                                     <span className="text-slate-200 font-medium block mt-1">
                                                       {language === 'TH'
-                                                        ? `ดึงค่าจาก ${(target as any).conditionalSourceLabel} มาใช้แทนค่าที่อ่านได้จากเอกสารนี้`
-                                                        : `Pulled from ${(target as any).conditionalSourceLabel} in place of this document's own read value`}
+                                                        ? `ดึงค่าจากเอกสาร ${(target as any).conditionalSourceDoc} ฟิลด์ ${(target as any).conditionalSourceField} มาใช้แทนค่าที่อ่านได้จากเอกสารนี้`
+                                                        : `Pulled from ${(target as any).conditionalSourceDoc}'s "${(target as any).conditionalSourceField}" field, in place of this document's own read value`}
                                                     </span>
                                                   )}
                                                 </div>
