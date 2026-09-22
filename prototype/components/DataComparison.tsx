@@ -9951,7 +9951,7 @@ const mockWorkflows: Workflow[] = [
                                                   )}
                                                 </div>
                                               }>
-                                                <div className="mt-1 px-1.5 py-0.5 bg-slate-100 text-slate-600 border border-slate-200 rounded-[20px] text-[8px] font-black tracking-tight shrink-0 shadow-sm flex items-center gap-1.5 w-fit max-w-full cursor-help">
+                                                <div className="mt-1 px-1.5 py-0.5 bg-slate-100 text-slate-600 border border-slate-200 rounded-[20px] text-[9px] font-black tracking-tight shrink-0 shadow-sm flex items-center gap-1.5 w-fit max-w-full cursor-help">
                                                   <span className="truncate max-w-[200px] leading-tight">{target.ruleTitle}</span>
                                                 </div>
                                               </Tooltip>
