@@ -9900,7 +9900,7 @@ const mockWorkflows: Workflow[] = [
                                             {(target as any).conditionalSourceValue && (
                                               <div className="flex items-center gap-1" title={language === 'TH' ? 'ค่าที่อ่านได้จากเอกสารนี้ก่อนแทนที่ตามเงื่อนไข' : "This document's own read value, before the conditional swap"}>
                                                 <span className="text-[10px] font-semibold text-slate-400 line-through decoration-slate-300">
-                                                  {language === 'TH' ? 'เดิม:' : 'Was:'} {(target as any).conditionalSourceValue}
+                                                  {language === 'TH' ? 'ค่าเดิม:' : 'Was:'} {(target as any).conditionalSourceValue}
                                                 </span>
                                               </div>
                                             )}
