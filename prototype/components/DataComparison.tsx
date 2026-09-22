@@ -9826,7 +9826,7 @@ const mockWorkflows: Workflow[] = [
                                          target.status === 'MISMATCH' ? 'bg-rose-50/30' :
                                          'bg-slate-50/10 opacity-50'
                                       }`}>
-                                         <div className={`px-4 py-4 text-[11px] font-black text-center min-h-full flex flex-col items-center justify-center gap-1.5 group/cell relative overflow-visible ${
+                                         <div className={`px-4 py-4 text-[11px] font-black text-center min-h-full flex flex-col items-center justify-start gap-1.5 group/cell relative overflow-visible ${
                                             isSummary ? 'text-purple-700' :
                                             isUserConfirmed ? 'text-emerald-700' :
                                             (target.status === 'MATCH' || target.status === 'SYNONYM') ? 'text-slate-600' :
@@ -9906,7 +9906,7 @@ const mockWorkflows: Workflow[] = [
                                             )}
 
                                             {(target as any).isPrimary && res.targets.find((t: any) => t.isPrimary) === target && !isSummary && (
-                                              <div className="px-1.5 py-0.5 bg-blue-100 text-blue-700 border border-blue-200 rounded-[4px] text-[8px] font-black uppercase tracking-wider shrink-0 shadow-sm flex items-center gap-1.5 w-fit">
+                                              <div className="mt-auto px-1.5 py-0.5 bg-blue-100 text-blue-700 border border-blue-200 rounded-[4px] text-[8px] font-black uppercase tracking-wider shrink-0 shadow-sm flex items-center gap-1.5 w-fit">
                                                 Main
                                               </div>
                                             )}
