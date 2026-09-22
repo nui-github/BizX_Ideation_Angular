@@ -4099,6 +4099,30 @@ const mockWorkflows: Workflow[] = [
         }
         else {
           // Specific overrides for demonstration
+          // "Conditional Rule Demo" shipment — same CONDITIONAL pattern as the Footer
+          // fields (see below), but on the Header and Description parts too, so the demo
+          // shows the pattern applies at every level. 'Invoice' is non-primary for both
+          // parts in this job (B / L wins "MAIN"), so its override survives isPrimary.
+          if (job.reference === 'Conditional Rule Demo') {
+            if (f.part === 'Header' && f.name === 'Port of Discharge' && docName === 'Invoice') {
+              conditionalSourceValue = value;
+              conditionalSourceDoc = pickConditionalSourceDoc(docName);
+              conditionalSourceField = f.name;
+              value = 'TH BKK';
+              status = 'SYNONYM';
+              ruleTitle = 'เปรียบเทียบตามเงื่อนไข';
+              ruleDesc = 'ใช้รหัสท่าเรือจากเอกสารต้นทางแทนชื่อเต็ม';
+            } else if (f.part === 'Description' && f.name === 'UOM' && docName === 'Invoice') {
+              conditionalSourceValue = value;
+              conditionalSourceDoc = pickConditionalSourceDoc(docName);
+              conditionalSourceField = f.name;
+              value = 'CTN';
+              status = 'SYNONYM';
+              ruleTitle = 'เปรียบเทียบตามเงื่อนไข';
+              ruleDesc = 'แปลงหน่วยนับให้ตรงกับเอกสารขนส่ง';
+            }
+          }
+
           if (job.reference === 'JP-TH-2026-00223') {
              if (f.name === 'Consignee Name' && docName === 'PACKING LIST') {
                 value = 'BIZ-TRANS LOGISTICS (THAILA ND) CO., LTD.';
