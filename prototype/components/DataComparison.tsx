@@ -9858,17 +9858,7 @@ const mockWorkflows: Workflow[] = [
                                                   </Tooltip>
                                                )}
                                                {target.status === 'SYNONYM' && (
-                                                  <Tooltip content={(target as any).conditionalSourceValue ? (
-                                                    <div className="p-0.5 text-left text-[11px] font-sans max-w-[220px]">
-                                                      <span className="font-bold text-emerald-400 block mb-0.5">{target.ruleTitle}</span>
-                                                      <span className="text-slate-200 font-medium block">{target.ruleDesc}</span>
-                                                      <span className="text-slate-300 block mt-1 border-t border-slate-700/50 pt-1 leading-normal">
-                                                        {language === 'TH'
-                                                          ? `ดึงค่าจาก ${(target as any).conditionalSourceLabel} มาใช้แทนค่าที่อ่านได้จากเอกสารนี้`
-                                                          : `Pulled from ${(target as any).conditionalSourceLabel} in place of this document's own read value`}
-                                                      </span>
-                                                    </div>
-                                                  ) : (target.ruleTitle ? `${language === 'TH' ? 'ตรงตามเงื่อนไข:' : 'Matched Condition:'} ${target.ruleTitle}` : "ตรงตามเงื่อนไข")}>
+                                                  <Tooltip content={target.ruleTitle ? `${language === 'TH' ? 'ตรงตามเงื่อนไข:' : 'Matched Condition:'} ${target.ruleTitle}` : "ตรงตามเงื่อนไข"}>
                                                     <CheckCircle2 size={14} className="text-emerald-500 shrink-0 cursor-help" />
                                                   </Tooltip>
                                                 )}
@@ -9917,10 +9907,23 @@ const mockWorkflows: Workflow[] = [
                                             )}
 
                                             {target.status === 'SYNONYM' && target.ruleTitle && target.ruleTitle !== 'Master lookup (ฐานข้อมูล)' && target.ruleTitle !== 'ยืนยันโดยผู้ใช้' && target.ruleTitle !== 'Confirmed by User' && target.ruleTitle !== 'ผ่านการตรวจสอบแล้ว' && target.ruleTitle !== 'Verified' && (
-                                              <div className="mt-1 px-2 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200/60 rounded-[4px] text-[11px] font-black tracking-tight shrink-0 shadow-sm flex items-center gap-1.5 w-fit max-w-full">
-                                                <ListFilter size={12} className="text-emerald-600 shrink-0" strokeWidth={3} />
-                                                <span className="truncate max-w-[200px] leading-tight">{target.ruleTitle}</span>
-                                              </div>
+                                              <Tooltip content={
+                                                <div className="p-0.5 text-left text-[11px] font-sans max-w-[220px]">
+                                                  <span className="font-bold text-emerald-400 block">{target.ruleTitle}</span>
+                                                  {(target as any).conditionalSourceLabel && (
+                                                    <span className="text-slate-200 font-medium block mt-1">
+                                                      {language === 'TH'
+                                                        ? `ดึงค่าจาก ${(target as any).conditionalSourceLabel} มาใช้แทนค่าที่อ่านได้จากเอกสารนี้`
+                                                        : `Pulled from ${(target as any).conditionalSourceLabel} in place of this document's own read value`}
+                                                    </span>
+                                                  )}
+                                                </div>
+                                              }>
+                                                <div className="mt-1 px-2 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200/60 rounded-[4px] text-[11px] font-black tracking-tight shrink-0 shadow-sm flex items-center gap-1.5 w-fit max-w-full cursor-help">
+                                                  <ListFilter size={12} className="text-emerald-600 shrink-0" strokeWidth={3} />
+                                                  <span className="truncate max-w-[200px] leading-tight">{target.ruleTitle}</span>
+                                                </div>
+                                              </Tooltip>
                                             )}
 
                                          </div>
