@@ -6,7 +6,7 @@ import {
   FileText, Upload, ArrowRight, Check, AlertCircle,
   Search, Download, Columns, ChevronLeft, ChevronRight,
   Plus, Trash2, ArrowLeftRight, FileSpreadsheet, File as FileIcon, FileCode,
-  CheckCircle2, XCircle, Info, Eye, Send, Filter, ListFilter, ArrowLeft, Save, RotateCcw,
+  CheckCircle2, XCircle, Info, Eye, Send, Filter, ArrowLeft, Save, RotateCcw,
   LayoutGrid, List, ScanEye, Bot, ChevronDown, Lock, Unlock, HelpCircle, X, Loader2, ShieldCheck, ArrowUpRight, ScanSearch, History, Edit3, UploadCloud, AlertTriangle,
   Printer, RotateCw, ZoomIn, ZoomOut, Menu, Copy, Star, CheckCheck, StickyNote, SkipForward, Undo2,
   FileBarChart2, Layers, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, GripVertical
@@ -9951,8 +9951,7 @@ const mockWorkflows: Workflow[] = [
                                                   )}
                                                 </div>
                                               }>
-                                                <div className="mt-1 px-2 py-1 bg-slate-100 text-slate-600 border border-slate-200 rounded-[4px] text-[11px] font-black tracking-tight shrink-0 shadow-sm flex items-center gap-1.5 w-fit max-w-full cursor-help">
-                                                  <ListFilter size={12} className="text-slate-500 shrink-0" strokeWidth={3} />
+                                                <div className="mt-1 px-2 py-1 bg-slate-100 text-slate-600 border border-slate-200 rounded-[20px] text-[11px] font-black tracking-tight shrink-0 shadow-sm flex items-center gap-1.5 w-fit max-w-full cursor-help">
                                                   <span className="truncate max-w-[200px] leading-tight">{target.ruleTitle}</span>
                                                 </div>
                                               </Tooltip>
