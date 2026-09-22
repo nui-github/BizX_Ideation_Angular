@@ -4166,7 +4166,7 @@ const mockWorkflows: Workflow[] = [
                 conditionalSourceLabel = 'Booking Confirmation · Vessel Name';
                 value = 'MSC ALICIA V.2';
                 status = 'SYNONYM';
-                ruleTitle = 'เปรียบเทียบตามเงื่อนไข (CONDITIONAL)';
+                ruleTitle = 'เปรียบเทียบตามเงื่อนไข';
                 ruleDesc = 'ละเว้นคำนำหน้าชื่อเรือ (Prefix)';
              } else if (f.name === 'Country of Origin' && (docName.toUpperCase().includes('FORM') || docName.toUpperCase().includes('CO') || docName.toUpperCase().includes('CERT') || docName.toUpperCase().includes('FTA') || docName.toUpperCase().includes('B / L'))) {
                 value = 'PRC';
@@ -4232,7 +4232,7 @@ const mockWorkflows: Workflow[] = [
                 conditionalSourceLabel = 'Booking Confirmation · Vessel Name';
                 value = 'MSC ALICIA V.2';
                 status = 'SYNONYM';
-                ruleTitle = 'เปรียบเทียบตามเงื่อนไข (CONDITIONAL)';
+                ruleTitle = 'เปรียบเทียบตามเงื่อนไข';
                 ruleDesc = 'ละเว้นคำนำหน้าชื่อเรือ (Prefix)';
               }
             }
@@ -4266,7 +4266,7 @@ const mockWorkflows: Workflow[] = [
              const syns = synonymRules[f.source] || [];
              if (syns.includes(value)) {
                status = 'SYNONYM';
-               ruleTitle = 'เปรียบเทียบตามเงื่อนไข (CONDITIONAL)';
+               ruleTitle = 'เปรียบเทียบตามเงื่อนไข';
                ruleDesc = 'ตรงกับเงื่อนไขที่ผู้ใช้ระบุ (Manual Accepted)';
              } else {
                status = 'MISMATCH';
