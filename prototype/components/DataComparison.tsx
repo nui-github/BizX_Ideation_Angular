@@ -3381,6 +3381,35 @@ const mockWorkflows: Workflow[] = [
       foundDocs: 2,
       matchedCount: 1,
       mismatchedCount: 1
+    },
+    // --- Shipment 17: "Conditional Rule Demo" — showcases a CONDITIONAL compare rule.
+    // 'Packing List' is listed first so it (not 'B / L') wins the Footer "MAIN" column —
+    // isPrimary forcibly clears any conditional override, so 'B / L' must stay non-primary
+    // to show one. 'B / L' then sits at index 1 (odd), hitting both the unconditioned
+    // Footer overrides (Vessel / Flight, Total Net Weight (KGS)) and the tIdx-odd fallback
+    // override (Voyage No.) — three fields whose compared value is pulled from a sibling
+    // doc instead of this doc's own OCR read. See getMockComparisonResults. ---
+    {
+      id: 'job-conditional-demo',
+      reference: 'Conditional Rule Demo',
+      expiryDate: '30 SEP 2026 17:00:00',
+      createdAt: '22 SEP 2026',
+      workflowName: 'Shipping Doc Matching',
+      assignedTeam: 'operation',
+      assignee: 'Somchai T.',
+      status: JobStatus.REVIEW,
+      totalFieldsCount: 39,
+      accuracyScore: 100.0,
+      docs: {
+        'Packing List': ComparisonDocStatus.MATCHED,
+        'B / L': ComparisonDocStatus.MATCHED,
+        'Invoice': ComparisonDocStatus.MATCHED,
+      },
+      progress: 100,
+      totalDocs: 3,
+      foundDocs: 3,
+      matchedCount: 3,
+      mismatchedCount: 0
     }
     ];
     // Jobs created via "สร้างรายการใหม่" only ever live in this tab's memory — a doc preview
