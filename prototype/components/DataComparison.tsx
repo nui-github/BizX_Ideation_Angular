@@ -4008,7 +4008,14 @@ const mockWorkflows: Workflow[] = [
 
     return fields.map(f => {
       const docNames = Object.keys(job.docs);
-      
+      // Picks a real sibling doc from this job's own doc set to name as the CONDITIONAL
+      // rule's source — never a doc that isn't actually part of the comparison — preferring
+      // one that plausibly carries the field (booking/freight docs for shipping details).
+      const pickConditionalSourceDoc = (excludeName: string) => {
+        const preferred = docNames.find(d => d !== excludeName && /BOOKING|FREIGHT|CONFIRM/i.test(d));
+        return preferred || docNames.find(d => d !== excludeName) || excludeName;
+      };
+
       // Determine which docName is the primary one for this field (first matching)
       // Flow 3's collapsed "all previous flows merged" column is always the reference doc,
       // for every field — it already represents matched data from the prior flow. Checked
@@ -4164,12 +4171,20 @@ const mockWorkflows: Workflow[] = [
                 status = 'MISMATCH';
              } else if (f.name === 'Vessel / Flight' && (docName.toUpperCase().includes('FORM') || docName.toUpperCase().includes('B / L') || docName.toUpperCase().includes('WAYBILL'))) {
                 conditionalSourceValue = value;
-                conditionalSourceDoc = 'Booking Confirmation';
-                conditionalSourceField = 'Vessel Name';
+                conditionalSourceDoc = pickConditionalSourceDoc(docName);
+                conditionalSourceField = f.name;
                 value = 'MSC ALICIA V.2';
                 status = 'SYNONYM';
                 ruleTitle = 'เปรียบเทียบตามเงื่อนไข';
                 ruleDesc = 'ละเว้นคำนำหน้าชื่อเรือ (Prefix)';
+             } else if (f.name === 'Total Net Weight (KGS)' && (docName.toUpperCase().includes('FORM') || docName.toUpperCase().includes('B / L') || docName.toUpperCase().includes('WAYBILL'))) {
+                conditionalSourceValue = value;
+                conditionalSourceDoc = pickConditionalSourceDoc(docName);
+                conditionalSourceField = f.name;
+                value = '1,100.00';
+                status = 'SYNONYM';
+                ruleTitle = 'เปรียบเทียบตามเงื่อนไข';
+                ruleDesc = 'ใช้น้ำหนักสุทธิจากเอกสารขนส่งแทนที่อ่านได้';
              } else if (f.name === 'Country of Origin' && (docName.toUpperCase().includes('FORM') || docName.toUpperCase().includes('CO') || docName.toUpperCase().includes('CERT') || docName.toUpperCase().includes('FTA') || docName.toUpperCase().includes('B / L'))) {
                 value = 'PRC';
                 status = 'SYNONYM';
@@ -4231,12 +4246,20 @@ const mockWorkflows: Workflow[] = [
                 status = 'MISMATCH';
               } else if (f.name === 'Vessel / Flight' && tIdx % 2 === 1) {
                 conditionalSourceValue = value;
-                conditionalSourceDoc = 'Booking Confirmation';
-                conditionalSourceField = 'Vessel Name';
+                conditionalSourceDoc = pickConditionalSourceDoc(docName);
+                conditionalSourceField = f.name;
                 value = 'MSC ALICIA V.2';
                 status = 'SYNONYM';
                 ruleTitle = 'เปรียบเทียบตามเงื่อนไข';
                 ruleDesc = 'ละเว้นคำนำหน้าชื่อเรือ (Prefix)';
+              } else if (f.name === 'Voyage No.' && tIdx % 2 === 1) {
+                conditionalSourceValue = value;
+                conditionalSourceDoc = pickConditionalSourceDoc(docName);
+                conditionalSourceField = f.name;
+                value = 'V.034S-R';
+                status = 'SYNONYM';
+                ruleTitle = 'เปรียบเทียบตามเงื่อนไข';
+                ruleDesc = 'ตัดคำต่อท้ายรุ่นเรือ (Revision suffix)';
               }
             }
           }
