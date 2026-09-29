@@ -1910,7 +1910,7 @@ const mockWorkflows: Workflow[] = [
       type: f.type || 'application/pdf',
       pageMode: 'all' as const,
       pageRange: '',
-      templateName: '',
+      templateName: `${replaceTargetColumn || ''}_Generic`,
       file: f,
       sheetNames: [] as string[],
       sheetName: ''
@@ -6604,6 +6604,10 @@ const mockWorkflows: Workflow[] = [
                           className="flex-1 min-w-0 text-xs px-3 py-2 rounded-[4px] border border-slate-200 text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300"
                         >
                           <option value="">{language === 'TH' ? '-- เลือก Template --' : '-- Select Template --'}</option>
+                          {(() => {
+                            const genericTemplateName = `${replaceTargetColumn || ''}_Generic`;
+                            return <option value={genericTemplateName}>{genericTemplateName}</option>;
+                          })()}
                           {REPLACE_FILE_TEMPLATE_BRANDS.map(brand => {
                             const templateName = `${brand}_${replaceTargetColumn || ''}`;
                             return <option key={brand} value={templateName}>{templateName}</option>;
