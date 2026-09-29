@@ -4435,6 +4435,9 @@ const mockWorkflows: Workflow[] = [
   const isAllDocsMatched = (job: ComparisonJob) => {
     return Object.entries(job.docs).every(([docName, status]) => {
       const s = getEffectiveDocStatus(job, docName, status);
+      // A doc that was never uploaded for this job doesn't block "Done" — only docs
+      // actually present need to be matched/locked.
+      if (s === ComparisonDocStatus.MISSING) return true;
       return s === ComparisonDocStatus.MATCHED || s === ComparisonDocStatus.LOCKED;
     });
   };
