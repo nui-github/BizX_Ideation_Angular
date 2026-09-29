@@ -8476,7 +8476,9 @@ const mockWorkflows: Workflow[] = [
                   </div>
                   <div>
                     <h3 className="text-lg font-black text-[#010136] tracking-tight mb-0.5">
-                      {language === 'TH' ? 'ส่งออกข้อมูลรายการ' : 'Export Job Data'}
+                      {nextJob
+                        ? (language === 'TH' ? 'ส่งออกข้อมูลรายการ' : 'Export Job Data')
+                        : (language === 'TH' ? 'เสร็จสิ้นรายการ' : 'Complete Job')}
                     </h3>
                     <div className="flex items-center gap-1.5">
                       <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
@@ -8503,7 +8505,9 @@ const mockWorkflows: Workflow[] = [
                 <div className="p-4 rounded-xl border border-slate-200 bg-white">
                   <div className="flex items-center gap-3 mb-3">
                     <span className="text-sm font-bold text-slate-700">
-                      {language === 'TH' ? 'ส่งออกไปยังขั้นตอนถัดไป (ตามระบบ)' : 'Exporting to the Next Step (System)'}
+                      {nextJob
+                        ? (language === 'TH' ? 'ระบบจะส่งข้อมูลไปยังขั้นตอนถัดไปให้อัตโนมัติ' : 'The system will automatically send this to the next step')
+                        : (language === 'TH' ? 'ทุกเอกสารตรงกันครบแล้ว พร้อมปิดงานนี้' : 'All documents are matched — this job is ready to close')}
                     </span>
                   </div>
 
@@ -8542,7 +8546,9 @@ const mockWorkflows: Workflow[] = [
                   className="flex-1 rounded-[4px] h-12 font-black uppercase tracking-widest text-[11px] bg-[#1f5df9] hover:!bg-[#104BE3] border-none shadow-lg shadow-blue-500/20 font-sans cursor-pointer"
                   onClick={() => handleConfirmExport(exportJob)}
                 >
-                  {language === 'TH' ? 'ส่งออกข้อมูล' : 'EXPORT DATA'}
+                  {nextJob
+                    ? (language === 'TH' ? 'ส่งออกข้อมูล' : 'EXPORT DATA')
+                    : (language === 'TH' ? 'เสร็จสิ้น' : 'DONE')}
                 </Button>
               </div>
             </div>
