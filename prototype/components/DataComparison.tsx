@@ -6703,8 +6703,8 @@ const mockWorkflows: Workflow[] = [
                                   <AlertTriangle size={14} className="shrink-0 mt-0.5" />
                                   <span>
                                     {language === 'TH'
-                                      ? `เทมเพลตนี้ตรงกับไฟล์ที่อัปโหลดค่อนข้างน้อย (${selectedConfidence}%) กรุณาตรวจสอบว่าเลือกประเภทเอกสารและไฟล์ถูกต้องก่อนเริ่มระบบ`
-                                      : `This template matches your file poorly (${selectedConfidence}%). Please double-check the document type and file before starting.`}
+                                      ? `เทมเพลตนี้ตรงกับไฟล์ที่อัปโหลดค่อนข้างน้อย (${selectedConfidence}%) กรุณาตรวจสอบว่าเลือกประเภทเอกสารและไฟล์ถูกต้องก่อนเริ่มอ่านเอกสารและสกัดข้อมูล`
+                                      : `This template matches your file poorly (${selectedConfidence}%). Please double-check the document type and file before starting document reading and extraction.`}
                                   </span>
                                 </div>
                               )}
@@ -6714,7 +6714,7 @@ const mockWorkflows: Workflow[] = [
                       </div>
                     </div>
                   ))}
-                  <div className="text-xs font-bold text-amber-600 bg-amber-50 p-2.5 rounded-lg flex items-center gap-2 mt-2">
+                  <div className="text-xs font-bold text-blue-600 bg-blue-50 p-2.5 rounded-lg flex items-center gap-2 mt-2">
                     <Info size={14} />
                     {language === 'TH' ? 'ไฟล์ทั้งหมดที่อัปโหลดด้านบน ข้อมูลที่สกัดออกมาได้จะถูกนำมารวมกันและแสดงอยู่ในคอลัมน์เดียวกัน' : 'The data extracted from all the files uploaded above will be combined and shown in the same column'}
                   </div>
