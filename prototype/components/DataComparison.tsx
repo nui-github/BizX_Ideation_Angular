@@ -6938,7 +6938,9 @@ const mockWorkflows: Workflow[] = [
       {/* Mock template-layout popup for the Replace & Merge Template picker — there's no real
           template asset yet, so this mocks a layout resembling the doctype's real document
           (Invoice / Packing List layouts are modeled on real reference samples; other doctypes
-          fall back to a generic single-column layout), letterheaded with the template's brand. */}
+          fall back to a generic single-column layout), letterheaded with the template's brand.
+          Styled and paginated like the real "view file" PDF viewer: a page-switcher row up top
+          and 2+ stacked page sheets on a gray canvas below. */}
       {templatePreviewName && (() => {
         const brand = parseTemplateBrand(templatePreviewName);
         const doctype = templatePreviewName.endsWith('_Generic')
@@ -6953,15 +6955,227 @@ const mockWorkflows: Workflow[] = [
           </div>
         );
 
+        const pageScrollId = (idx: number) => `template-preview-page-${idx}`;
+        const scrollToPage = (idx: number) => {
+          document.getElementById(pageScrollId(idx))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        };
+
+        let pages: React.ReactNode[] = [];
+        if (docKind === 'invoice') {
+          pages = [
+            <>
+              <div className="flex items-start justify-between mb-6">
+                <div className="flex items-start gap-3 min-w-0">
+                  {brandLogo}
+                  <div className="min-w-0">
+                    <div className="font-black text-slate-700 text-base uppercase truncate">{brand} & Co.</div>
+                    <div className="text-slate-400 text-xs leading-snug mt-1">Address line 1<br />Address line 2</div>
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  <div className="font-black text-slate-700 text-base uppercase">Tax Invoice</div>
+                  <div className="text-slate-400 text-xs mt-2">No: <span className="text-slate-600 font-bold">0001</span></div>
+                  <div className="text-slate-400 text-xs">Date: <span className="text-slate-600 font-bold">--/--/----</span></div>
+                </div>
+              </div>
+              <div className="text-slate-400 text-xs border border-slate-100 rounded p-3 mb-6">
+                Buyer name<br />Buyer address
+              </div>
+              <div className="border border-slate-200 rounded overflow-hidden">
+                <div className="grid grid-cols-4 bg-slate-100 text-slate-500 font-bold text-xs px-3 py-2">
+                  <span>Qty</span><span className="col-span-2">Particulars</span><span className="text-right">Amount</span>
+                </div>
+                {[0, 1, 2, 3].map(row => (
+                  <div key={row} className="grid grid-cols-4 px-3 py-2 border-t border-slate-100 text-slate-400 text-xs">
+                    <span>--</span><span className="col-span-2">Item description</span><span className="text-right">--</span>
+                  </div>
+                ))}
+              </div>
+              <div className="text-[10px] text-slate-300 mt-6">{language === 'TH' ? 'ต่อหน้าถัดไป...' : 'Continued on next page...'}</div>
+            </>,
+            <>
+              <div className="text-slate-400 text-[10px] uppercase font-bold tracking-widest mb-3">
+                {templatePreviewName} — {language === 'TH' ? 'ต่อจากหน้าที่แล้ว' : 'Continued'}
+              </div>
+              <div className="border border-slate-200 rounded overflow-hidden">
+                <div className="grid grid-cols-4 bg-slate-100 text-slate-500 font-bold text-xs px-3 py-2">
+                  <span>Qty</span><span className="col-span-2">Particulars</span><span className="text-right">Amount</span>
+                </div>
+                {[0, 1].map(row => (
+                  <div key={row} className="grid grid-cols-4 px-3 py-2 border-t border-slate-100 text-slate-400 text-xs">
+                    <span>--</span><span className="col-span-2">Item description</span><span className="text-right">--</span>
+                  </div>
+                ))}
+              </div>
+              <div className="flex justify-end mt-3">
+                <div className="w-40 flex flex-col gap-1 text-xs">
+                  <div className="flex justify-between text-slate-400"><span>Sub-total</span><span>--</span></div>
+                  <div className="flex justify-between font-bold text-slate-600"><span>Total</span><span>--</span></div>
+                </div>
+              </div>
+              <div className="flex items-end justify-between mt-16 text-xs text-slate-400">
+                <div className="text-center">
+                  <div className="w-32 border-t border-slate-300 pt-1">{language === 'TH' ? 'ลายเซ็นผู้มีอำนาจ' : 'Authorised Signature'}</div>
+                </div>
+                <div className="font-black text-slate-600 uppercase">{brand} & Co.</div>
+              </div>
+            </>
+          ];
+        } else if (docKind === 'packing') {
+          pages = [
+            <>
+              <div className="flex items-start gap-3 mb-4">
+                {brandLogo}
+                <div className="text-slate-400 text-xs leading-snug">
+                  <div className="font-black text-slate-700 text-base uppercase">{brand} & Co.</div>
+                  Address line
+                </div>
+              </div>
+              <div className="text-center font-black text-slate-700 text-base uppercase mb-4">Packing List</div>
+              <div className="flex justify-between text-slate-400 text-xs mb-4">
+                <span>TO: Buyer name</span>
+                <span>DATE: --/--/----</span>
+              </div>
+              <div className="border border-slate-200 rounded overflow-hidden">
+                <div className="grid grid-cols-5 bg-slate-100 text-slate-500 font-bold text-xs px-3 py-2">
+                  <span>Ctn</span><span>Qty</span><span className="col-span-2">Description</span><span>Unit</span>
+                </div>
+                {[0, 1, 2, 3].map(row => (
+                  <div key={row} className="grid grid-cols-5 px-3 py-2 border-t border-slate-100 text-slate-400 text-xs">
+                    <span>--</span><span>--</span><span className="col-span-2">Item description</span><span>PCS</span>
+                  </div>
+                ))}
+              </div>
+              <div className="text-[10px] text-slate-300 mt-6">{language === 'TH' ? 'ต่อหน้าถัดไป...' : 'Continued on next page...'}</div>
+            </>,
+            <>
+              <div className="text-slate-400 text-[10px] uppercase font-bold tracking-widest mb-3">
+                {templatePreviewName} — {language === 'TH' ? 'ต่อจากหน้าที่แล้ว' : 'Continued'}
+              </div>
+              <div className="border border-slate-200 rounded overflow-hidden">
+                <div className="grid grid-cols-5 bg-slate-100 text-slate-500 font-bold text-xs px-3 py-2">
+                  <span>Ctn</span><span>Qty</span><span className="col-span-2">Description</span><span>Unit</span>
+                </div>
+                {[0, 1].map(row => (
+                  <div key={row} className="grid grid-cols-5 px-3 py-2 border-t border-slate-100 text-slate-400 text-xs">
+                    <span>--</span><span>--</span><span className="col-span-2">Item description</span><span>PCS</span>
+                  </div>
+                ))}
+              </div>
+              <div className="text-right font-bold text-slate-600 text-xs mt-3">Total: -- PCS</div>
+            </>
+          ];
+        } else if (docKind === 'freight') {
+          pages = [
+            <div className="flex flex-col items-center">
+              {brandLogo}
+              <div className="font-black text-slate-700 text-base uppercase mt-2">{doctype}</div>
+              <div className="text-slate-400 text-xs text-center mt-3 self-stretch">
+                Sender name<br />Sender address
+              </div>
+              <div className="text-slate-500 font-bold text-xs text-center mt-3">Account: Buyer name</div>
+              <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-slate-400 text-xs mt-4 self-stretch">
+                <div className="flex justify-between"><span>Vessel</span><span className="text-slate-600 font-bold">--</span></div>
+                <div className="flex justify-between"><span>Port of Loading</span><span className="text-slate-600 font-bold">--</span></div>
+                <div className="flex justify-between"><span>Port of Discharge</span><span className="text-slate-600 font-bold">--</span></div>
+                <div className="flex justify-between"><span>Weight</span><span className="text-slate-600 font-bold">--</span></div>
+              </div>
+              <div className="border border-slate-200 rounded overflow-hidden self-stretch mt-4">
+                <div className="grid grid-cols-3 bg-slate-100 text-slate-500 font-bold text-xs px-3 py-2">
+                  <span>Charge</span><span className="text-right">Rate</span><span className="text-right">Amount</span>
+                </div>
+                {[0, 1, 2].map(row => (
+                  <div key={row} className="grid grid-cols-3 px-3 py-2 border-t border-slate-100 text-slate-400 text-xs">
+                    <span>Ocean Freight</span><span className="text-right">--</span><span className="text-right">--</span>
+                  </div>
+                ))}
+              </div>
+            </div>,
+            <div className="flex flex-col items-center">
+              <div className="text-slate-400 text-[10px] uppercase font-bold tracking-widest self-stretch mb-3">
+                {templatePreviewName} — {language === 'TH' ? 'ต่อจากหน้าที่แล้ว' : 'Continued'}
+              </div>
+              <div className="border border-slate-200 rounded overflow-hidden self-stretch">
+                <div className="grid grid-cols-3 bg-slate-100 text-slate-500 font-bold text-xs px-3 py-2">
+                  <span>Charge</span><span className="text-right">Rate</span><span className="text-right">Amount</span>
+                </div>
+                {[0, 1].map(row => (
+                  <div key={row} className="grid grid-cols-3 px-3 py-2 border-t border-slate-100 text-slate-400 text-xs">
+                    <span>Other Charges</span><span className="text-right">--</span><span className="text-right">--</span>
+                  </div>
+                ))}
+              </div>
+              <div className="text-slate-400 text-[11px] text-center mt-16 self-stretch">
+                Company address, phone and website footer line
+              </div>
+            </div>
+          ];
+        } else {
+          pages = [
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-3">
+                {brandLogo}
+                <div className="text-base font-black text-slate-700 uppercase truncate">{doctype}</div>
+              </div>
+              <div className="h-2.5 w-1/3 bg-slate-200 rounded" />
+              <div className="flex gap-6 mt-1">
+                <div className="flex-1 flex flex-col gap-2">
+                  <div className="h-2.5 w-1/2 bg-slate-200 rounded" />
+                  <div className="h-2.5 w-3/4 bg-slate-200 rounded" />
+                </div>
+                <div className="flex-1 flex flex-col gap-2">
+                  <div className="h-2.5 w-1/2 bg-slate-200 rounded" />
+                  <div className="h-2.5 w-3/4 bg-slate-200 rounded" />
+                </div>
+              </div>
+              <div className="mt-1 border border-slate-200 rounded overflow-hidden">
+                <div className="h-8 bg-slate-200" />
+                {[0, 1, 2, 3].map(row => (
+                  <div key={row} className="h-8 border-t border-slate-100 flex items-center px-3 gap-3">
+                    <div className="h-2 w-1/4 bg-slate-100 rounded" />
+                    <div className="h-2 w-1/5 bg-slate-100 rounded" />
+                    <div className="h-2 w-1/6 bg-slate-100 rounded" />
+                  </div>
+                ))}
+              </div>
+            </div>,
+            <div className="flex flex-col gap-4">
+              <div className="text-slate-400 text-[10px] uppercase font-bold tracking-widest">
+                {templatePreviewName} — {language === 'TH' ? 'ต่อจากหน้าที่แล้ว' : 'Continued'}
+              </div>
+              <div className="border border-slate-200 rounded overflow-hidden">
+                <div className="h-8 bg-slate-200" />
+                {[0, 1, 2].map(row => (
+                  <div key={row} className="h-8 border-t border-slate-100 flex items-center px-3 gap-3">
+                    <div className="h-2 w-1/4 bg-slate-100 rounded" />
+                    <div className="h-2 w-1/5 bg-slate-100 rounded" />
+                    <div className="h-2 w-1/6 bg-slate-100 rounded" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ];
+        }
+
         return (
           <div className="fixed inset-0 z-[680] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white w-[90vw] max-w-5xl h-[88vh] rounded-2xl overflow-hidden shadow-2xl flex flex-col font-sans">
               <div className="px-5 py-4 border-b border-slate-100 flex items-start justify-between gap-4 shrink-0">
-                <div className="flex flex-col gap-1 min-w-0">
+                <div className="flex flex-col gap-1.5 min-w-0">
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                    {language === 'TH' ? 'ตัวอย่างเทมเพลต (Mock)' : 'Template preview (Mock)'}
+                    {language === 'TH' ? 'ตัวอย่างเทมเพลต (Mock)' : 'Template preview (Mock)'} — {templatePreviewName}
                   </span>
-                  <span className="text-sm font-black text-[#010136] truncate">{templatePreviewName}</span>
+                  <div className="flex items-center gap-2 overflow-x-auto">
+                    {pages.map((_, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => scrollToPage(idx)}
+                        className="px-3 py-1.5 rounded-[4px] text-xs font-bold whitespace-nowrap transition-all shrink-0 bg-slate-100 text-slate-500 hover:bg-slate-200"
+                      >
+                        {language === 'TH' ? `หน้า ${idx + 1}` : `Page ${idx + 1}`}
+                      </button>
+                    ))}
+                  </div>
                 </div>
                 <button
                   onClick={() => setTemplatePreviewName(null)}
@@ -6970,131 +7184,17 @@ const mockWorkflows: Workflow[] = [
                   <X size={18} />
                 </button>
               </div>
-              <div className="flex-1 bg-slate-100 min-h-0 overflow-auto flex justify-center p-8">
-                <div className="bg-white shadow-lg w-full max-w-[700px] h-fit p-10 text-[13px] leading-tight shrink-0">
-                  {docKind === 'invoice' && (
-                    <>
-                      <div className="flex items-start justify-between mb-6">
-                        <div className="flex items-start gap-3 min-w-0">
-                          {brandLogo}
-                          <div className="min-w-0">
-                            <div className="font-black text-slate-700 text-base uppercase truncate">{brand} & Co.</div>
-                            <div className="text-slate-400 text-xs leading-snug mt-1">Address line 1<br />Address line 2</div>
-                          </div>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <div className="font-black text-slate-700 text-base uppercase">Tax Invoice</div>
-                          <div className="text-slate-400 text-xs mt-2">No: <span className="text-slate-600 font-bold">0001</span></div>
-                          <div className="text-slate-400 text-xs">Date: <span className="text-slate-600 font-bold">--/--/----</span></div>
-                        </div>
-                      </div>
-                      <div className="text-slate-400 text-xs border border-slate-100 rounded p-3 mb-6">
-                        Buyer name<br />Buyer address
-                      </div>
-                      <div className="border border-slate-200 rounded overflow-hidden">
-                        <div className="grid grid-cols-4 bg-slate-100 text-slate-500 font-bold text-xs px-3 py-2">
-                          <span>Qty</span><span className="col-span-2">Particulars</span><span className="text-right">Amount</span>
-                        </div>
-                        {[0, 1, 2, 3].map(row => (
-                          <div key={row} className="grid grid-cols-4 px-3 py-2 border-t border-slate-100 text-slate-400 text-xs">
-                            <span>--</span><span className="col-span-2">Item description</span><span className="text-right">--</span>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="flex justify-end mt-3">
-                        <div className="w-40 flex flex-col gap-1 text-xs">
-                          <div className="flex justify-between text-slate-400"><span>Sub-total</span><span>--</span></div>
-                          <div className="flex justify-between font-bold text-slate-600"><span>Total</span><span>--</span></div>
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  {docKind === 'packing' && (
-                    <>
-                      <div className="flex items-start gap-3 mb-4">
-                        {brandLogo}
-                        <div className="text-slate-400 text-xs leading-snug">
-                          <div className="font-black text-slate-700 text-base uppercase">{brand} & Co.</div>
-                          Address line
-                        </div>
-                      </div>
-                      <div className="text-center font-black text-slate-700 text-base uppercase mb-4">Packing List</div>
-                      <div className="flex justify-between text-slate-400 text-xs mb-4">
-                        <span>TO: Buyer name</span>
-                        <span>DATE: --/--/----</span>
-                      </div>
-                      <div className="border border-slate-200 rounded overflow-hidden">
-                        <div className="grid grid-cols-5 bg-slate-100 text-slate-500 font-bold text-xs px-3 py-2">
-                          <span>Ctn</span><span>Qty</span><span className="col-span-2">Description</span><span>Unit</span>
-                        </div>
-                        {[0, 1, 2, 3].map(row => (
-                          <div key={row} className="grid grid-cols-5 px-3 py-2 border-t border-slate-100 text-slate-400 text-xs">
-                            <span>--</span><span>--</span><span className="col-span-2">Item description</span><span>PCS</span>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="text-right font-bold text-slate-600 text-xs mt-3">Total: -- PCS</div>
-                    </>
-                  )}
-
-                  {docKind === 'freight' && (
-                    <div className="flex flex-col items-center">
-                      {brandLogo}
-                      <div className="font-black text-slate-700 text-base uppercase mt-2">{doctype}</div>
-                      <div className="text-slate-400 text-xs text-center mt-3 self-stretch">
-                        Sender name<br />Sender address
-                      </div>
-                      <div className="text-slate-500 font-bold text-xs text-center mt-3">Account: Buyer name</div>
-                      <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-slate-400 text-xs mt-4 self-stretch">
-                        <div className="flex justify-between"><span>Vessel</span><span className="text-slate-600 font-bold">--</span></div>
-                        <div className="flex justify-between"><span>Port of Loading</span><span className="text-slate-600 font-bold">--</span></div>
-                        <div className="flex justify-between"><span>Port of Discharge</span><span className="text-slate-600 font-bold">--</span></div>
-                        <div className="flex justify-between"><span>Weight</span><span className="text-slate-600 font-bold">--</span></div>
-                      </div>
-                      <div className="border border-slate-200 rounded overflow-hidden self-stretch mt-4">
-                        <div className="grid grid-cols-3 bg-slate-100 text-slate-500 font-bold text-xs px-3 py-2">
-                          <span>Charge</span><span className="text-right">Rate</span><span className="text-right">Amount</span>
-                        </div>
-                        {[0, 1, 2].map(row => (
-                          <div key={row} className="grid grid-cols-3 px-3 py-2 border-t border-slate-100 text-slate-400 text-xs">
-                            <span>Ocean Freight</span><span className="text-right">--</span><span className="text-right">--</span>
-                          </div>
-                        ))}
-                      </div>
+              <div className="flex-1 bg-slate-100 min-h-0 overflow-auto flex flex-col items-center gap-6 p-8">
+                {pages.map((pageContent, idx) => (
+                  <div key={idx} id={pageScrollId(idx)} className="w-full max-w-[700px] shrink-0 scroll-mt-4">
+                    <div className="bg-white shadow-lg w-full h-fit p-10 text-[13px] leading-tight">
+                      {pageContent}
                     </div>
-                  )}
-
-                  {docKind === 'generic' && (
-                    <div className="flex flex-col gap-4">
-                      <div className="flex items-center gap-3">
-                        {brandLogo}
-                        <div className="text-base font-black text-slate-700 uppercase truncate">{doctype}</div>
-                      </div>
-                      <div className="h-2.5 w-1/3 bg-slate-200 rounded" />
-                      <div className="flex gap-6 mt-1">
-                        <div className="flex-1 flex flex-col gap-2">
-                          <div className="h-2.5 w-1/2 bg-slate-200 rounded" />
-                          <div className="h-2.5 w-3/4 bg-slate-200 rounded" />
-                        </div>
-                        <div className="flex-1 flex flex-col gap-2">
-                          <div className="h-2.5 w-1/2 bg-slate-200 rounded" />
-                          <div className="h-2.5 w-3/4 bg-slate-200 rounded" />
-                        </div>
-                      </div>
-                      <div className="mt-1 border border-slate-200 rounded overflow-hidden">
-                        <div className="h-8 bg-slate-200" />
-                        {[0, 1, 2, 3].map(row => (
-                          <div key={row} className="h-8 border-t border-slate-100 flex items-center px-3 gap-3">
-                            <div className="h-2 w-1/4 bg-slate-100 rounded" />
-                            <div className="h-2 w-1/5 bg-slate-100 rounded" />
-                            <div className="h-2 w-1/6 bg-slate-100 rounded" />
-                          </div>
-                        ))}
-                      </div>
+                    <div className="text-center text-[10px] font-bold text-slate-400 mt-2">
+                      {language === 'TH' ? `หน้า ${idx + 1} จาก ${pages.length}` : `Page ${idx + 1} of ${pages.length}`}
                     </div>
-                  )}
-                </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
