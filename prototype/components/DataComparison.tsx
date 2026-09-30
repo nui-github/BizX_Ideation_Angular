@@ -45,16 +45,17 @@ const hashString = (str: string): number => {
   return Math.abs(hash);
 };
 
-// Mock OCR-template match confidence for the Template picker. {Doctype}_Generic is the safe
-// fallback template, so it's always pinned to the top tier (96-99%); brand-specific templates
-// score lower (40-95%) and vary by name so they never outrank Generic.
-const getTemplateConfidence = (templateName: string, isGeneric: boolean): number => {
-  return isGeneric ? 96 + (hashString(templateName) % 4) : 40 + (hashString(templateName) % 56);
-};
+// Mock OCR-template match confidence for the Template picker, one per tier so the 3 visible
+// options always demonstrate all 3 confidence levels: {Doctype}_Generic is the safe fallback
+// and always High (90-99%); the other two slots are pinned to Medium (70-89%) and Low (below
+// 70%) so a Low/red option is always shown alongside it.
+const getHighTemplateConfidence = (templateName: string): number => 90 + (hashString(templateName) % 10);
+const getMediumTemplateConfidence = (templateName: string): number => 70 + (hashString(templateName) % 20);
+const getLowTemplateConfidence = (templateName: string): number => 40 + (hashString(templateName) % 30);
 
 const getConfidenceBadgeClass = (confidence: number): string => {
-  if (confidence >= 95) return 'bg-emerald-100 text-emerald-700';
-  if (confidence >= 60) return 'bg-amber-100 text-amber-700';
+  if (confidence >= 90) return 'bg-emerald-100 text-emerald-700';
+  if (confidence >= 70) return 'bg-orange-100 text-orange-700';
   return 'bg-rose-100 text-rose-700';
 };
 
@@ -6621,23 +6622,27 @@ const mockWorkflows: Workflow[] = [
                       )}
 
                       {/* Per-file template — required, [Brand]_[Doctype] built from the target column.
-                          Ranked by mock match confidence and capped to the top 3; {Doctype}_Generic
-                          is always the highest-confidence (and therefore first) option. */}
+                          Always shows exactly 3 options, one per confidence tier, sorted High→Low:
+                          {Doctype}_Generic is always the High/safe fallback, with one brand pinned
+                          to Medium and another to Low so all 3 tiers are represented. */}
                       <div className="flex items-center gap-2 pl-1">
                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0 w-16">
                           {language === 'TH' ? 'Template:' : 'Template:'}
                         </span>
                         {(() => {
-                          const genericTemplateName = `${replaceTargetColumn || ''}_Generic`;
+                          const doctype = replaceTargetColumn || '';
+                          const genericTemplateName = `${doctype}_Generic`;
+                          const mediumBrandIdx = hashString(`${doctype}:medium`) % REPLACE_FILE_TEMPLATE_BRANDS.length;
+                          let lowBrandIdx = hashString(`${doctype}:low`) % REPLACE_FILE_TEMPLATE_BRANDS.length;
+                          if (lowBrandIdx === mediumBrandIdx) lowBrandIdx = (lowBrandIdx + 1) % REPLACE_FILE_TEMPLATE_BRANDS.length;
+                          const mediumTemplateName = `${REPLACE_FILE_TEMPLATE_BRANDS[mediumBrandIdx]}_${doctype}`;
+                          const lowTemplateName = `${REPLACE_FILE_TEMPLATE_BRANDS[lowBrandIdx]}_${doctype}`;
+
                           const templateOptions = [
-                            { templateName: genericTemplateName, confidence: getTemplateConfidence(genericTemplateName, true) },
-                            ...REPLACE_FILE_TEMPLATE_BRANDS.map(brand => {
-                              const templateName = `${brand}_${replaceTargetColumn || ''}`;
-                              return { templateName, confidence: getTemplateConfidence(templateName, false) };
-                            })
-                          ]
-                            .sort((a, b) => b.confidence - a.confidence)
-                            .slice(0, 3);
+                            { templateName: genericTemplateName, confidence: getHighTemplateConfidence(genericTemplateName) },
+                            { templateName: mediumTemplateName, confidence: getMediumTemplateConfidence(mediumTemplateName) },
+                            { templateName: lowTemplateName, confidence: getLowTemplateConfidence(lowTemplateName) }
+                          ].sort((a, b) => b.confidence - a.confidence);
 
                           return (
                             <Select
@@ -6652,7 +6657,7 @@ const mockWorkflows: Workflow[] = [
                                   <div className="flex items-center justify-between gap-2 w-full">
                                     <span className="truncate">{opt.templateName}</span>
                                     <span className={`shrink-0 px-1.5 py-0.5 rounded-full text-[10px] font-black ${getConfidenceBadgeClass(opt.confidence)}`}>
-                                      {language === 'TH' ? 'ความแม่นยำในการอ่าน:' : 'Confidence:'} {opt.confidence}%
+                                      {language === 'TH' ? 'ระดับความแม่นยำ:' : 'Confidence Level:'} {opt.confidence}%
                                     </span>
                                   </div>
                                 )
