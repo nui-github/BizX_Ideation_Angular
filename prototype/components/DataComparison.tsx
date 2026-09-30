@@ -59,6 +59,25 @@ const getConfidenceBadgeClass = (confidence: number): string => {
   return 'bg-rose-100 text-rose-700';
 };
 
+// A template name is either "[Brand]_[Doctype]" or "[Doctype]_Generic" — split off the brand
+// (or "Generic") so the preview popup's mocked letterhead can show it.
+const parseTemplateBrand = (templateName: string): string => {
+  if (templateName.endsWith('_Generic')) return 'Generic';
+  return templateName.split('_')[0] || 'Generic';
+};
+
+// Which mocked document layout to render for the preview popup, based on real reference layouts
+// (Invoice, Packing List) for the doctypes we have samples of; anything else falls back to a
+// generic single-column mock.
+type TemplateDocKind = 'invoice' | 'packing' | 'freight' | 'generic';
+const getTemplateDocKind = (doctype: string): TemplateDocKind => {
+  const upper = doctype.toUpperCase();
+  if (upper.includes('PACKING')) return 'packing';
+  if (upper.includes('FREIGHT')) return 'freight';
+  if (upper.includes('INVOICE')) return 'invoice';
+  return 'generic';
+};
+
 const MAX_UPLOAD_FILE_SIZE_BYTES = 50 * 1024 * 1024;
 
 // Picks which preview mockup to render for a document based on its real file extension
@@ -6660,7 +6679,7 @@ const mockWorkflows: Workflow[] = [
                                     <div className="flex items-center justify-between gap-2 w-full">
                                       <span className="truncate">{opt.templateName}</span>
                                       <span className={`shrink-0 px-1.5 py-0.5 rounded-full text-[10px] font-black ${getConfidenceBadgeClass(opt.confidence)}`}>
-                                        {language === 'TH' ? 'ระดับความแม่นยำ:' : 'Confidence Level:'} {opt.confidence}%
+                                        {language === 'TH' ? 'ความถูกต้องของเทมเพลต:' : 'Template Accuracy:'} {opt.confidence}%
                                       </span>
                                     </div>
                                   )
@@ -6904,51 +6923,167 @@ const mockWorkflows: Workflow[] = [
       })()}
 
       {/* Mock template-layout popup for the Replace & Merge Template picker — there's no real
-          template asset yet, so this shows a generic layout sketch labeled with the template name. */}
-      {templatePreviewName && (
-        <div className="fixed inset-0 z-[680] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-md rounded-2xl overflow-hidden shadow-2xl flex flex-col font-sans">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-4 shrink-0">
-              <span className="text-sm font-black text-[#010136] truncate">{templatePreviewName}</span>
-              <button
-                onClick={() => setTemplatePreviewName(null)}
-                className="p-1.5 hover:bg-slate-100 rounded-[4px] text-slate-400 hover:text-slate-600 transition-colors shrink-0 cursor-pointer"
-              >
-                <X size={16} />
-              </button>
-            </div>
-            <div className="p-6 bg-slate-100">
-              <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-5 flex flex-col gap-3">
-                <div className="h-3 w-2/5 bg-slate-300 rounded" />
-                <div className="h-2 w-1/3 bg-slate-200 rounded" />
-                <div className="flex gap-4 mt-2">
-                  <div className="flex-1 flex flex-col gap-1.5">
-                    <div className="h-2 w-1/2 bg-slate-200 rounded" />
-                    <div className="h-2 w-3/4 bg-slate-200 rounded" />
-                  </div>
-                  <div className="flex-1 flex flex-col gap-1.5">
-                    <div className="h-2 w-1/2 bg-slate-200 rounded" />
-                    <div className="h-2 w-3/4 bg-slate-200 rounded" />
-                  </div>
-                </div>
-                <div className="mt-3 border border-slate-200 rounded overflow-hidden">
-                  <div className="h-5 bg-slate-200" />
-                  {[0, 1, 2].map(row => (
-                    <div key={row} className="h-5 border-t border-slate-100 flex items-center px-2 gap-2">
-                      <div className="h-1.5 w-1/4 bg-slate-100 rounded" />
-                      <div className="h-1.5 w-1/5 bg-slate-100 rounded" />
-                      <div className="h-1.5 w-1/6 bg-slate-100 rounded" />
-                    </div>
-                  ))}
-                </div>
+          template asset yet, so this mocks a layout resembling the doctype's real document
+          (Invoice / Packing List layouts are modeled on real reference samples; other doctypes
+          fall back to a generic single-column layout), letterheaded with the template's brand. */}
+      {templatePreviewName && (() => {
+        const brand = parseTemplateBrand(templatePreviewName);
+        const doctype = templatePreviewName.endsWith('_Generic')
+          ? templatePreviewName.slice(0, -'_Generic'.length)
+          : templatePreviewName.slice(brand.length + 1);
+        const docKind = getTemplateDocKind(doctype);
+        const brandInitials = (brand.match(/[A-Za-z]/g) || ['?']).slice(0, 2).join('').toUpperCase();
+
+        const brandLogo = (
+          <div className="w-8 h-8 rounded bg-blue-100 flex items-center justify-center text-blue-600 font-black text-[10px] shrink-0">
+            {brandInitials}
+          </div>
+        );
+
+        return (
+          <div className="fixed inset-0 z-[680] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white w-full max-w-md rounded-2xl overflow-hidden shadow-2xl flex flex-col font-sans">
+              <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-4 shrink-0">
+                <span className="text-sm font-black text-[#010136] truncate">{templatePreviewName}</span>
+                <button
+                  onClick={() => setTemplatePreviewName(null)}
+                  className="p-1.5 hover:bg-slate-100 rounded-[4px] text-slate-400 hover:text-slate-600 transition-colors shrink-0 cursor-pointer"
+                >
+                  <X size={16} />
+                </button>
               </div>
-              <p className="text-[10px] font-bold text-slate-400 text-center mt-3">
-                {language === 'TH' ? 'ตัวอย่างโครงร่างเทมเพลต (Mock)' : 'Mock template layout preview'}
-              </p>
+              <div className="p-6 bg-slate-100">
+                {docKind === 'invoice' && (
+                  <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 text-[8px] leading-tight">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-start gap-2 min-w-0">
+                        {brandLogo}
+                        <div className="min-w-0">
+                          <div className="font-black text-slate-700 text-[9px] uppercase truncate">{brand} & Co.</div>
+                          <div className="text-slate-400 leading-snug mt-0.5">Address line 1<br />Address line 2</div>
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="font-black text-slate-700 text-[9px] uppercase">Tax Invoice</div>
+                        <div className="text-slate-400 mt-1">No: <span className="text-slate-600 font-bold">0001</span></div>
+                        <div className="text-slate-400">Date: <span className="text-slate-600 font-bold">--/--/----</span></div>
+                      </div>
+                    </div>
+                    <div className="text-slate-400 border border-slate-100 rounded p-2 mb-3">
+                      Buyer name<br />Buyer address
+                    </div>
+                    <div className="border border-slate-200 rounded overflow-hidden">
+                      <div className="grid grid-cols-4 bg-slate-100 text-slate-500 font-bold px-2 py-1">
+                        <span>Qty</span><span className="col-span-2">Particulars</span><span className="text-right">Amount</span>
+                      </div>
+                      {[0, 1, 2].map(row => (
+                        <div key={row} className="grid grid-cols-4 px-2 py-1 border-t border-slate-100 text-slate-400">
+                          <span>--</span><span className="col-span-2">Item description</span><span className="text-right">--</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex justify-end mt-2">
+                      <div className="w-24 flex flex-col gap-0.5">
+                        <div className="flex justify-between text-slate-400"><span>Sub-total</span><span>--</span></div>
+                        <div className="flex justify-between font-bold text-slate-600"><span>Total</span><span>--</span></div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {docKind === 'packing' && (
+                  <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 text-[8px] leading-tight">
+                    <div className="flex items-start gap-2 mb-2">
+                      {brandLogo}
+                      <div className="text-slate-400 leading-snug">
+                        <div className="font-black text-slate-700 text-[9px] uppercase">{brand} & Co.</div>
+                        Address line
+                      </div>
+                    </div>
+                    <div className="text-center font-black text-slate-700 text-[9px] uppercase mb-2">Packing List</div>
+                    <div className="flex justify-between text-slate-400 mb-2">
+                      <span>TO: Buyer name</span>
+                      <span>DATE: --/--/----</span>
+                    </div>
+                    <div className="border border-slate-200 rounded overflow-hidden">
+                      <div className="grid grid-cols-5 bg-slate-100 text-slate-500 font-bold px-2 py-1">
+                        <span>Ctn</span><span>Qty</span><span className="col-span-2">Description</span><span>Unit</span>
+                      </div>
+                      {[0, 1, 2].map(row => (
+                        <div key={row} className="grid grid-cols-5 px-2 py-1 border-t border-slate-100 text-slate-400">
+                          <span>--</span><span>--</span><span className="col-span-2">Item description</span><span>PCS</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="text-right font-bold text-slate-600 mt-2">Total: -- PCS</div>
+                  </div>
+                )}
+
+                {docKind === 'freight' && (
+                  <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 text-[8px] leading-tight flex flex-col items-center">
+                    {brandLogo}
+                    <div className="font-black text-slate-700 text-[9px] uppercase mt-1.5">{doctype}</div>
+                    <div className="text-slate-400 text-center mt-2 self-stretch">
+                      Sender name<br />Sender address
+                    </div>
+                    <div className="text-slate-500 font-bold text-center mt-2">Account: Buyer name</div>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-slate-400 mt-3 self-stretch">
+                      <div className="flex justify-between"><span>Vessel</span><span className="text-slate-600 font-bold">--</span></div>
+                      <div className="flex justify-between"><span>Port of Loading</span><span className="text-slate-600 font-bold">--</span></div>
+                      <div className="flex justify-between"><span>Port of Discharge</span><span className="text-slate-600 font-bold">--</span></div>
+                      <div className="flex justify-between"><span>Weight</span><span className="text-slate-600 font-bold">--</span></div>
+                    </div>
+                    <div className="border border-slate-200 rounded overflow-hidden self-stretch mt-3">
+                      <div className="grid grid-cols-3 bg-slate-100 text-slate-500 font-bold px-2 py-1">
+                        <span>Charge</span><span className="text-right">Rate</span><span className="text-right">Amount</span>
+                      </div>
+                      {[0, 1].map(row => (
+                        <div key={row} className="grid grid-cols-3 px-2 py-1 border-t border-slate-100 text-slate-400">
+                          <span>Ocean Freight</span><span className="text-right">--</span><span className="text-right">--</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {docKind === 'generic' && (
+                  <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-5 flex flex-col gap-3">
+                    <div className="flex items-center gap-2">
+                      {brandLogo}
+                      <div className="text-[9px] font-black text-slate-700 uppercase truncate">{doctype}</div>
+                    </div>
+                    <div className="h-2 w-1/3 bg-slate-200 rounded" />
+                    <div className="flex gap-4 mt-1">
+                      <div className="flex-1 flex flex-col gap-1.5">
+                        <div className="h-2 w-1/2 bg-slate-200 rounded" />
+                        <div className="h-2 w-3/4 bg-slate-200 rounded" />
+                      </div>
+                      <div className="flex-1 flex flex-col gap-1.5">
+                        <div className="h-2 w-1/2 bg-slate-200 rounded" />
+                        <div className="h-2 w-3/4 bg-slate-200 rounded" />
+                      </div>
+                    </div>
+                    <div className="mt-1 border border-slate-200 rounded overflow-hidden">
+                      <div className="h-5 bg-slate-200" />
+                      {[0, 1, 2].map(row => (
+                        <div key={row} className="h-5 border-t border-slate-100 flex items-center px-2 gap-2">
+                          <div className="h-1.5 w-1/4 bg-slate-100 rounded" />
+                          <div className="h-1.5 w-1/5 bg-slate-100 rounded" />
+                          <div className="h-1.5 w-1/6 bg-slate-100 rounded" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <p className="text-[10px] font-bold text-slate-400 text-center mt-3">
+                  {language === 'TH' ? 'ตัวอย่างโครงร่างเทมเพลต (Mock)' : 'Mock template layout preview'}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* PDF View Overlay Side-by-side */}
       {pdfPreviewUrl && (
