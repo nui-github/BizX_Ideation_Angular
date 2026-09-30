@@ -6561,19 +6561,22 @@ const mockWorkflows: Workflow[] = [
                           </div>
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
-                          <button
-                            onClick={() => setReplacePreviewFileId(file.id)}
-                            className="p-2 hover:bg-blue-50 rounded-[4px] text-slate-300 hover:text-blue-500 transition-colors"
-                            title={language === 'TH' ? 'ดูตัวอย่างไฟล์' : 'Preview file'}
-                          >
-                            <Eye size={16} />
-                          </button>
-                          <button
-                            onClick={() => handleRemoveReplaceFile(file.id)}
-                            className="p-2 hover:bg-rose-50 rounded-[4px] text-slate-300 hover:text-rose-500 transition-colors"
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                          <Tooltip content={language === 'TH' ? 'ดูตัวอย่างไฟล์' : 'Preview file'}>
+                            <button
+                              onClick={() => setReplacePreviewFileId(file.id)}
+                              className="p-2 hover:bg-blue-50 rounded-[4px] text-slate-300 hover:text-blue-500 transition-colors"
+                            >
+                              <Eye size={16} />
+                            </button>
+                          </Tooltip>
+                          <Tooltip content={language === 'TH' ? 'ลบไฟล์' : 'Remove file'}>
+                            <button
+                              onClick={() => handleRemoveReplaceFile(file.id)}
+                              className="p-2 hover:bg-rose-50 rounded-[4px] text-slate-300 hover:text-rose-500 transition-colors"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </Tooltip>
                         </div>
                       </div>
 
