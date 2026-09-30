@@ -34,6 +34,30 @@ const CURRENT_USER_NAME = 'Kunawut W.';
 // template name is built as [Brand]_[Doctype], e.g. MARDI_Invoice.
 const REPLACE_FILE_TEMPLATE_BRANDS = ['MARDI', 'Elita', 'MINIMONO', 'ROENARI', 'SANRIO', 'WANTEX'];
 
+// Deterministic string hash so a template's mock match confidence stays stable across re-renders
+// instead of jumping around every time Math.random() would be called.
+const hashString = (str: string): number => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+};
+
+// Mock OCR-template match confidence for the Template picker. {Doctype}_Generic is the safe
+// fallback template, so it's always pinned to the top tier (96-99%); brand-specific templates
+// score lower (40-95%) and vary by name so they never outrank Generic.
+const getTemplateConfidence = (templateName: string, isGeneric: boolean): number => {
+  return isGeneric ? 96 + (hashString(templateName) % 4) : 40 + (hashString(templateName) % 56);
+};
+
+const getConfidenceBadgeClass = (confidence: number): string => {
+  if (confidence >= 95) return 'bg-emerald-100 text-emerald-700';
+  if (confidence >= 60) return 'bg-amber-100 text-amber-700';
+  return 'bg-rose-100 text-rose-700';
+};
+
 const MAX_UPLOAD_FILE_SIZE_BYTES = 50 * 1024 * 1024;
 
 // Picks which preview mockup to render for a document based on its real file extension
@@ -6596,26 +6620,46 @@ const mockWorkflows: Workflow[] = [
                         </div>
                       )}
 
-                      {/* Per-file template — required, [Brand]_[Doctype] built from the target column */}
+                      {/* Per-file template — required, [Brand]_[Doctype] built from the target column.
+                          Ranked by mock match confidence and capped to the top 3; {Doctype}_Generic
+                          is always the highest-confidence (and therefore first) option. */}
                       <div className="flex items-center gap-2 pl-1">
                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0 w-16">
                           {language === 'TH' ? 'Template:' : 'Template:'}
                         </span>
-                        <select
-                          value={file.templateName}
-                          onChange={(e) => setReplaceFileTemplateName(file.id, e.target.value)}
-                          className="flex-1 min-w-0 text-xs px-3 py-2 rounded-[4px] border border-slate-200 text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300"
-                        >
-                          <option value="">{language === 'TH' ? '-- เลือก Template --' : '-- Select Template --'}</option>
-                          {(() => {
-                            const genericTemplateName = `${replaceTargetColumn || ''}_Generic`;
-                            return <option value={genericTemplateName}>{genericTemplateName}</option>;
-                          })()}
-                          {REPLACE_FILE_TEMPLATE_BRANDS.map(brand => {
-                            const templateName = `${brand}_${replaceTargetColumn || ''}`;
-                            return <option key={brand} value={templateName}>{templateName}</option>;
-                          })}
-                        </select>
+                        {(() => {
+                          const genericTemplateName = `${replaceTargetColumn || ''}_Generic`;
+                          const templateOptions = [
+                            { templateName: genericTemplateName, confidence: getTemplateConfidence(genericTemplateName, true) },
+                            ...REPLACE_FILE_TEMPLATE_BRANDS.map(brand => {
+                              const templateName = `${brand}_${replaceTargetColumn || ''}`;
+                              return { templateName, confidence: getTemplateConfidence(templateName, false) };
+                            })
+                          ]
+                            .sort((a, b) => b.confidence - a.confidence)
+                            .slice(0, 3);
+
+                          return (
+                            <Select
+                              value={file.templateName || undefined}
+                              onChange={(value) => setReplaceFileTemplateName(file.id, value)}
+                              placeholder={language === 'TH' ? '-- เลือก Template --' : '-- Select Template --'}
+                              className="flex-1 min-w-0"
+                              popupMatchSelectWidth
+                              options={templateOptions.map(opt => ({
+                                value: opt.templateName,
+                                label: (
+                                  <div className="flex items-center justify-between gap-2 w-full">
+                                    <span className="truncate">{opt.templateName}</span>
+                                    <span className={`shrink-0 px-1.5 py-0.5 rounded-full text-[10px] font-black ${getConfidenceBadgeClass(opt.confidence)}`}>
+                                      {opt.confidence}%
+                                    </span>
+                                  </div>
+                                )
+                              }))}
+                            />
+                          );
+                        })()}
                       </div>
                     </div>
                   ))}
