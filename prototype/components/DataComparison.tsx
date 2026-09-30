@@ -6652,7 +6652,7 @@ const mockWorkflows: Workflow[] = [
                                   <div className="flex items-center justify-between gap-2 w-full">
                                     <span className="truncate">{opt.templateName}</span>
                                     <span className={`shrink-0 px-1.5 py-0.5 rounded-full text-[10px] font-black ${getConfidenceBadgeClass(opt.confidence)}`}>
-                                      confidence: {opt.confidence}%
+                                      {language === 'TH' ? 'ความแม่นยำในการอ่าน:' : 'Confidence:'} {opt.confidence}%
                                     </span>
                                   </div>
                                 )
