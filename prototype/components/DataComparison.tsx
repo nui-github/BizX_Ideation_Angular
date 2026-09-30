@@ -6646,10 +6646,7 @@ const mockWorkflows: Workflow[] = [
                           Always shows exactly 3 options, one per confidence tier, sorted High→Low:
                           {Doctype}_Generic is always the High/safe fallback, with one brand pinned
                           to Medium and another to Low so all 3 tiers are represented. */}
-                      <div className="flex items-center gap-2 pl-1">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0 w-16">
-                          {language === 'TH' ? 'Template:' : 'Template:'}
-                        </span>
+                      <div className="flex flex-col gap-2 pl-1">
                         {(() => {
                           const doctype = replaceTargetColumn || '';
                           const genericTemplateName = `${doctype}_Generic`;
@@ -6664,36 +6661,52 @@ const mockWorkflows: Workflow[] = [
                             { templateName: mediumTemplateName, confidence: getMediumTemplateConfidence(mediumTemplateName) },
                             { templateName: lowTemplateName, confidence: getLowTemplateConfidence(lowTemplateName) }
                           ].sort((a, b) => b.confidence - a.confidence);
+                          const selectedConfidence = templateOptions.find(opt => opt.templateName === file.templateName)?.confidence;
 
                           return (
                             <>
-                              <Select
-                                value={file.templateName || undefined}
-                                onChange={(value) => setReplaceFileTemplateName(file.id, value)}
-                                placeholder={language === 'TH' ? '-- เลือก Template --' : '-- Select Template --'}
-                                className="flex-1 min-w-0"
-                                popupMatchSelectWidth
-                                options={templateOptions.map(opt => ({
-                                  value: opt.templateName,
-                                  label: (
-                                    <div className="flex items-center justify-between gap-2 w-full">
-                                      <span className="truncate">{opt.templateName}</span>
-                                      <span className={`shrink-0 px-1.5 py-0.5 rounded-full text-[10px] font-black ${getConfidenceBadgeClass(opt.confidence)}`}>
-                                        {language === 'TH' ? 'ความเหมือนเทมเพลต:' : 'Template Match:'} {opt.confidence}%
-                                      </span>
-                                    </div>
-                                  )
-                                }))}
-                              />
-                              {file.templateName && (
-                                <Tooltip content={language === 'TH' ? 'ดูตัวอย่างเทมเพลต' : 'Preview template'}>
-                                  <button
-                                    onClick={() => setTemplatePreviewName(file.templateName)}
-                                    className="p-2 rounded-[4px] border border-slate-200 text-slate-400 hover:text-blue-500 hover:border-blue-200 hover:bg-blue-50 transition-colors shrink-0 cursor-pointer"
-                                  >
-                                    <Eye size={14} />
-                                  </button>
-                                </Tooltip>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0 w-16">
+                                  {language === 'TH' ? 'Template:' : 'Template:'}
+                                </span>
+                                <Select
+                                  value={file.templateName || undefined}
+                                  onChange={(value) => setReplaceFileTemplateName(file.id, value)}
+                                  placeholder={language === 'TH' ? '-- เลือก Template --' : '-- Select Template --'}
+                                  className="flex-1 min-w-0"
+                                  popupMatchSelectWidth
+                                  options={templateOptions.map(opt => ({
+                                    value: opt.templateName,
+                                    label: (
+                                      <div className="flex items-center justify-between gap-2 w-full">
+                                        <span className="truncate">{opt.templateName}</span>
+                                        <span className={`shrink-0 px-1.5 py-0.5 rounded-full text-[10px] font-black ${getConfidenceBadgeClass(opt.confidence)}`}>
+                                          {language === 'TH' ? 'ความเหมือนเทมเพลต:' : 'Template Match:'} {opt.confidence}%
+                                        </span>
+                                      </div>
+                                    )
+                                  }))}
+                                />
+                                {file.templateName && (
+                                  <Tooltip content={language === 'TH' ? 'ดูตัวอย่างเทมเพลต' : 'Preview template'}>
+                                    <button
+                                      onClick={() => setTemplatePreviewName(file.templateName)}
+                                      className="p-2 rounded-[4px] border border-slate-200 text-slate-400 hover:text-blue-500 hover:border-blue-200 hover:bg-blue-50 transition-colors shrink-0 cursor-pointer"
+                                    >
+                                      <Eye size={14} />
+                                    </button>
+                                  </Tooltip>
+                                )}
+                              </div>
+                              {selectedConfidence !== undefined && selectedConfidence < 70 && (
+                                <div className="ml-[72px] flex items-start gap-2 text-[11px] font-bold text-rose-600 bg-rose-50 border border-rose-100 p-2.5 rounded-lg">
+                                  <AlertTriangle size={14} className="shrink-0 mt-0.5" />
+                                  <span>
+                                    {language === 'TH'
+                                      ? `เทมเพลตนี้ตรงกับไฟล์ที่อัปโหลดค่อนข้างน้อย (${selectedConfidence}%) กรุณาตรวจสอบว่าเลือกประเภทเอกสารและไฟล์ถูกต้องก่อนเริ่มระบบ`
+                                      : `This template matches your file poorly (${selectedConfidence}%). Please double-check the document type and file before starting.`}
+                                  </span>
+                                </div>
                               )}
                             </>
                           );
