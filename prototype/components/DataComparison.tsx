@@ -1754,6 +1754,8 @@ const mockWorkflows: Workflow[] = [
   }[]>([]);
   const [replaceIsDragging, setReplaceIsDragging] = useState(false);
   const [replacePreviewFileId, setReplacePreviewFileId] = useState<string | null>(null);
+  // Mock template-layout popup — just the template name, no real asset to preview yet.
+  const [templatePreviewName, setTemplatePreviewName] = useState<string | null>(null);
   const [replacePreviewUrl, setReplacePreviewUrl] = useState<string | null>(null);
   // Real parsed content for the Excel/XML preview overlay (actual uploaded bytes, not a mock).
   const [replacePreviewParsed, setReplacePreviewParsed] = useState<
@@ -6645,24 +6647,36 @@ const mockWorkflows: Workflow[] = [
                           ].sort((a, b) => b.confidence - a.confidence);
 
                           return (
-                            <Select
-                              value={file.templateName || undefined}
-                              onChange={(value) => setReplaceFileTemplateName(file.id, value)}
-                              placeholder={language === 'TH' ? '-- เลือก Template --' : '-- Select Template --'}
-                              className="flex-1 min-w-0"
-                              popupMatchSelectWidth
-                              options={templateOptions.map(opt => ({
-                                value: opt.templateName,
-                                label: (
-                                  <div className="flex items-center justify-between gap-2 w-full">
-                                    <span className="truncate">{opt.templateName}</span>
-                                    <span className={`shrink-0 px-1.5 py-0.5 rounded-full text-[10px] font-black ${getConfidenceBadgeClass(opt.confidence)}`}>
-                                      {language === 'TH' ? 'ระดับความแม่นยำ:' : 'Confidence Level:'} {opt.confidence}%
-                                    </span>
-                                  </div>
-                                )
-                              }))}
-                            />
+                            <>
+                              <Select
+                                value={file.templateName || undefined}
+                                onChange={(value) => setReplaceFileTemplateName(file.id, value)}
+                                placeholder={language === 'TH' ? '-- เลือก Template --' : '-- Select Template --'}
+                                className="flex-1 min-w-0"
+                                popupMatchSelectWidth
+                                options={templateOptions.map(opt => ({
+                                  value: opt.templateName,
+                                  label: (
+                                    <div className="flex items-center justify-between gap-2 w-full">
+                                      <span className="truncate">{opt.templateName}</span>
+                                      <span className={`shrink-0 px-1.5 py-0.5 rounded-full text-[10px] font-black ${getConfidenceBadgeClass(opt.confidence)}`}>
+                                        {language === 'TH' ? 'ระดับความแม่นยำ:' : 'Confidence Level:'} {opt.confidence}%
+                                      </span>
+                                    </div>
+                                  )
+                                }))}
+                              />
+                              {file.templateName && (
+                                <Tooltip content={language === 'TH' ? 'ดูตัวอย่างเทมเพลต' : 'Preview template'}>
+                                  <button
+                                    onClick={() => setTemplatePreviewName(file.templateName)}
+                                    className="p-2 rounded-[4px] border border-slate-200 text-slate-400 hover:text-blue-500 hover:border-blue-200 hover:bg-blue-50 transition-colors shrink-0 cursor-pointer"
+                                  >
+                                    <Eye size={14} />
+                                  </button>
+                                </Tooltip>
+                              )}
+                            </>
                           );
                         })()}
                       </div>
@@ -6888,6 +6902,53 @@ const mockWorkflows: Workflow[] = [
           </div>
         );
       })()}
+
+      {/* Mock template-layout popup for the Replace & Merge Template picker — there's no real
+          template asset yet, so this shows a generic layout sketch labeled with the template name. */}
+      {templatePreviewName && (
+        <div className="fixed inset-0 z-[680] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-md rounded-2xl overflow-hidden shadow-2xl flex flex-col font-sans">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-4 shrink-0">
+              <span className="text-sm font-black text-[#010136] truncate">{templatePreviewName}</span>
+              <button
+                onClick={() => setTemplatePreviewName(null)}
+                className="p-1.5 hover:bg-slate-100 rounded-[4px] text-slate-400 hover:text-slate-600 transition-colors shrink-0 cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="p-6 bg-slate-100">
+              <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-5 flex flex-col gap-3">
+                <div className="h-3 w-2/5 bg-slate-300 rounded" />
+                <div className="h-2 w-1/3 bg-slate-200 rounded" />
+                <div className="flex gap-4 mt-2">
+                  <div className="flex-1 flex flex-col gap-1.5">
+                    <div className="h-2 w-1/2 bg-slate-200 rounded" />
+                    <div className="h-2 w-3/4 bg-slate-200 rounded" />
+                  </div>
+                  <div className="flex-1 flex flex-col gap-1.5">
+                    <div className="h-2 w-1/2 bg-slate-200 rounded" />
+                    <div className="h-2 w-3/4 bg-slate-200 rounded" />
+                  </div>
+                </div>
+                <div className="mt-3 border border-slate-200 rounded overflow-hidden">
+                  <div className="h-5 bg-slate-200" />
+                  {[0, 1, 2].map(row => (
+                    <div key={row} className="h-5 border-t border-slate-100 flex items-center px-2 gap-2">
+                      <div className="h-1.5 w-1/4 bg-slate-100 rounded" />
+                      <div className="h-1.5 w-1/5 bg-slate-100 rounded" />
+                      <div className="h-1.5 w-1/6 bg-slate-100 rounded" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <p className="text-[10px] font-bold text-slate-400 text-center mt-3">
+                {language === 'TH' ? 'ตัวอย่างโครงร่างเทมเพลต (Mock)' : 'Mock template layout preview'}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* PDF View Overlay Side-by-side */}
       {pdfPreviewUrl && (
