@@ -9,7 +9,7 @@ import {
   CheckCircle2, XCircle, Info, Eye, Send, Filter, ArrowLeft, Save, RotateCcw,
   LayoutGrid, List, ScanEye, Bot, ChevronDown, Lock, Unlock, HelpCircle, X, Loader2, ShieldCheck, ArrowUpRight, ScanSearch, History, Edit3, UploadCloud, AlertTriangle,
   Printer, RotateCw, ZoomIn, ZoomOut, Menu, Copy, Star, CheckCheck, StickyNote, SkipForward, Undo2,
-  FileBarChart2, Layers, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, GripVertical
+  FileBarChart2, Layers, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, GripVertical, MoreVertical, Redo2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Tabs, Tag, Badge, Empty, Button, message, DatePicker, Select, Radio } from 'antd';
@@ -7157,25 +7157,18 @@ const mockWorkflows: Workflow[] = [
           ];
         }
 
+        const pdfFileName = `${templatePreviewName.replace(/\s+/g, '_')}.pdf`;
+
         return (
           <div className="fixed inset-0 z-[680] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white w-[90vw] max-w-5xl h-[88vh] rounded-2xl overflow-hidden shadow-2xl flex flex-col font-sans">
+              {/* Same file-switcher-pill header as the real "view file" modal, so this reads as
+                  the same kind of viewer rather than a different popup. */}
               <div className="px-5 py-4 border-b border-slate-100 flex items-start justify-between gap-4 shrink-0">
-                <div className="flex flex-col gap-1.5 min-w-0">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                    {language === 'TH' ? 'ตัวอย่างเทมเพลต (Mock)' : 'Template preview (Mock)'} — {templatePreviewName}
+                <div className="flex items-center gap-2 overflow-x-auto">
+                  <span className="px-3 py-1.5 rounded-[4px] text-xs font-bold whitespace-nowrap bg-[#1f5df9] text-white shadow-sm">
+                    {templatePreviewName} ({language === 'TH' ? 'ตัวอย่าง Mock' : 'Mock preview'})
                   </span>
-                  <div className="flex items-center gap-2 overflow-x-auto">
-                    {pages.map((_, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => scrollToPage(idx)}
-                        className="px-3 py-1.5 rounded-[4px] text-xs font-bold whitespace-nowrap transition-all shrink-0 bg-slate-100 text-slate-500 hover:bg-slate-200"
-                      >
-                        {language === 'TH' ? `หน้า ${idx + 1}` : `Page ${idx + 1}`}
-                      </button>
-                    ))}
-                  </div>
                 </div>
                 <button
                   onClick={() => setTemplatePreviewName(null)}
@@ -7184,17 +7177,60 @@ const mockWorkflows: Workflow[] = [
                   <X size={18} />
                 </button>
               </div>
-              <div className="flex-1 bg-slate-100 min-h-0 overflow-auto flex flex-col items-center gap-6 p-8">
-                {pages.map((pageContent, idx) => (
-                  <div key={idx} id={pageScrollId(idx)} className="w-full max-w-[700px] shrink-0 scroll-mt-4">
-                    <div className="bg-white shadow-lg w-full h-fit p-10 text-[13px] leading-tight">
-                      {pageContent}
-                    </div>
-                    <div className="text-center text-[10px] font-bold text-slate-400 mt-2">
-                      {language === 'TH' ? `หน้า ${idx + 1} จาก ${pages.length}` : `Page ${idx + 1} of ${pages.length}`}
+
+              {/* Fake PDF-viewer chrome (thumbnail rail + dark toolbar) mocking the browser's
+                  native PDF viewer that the real "view file" iframe shows for an actual PDF. */}
+              <div className="flex-1 flex min-h-0 bg-[#525659]">
+                <div className="w-[130px] bg-[#323639] flex flex-col items-center gap-4 py-4 overflow-y-auto shrink-0">
+                  {pages.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => scrollToPage(idx)}
+                      className="flex flex-col items-center gap-1.5 group cursor-pointer"
+                    >
+                      <div className={`w-16 h-[88px] bg-white rounded-sm shadow flex flex-col gap-1 p-1.5 transition-all ${
+                        idx === 0 ? 'ring-2 ring-blue-400' : 'group-hover:ring-2 group-hover:ring-blue-300'
+                      }`}>
+                        <div className="h-1 w-1/2 bg-slate-300 rounded-full" />
+                        <div className="h-0.5 w-2/3 bg-slate-200 rounded-full" />
+                        <div className="flex-1 mt-0.5 bg-slate-100 rounded-[1px]" />
+                      </div>
+                      <span className="text-[10px] text-slate-300 font-bold">{idx + 1}</span>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex-1 flex flex-col min-w-0">
+                  <div className="h-11 bg-[#3c4043] flex items-center px-3 gap-3 text-slate-300 shrink-0">
+                    <Menu size={16} className="cursor-pointer hover:text-white" />
+                    <span className="text-xs truncate max-w-[220px]">{pdfFileName}</span>
+                    <div className="ml-auto flex items-center gap-3 shrink-0">
+                      <span className="text-xs tabular-nums">1 / {pages.length}</span>
+                      <div className="w-px h-4 bg-slate-500" />
+                      <ZoomOut size={15} className="cursor-pointer hover:text-white" />
+                      <span className="text-xs">100%</span>
+                      <ZoomIn size={15} className="cursor-pointer hover:text-white" />
+                      <div className="w-px h-4 bg-slate-500" />
+                      <RotateCw size={15} className="cursor-pointer hover:text-white" />
+                      <Edit3 size={15} className="cursor-pointer hover:text-white" />
+                      <Undo2 size={15} className="cursor-pointer hover:text-white" />
+                      <Redo2 size={15} className="cursor-pointer hover:text-white" />
+                      <div className="w-px h-4 bg-slate-500" />
+                      <Download size={15} className="cursor-pointer hover:text-white" />
+                      <Printer size={15} className="cursor-pointer hover:text-white" />
+                      <MoreVertical size={15} className="cursor-pointer hover:text-white" />
                     </div>
                   </div>
-                ))}
+                  <div className="flex-1 bg-[#525659] min-h-0 overflow-auto flex flex-col items-center gap-6 p-8">
+                    {pages.map((pageContent, idx) => (
+                      <div key={idx} id={pageScrollId(idx)} className="w-full max-w-[700px] shrink-0 scroll-mt-4">
+                        <div className="bg-white shadow-lg w-full h-fit p-10 text-[13px] leading-tight">
+                          {pageContent}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
