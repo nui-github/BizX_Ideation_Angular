@@ -9079,13 +9079,12 @@ const mockWorkflows: Workflow[] = [
                       {language === 'TH' ? '1. ส่วนของเอกสาร' : '1. Section'}
                     </span>
                     <Select
-                      mode="multiple"
                       allowClear
                       style={{ width: '100%' }}
-                      placeholder={language === 'TH' ? 'เลือกส่วนของเอกสาร...' : 'Select sections...'}
-                      value={skipDraft.sections}
-                      onChange={(vals) => {
-                        const sections = vals as ('Header' | 'Description' | 'Footer')[];
+                      placeholder={language === 'TH' ? 'เลือกส่วนของเอกสาร...' : 'Select a section...'}
+                      value={skipDraft.sections[0]}
+                      onChange={(val) => {
+                        const sections = (val ? [val] : []) as ('Header' | 'Description' | 'Footer')[];
                         setSkipDraft(prev => prev && ({
                           ...prev,
                           sections,
