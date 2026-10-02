@@ -12,7 +12,7 @@ import {
   FileBarChart2, Layers, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, GripVertical, MoreVertical, Redo2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Tabs, Tag, Badge, Empty, Button, message, DatePicker, Select, Radio } from 'antd';
+import { Tabs, Tag, Badge, Empty, Button, message, DatePicker, Select, Radio, Drawer } from 'antd';
 import thTH from 'antd/locale/th_TH';
 import dayjs from 'dayjs';
 import 'dayjs/locale/th';
@@ -77,6 +77,13 @@ const getTemplateDocKind = (doctype: string): TemplateDocKind => {
   if (upper.includes('INVOICE')) return 'invoice';
   return 'generic';
 };
+
+interface SkipCompareRule {
+  id: string;
+  sections: ('Header' | 'Description' | 'Footer')[];
+  fields: string[];
+  docs: string[];
+}
 
 const MAX_UPLOAD_FILE_SIZE_BYTES = 50 * 1024 * 1024;
 
@@ -1921,6 +1928,19 @@ const mockWorkflows: Workflow[] = [
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectionReasonModal, setShowRejectionReasonModal] = useState(false);
   const [showGenerateReportDrawer, setShowGenerateReportDrawer] = useState(false);
+
+  // "Skip compare" rules, per job: each rule skips the chosen fields (within the chosen sections)
+  // for the chosen documents, so those cells are excluded from mismatch checks. Fields are stored
+  // as "Part::FieldName" because the same field name can appear under more than one section.
+  const [showSkipDrawer, setShowSkipDrawer] = useState(false);
+  const [skipRulesByJob, setSkipRulesByJob] = useState<Record<string, SkipCompareRule[]>>({});
+  const [skipDraft, setSkipDraft] = useState<SkipCompareRule | null>(null);
+  const isCellSkipped = (jobId: string | undefined, docName: string, part: string, fieldName: string): boolean => {
+    if (!jobId) return false;
+    return (skipRulesByJob[jobId] || []).some(rule =>
+      rule.docs.includes(docName) && rule.fields.includes(`${part}::${fieldName}`)
+    );
+  };
 
   // --- Custom Handlers for Column Replace Feature ---
   const handleReplaceDragOver = (e: React.DragEvent) => {
@@ -4430,6 +4450,7 @@ const mockWorkflows: Workflow[] = [
           if (status === 'MISMATCH' && confirmedMismatches[confirmedKey]) {
             status = 'MATCH';
           }
+          if (isCellSkipped(job.id, docName, (res as any).part, res.fieldName)) return false;
           return status === 'MISMATCH';
         })
       );
@@ -8984,6 +9005,194 @@ const mockWorkflows: Workflow[] = [
         language={language}
       />
 
+      {/* Skip compare drawer — manage the per-job list of "skip these fields on these documents" rules */}
+      {selectedJob && (() => {
+        const jobId = selectedJob.id;
+        const rules = skipRulesByJob[jobId] || [];
+        const sectionLabelMap: Record<'Header' | 'Description' | 'Footer', string> = {
+          Header: language === 'TH' ? 'ส่วนหัว (Header)' : 'Header',
+          Description: language === 'TH' ? 'รายการสินค้า (Description)' : 'Description',
+          Footer: language === 'TH' ? 'ส่วนท้าย (Footer)' : 'Footer'
+        };
+        const fieldsByPart: Record<'Header' | 'Description' | 'Footer', string[]> = { Header: [], Description: [], Footer: [] };
+        const seenFields = new Set<string>();
+        allComparisonResults.forEach(res => {
+          const part = (res as any).part as 'Header' | 'Description' | 'Footer' | 'Summary';
+          if (part === 'Summary' || !fieldsByPart[part]) return;
+          const key = `${part}::${res.fieldName}`;
+          if (seenFields.has(key)) return;
+          seenFields.add(key);
+          fieldsByPart[part].push(res.fieldName);
+        });
+        const jobDocNames = Object.keys(selectedJob.docs);
+        const fieldLabel = (key: string) => key.split('::')[1];
+
+        const saveDraft = () => {
+          if (!skipDraft) return;
+          setSkipRulesByJob(prev => {
+            const current = prev[jobId] || [];
+            const exists = current.some(r => r.id === skipDraft.id);
+            return {
+              ...prev,
+              [jobId]: exists ? current.map(r => (r.id === skipDraft.id ? skipDraft : r)) : [...current, skipDraft]
+            };
+          });
+          setSkipDraft(null);
+        };
+        const deleteRule = (ruleId: string) => {
+          setSkipRulesByJob(prev => ({ ...prev, [jobId]: (prev[jobId] || []).filter(r => r.id !== ruleId) }));
+          if (skipDraft?.id === ruleId) setSkipDraft(null);
+        };
+        const canSave = !!skipDraft && skipDraft.sections.length > 0 && skipDraft.fields.length > 0 && skipDraft.docs.length > 0;
+
+        return (
+          <Drawer
+            open={showSkipDrawer}
+            onClose={() => { setShowSkipDrawer(false); setSkipDraft(null); }}
+            width={480}
+            zIndex={700}
+            title={
+              <div className="flex items-center gap-2">
+                <SkipForward size={16} className="text-slate-500" />
+                <span className="font-black text-[#010136]">{language === 'TH' ? 'ข้ามการเปรียบเทียบฟิลด์' : 'Skip compare fields'}</span>
+              </div>
+            }
+          >
+            <div className="flex flex-col gap-4 font-sans">
+              <div className="text-xs font-bold text-blue-600 bg-blue-50 p-2.5 rounded-lg flex items-start gap-2">
+                <Info size={14} className="shrink-0 mt-0.5" />
+                {language === 'TH'
+                  ? 'ฟิลด์ที่ตั้งให้ข้ามจะไม่ถูกนำมาเปรียบเทียบในเอกสารที่เลือก และจะมีเครื่องหมาย "ข้ามการเปรียบเทียบ" แสดงในตาราง สามารถแก้ไขหรือลบรายการเพื่อยกเลิกการข้ามได้ตลอดเวลา'
+                  : 'Skipped fields are not compared on the selected documents and show a "Skipped" mark in the table. Edit or delete a rule any time to stop skipping.'}
+              </div>
+
+              {skipDraft ? (
+                <div className="border border-slate-200 rounded-xl p-4 flex flex-col gap-4">
+                  <div className="text-sm font-black text-slate-700">
+                    {rules.some(r => r.id === skipDraft.id)
+                      ? (language === 'TH' ? 'แก้ไขรายการข้ามการเปรียบเทียบ' : 'Edit skip rule')
+                      : (language === 'TH' ? 'สร้างรายการข้ามการเปรียบเทียบ' : 'New skip rule')}
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                      {language === 'TH' ? '1. ส่วนของเอกสาร' : '1. Section'}
+                    </span>
+                    <Select
+                      mode="multiple"
+                      allowClear
+                      style={{ width: '100%' }}
+                      placeholder={language === 'TH' ? 'เลือกส่วนของเอกสาร...' : 'Select sections...'}
+                      value={skipDraft.sections}
+                      onChange={(vals) => {
+                        const sections = vals as ('Header' | 'Description' | 'Footer')[];
+                        setSkipDraft(prev => prev && ({
+                          ...prev,
+                          sections,
+                          fields: prev.fields.filter(f => sections.includes(f.split('::')[0] as any))
+                        }));
+                      }}
+                      options={(['Header', 'Description', 'Footer'] as const).map(p => ({ value: p, label: sectionLabelMap[p] }))}
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                      {language === 'TH' ? '2. ฟิลด์ที่ต้องการข้าม' : '2. Field to skip'}
+                    </span>
+                    <Select
+                      allowClear
+                      showSearch
+                      style={{ width: '100%' }}
+                      disabled={skipDraft.sections.length === 0}
+                      placeholder={skipDraft.sections.length === 0
+                        ? (language === 'TH' ? 'เลือกส่วนของเอกสารก่อน' : 'Select a section first')
+                        : (language === 'TH' ? 'เลือกฟิลด์...' : 'Select a field...')}
+                      value={skipDraft.fields[0]}
+                      onChange={(val) => setSkipDraft(prev => prev && ({ ...prev, fields: val ? [val as string] : [] }))}
+                      options={skipDraft.sections.map(part => ({
+                        label: sectionLabelMap[part],
+                        options: fieldsByPart[part].map(name => ({ value: `${part}::${name}`, label: name }))
+                      }))}
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                      {language === 'TH' ? '3. ใช้กับเอกสาร (Doctype)' : '3. Apply to documents (Doctype)'}
+                    </span>
+                    <Select
+                      mode="multiple"
+                      allowClear
+                      style={{ width: '100%' }}
+                      placeholder={language === 'TH' ? 'เลือกเอกสาร...' : 'Select documents...'}
+                      value={skipDraft.docs}
+                      onChange={(vals) => setSkipDraft(prev => prev && ({ ...prev, docs: vals as string[] }))}
+                      options={jobDocNames.map(name => ({ value: name, label: name }))}
+                    />
+                  </div>
+
+                  <div className="flex gap-2 justify-end pt-1">
+                    <Button onClick={() => setSkipDraft(null)}>{language === 'TH' ? 'ยกเลิก' : 'Cancel'}</Button>
+                    <Button type="primary" disabled={!canSave} onClick={saveDraft}>{language === 'TH' ? 'บันทึก' : 'Save'}</Button>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  type="primary"
+                  icon={<Plus size={14} />}
+                  onClick={() => setSkipDraft({ id: `skip-${Date.now()}`, sections: [], fields: [], docs: [] })}
+                  className="self-start"
+                >
+                  {language === 'TH' ? 'สร้างรายการข้ามใหม่' : 'New skip rule'}
+                </Button>
+              )}
+
+              <div className="flex flex-col gap-3">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                  {language === 'TH' ? `รายการที่ตั้งไว้ (${rules.length})` : `Saved rules (${rules.length})`}
+                </span>
+                {rules.length === 0 && (
+                  <div className="text-xs font-bold text-slate-400 border border-dashed border-slate-200 rounded-xl p-6 text-center">
+                    {language === 'TH' ? 'ยังไม่มีรายการข้ามการเปรียบเทียบ' : 'No skip rules yet'}
+                  </div>
+                )}
+                {rules.map((rule, idx) => (
+                  <div key={rule.id} className={`border rounded-xl p-3 flex flex-col gap-2 ${skipDraft?.id === rule.id ? 'border-blue-300 bg-blue-50/30' : 'border-slate-200'}`}>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black text-slate-700">{language === 'TH' ? `รายการที่ ${idx + 1}` : `Rule ${idx + 1}`}</span>
+                      <div className="flex items-center gap-1">
+                        <Tooltip content={language === 'TH' ? 'แก้ไข' : 'Edit'}>
+                          <button onClick={() => setSkipDraft({ ...rule })} className="p-1.5 hover:bg-blue-50 rounded-[4px] text-slate-400 hover:text-blue-500 transition-colors cursor-pointer">
+                            <Edit3 size={14} />
+                          </button>
+                        </Tooltip>
+                        <Tooltip content={language === 'TH' ? 'ลบ (ยกเลิกการข้าม)' : 'Delete (stop skipping)'}>
+                          <button onClick={() => deleteRule(rule.id)} className="p-1.5 hover:bg-rose-50 rounded-[4px] text-slate-400 hover:text-rose-500 transition-colors cursor-pointer">
+                            <Trash2 size={14} />
+                          </button>
+                        </Tooltip>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {rule.sections.map(s => <Tag key={s} color="blue" className="!m-0">{sectionLabelMap[s]}</Tag>)}
+                    </div>
+                    <div className="text-[11px] font-bold text-slate-500">
+                      <span className="text-slate-400">{language === 'TH' ? 'ฟิลด์: ' : 'Fields: '}</span>
+                      {rule.fields.map(fieldLabel).join(', ')}
+                    </div>
+                    <div className="text-[11px] font-bold text-slate-500">
+                      <span className="text-slate-400">{language === 'TH' ? 'เอกสาร: ' : 'Documents: '}</span>
+                      {rule.docs.join(', ')}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Drawer>
+        );
+      })()}
+
       {/* Reject Data confirmation modal */}
        {showRejectFileModal && rejectFileTargetDocName && (
          <div className="fixed inset-0 z-[620] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
@@ -9467,6 +9676,25 @@ const mockWorkflows: Workflow[] = [
                       className="p-2.5 rounded-[4px] transition-all border flex items-center justify-center cursor-pointer shadow-sm bg-white text-slate-500 border-slate-200/60 hover:bg-slate-50"
                     >
                       <History size={15} strokeWidth={2.5} className="text-slate-400" />
+                    </button>
+                  </Tooltip>
+
+                  {/* Skip compare — drawer to choose fields/documents that are excluded from comparison */}
+                  <Tooltip position={isJobPanelFullscreen ? 'bottom' : 'top'} content={language === 'TH' ? 'ตั้งค่าข้ามการเปรียบเทียบฟิลด์' : 'Skip compare settings'}>
+                    <button
+                      onClick={() => { setSkipDraft(null); setShowSkipDrawer(true); }}
+                      className={`relative p-2.5 rounded-[4px] transition-all border flex items-center justify-center cursor-pointer shadow-sm ${
+                        (skipRulesByJob[selectedJob.id] || []).length > 0
+                          ? 'bg-slate-100 text-slate-600 border-slate-300 hover:bg-slate-200'
+                          : 'bg-white text-slate-500 border-slate-200/60 hover:bg-slate-50'
+                      }`}
+                    >
+                      <SkipForward size={15} strokeWidth={2.5} className="text-slate-400" />
+                      {(skipRulesByJob[selectedJob.id] || []).length > 0 && (
+                        <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-slate-600 text-white text-[9px] font-black flex items-center justify-center leading-none shadow-sm">
+                          {(skipRulesByJob[selectedJob.id] || []).length}
+                        </span>
+                      )}
                     </button>
                   </Tooltip>
 
@@ -10223,6 +10451,28 @@ const mockWorkflows: Workflow[] = [
                                           <div className="px-4 py-4 text-[10px] font-black text-slate-300 text-center flex items-center justify-center gap-1.5 min-h-full">
                                              <Loader2 size={10} className="animate-spin opacity-40" />
                                              <span className="uppercase tracking-widest opacity-40">WAITING</span>
+                                          </div>
+                                        </td>
+                                      );
+                                    }
+                                    if (isCellSkipped(selectedJob?.id, docName, (res as any).part, res.fieldName)) {
+                                      return (
+                                        <td key={docName} className="p-0 border-r border-r-slate-100 border-t border-t-slate-200 align-top h-px bg-slate-100/70">
+                                          <div className="px-4 py-4 h-full flex flex-col items-center justify-start gap-1.5">
+                                            <span className="text-[11px] font-bold text-slate-400 line-through decoration-slate-300 break-all text-center">{target.value}</span>
+                                            <Tooltip content={language === 'TH' ? 'ฟิลด์นี้ถูกตั้งค่าให้ข้ามการเปรียบเทียบ — คลิกเพื่อแก้ไขหรือยกเลิก' : 'This field is set to skip comparison — click to edit or undo'}>
+                                              <button
+                                                onClick={() => {
+                                                  const rule = (skipRulesByJob[selectedJob!.id] || []).find(r => r.docs.includes(docName) && r.fields.includes(`${(res as any).part}::${res.fieldName}`));
+                                                  if (rule) setSkipDraft({ ...rule });
+                                                  setShowSkipDrawer(true);
+                                                }}
+                                                className="px-1.5 py-0.5 bg-slate-200 text-slate-600 border border-slate-300 rounded-[4px] text-[8px] font-black uppercase tracking-wider shrink-0 flex items-center gap-1 cursor-pointer hover:bg-slate-300 transition-colors"
+                                              >
+                                                <SkipForward size={9} strokeWidth={3} />
+                                                {language === 'TH' ? 'ข้ามการเปรียบเทียบ' : 'Skipped'}
+                                              </button>
+                                            </Tooltip>
                                           </div>
                                         </td>
                                       );
