@@ -9051,6 +9051,15 @@ const mockWorkflows: Workflow[] = [
             onClose={() => { setShowSkipDrawer(false); setSkipDraft(null); }}
             width={480}
             zIndex={700}
+            closeIcon={false}
+            extra={
+              <button
+                onClick={() => { setShowSkipDrawer(false); setSkipDraft(null); }}
+                className="p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 rounded-lg border-none bg-transparent cursor-pointer transition-colors"
+              >
+                <X size={20} />
+              </button>
+            }
             title={
               <div className="flex items-center gap-2">
                 <SkipForward size={16} className="text-slate-500" />
