@@ -1771,6 +1771,7 @@ const mockWorkflows: Workflow[] = [
     pageMode: 'all' | 'custom';
     pageRange: string;
     templateName: string;
+    useForTraining: boolean;
     file: File;
     // Excel files only (.xlsx/.xls) — every sheet tab name in the workbook, and which one
     // is selected to read from. Empty array while the workbook is still being parsed, or
@@ -1977,6 +1978,7 @@ const mockWorkflows: Workflow[] = [
       pageMode: 'all' as const,
       pageRange: '',
       templateName: `${replaceTargetColumn || ''}_Generic`,
+      useForTraining: true,
       file: f,
       sheetNames: [] as string[],
       sheetName: ''
@@ -2008,6 +2010,9 @@ const mockWorkflows: Workflow[] = [
   };
   const setReplaceFileSheetName = (fileId: string, sheetName: string) => {
     setReplaceUploadedFiles(prev => prev.map(f => f.id === fileId ? { ...f, sheetName } : f));
+  };
+  const setReplaceFileUseForTraining = (fileId: string, useForTraining: boolean) => {
+    setReplaceUploadedFiles(prev => prev.map(f => f.id === fileId ? { ...f, useForTraining } : f));
   };
   const setReplaceFileTemplateName = (fileId: string, templateName: string) => {
     setReplaceUploadedFiles(prev => prev.map(f => f.id === fileId ? { ...f, templateName } : f));
@@ -6731,6 +6736,26 @@ const mockWorkflows: Workflow[] = [
                                       : `This template matches your file poorly (${selectedConfidence}%). Please double-check the document type and file before starting document reading and extraction.`}
                                   </span>
                                 </div>
+                              )}
+                              {selectedConfidence !== undefined && selectedConfidence < 90 && (
+                                <label className="ml-[72px] flex items-start gap-2.5 cursor-pointer select-none w-fit">
+                                  <input
+                                    type="checkbox"
+                                    checked={file.useForTraining}
+                                    onChange={(e) => setReplaceFileUseForTraining(file.id, e.target.checked)}
+                                    className="mt-0.5 w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-100 shrink-0 cursor-pointer"
+                                  />
+                                  <span className="flex flex-col gap-0.5">
+                                    <span className="text-[11px] font-bold text-slate-600">
+                                      {language === 'TH' ? 'ให้ระบบเรียนรู้จากเอกสารนี้' : 'Let the system learn from this document'}
+                                    </span>
+                                    <span className="text-[10px] font-medium text-slate-400">
+                                      {language === 'TH'
+                                        ? 'ระบบจะนำเอกสารนี้ไปช่วยปรับปรุงเทมเพลต เพื่อให้อ่านเอกสารแบบนี้ได้แม่นยำขึ้นในครั้งต่อไป'
+                                        : 'The system will use this document to improve the template, so similar documents are read more accurately next time.'}
+                                    </span>
+                                  </span>
+                                </label>
                               )}
                             </>
                           );
