@@ -3428,6 +3428,104 @@ const mockWorkflows: Workflow[] = [
       foundDocs: 3,
       matchedCount: 2,
       mismatchedCount: 1
+    },
+
+    // --- Shipment 18: "Merge field value" — same 4-flow CDS preset as shipment 14. Flow 1 is
+    // done; in flow 2 only Invoice + Packing List are uploaded and read (the rest still to
+    // upload); flows 3-4 haven't started. Flow 2's data is hand-built in
+    // getMergeFieldValueDemoResults to demo the "items that couldn't be matched with the
+    // invoice" section: the invoice lists 3 items, the packing list splits each into several
+    // sub-rows whose quantities add back up to the invoice's, so row-by-row matching leaves
+    // the surplus sub-rows with nothing to pair against. ---
+    {
+      id: 'job-mfv-a',
+      reference: 'Merge field value',
+      expiryDate: '12 OCT 2026 17:00:00',
+      createdAt: '09 OCT 2026',
+      workflowName: 'PO/PI Matching',
+      assignedTeam: 'operation',
+      assignee: 'Somchai T.',
+      isLocked: true,
+      status: JobStatus.READY,
+      totalFieldsCount: 11,
+      accuracyScore: 100.0,
+      docs: {
+        'PO/PI': ComparisonDocStatus.LOCKED,
+        'Invoice': ComparisonDocStatus.LOCKED
+      },
+      progress: 100,
+      totalDocs: 2,
+      foundDocs: 2,
+      matchedCount: 2,
+      mismatchedCount: 0
+    },
+    {
+      id: 'job-mfv-b',
+      reference: 'Merge field value',
+      expiryDate: '13 OCT 2026 17:00:00',
+      createdAt: '09 OCT 2026',
+      workflowName: 'Shipping Doc Matching',
+      assignedTeam: 'operation',
+      assignee: 'Somchai T.',
+      status: JobStatus.REVIEW,
+      totalFieldsCount: 0,
+      accuracyScore: 0.0,
+      docs: {
+        'Invoice': ComparisonDocStatus.MISMATCHED,
+        'Packing List': ComparisonDocStatus.MISMATCHED,
+        'Bill of Lading': ComparisonDocStatus.MISSING,
+        'FREIGHT INVOICE': ComparisonDocStatus.MISSING,
+        'HS Code': ComparisonDocStatus.MISSING,
+        'FTA Draft': ComparisonDocStatus.MISSING
+      },
+      progress: 33,
+      totalDocs: 6,
+      foundDocs: 2,
+      matchedCount: 0,
+      mismatchedCount: 2
+    },
+    {
+      id: 'job-mfv-c',
+      reference: 'Merge field value',
+      expiryDate: '14 OCT 2026 17:00:00',
+      createdAt: '09 OCT 2026',
+      workflowName: 'Import Declaration Matching#1',
+      assignedTeam: 'customs',
+      status: JobStatus.NEW,
+      totalFieldsCount: 0,
+      accuracyScore: 0.0,
+      docs: {
+        'ใบขนสินค้า': ComparisonDocStatus.MISSING,
+        'Bill of Lading': ComparisonDocStatus.MISSING
+      },
+      progress: 0,
+      totalDocs: 2,
+      foundDocs: 0,
+      matchedCount: 0,
+      mismatchedCount: 0
+    },
+    {
+      id: 'job-mfv-d',
+      reference: 'Merge field value',
+      expiryDate: '15 OCT 2026 17:00:00',
+      createdAt: '09 OCT 2026',
+      workflowName: 'Import Declaration Matching#2',
+      assignedTeam: 'customs',
+      status: JobStatus.NEW,
+      totalFieldsCount: 0,
+      accuracyScore: 0.0,
+      docs: {
+        'Import Dec.': ComparisonDocStatus.MISSING,
+        'Form FTA': ComparisonDocStatus.MISSING,
+        'License': ComparisonDocStatus.MISSING,
+        'LPI': ComparisonDocStatus.MISSING,
+        'Other': ComparisonDocStatus.MISSING
+      },
+      progress: 0,
+      totalDocs: 5,
+      foundDocs: 0,
+      matchedCount: 0,
+      mismatchedCount: 0
     }
     ];
     // Jobs created via "สร้างรายการใหม่" only ever live in this tab's memory — a doc preview
@@ -3955,7 +4053,7 @@ const mockWorkflows: Workflow[] = [
   const getNoRuleCellsForJob = (jobId: string, docNames: string[]): Set<string> => {
     // The Conditional Rule Demo job needs its specific fields reliably visible every load —
     // skip the random "no rule configured" simulation for it entirely.
-    if (jobId === 'job-conditional-demo') return new Set();
+    if (jobId === 'job-conditional-demo' || jobId === 'job-mfv-b') return new Set();
     if (!noRuleFieldsRef.current[jobId]) {
       const count = 2 + Math.floor(Math.random() * 2); // 2-3
       noRuleFieldsRef.current[jobId] = [
@@ -3968,7 +4066,119 @@ const mockWorkflows: Workflow[] = [
   };
 
   // Mock data generator for comparison - Logistics specific fields
+  // Hand-built flow-2 data for the "Merge field value" demo shipment. The invoice has 3 line
+  // items; the packing list breaks each one into 5 size sub-rows whose quantities sum back to
+  // the invoice quantity. Rows are paired one-to-one, so only each item's first sub-row finds
+  // an invoice counterpart ("Description"); the 12 leftover sub-rows land in the 'Unmatched'
+  // part, which the table renders as its own "items that couldn't be matched with the
+  // invoice" section.
+  const getMergeFieldValueDemoResults = (job: ComparisonJob): any[] => {
+    const docNames = Object.keys(job.docs);
+    const makeTargets = (
+      invoiceValue: string,
+      packingValue: string,
+      packingStatus: 'MATCH' | 'MISMATCH',
+      options: { primary: 'Invoice' | 'Packing List'; missingInMain?: boolean }
+    ) => docNames.map((docName, tIdx) => {
+      const base = {
+        fileId: `target-${tIdx + 1}`,
+        fileName: docName,
+        ruleTitle: '',
+        ruleDesc: '',
+        conditionalSourceValue: undefined,
+        conditionalSourceDoc: undefined,
+        conditionalSourceField: undefined,
+        isPrimary: docName === options.primary
+      };
+      // Cells for not-yet-uploaded docs and for "not in the main document" rows are drawn by
+      // dedicated branches in the table (never from status), so they use 'MATCH' here to
+      // keep each item's matched/mismatched counts from being suppressed by an 'NA'/'WAITING'
+      // target — the group header hides its counts whenever any target is still uncompared.
+      if (docName === 'Invoice') {
+        return options.missingInMain
+          ? { ...base, value: '', status: 'MATCH', missingInMain: true }
+          : { ...base, value: invoiceValue, status: 'MATCH' };
+      }
+      if (docName === 'Packing List') return { ...base, value: packingValue, status: packingStatus };
+      return { ...base, value: '-', status: 'MATCH' };
+    });
+
+    const results: any[] = [];
+
+    const headerRows: [string, string][] = [
+      ['Consignee Name', 'BIZ-TRANS LOGISTICS CO., LTD.'],
+      ['Consignee TAX ID', '0105562000000'],
+      ['Incoterm', 'FOB'],
+      ['Port of Loading', 'SHANGHAI, CHINA'],
+      ['Port of Discharge', 'BANGKOK, THAILAND']
+    ];
+    headerRows.forEach(([fieldName, value]) => {
+      results.push({
+        fieldName, sourceValue: value, part: 'Header', group: undefined,
+        targets: makeTargets(value, value, 'MATCH', { primary: 'Invoice' })
+      });
+    });
+
+    const invoiceItems = [
+      { desc: 'Mens (Knitted 82% Nylon 18% Spandex) S/S Polo Black', sku: 'MPL-001', qty: 1200 },
+      { desc: 'Mens (Knitted 82% Nylon 18% Spandex) S/S Polo White', sku: 'MPL-002', qty: 2400 },
+      { desc: 'Womens (Knitted 82% Nylon 18% Spandex) S/S Polo Navy', sku: 'WPL-003', qty: 3600 }
+    ];
+    const sizes = ['S', 'M', 'L', 'XL', 'XXL'];
+    let unmatchedCount = 0;
+
+    invoiceItems.forEach((item, itemIdx) => {
+      const perSizeQty = (item.qty / sizes.length).toLocaleString('en-US');
+      sizes.forEach((size, sizeIdx) => {
+        const packingRow = {
+          'Product Description': `${item.desc} - Size ${size}`,
+          'Item No. / Model No. (SKU)': `${item.sku}-${size}`,
+          "Q'ty by line": perSizeQty,
+          'UOM': 'PCS'
+        };
+        const invoiceRow = {
+          'Product Description': item.desc,
+          'Item No. / Model No. (SKU)': item.sku,
+          "Q'ty by line": item.qty.toLocaleString('en-US'),
+          'UOM': 'PCS'
+        };
+        if (sizeIdx === 0) {
+          (Object.keys(invoiceRow) as (keyof typeof invoiceRow)[]).forEach(fieldName => {
+            const same = invoiceRow[fieldName] === packingRow[fieldName];
+            results.push({
+              fieldName, sourceValue: invoiceRow[fieldName], part: 'Description', group: `Item ${itemIdx + 1}`,
+              targets: makeTargets(invoiceRow[fieldName], packingRow[fieldName], same ? 'MATCH' : 'MISMATCH', { primary: 'Invoice' })
+            });
+          });
+        } else {
+          unmatchedCount += 1;
+          (Object.keys(packingRow) as (keyof typeof packingRow)[]).forEach(fieldName => {
+            results.push({
+              fieldName, sourceValue: '', part: 'Unmatched', group: `UM::Item ${unmatchedCount}`,
+              targets: makeTargets('', packingRow[fieldName], 'MISMATCH', { primary: 'Invoice', missingInMain: true })
+            });
+          });
+        }
+      });
+    });
+
+    const footerRows: [string, string][] = [
+      ['Total Quantity', '7,200'],
+      ['Total Gross Weight (KGS)', '1,250.00'],
+      ['Country of Origin', 'CHINA']
+    ];
+    footerRows.forEach(([fieldName, value]) => {
+      results.push({
+        fieldName, sourceValue: value, part: 'Footer', group: undefined,
+        targets: makeTargets(value, value, 'MATCH', { primary: 'Packing List' })
+      });
+    });
+
+    return results;
+  };
+
   const getMockComparisonResults = (job: ComparisonJob, datasetKey?: string) => {
+    if (job.id === 'job-mfv-b') return getMergeFieldValueDemoResults(job);
     // Generate realistic logistics data
     const headerFields = [
       { name: 'Consignee Name', source: 'BIZ-TRANS LOGISTICS CO., LTD.', type: 'string', part: 'Header' },
@@ -8643,8 +8853,8 @@ const mockWorkflows: Workflow[] = [
         const fieldsBySection: Record<'Header' | 'Description' | 'Footer', string[]> = { Header: [], Description: [], Footer: [] };
         const seen = new Set<string>();
         allComparisonResults.forEach(res => {
-          const part = (res as any).part as 'Header' | 'Description' | 'Footer' | 'Summary';
-          if (part === 'Summary') return;
+          const part = (res as any).part as 'Header' | 'Description' | 'Footer' | 'Summary' | 'Unmatched';
+          if (part === 'Summary' || part === 'Unmatched') return;
           if (!res.targets.some(t => t.fileName === targetDoc && t.status === 'MISMATCH')) return;
           const key = `${part}::${res.fieldName}`;
           if (seen.has(key)) return;
@@ -9074,7 +9284,7 @@ const mockWorkflows: Workflow[] = [
           <Drawer
             open={showSkipDrawer}
             onClose={() => { setShowSkipDrawer(false); setSkipDraft(null); }}
-            width={480}
+            size={480}
             zIndex={700}
             closeIcon={false}
             extra={
@@ -10304,7 +10514,7 @@ const mockWorkflows: Workflow[] = [
                                    {language === 'TH' ? 'ดูข้อมูลทั้งหมด' : 'Show All Data'}
                                  </button>
                               </div>
-                            ) : ['Header', 'Description', 'Footer', 'Summary'].map(part => {
+                            ) : ['Header', 'Description', 'Unmatched', 'Footer', 'Summary'].map(part => {
                               const originalPartResults = comparisonResults.filter(res => (res as any).part === part);
                               const partResults = originalPartResults
                                 .filter(res => passesDiffFilter(res));
@@ -10323,7 +10533,7 @@ const mockWorkflows: Workflow[] = [
                               ).length : 0;
                               const showHeaderBadges = readDocsCount >= 2;
 
-                              if (part === 'Description') {
+                              if (part === 'Description' || part === 'Unmatched') {
                                 const groups = Array.from(new Set(originalPartResults.map(r => r.group || 'no-group'))).filter(g => g !== 'no-group');
                                 totalLabel = groups.length;
                                 
@@ -10363,6 +10573,16 @@ const mockWorkflows: Workflow[] = [
                                                <div className="w-5 h-5 rounded bg-white border border-slate-200 flex items-center justify-center shadow-sm text-slate-400 group-hover:text-blue-600 transition-colors scale-90">
                                                  {collapsedParts[part] ? <ChevronRight size={10} /> : <ChevronDown size={10} />}
                                                </div>
+                                                {part === 'Unmatched' ? (
+                                                  <div className="flex items-center gap-2">
+                                                    <AlertTriangle size={12} className="text-amber-500" />
+                                                    <span className="text-[11px] font-black text-slate-800 group-hover:text-blue-600 transition-colors">
+                                                      {language === 'TH'
+                                                        ? `${totalLabel} รายการที่จับคู่กับ Invoice ไม่ได้`
+                                                        : `${totalLabel} items that couldn't be matched with the Invoice`}
+                                                    </span>
+                                                  </div>
+                                                ) : (
                                                 <div className="flex items-center gap-2">
                                                   <span className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-800 group-hover:text-blue-600 transition-colors uppercase">{part}</span>
                                                   <span className="text-[10px] font-black text-slate-400">:</span>
@@ -10370,9 +10590,10 @@ const mockWorkflows: Workflow[] = [
                                                     {totalLabel} {part === 'Description' ? t.itemsList : t.itemsDataset}
                                                   </span>
                                                 </div>
+                                                )}
                                               </div>
                                               
-                                              {showHeaderBadges && part !== 'Summary' && (
+                                              {showHeaderBadges && part !== 'Summary' && part !== 'Unmatched' && (
                                                 <div className="flex items-center gap-1.5 translate-y-[1px]">
                                                  <Tooltip content={part === 'Description' ? t.ttMatchedCountDesc : t.ttMatchedCount}><div className={`flex items-center gap-1 px-1.5 py-0.5 rounded border text-[9px] font-black tracking-tight ${showOnlyDiff ? 'bg-slate-50 text-slate-400 border-slate-200 shadow-none opacity-60' : (displayMatchCount > 0 ? 'bg-emerald-50 text-emerald-600 border-emerald-100/50 shadow-sm' : 'bg-slate-50 text-slate-300 border-slate-100')}`}>
                                                    <Check size={9} strokeWidth={4} />
@@ -10412,7 +10633,12 @@ const mockWorkflows: Workflow[] = [
                                                          <div className="w-5 h-5 rounded bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-500 group-hover/itemheader:text-blue-600 group-hover/itemheader:border-blue-200 transition-all">
                                                             {collapsedGroups[group] ? <ChevronRight size={12} strokeWidth={3} /> : <ChevronDown size={12} strokeWidth={3} />}
                                                          </div>
-                                                         <span className="font-black text-[11px] text-slate-800 uppercase tracking-widest">{group}</span>
+                                                         <span className="font-black text-[11px] text-slate-800 uppercase tracking-widest">{String(group).replace('UM::', '')}</span>
+                                                         {part === 'Unmatched' && (
+                                                           <span className="px-2 py-0.5 rounded-full bg-slate-200/70 text-slate-500 text-[9px] font-bold normal-case tracking-normal">
+                                                             {language === 'TH' ? 'จาก Packing List' : 'From Packing List'}
+                                                           </span>
+                                                         )}
                                                          <div className="flex items-center gap-1.5 ml-2">
                                                             {(() => {
                                                               const groupFields = originalPartResults.filter(r => (r.group || 'no-group') === group);
@@ -10484,6 +10710,20 @@ const mockWorkflows: Workflow[] = [
                                           <div className="px-4 py-4 text-[10px] font-black text-slate-300 text-center flex items-center justify-center gap-1.5 min-h-full">
                                              <Loader2 size={10} className="animate-spin opacity-40" />
                                              <span className="uppercase tracking-widest opacity-40">WAITING</span>
+                                          </div>
+                                        </td>
+                                      );
+                                    }
+                                    if ((target as any).missingInMain) {
+                                      return (
+                                        <td key={docName} className="p-0 border-r border-r-slate-100 border-t border-t-slate-200 align-top h-px bg-blue-50">
+                                          <div className="px-4 py-4 h-full flex flex-col items-center justify-start gap-1.5">
+                                            <span className="text-[11px] font-bold text-slate-400 italic">
+                                              {language === 'TH' ? 'ไม่มีในเอกสารหลัก' : 'Not in the main document'}
+                                            </span>
+                                            <div className="mt-auto px-1.5 py-0.5 bg-blue-100 text-blue-700 border border-blue-200 rounded-[4px] text-[8px] font-black uppercase tracking-wider shrink-0 shadow-sm w-fit">
+                                              Main
+                                            </div>
                                           </div>
                                         </td>
                                       );
