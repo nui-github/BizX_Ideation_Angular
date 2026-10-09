@@ -9383,7 +9383,7 @@ const mockWorkflows: Workflow[] = [
             }
             title={
               <div className="flex items-center gap-2">
-                <Merge size={16} className="text-sky-500" />
+                <Merge size={16} className="text-[#1f5df9]" />
                 <span className="font-black text-[#010136]">{language === 'TH' ? 'รวมค่าของรายการสินค้า' : 'Merge item values'}</span>
               </div>
             }
@@ -10227,13 +10227,13 @@ const mockWorkflows: Workflow[] = [
                         onClick={() => { setMergeDraft(null); setShowMergeDrawer(true); }}
                         className={`relative p-2.5 rounded-[4px] transition-all border flex items-center justify-center cursor-pointer shadow-sm ${
                           (mergeRulesByJob[selectedJob.id] || []).length > 0
-                            ? 'bg-sky-50 text-sky-600 border-sky-200 hover:bg-sky-100'
+                            ? 'bg-blue-50 text-[#1f5df9] border-blue-200 hover:bg-blue-100 shadow-[0_2px_8px_rgba(31,93,249,0.15)]'
                             : 'bg-white text-slate-500 border-slate-200/60 hover:bg-slate-50'
                         }`}
                       >
-                        <Merge size={15} strokeWidth={2.5} className={(mergeRulesByJob[selectedJob.id] || []).length > 0 ? 'text-sky-500' : 'text-slate-400'} />
+                        <Merge size={15} strokeWidth={2.5} className={(mergeRulesByJob[selectedJob.id] || []).length > 0 ? 'text-[#1f5df9]' : 'text-slate-400'} />
                         {(mergeRulesByJob[selectedJob.id] || []).length > 0 && (
-                          <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-sky-500 text-white text-[9px] font-black flex items-center justify-center leading-none shadow-sm">
+                          <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-[#1f5df9] text-white text-[9px] font-black flex items-center justify-center leading-none shadow-sm">
                             {(mergeRulesByJob[selectedJob.id] || []).length}
                           </span>
                         )}
@@ -11148,7 +11148,7 @@ const mockWorkflows: Workflow[] = [
                                                         </span>
                                                       </div>
                                                     }>
-                                                      <Info size={13} className="text-sky-500 shrink-0 cursor-help" />
+                                                      <Info size={13} className="text-[#1f5df9] shrink-0 cursor-help" />
                                                     </Tooltip>
                                                   );
                                                 })()}
