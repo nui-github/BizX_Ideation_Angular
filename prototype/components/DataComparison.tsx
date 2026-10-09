@@ -78,10 +78,12 @@ const getTemplateDocKind = (doctype: string): TemplateDocKind => {
   return 'generic';
 };
 
-// "Merge field values": rows of the sub document that share the main document's key (e.g. the
-// same Item No.) are folded into that one item by summing the chosen numeric fields.
+// "Merge field values": rows of the chosen document that share the main document's key (e.g. the
+// same Item No.) are folded into that one item by summing the chosen numeric fields. The user
+// picks the document, the key field and the number fields; the main document is whichever one
+// the item rows are anchored to, so it isn't asked for.
 interface MergeFieldRule {
-  mainDoc: string;
+  id: string;
   subDoc: string;
   keyField: string;
   fields: string[];
@@ -1948,10 +1950,10 @@ const mockWorkflows: Workflow[] = [
   const [showSkipDrawer, setShowSkipDrawer] = useState(false);
   const [skipRulesByJob, setSkipRulesByJob] = useState<Record<string, SkipCompareRule[]>>({});
   const [skipDraft, setSkipDraft] = useState<SkipCompareRule | null>(null);
-  // "Merge field values" rule, per job (at most one active rule); the draft is the form's state.
+  // "Merge field values" rules, per job — a list like the skip rules, one rule per document.
   const [showMergeDrawer, setShowMergeDrawer] = useState(false);
-  const [mergeRulesByJob, setMergeRulesByJob] = useState<Record<string, MergeFieldRule | undefined>>({});
-  const [mergeDraft, setMergeDraft] = useState<{ mainDoc?: string; subDoc?: string; keyField?: string; fields: string[] }>({ fields: [] });
+  const [mergeRulesByJob, setMergeRulesByJob] = useState<Record<string, MergeFieldRule[]>>({});
+  const [mergeDraft, setMergeDraft] = useState<MergeFieldRule | null>(null);
   const isCellSkipped = (jobId: string | undefined, docName: string, part: string, fieldName: string): boolean => {
     if (!jobId) return false;
     return (skipRulesByJob[jobId] || []).some(rule =>
@@ -4213,6 +4215,10 @@ const mockWorkflows: Workflow[] = [
     const valueOf = (row: any, docName: string) => row?.targets.find((t: any) => t.fileName === docName)?.value;
     const findRow = (rows: any[], group: string, fieldName: string) => rows.find(r => r.group === group && r.fieldName === fieldName);
     const itemRows = results.filter(r => r.part === 'Description');
+    // The main document is whichever one the item rows are anchored to.
+    const mainDoc = itemRows[0]?.targets.find((t: any) => t.isPrimary)?.fileName;
+    if (!mainDoc || mainDoc === rule.subDoc || !rule.keyField) return results;
+    const ruleWithKey = { ...rule, mainDoc };
     const leftoverRows = results.filter(r => r.part === 'Unmatched');
     const itemGroups = Array.from(new Set(itemRows.map(r => r.group as string)));
     const leftoverGroups = Array.from(new Set(leftoverRows.map(r => r.group as string)));
@@ -4221,9 +4227,9 @@ const mockWorkflows: Workflow[] = [
     const mergedCells = new Map<string, { parts: string[]; key: string }>();
 
     itemGroups.forEach(group => {
-      const key = valueOf(findRow(itemRows, group, rule.keyField), rule.mainDoc);
+      const key = valueOf(findRow(itemRows, group, ruleWithKey.keyField), ruleWithKey.mainDoc);
       if (!key) return;
-      const joinedLeftovers = leftoverGroups.filter(lg => valueOf(findRow(leftoverRows, lg, rule.keyField), rule.subDoc) === key);
+      const joinedLeftovers = leftoverGroups.filter(lg => valueOf(findRow(leftoverRows, lg, ruleWithKey.keyField), rule.subDoc) === key);
       joinedLeftovers.forEach(lg => consumedLeftovers.add(lg));
       rule.fields.forEach(fieldName => {
         const parts = [
@@ -4240,14 +4246,14 @@ const mockWorkflows: Workflow[] = [
         const info = r.part === 'Description' ? mergedCells.get(`${r.group}::${r.fieldName}`) : undefined;
         if (!info) return r;
         const total = info.parts.reduce((sum, v) => sum + parseNumericValue(v), 0);
-        const mainValue = parseNumericValue(valueOf(r, rule.mainDoc));
+        const mainValue = parseNumericValue(valueOf(r, ruleWithKey.mainDoc));
         return {
           ...r,
           targets: r.targets.map((t: any) => t.fileName !== rule.subDoc ? t : {
             ...t,
             value: formatMergedNumber(total),
             status: mainValue === total ? 'MATCH' : 'MISMATCH',
-            mergedInfo: { fieldName: r.fieldName, keyField: rule.keyField, key: info.key, parts: info.parts, total: formatMergedNumber(total), docName: rule.subDoc }
+            mergedInfo: { fieldName: r.fieldName, keyField: ruleWithKey.keyField, key: info.key, parts: info.parts, total: formatMergedNumber(total), docName: rule.subDoc }
           })
         };
       });
@@ -4256,8 +4262,8 @@ const mockWorkflows: Workflow[] = [
   const getMockComparisonResults = (job: ComparisonJob, datasetKey?: string) => {
     if (job.id === 'job-mfv-b') {
       const base = getMergeFieldValueDemoResults(job);
-      const mergeRule = mergeRulesByJob[job.id];
-      return mergeRule ? applyMergeFieldRule(base, mergeRule) : base;
+      const mergeRules = mergeRulesByJob[job.id] || [];
+      return mergeRules.reduce((acc, rule) => applyMergeFieldRule(acc, rule), base);
     }
     // Generate realistic logistics data
     const headerFields = [
@@ -9320,35 +9326,43 @@ const mockWorkflows: Workflow[] = [
         language={language}
       />
 
-      {/* Merge field values drawer — fold leftover sub-document rows into the main document's items */}
+      {/* Merge field values drawer — a list of rules, each folding one document's leftover rows
+          into the main document's items. The main document is chosen by the system; a rule is
+          "which document" + "which field identifies the same item" + "which numbers to add". */}
       {selectedJob && (() => {
         const jobId = selectedJob.id;
-        const activeRule = mergeRulesByJob[jobId];
+        const rules = mergeRulesByJob[jobId] || [];
         const uploadedDocs = Object.entries(selectedJob.docs)
           .filter(([, status]) => status !== ComparisonDocStatus.MISSING)
           .map(([name]) => name);
+        const mainDoc = allComparisonResults
+          .find(r => (r as any).part === 'Description')?.targets.find((t: any) => t.isPrimary)?.fileName;
+        // One rule per document; the main document can't be merged into itself.
+        const usedDocs = new Set(rules.filter(r => r.id !== mergeDraft?.id).map(r => r.subDoc));
+        const docOptions = uploadedDocs.filter(name => name !== mainDoc && !usedDocs.has(name));
         const itemFieldTypes = new Map<string, string>();
         allComparisonResults.forEach(res => {
           const part = (res as any).part;
           if (part === 'Description' || part === 'Unmatched') itemFieldTypes.set(res.fieldName, (res as any).fieldType || 'string');
         });
-        const keyFieldOptions = Array.from(itemFieldTypes.entries()).filter(([, type]) => type !== 'number').map(([name]) => name);
         const numericFieldOptions = Array.from(itemFieldTypes.entries()).filter(([, type]) => type === 'number').map(([name]) => name);
+        const keyFieldOptions = Array.from(itemFieldTypes.entries()).filter(([, type]) => type !== 'number').map(([name]) => name);
         const leftoverCount = new Set(allComparisonResults.filter(r => (r as any).part === 'Unmatched').map(r => (r as any).group)).size;
-        const canMerge = !!(mergeDraft.mainDoc && mergeDraft.subDoc && mergeDraft.keyField && mergeDraft.fields.length > 0);
+        const canSave = !!mergeDraft && !!mergeDraft.subDoc && !!mergeDraft.keyField && mergeDraft.fields.length > 0;
 
-        const closeDrawer = () => setShowMergeDrawer(false);
-        const applyMerge = () => {
-          if (!canMerge) return;
-          setMergeRulesByJob(prev => ({
-            ...prev,
-            [jobId]: { mainDoc: mergeDraft.mainDoc!, subDoc: mergeDraft.subDoc!, keyField: mergeDraft.keyField!, fields: mergeDraft.fields }
-          }));
-          closeDrawer();
+        const closeDrawer = () => { setShowMergeDrawer(false); setMergeDraft(null); };
+        const saveDraft = () => {
+          if (!mergeDraft || !canSave) return;
+          setMergeRulesByJob(prev => {
+            const current = prev[jobId] || [];
+            const exists = current.some(r => r.id === mergeDraft.id);
+            return { ...prev, [jobId]: exists ? current.map(r => (r.id === mergeDraft.id ? mergeDraft : r)) : [...current, mergeDraft] };
+          });
+          setMergeDraft(null);
         };
-        const clearMerge = () => {
-          setMergeRulesByJob(prev => ({ ...prev, [jobId]: undefined }));
-          setMergeDraft({ fields: [] });
+        const deleteRule = (ruleId: string) => {
+          setMergeRulesByJob(prev => ({ ...prev, [jobId]: (prev[jobId] || []).filter(r => r.id !== ruleId) }));
+          if (mergeDraft?.id === ruleId) setMergeDraft(null);
         };
         const labelClass = 'text-[10px] font-black text-slate-400 uppercase tracking-widest';
 
@@ -9373,18 +9387,8 @@ const mockWorkflows: Workflow[] = [
                 <span className="font-black text-[#010136]">{language === 'TH' ? 'รวมค่าของรายการสินค้า' : 'Merge item values'}</span>
               </div>
             }
-            footer={
-              <div className="flex gap-3 justify-end font-sans">
-                <Button disabled={!activeRule} onClick={clearMerge}>
-                  {language === 'TH' ? 'ยกเลิกการรวม' : 'Undo merge'}
-                </Button>
-                <Button type="primary" disabled={!canMerge} onClick={applyMerge}>
-                  {language === 'TH' ? 'รวมค่า' : 'Merge'}
-                </Button>
-              </div>
-            }
           >
-            <div className="flex flex-col gap-5 font-sans">
+            <div className="flex flex-col gap-4 font-sans">
               <div className="text-xs font-bold text-blue-600 bg-blue-50 p-3 rounded-lg flex items-start gap-2">
                 <Info size={14} className="shrink-0 mt-0.5" />
                 <span>
@@ -9394,74 +9398,120 @@ const mockWorkflows: Workflow[] = [
                 </span>
               </div>
 
-              {activeRule && (
-                <div className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 p-3 rounded-lg flex items-start gap-2">
-                  <CheckCircle2 size={14} className="shrink-0 mt-0.5" />
-                  <span>
-                    {language === 'TH'
-                      ? `กำลังรวมค่าอยู่: รวม ${activeRule.fields.join(', ')} ของ ${activeRule.subDoc} เข้ากับรายการของ ${activeRule.mainDoc} โดยจับกลุ่มด้วย ${activeRule.keyField}`
-                      : `Merge active: adding up ${activeRule.fields.join(', ')} from ${activeRule.subDoc} into ${activeRule.mainDoc}'s items, grouped by ${activeRule.keyField}`}
-                  </span>
-                </div>
-              )}
-              {!activeRule && (
+              {leftoverCount > 0 && (
                 <div className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-100 p-3 rounded-lg flex items-start gap-2">
                   <AlertTriangle size={14} className="shrink-0 mt-0.5" />
                   <span>
                     {language === 'TH'
-                      ? `ตอนนี้มี ${leftoverCount} รายการที่จับคู่กับเอกสารหลักไม่ได้`
-                      : `${leftoverCount} items currently can't be matched with the main document`}
+                      ? `ตอนนี้ยังมี ${leftoverCount} รายการที่จับคู่กับเอกสารหลักไม่ได้`
+                      : `${leftoverCount} items still can't be matched with the main document`}
                   </span>
                 </div>
               )}
 
-              <div className="flex flex-col gap-1.5">
-                <span className={labelClass}>{language === 'TH' ? '1. เอกสารหลัก (ใช้เป็นรายการตั้งต้น)' : '1. Main document (the items to keep)'}</span>
-                <Select
-                  style={{ width: '100%' }}
-                  placeholder={language === 'TH' ? 'เลือกเอกสารหลัก...' : 'Select the main document...'}
-                  value={mergeDraft.mainDoc}
-                  onChange={(val) => setMergeDraft(prev => ({ ...prev, mainDoc: val, subDoc: prev.subDoc === val ? undefined : prev.subDoc }))}
-                  options={uploadedDocs.map(name => ({ value: name, label: name }))}
-                />
-              </div>
+              {mergeDraft ? (
+                <div className="border border-slate-200 rounded-xl p-4 flex flex-col gap-4">
+                  <div className="text-sm font-black text-slate-700">
+                    {rules.some(r => r.id === mergeDraft.id)
+                      ? (language === 'TH' ? 'แก้ไขรายการรวมค่า' : 'Edit merge rule')
+                      : (language === 'TH' ? 'สร้างรายการรวมค่า' : 'New merge rule')}
+                  </div>
 
-              <div className="flex flex-col gap-1.5">
-                <span className={labelClass}>{language === 'TH' ? '2. เอกสารที่ต้องการรวมค่า' : '2. Document to merge values from'}</span>
-                <Select
-                  style={{ width: '100%' }}
-                  placeholder={language === 'TH' ? 'เลือกเอกสารที่ต้องการรวมค่า...' : 'Select the document to merge...'}
-                  value={mergeDraft.subDoc}
-                  onChange={(val) => setMergeDraft(prev => ({ ...prev, subDoc: val }))}
-                  options={uploadedDocs.filter(name => name !== mergeDraft.mainDoc).map(name => ({ value: name, label: name }))}
-                />
-              </div>
+                  <div className="flex flex-col gap-1.5">
+                    <span className={labelClass}>{language === 'TH' ? '1. เอกสารที่ต้องการรวมค่า' : '1. Document to merge'}</span>
+                    <Select
+                      style={{ width: '100%' }}
+                      placeholder={language === 'TH' ? 'เลือกเอกสาร...' : 'Select a document...'}
+                      value={mergeDraft.subDoc || undefined}
+                      onChange={(val) => setMergeDraft(prev => prev && ({ ...prev, subDoc: val }))}
+                      options={docOptions.map(name => ({ value: name, label: name }))}
+                    />
+                  </div>
 
-              <div className="flex flex-col gap-1.5">
-                <span className={labelClass}>{language === 'TH' ? '3. ใช้ฟิลด์ไหนบอกว่าเป็นสินค้าตัวเดียวกัน' : '3. Field that tells rows are the same item'}</span>
-                <Select
-                  style={{ width: '100%' }}
-                  placeholder={language === 'TH' ? 'เช่น Item No. / Model No. (SKU)' : 'e.g. Item No. / Model No. (SKU)'}
-                  value={mergeDraft.keyField}
-                  onChange={(val) => setMergeDraft(prev => ({ ...prev, keyField: val }))}
-                  options={keyFieldOptions.map(name => ({ value: name, label: name }))}
-                />
-                <span className="text-[10px] font-medium text-slate-400">
-                  {language === 'TH' ? 'แถวที่มีค่าในฟิลด์นี้เหมือนกัน จะถูกนับเป็นสินค้าตัวเดียวกัน' : 'Rows with the same value in this field are treated as one item'}
+                  <div className="flex flex-col gap-1.5">
+                    <span className={labelClass}>{language === 'TH' ? '2. ใช้ฟิลด์ไหนบอกว่าเป็นสินค้าตัวเดียวกัน' : '2. Field that tells rows are the same item'}</span>
+                    <Select
+                      style={{ width: '100%' }}
+                      placeholder={language === 'TH' ? 'เช่น Item No. / Model No. (SKU)' : 'e.g. Item No. / Model No. (SKU)'}
+                      value={mergeDraft.keyField || undefined}
+                      onChange={(val) => setMergeDraft(prev => prev && ({ ...prev, keyField: val }))}
+                      options={keyFieldOptions.map(name => ({ value: name, label: name }))}
+                    />
+                    <span className="text-[10px] font-medium text-slate-400">
+                      {language === 'TH' ? 'แถวที่มีค่าในฟิลด์นี้เหมือนกัน จะถูกนับเป็นสินค้าตัวเดียวกัน' : 'Rows with the same value in this field are treated as one item'}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <span className={labelClass}>{language === 'TH' ? '3. ฟิลด์ตัวเลขที่ต้องการบวกรวมกัน' : '3. Number fields to add up'}</span>
+                    <Select
+                      mode="multiple"
+                      allowClear
+                      style={{ width: '100%' }}
+                      placeholder={language === 'TH' ? 'เลือกได้มากกว่า 1 ฟิลด์...' : 'Select one or more fields...'}
+                      value={mergeDraft.fields}
+                      onChange={(vals) => setMergeDraft(prev => prev && ({ ...prev, fields: vals as string[] }))}
+                      options={numericFieldOptions.map(name => ({ value: name, label: name }))}
+                    />
+                  </div>
+
+                  <div className="flex gap-2 justify-end pt-1">
+                    <Button onClick={() => setMergeDraft(null)}>{language === 'TH' ? 'ยกเลิก' : 'Cancel'}</Button>
+                    <Button type="primary" disabled={!canSave} onClick={saveDraft}>{language === 'TH' ? 'รวมค่า' : 'Merge'}</Button>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  type="primary"
+                  icon={<Plus size={14} />}
+                  disabled={docOptions.length === 0}
+                  onClick={() => setMergeDraft({ id: `merge-${Date.now()}`, subDoc: '', keyField: '', fields: [] })}
+                  className="self-start"
+                >
+                  {language === 'TH' ? 'สร้างรายการรวมค่าใหม่' : 'New merge rule'}
+                </Button>
+              )}
+
+              <div className="flex flex-col gap-3">
+                <span className={labelClass}>
+                  {language === 'TH' ? `รายการที่ตั้งไว้ (${rules.length})` : `Saved rules (${rules.length})`}
                 </span>
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <span className={labelClass}>{language === 'TH' ? '4. ฟิลด์ตัวเลขที่ต้องการบวกรวมกัน' : '4. Number fields to add up'}</span>
-                <Select
-                  mode="multiple"
-                  allowClear
-                  style={{ width: '100%' }}
-                  placeholder={language === 'TH' ? 'เลือกได้มากกว่า 1 ฟิลด์...' : 'Select one or more fields...'}
-                  value={mergeDraft.fields}
-                  onChange={(vals) => setMergeDraft(prev => ({ ...prev, fields: vals as string[] }))}
-                  options={numericFieldOptions.map(name => ({ value: name, label: name }))}
-                />
+                {rules.length === 0 && (
+                  <div className="text-xs font-bold text-slate-400 border border-dashed border-slate-200 rounded-xl p-6 text-center">
+                    {language === 'TH' ? 'ยังไม่มีรายการรวมค่า' : 'No merge rules yet'}
+                  </div>
+                )}
+                {rules.map((rule, idx) => (
+                  <div key={rule.id} className={`border rounded-xl p-3 flex flex-col gap-2 ${mergeDraft?.id === rule.id ? 'border-blue-300 bg-blue-50/30' : 'border-slate-200'}`}>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black text-slate-700">{language === 'TH' ? `รายการที่ ${idx + 1}` : `Rule ${idx + 1}`}</span>
+                      <div className="flex items-center gap-1">
+                        <Tooltip content={language === 'TH' ? 'แก้ไข' : 'Edit'}>
+                          <button onClick={() => setMergeDraft({ ...rule, fields: [...rule.fields] })} className="p-1.5 hover:bg-blue-50 rounded-[4px] text-slate-400 hover:text-blue-500 transition-colors cursor-pointer">
+                            <Edit3 size={14} />
+                          </button>
+                        </Tooltip>
+                        <Tooltip content={language === 'TH' ? 'ลบ (ยกเลิกการรวม)' : 'Delete (undo merge)'}>
+                          <button onClick={() => deleteRule(rule.id)} className="p-1.5 hover:bg-rose-50 rounded-[4px] text-slate-400 hover:text-rose-500 transition-colors cursor-pointer">
+                            <Trash2 size={14} />
+                          </button>
+                        </Tooltip>
+                      </div>
+                    </div>
+                    <div className="text-[11px] font-bold text-slate-500">
+                      <span className="text-slate-400">{language === 'TH' ? 'เอกสาร: ' : 'Document: '}</span>
+                      {rule.subDoc}
+                    </div>
+                    <div className="text-[11px] font-bold text-slate-500">
+                      <span className="text-slate-400">{language === 'TH' ? 'รวมค่า: ' : 'Adds up: '}</span>
+                      {rule.fields.join(', ')}
+                    </div>
+                    <div className="text-[11px] font-bold text-slate-500">
+                      <span className="text-slate-400">{language === 'TH' ? 'จับกลุ่มด้วย: ' : 'Grouped by: '}</span>
+                      {rule.keyField}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </Drawer>
@@ -10171,23 +10221,21 @@ const mockWorkflows: Workflow[] = [
 
                   {/* Merge field values — only offered when this flow has rows that couldn't be
                       paired with the main document (or a merge is already applied) */}
-                  {(allComparisonResults.some(r => (r as any).part === 'Unmatched') || mergeRulesByJob[selectedJob.id]) && (
+                  {(allComparisonResults.some(r => (r as any).part === 'Unmatched') || (mergeRulesByJob[selectedJob.id] || []).length > 0) && (
                     <Tooltip position={isJobPanelFullscreen ? 'bottom' : 'top'} content={language === 'TH' ? 'รวมค่าของรายการที่จับคู่ไม่ได้' : 'Merge values of unmatched items'}>
                       <button
-                        onClick={() => {
-                          const active = mergeRulesByJob[selectedJob.id];
-                          setMergeDraft(active ? { ...active, fields: [...active.fields] } : { fields: [] });
-                          setShowMergeDrawer(true);
-                        }}
+                        onClick={() => { setMergeDraft(null); setShowMergeDrawer(true); }}
                         className={`relative p-2.5 rounded-[4px] transition-all border flex items-center justify-center cursor-pointer shadow-sm ${
-                          mergeRulesByJob[selectedJob.id]
+                          (mergeRulesByJob[selectedJob.id] || []).length > 0
                             ? 'bg-sky-50 text-sky-600 border-sky-200 hover:bg-sky-100'
                             : 'bg-white text-slate-500 border-slate-200/60 hover:bg-slate-50'
                         }`}
                       >
-                        <Merge size={15} strokeWidth={2.5} className={mergeRulesByJob[selectedJob.id] ? 'text-sky-500' : 'text-slate-400'} />
-                        {mergeRulesByJob[selectedJob.id] && (
-                          <span className="absolute -top-1.5 -right-1.5 w-2.5 h-2.5 rounded-full bg-sky-500 border-2 border-white" />
+                        <Merge size={15} strokeWidth={2.5} className={(mergeRulesByJob[selectedJob.id] || []).length > 0 ? 'text-sky-500' : 'text-slate-400'} />
+                        {(mergeRulesByJob[selectedJob.id] || []).length > 0 && (
+                          <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-sky-500 text-white text-[9px] font-black flex items-center justify-center leading-none shadow-sm">
+                            {(mergeRulesByJob[selectedJob.id] || []).length}
+                          </span>
                         )}
                       </button>
                     </Tooltip>
