@@ -9696,8 +9696,8 @@ const mockWorkflows: Workflow[] = [
           },
           {
             value: 'exact',
-            label: language === 'TH' ? 'ตรงเป๊ะ' : 'Exact',
-            hint: language === 'TH' ? 'ต้องเหมือนกันทุกตัวอักษร รวมตัวพิมพ์และตัวคั่น' : 'Must be identical, including letter case and separator'
+            label: language === 'TH' ? 'ตรงกันทุกตัวอักษร' : 'Exact',
+            hint: language === 'TH' ? 'ต้องเขียนเหมือนกันทุกอย่าง รวมตัวพิมพ์เล็ก-ใหญ่ เครื่องหมาย และตัวคั่น' : 'Must be identical, including letter case, symbols and separator'
           }
         ];
         const modeLabel = (mode: ComposeCompareMode) => modeOptions.find(m => m.value === mode)?.label ?? mode;
