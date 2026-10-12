@@ -89,6 +89,41 @@ interface MergeFieldRule {
   fields: string[];
 }
 
+// "Compose field values": one field of a target document (e.g. the customs XML's Product
+// Description) is built from several separate fields of the main document (Description + Color +
+// Size). The main document's own rows stay as they are — this only adds a computed value to
+// compare against the target field. Documents like the XML have no fixed layout, so the user
+// chooses the order, the separator and how strict the comparison is.
+type ComposeCompareMode = 'exact' | 'loose' | 'contains';
+interface ComposeFieldRule {
+  id: string;
+  targetDoc: string;
+  targetField: string;
+  parts: string[];
+  separator: string;
+  mode: ComposeCompareMode;
+}
+
+const COMPOSE_SEPARATORS: { value: string; labelTh: string; labelEn: string }[] = [
+  { value: ' ', labelTh: 'เว้นวรรค', labelEn: 'Space' },
+  { value: ' / ', labelTh: 'เครื่องหมาย /', labelEn: 'Slash ( / )' },
+  { value: ' - ', labelTh: 'ขีดกลาง ( - )', labelEn: 'Dash ( - )' },
+  { value: ', ', labelTh: 'ลูกน้ำ ( , )', labelEn: 'Comma ( , )' },
+  { value: '', labelTh: 'ไม่มีตัวคั่น', labelEn: 'No separator' }
+];
+
+const normalizeLoose = (s: any): string => String(s ?? '').toLowerCase().replace(/[^a-z0-9ก-๙]/g, '');
+
+const composeFieldValue = (partValues: string[], separator: string): string =>
+  partValues.filter(v => v !== undefined && v !== '').join(separator);
+
+const compareComposedValue = (composed: string, actual: string, partValues: string[], mode: ComposeCompareMode): boolean => {
+  if (mode === 'exact') return composed === actual;
+  if (mode === 'loose') return normalizeLoose(composed) === normalizeLoose(actual);
+  const haystack = normalizeLoose(actual);
+  return partValues.filter(Boolean).every(p => haystack.includes(normalizeLoose(p)));
+};
+
 const parseNumericValue = (value: any): number => parseFloat(String(value ?? '').replace(/,/g, ''));
 const formatMergedNumber = (n: number): string => n.toLocaleString('en-US', { maximumFractionDigits: 2 });
 
@@ -1951,9 +1986,11 @@ const mockWorkflows: Workflow[] = [
   const [skipRulesByJob, setSkipRulesByJob] = useState<Record<string, SkipCompareRule[]>>({});
   const [skipDraft, setSkipDraft] = useState<SkipCompareRule | null>(null);
   // "Merge field values" rules, per job — a list like the skip rules, one rule per document.
-  const [showMergeDrawer, setShowMergeDrawer] = useState(false);
+  const [showRulesDrawer, setShowRulesDrawer] = useState(false);
   const [mergeRulesByJob, setMergeRulesByJob] = useState<Record<string, MergeFieldRule[]>>({});
   const [mergeDraft, setMergeDraft] = useState<MergeFieldRule | null>(null);
+  const [composeRulesByJob, setComposeRulesByJob] = useState<Record<string, ComposeFieldRule[]>>({});
+  const [composeDraft, setComposeDraft] = useState<ComposeFieldRule | null>(null);
   const isCellSkipped = (jobId: string | undefined, docName: string, part: string, fieldName: string): boolean => {
     if (!jobId) return false;
     return (skipRulesByJob[jobId] || []).some(rule =>
@@ -3509,18 +3546,29 @@ const mockWorkflows: Workflow[] = [
       createdAt: '09 OCT 2026',
       workflowName: 'Import Declaration Matching#1',
       assignedTeam: 'customs',
-      status: JobStatus.NEW,
+      assignee: 'Somchai T.',
+      status: JobStatus.REVIEW,
       totalFieldsCount: 0,
       accuracyScore: 0.0,
+      // Flow 3 keeps every document as its own column (no merged "previous flows" column).
+      // The customs XML ("ใบขนสินค้า") and the Invoice / Packing List carried over from flow 2
+      // are read already; the rest are still to upload. The XML's Product Description is built
+      // from the invoice's description + colour + size — see getCompositeFieldDemoResults.
       docs: {
-        'ใบขนสินค้า': ComparisonDocStatus.MISSING,
-        'Bill of Lading': ComparisonDocStatus.MISSING
+        'ใบขนสินค้า': ComparisonDocStatus.MISMATCHED,
+        'Invoice': ComparisonDocStatus.MISMATCHED,
+        'Packing List': ComparisonDocStatus.MATCHED,
+        'Bill of Lading': ComparisonDocStatus.MISSING,
+        'FREIGHT INVOICE': ComparisonDocStatus.MISSING,
+        'HS Code Master File': ComparisonDocStatus.MISSING,
+        'Form FTA': ComparisonDocStatus.MISSING,
+        'Insurance Sheet': ComparisonDocStatus.MISSING
       },
-      progress: 0,
-      totalDocs: 2,
-      foundDocs: 0,
-      matchedCount: 0,
-      mismatchedCount: 0
+      progress: 38,
+      totalDocs: 8,
+      foundDocs: 3,
+      matchedCount: 1,
+      mismatchedCount: 2
     },
     {
       id: 'job-mfv-d',
@@ -4071,7 +4119,7 @@ const mockWorkflows: Workflow[] = [
   const getNoRuleCellsForJob = (jobId: string, docNames: string[]): Set<string> => {
     // The Conditional Rule Demo job needs its specific fields reliably visible every load —
     // skip the random "no rule configured" simulation for it entirely.
-    if (jobId === 'job-conditional-demo' || jobId === 'job-mfv-b') return new Set();
+    if (jobId === 'job-conditional-demo' || jobId === 'job-mfv-b' || jobId === 'job-mfv-c') return new Set();
     if (!noRuleFieldsRef.current[jobId]) {
       const count = 2 + Math.floor(Math.random() * 2); // 2-3
       noRuleFieldsRef.current[jobId] = [
@@ -4211,7 +4259,7 @@ const mockWorkflows: Workflow[] = [
   // field, into that item's sub-doc cell and compared with the main value again. The leftover
   // rows that got folded in leave the "couldn't be matched" section. Clearing the rule simply
   // stops calling this, which restores the original rows.
-  const applyMergeFieldRule = (results: any[], rule: MergeFieldRule): any[] => {
+  const applyMergeFieldRule = (results: any[], rule: MergeFieldRule, consumedLeftoverGroups: Set<string> = new Set()): any[] => {
     const valueOf = (row: any, docName: string) => row?.targets.find((t: any) => t.fileName === docName)?.value;
     const findRow = (rows: any[], group: string, fieldName: string) => rows.find(r => r.group === group && r.fieldName === fieldName);
     const itemRows = results.filter(r => r.part === 'Description');
@@ -4223,7 +4271,7 @@ const mockWorkflows: Workflow[] = [
     const itemGroups = Array.from(new Set(itemRows.map(r => r.group as string)));
     const leftoverGroups = Array.from(new Set(leftoverRows.map(r => r.group as string)));
 
-    const consumedLeftovers = new Set<string>();
+    const consumedLeftovers = consumedLeftoverGroups;
     const mergedCells = new Map<string, { parts: string[]; key: string }>();
 
     itemGroups.forEach(group => {
@@ -4240,8 +4288,9 @@ const mockWorkflows: Workflow[] = [
       });
     });
 
+    // The folded-in leftover rows stay in the list here (a later rule for the same document may
+    // still need them) — the caller drops them once every rule has been applied.
     return results
-      .filter(r => !(r.part === 'Unmatched' && consumedLeftovers.has(r.group)))
       .map(r => {
         const info = r.part === 'Description' ? mergedCells.get(`${r.group}::${r.fieldName}`) : undefined;
         if (!info) return r;
@@ -4259,11 +4308,243 @@ const mockWorkflows: Workflow[] = [
       });
   };
 
+  // Hand-built flow-3 data for the "Merge field value" demo shipment. Every document is its own
+  // column. The customs XML ("ใบขนสินค้า") has no separate Color / Size fields — it writes them
+  // into its Product Description ("<desc> / <color> / <size>"), while the invoice and packing
+  // list keep the three apart. Before any compose rule the XML's description can't match the
+  // invoice's, which is exactly what the "compose field values" drawer fixes.
+  const getCompositeFieldDemoResults = (job: ComparisonJob): any[] => {
+    const docNames = Object.keys(job.docs);
+    const XML_DOC = 'ใบขนสินค้า';
+    type CellSpec = { value: string; status?: 'MATCH' | 'MISMATCH'; notInDoc?: boolean };
+    const makeTargets = (cells: Record<string, CellSpec>, primary: string) => docNames.map((docName, tIdx) => {
+      const base = {
+        fileId: `target-${tIdx + 1}`,
+        fileName: docName,
+        ruleTitle: '',
+        ruleDesc: '',
+        conditionalSourceValue: undefined,
+        conditionalSourceDoc: undefined,
+        conditionalSourceField: undefined,
+        isPrimary: docName === primary
+      };
+      const cell = cells[docName];
+      // Not-yet-uploaded docs are drawn by the table's own "missing" branch; 'MATCH' keeps them
+      // from suppressing each group's matched/mismatched counts.
+      if (!cell) return { ...base, value: '-', status: 'MATCH' };
+      return { ...base, value: cell.value, status: cell.status ?? 'MATCH', ...(cell.notInDoc ? { notInDoc: true } : {}) };
+    });
+    const sameEverywhere = (value: string): Record<string, CellSpec> => ({
+      [XML_DOC]: { value }, 'Invoice': { value }, 'Packing List': { value }
+    });
+
+    const results: any[] = [];
+
+    const headerRows: [string, string][] = [
+      ['Consignee Name', 'BIZ-TRANS LOGISTICS CO., LTD.'],
+      ['Consignee TAX ID', '0105562000000'],
+      ['Incoterm', 'FOB'],
+      ['Port of Loading', 'SHANGHAI, CHINA'],
+      ['Port of Discharge', 'BANGKOK, THAILAND']
+    ];
+    headerRows.forEach(([fieldName, value]) => {
+      results.push({ fieldName, sourceValue: value, part: 'Header', group: undefined, targets: makeTargets(sameEverywhere(value), 'Invoice') });
+    });
+
+    const items = [
+      { desc: 'Mens S/S Polo Shirt', color: 'Black', size: 'M', sku: 'MPL-001', qty: 1200, price: 8.5, xmlDesc: 'Mens S/S Polo Shirt / Black / M' },
+      { desc: 'Mens S/S Polo Shirt', color: 'White', size: 'L', sku: 'MPL-002', qty: 2400, price: 8.5, xmlDesc: 'MENS S/S POLO SHIRT / WHITE / L' },
+      // The XML has the wrong size here (M instead of S), so this item stays a real mismatch
+      // even after the rule is applied.
+      { desc: 'Womens S/S Polo Shirt', color: 'Navy', size: 'S', sku: 'WPL-003', qty: 3600, price: 8, xmlDesc: 'Womens S/S Polo Shirt / Navy / M' }
+    ];
+    const fmt2 = (n: number) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    let totalAmount = 0;
+    items.forEach((item, idx) => {
+      const group = `Item ${idx + 1}`;
+      const amount = item.qty * item.price;
+      totalAmount += amount;
+      const rows: { fieldName: string; type: 'string' | 'number'; value: string; xml: CellSpec }[] = [
+        { fieldName: 'Product Description', type: 'string', value: item.desc, xml: { value: item.xmlDesc, status: 'MISMATCH' } },
+        { fieldName: 'Color', type: 'string', value: item.color, xml: { value: '', notInDoc: true } },
+        { fieldName: 'Size', type: 'string', value: item.size, xml: { value: '', notInDoc: true } },
+        { fieldName: 'Item No. / Model No. (SKU)', type: 'string', value: item.sku, xml: { value: item.sku } },
+        { fieldName: "Q'ty by line", type: 'number', value: formatMergedNumber(item.qty), xml: { value: formatMergedNumber(item.qty) } },
+        { fieldName: 'Price / Unit', type: 'number', value: fmt2(item.price), xml: { value: fmt2(item.price) } },
+        { fieldName: 'Invoice Amount', type: 'number', value: fmt2(amount), xml: { value: fmt2(amount) } }
+      ];
+      rows.forEach(row => {
+        results.push({
+          fieldName: row.fieldName, fieldType: row.type, sourceValue: row.value, part: 'Description', group,
+          targets: makeTargets({
+            [XML_DOC]: row.xml,
+            'Invoice': { value: row.value },
+            'Packing List': { value: row.value }
+          }, 'Invoice')
+        });
+      });
+    });
+
+    const footerRows: [string, string][] = [
+      ['Total Quantity', '7,200'],
+      ['Total Gross Weight (KGS)', '1,250.00'],
+      ['Country of Origin', 'CHINA']
+    ];
+    footerRows.forEach(([fieldName, value]) => {
+      results.push({ fieldName, sourceValue: value, part: 'Footer', group: undefined, targets: makeTargets(sameEverywhere(value), 'Packing List') });
+    });
+
+    const summaryRows: [string, string][] = [
+      ['Total Quantity', '7,200'],
+      ['Total Amount', fmt2(totalAmount)],
+      ['Total GrossWeight', '1,250.00']
+    ];
+    summaryRows.forEach(([fieldName, value]) => {
+      results.push({ fieldName, fieldType: 'number', sourceValue: value, part: 'Summary', group: undefined, targets: makeTargets(sameEverywhere(value), '') });
+    });
+
+    return results;
+  };
+
+  // Builds one target-document field out of several main-document fields (see ComposeFieldRule)
+  // and compares it with what the target document actually says. The main document's own rows
+  // are left alone — its cell just gains the composed value (composedInfo) and the target's
+  // cell is re-judged against it; the target's now-redundant Color/Size cells point back at
+  // the field they were folded into.
+  const applyComposeFieldRule = (results: any[], rule: ComposeFieldRule): any[] => {
+    const valueOf = (row: any, docName: string) => row?.targets.find((t: any) => t.fileName === docName)?.value;
+    const itemRows = results.filter(r => r.part === 'Description');
+    const mainDoc = itemRows[0]?.targets.find((t: any) => t.isPrimary)?.fileName;
+    if (!mainDoc || mainDoc === rule.targetDoc || rule.parts.length === 0) return results;
+    const composedByGroup = new Map<string, { composed: string; ok: boolean; parts: { field: string; value: string }[] }>();
+    Array.from(new Set(itemRows.map(r => r.group as string))).forEach(group => {
+      const findRow = (fieldName: string) => itemRows.find(r => r.group === group && r.fieldName === fieldName);
+      const targetRow = findRow(rule.targetField);
+      if (!targetRow) return;
+      const parts = rule.parts.map(field => ({ field, value: String(valueOf(findRow(field), mainDoc) ?? '') }));
+      const partValues = parts.map(p => p.value);
+      const composed = composeFieldValue(partValues, rule.separator);
+      const actual = String(valueOf(targetRow, rule.targetDoc) ?? '');
+      composedByGroup.set(group, { composed, ok: compareComposedValue(composed, actual, partValues, rule.mode), parts });
+    });
+    return results.map(r => {
+      if (r.part !== 'Description') return r;
+      const info = composedByGroup.get(r.group);
+      if (!info) return r;
+      if (r.fieldName === rule.targetField) {
+        return {
+          ...r,
+          targets: r.targets.map((t: any) => {
+            if (t.fileName === mainDoc) {
+              return { ...t, composedInfo: { docName: mainDoc, targetDoc: rule.targetDoc, targetField: rule.targetField, composed: info.composed, parts: info.parts, separator: rule.separator, mode: rule.mode } };
+            }
+            if (t.fileName === rule.targetDoc) return { ...t, status: info.ok ? 'MATCH' : 'MISMATCH', compareValue: info.composed };
+            return t;
+          })
+        };
+      }
+      if (rule.parts.includes(r.fieldName)) {
+        return {
+          ...r,
+          targets: r.targets.map((t: any) => t.fileName === rule.targetDoc ? { ...t, composedInto: rule.targetField } : t)
+        };
+      }
+      return r;
+    });
+  };
+
+  // Looks for a target-document field whose text already contains the values of several
+  // separate main-document fields (e.g. XML description = invoice description + color + size)
+  // and proposes the matching compose rule, so the user only has to confirm it.
+  const detectComposeSuggestion = (
+    results: any[],
+    uploadedDocs: string[],
+    existingRules: ComposeFieldRule[]
+  ): { rule: ComposeFieldRule; matched: number; total: number } | null => {
+    const itemRows = results.filter(r => r.part === 'Description');
+    const mainDoc = itemRows[0]?.targets.find((t: any) => t.isPrimary)?.fileName;
+    if (!mainDoc) return null;
+    const valueOf = (row: any, docName: string): string => String(row?.targets.find((t: any) => t.fileName === docName)?.value ?? '');
+    const groups = Array.from(new Set(itemRows.map(r => r.group as string)));
+    const textFields = Array.from(new Set(itemRows.filter(r => r.fieldType !== 'number').map(r => r.fieldName as string)));
+    const rowOf = (group: string, fieldName: string) => itemRows.find(r => r.group === group && r.fieldName === fieldName);
+    const lastWordIndex = (haystack: string, needle: string): number => {
+      const escaped = needle.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const re = new RegExp(`(^|[^a-z0-9])(${escaped})(?=$|[^a-z0-9])`, 'gi');
+      let idx = -1;
+      let m: RegExpExecArray | null;
+      const lower = haystack.toLowerCase();
+      while ((m = re.exec(lower))) idx = m.index + m[1].length;
+      return idx;
+    };
+    for (const docName of uploadedDocs.filter(d => d !== mainDoc)) {
+      for (const targetField of textFields) {
+        if (existingRules.some(r => r.targetDoc === docName && r.targetField === targetField)) continue;
+        const firstGroup = groups[0];
+        const actual = valueOf(rowOf(firstGroup, targetField), docName);
+        if (!actual || (rowOf(firstGroup, targetField)?.targets.find((t: any) => t.fileName === docName) as any)?.notInDoc) continue;
+        const candidates = textFields
+          .map(field => ({ field, value: valueOf(rowOf(firstGroup, field), mainDoc) }))
+          .filter(c => c.value && normalizeLoose(actual).includes(normalizeLoose(c.value)))
+          .map(c => ({ ...c, pos: lastWordIndex(actual, c.value) }))
+          // Only whole-word hits count, so a one-letter size like "M" isn't "found" inside "MPL-001".
+          .filter(c => c.pos >= 0)
+          .sort((a, b) => a.pos - b.pos);
+        if (candidates.length < 2) continue;
+        const parts = candidates.map(c => c.field);
+        const matched = groups.filter(group => {
+          const text = normalizeLoose(valueOf(rowOf(group, targetField), docName));
+          return parts.every(field => text.includes(normalizeLoose(valueOf(rowOf(group, field), mainDoc))));
+        }).length;
+        if (matched * 2 < groups.length) continue;
+        const [a, b] = candidates;
+        const between = a.pos >= 0 && b.pos >= 0 ? actual.slice(a.pos + a.value.length, b.pos) : ' ';
+        const separator = COMPOSE_SEPARATORS.some(s => s.value === between) ? between : ' ';
+        return { rule: { id: 'compose-suggested', targetDoc: docName, targetField, parts, separator, mode: 'loose' }, matched, total: groups.length };
+      }
+    }
+    return null;
+  };
+
+  // The hand-built demo datasets (merge / compose) skip the general generator, which is where a
+  // user's manual OCR edits and "confirm this value" clicks are folded back into each cell — so
+  // fold them in here for those datasets too. Only cells that currently mismatch can be edited
+  // or confirmed, same as in the table.
+  const applyUserCellEdits = (job: ComparisonJob, results: any[]): any[] => results.map(r => ({
+    ...r,
+    targets: r.targets.map((t: any) => {
+      if (t.isPrimary || t.status !== 'MISMATCH') return t;
+      let next = t;
+      const edited = overriddenValues[`${t.fileName}_${r.fieldName}`];
+      if (edited && !t.mergedInfo) {
+        const expected = t.compareValue || r.sourceValue;
+        next = { ...next, value: edited, status: edited === expected ? 'MATCH' : 'MISMATCH' };
+      }
+      if (next.status === 'MISMATCH' && confirmedMismatches[`${job.id}_${t.fileName}_${r.fieldName}`]) {
+        next = {
+          ...next,
+          status: 'MATCH',
+          ruleTitle: language === 'TH' ? 'ผ่านการตรวจสอบแล้ว' : 'Verified',
+          ruleDesc: language === 'TH' ? 'ยืนยันความถูกต้องของข้อมูลแล้ว' : 'Manually verified and confirmed'
+        };
+      }
+      return next;
+    })
+  }));
+
   const getMockComparisonResults = (job: ComparisonJob, datasetKey?: string) => {
+    if (job.id === 'job-mfv-c') {
+      const base = getCompositeFieldDemoResults(job);
+      const composeRules = composeRulesByJob[job.id] || [];
+      return applyUserCellEdits(job, composeRules.reduce((acc, rule) => applyComposeFieldRule(acc, rule), base));
+    }
     if (job.id === 'job-mfv-b') {
       const base = getMergeFieldValueDemoResults(job);
       const mergeRules = mergeRulesByJob[job.id] || [];
-      return mergeRules.reduce((acc, rule) => applyMergeFieldRule(acc, rule), base);
+      const consumed = new Set<string>();
+      return applyUserCellEdits(job, mergeRules
+        .reduce((acc, rule) => applyMergeFieldRule(acc, rule, consumed), base)
+        .filter(r => !(r.part === 'Unmatched' && consumed.has(r.group))));
     }
     // Generate realistic logistics data
     const headerFields = [
@@ -5737,7 +6018,9 @@ const mockWorkflows: Workflow[] = [
                   // all docs matching isn't enough on its own (that's still PENDING) — so the next
                   // sub-item stays blocked until this one is actually READY.
                   const isWorkflowCompleted = (j: ComparisonJob) => j.status === JobStatus.READY;
-                  const isBlocked = seqIndex > 0 && shipmentJobs.slice(0, seqIndex).some(prevJob => !isWorkflowCompleted(prevJob));
+                  // The "Merge field value" demo's flow 3 stays openable even though its flow 2 is still
+                  // half-uploaded, so the compose-field-values demo can be reached directly.
+                  const isBlocked = job.id !== 'job-mfv-c' && seqIndex > 0 && shipmentJobs.slice(0, seqIndex).some(prevJob => !isWorkflowCompleted(prevJob));
                   
                   return (
                     <tr 
@@ -6277,7 +6560,7 @@ const mockWorkflows: Workflow[] = [
         status: unvalidatedDocs.has(t.fileName) ? 'WAITING' as any : t.status
       }))
     }));
-  }, [selectedJob, overriddenValues, comparedDocs, unvalidatedDocs, confirmedMismatches, standaloneDocPreview, selectedDatasetKey, mergeRulesByJob]);
+  }, [selectedJob, overriddenValues, comparedDocs, unvalidatedDocs, confirmedMismatches, standaloneDocPreview, selectedDatasetKey, mergeRulesByJob, composeRulesByJob]);
 
   const allComparisonResults = React.useMemo(() => {
     if (!selectedJob) return [];
@@ -6303,7 +6586,18 @@ const mockWorkflows: Workflow[] = [
         status: unvalidatedDocs.has(t.fileName) ? 'WAITING' as any : t.status
       }))
     }));
-  }, [selectedJob, overriddenValues, unvalidatedDocs, confirmedMismatches, standaloneDocPreview, selectedDatasetKey, mergeRulesByJob]);
+  }, [selectedJob, overriddenValues, unvalidatedDocs, confirmedMismatches, standaloneDocPreview, selectedDatasetKey, mergeRulesByJob, composeRulesByJob]);
+
+  // A "compose field values" rule the system thinks applies to this flow (e.g. the XML's
+  // description already contains the invoice's description + color + size), offered until the
+  // user has set up a rule for that same field.
+  const composeSuggestion = React.useMemo(() => {
+    if (!selectedJob || allComparisonResults.length === 0) return null;
+    const uploadedDocs = Object.entries(selectedJob.docs)
+      .filter(([, status]) => status !== ComparisonDocStatus.MISSING)
+      .map(([name]) => name);
+    return detectComposeSuggestion(allComparisonResults, uploadedDocs, composeRulesByJob[selectedJob.id] || []);
+  }, [selectedJob, allComparisonResults, composeRulesByJob]);
 
   // Grouped, deduped list of every field present in this flow (regardless of match status),
   // each with a count of how many rows carry it — powers the "select specific fields" mode
@@ -9326,33 +9620,44 @@ const mockWorkflows: Workflow[] = [
         language={language}
       />
 
-      {/* Merge field values drawer — a list of rules, each folding one document's leftover rows
-          into the main document's items. The main document is chosen by the system; a rule is
-          "which document" + "which field identifies the same item" + "which numbers to add". */}
+      {/* Field rules drawer — one place for every "make these two documents comparable" rule:
+          - merge: rows of a document that share a key are folded into one item by summing the
+            chosen number fields (e.g. a Packing List split by size vs. one Invoice line);
+          - compose: one field of a target document is built from several fields of the main
+            document joined together (e.g. XML description = description + color + size).
+          Both kinds live in the same saved list; "new rule" asks which kind first. */}
       {selectedJob && (() => {
         const jobId = selectedJob.id;
-        const rules = mergeRulesByJob[jobId] || [];
+        const mergeRules = mergeRulesByJob[jobId] || [];
+        const composeRules = composeRulesByJob[jobId] || [];
+        const totalRules = mergeRules.length + composeRules.length;
         const uploadedDocs = Object.entries(selectedJob.docs)
           .filter(([, status]) => status !== ComparisonDocStatus.MISSING)
           .map(([name]) => name);
-        const mainDoc = allComparisonResults
-          .find(r => (r as any).part === 'Description')?.targets.find((t: any) => t.isPrimary)?.fileName;
-        // One rule per document; the main document can't be merged into itself.
-        const usedDocs = new Set(rules.filter(r => r.id !== mergeDraft?.id).map(r => r.subDoc));
-        const docOptions = uploadedDocs.filter(name => name !== mainDoc && !usedDocs.has(name));
+        const itemRows = allComparisonResults.filter(r => (r as any).part === 'Description');
+        const mainDoc = itemRows[0]?.targets.find((t: any) => t.isPrimary)?.fileName as string | undefined;
+        const labelClass = 'text-[10px] font-black text-slate-400 uppercase tracking-widest';
+
+        // ---- merge (sum rows) ----
+        const mergeDocOptions = uploadedDocs.filter(name => name !== mainDoc);
         const itemFieldTypes = new Map<string, string>();
         allComparisonResults.forEach(res => {
           const part = (res as any).part;
           if (part === 'Description' || part === 'Unmatched') itemFieldTypes.set(res.fieldName, (res as any).fieldType || 'string');
         });
-        const numericFieldOptions = Array.from(itemFieldTypes.entries()).filter(([, type]) => type === 'number').map(([name]) => name);
+        // A number field can only be added up once per document, so fields already taken by
+        // another rule for the chosen document aren't offered again.
+        const takenMergeFields = new Set(
+          mergeRules.filter(r => r.id !== mergeDraft?.id && r.subDoc === mergeDraft?.subDoc).flatMap(r => r.fields)
+        );
+        const numericFieldOptions = Array.from(itemFieldTypes.entries())
+          .filter(([name, type]) => type === 'number' && !takenMergeFields.has(name))
+          .map(([name]) => name);
         const keyFieldOptions = Array.from(itemFieldTypes.entries()).filter(([, type]) => type !== 'number').map(([name]) => name);
         const leftoverCount = new Set(allComparisonResults.filter(r => (r as any).part === 'Unmatched').map(r => (r as any).group)).size;
-        const canSave = !!mergeDraft && !!mergeDraft.subDoc && !!mergeDraft.keyField && mergeDraft.fields.length > 0;
-
-        const closeDrawer = () => { setShowMergeDrawer(false); setMergeDraft(null); };
-        const saveDraft = () => {
-          if (!mergeDraft || !canSave) return;
+        const canSaveMerge = !!mergeDraft && !!mergeDraft.subDoc && !!mergeDraft.keyField && mergeDraft.fields.length > 0;
+        const saveMergeDraft = () => {
+          if (!mergeDraft || !canSaveMerge) return;
           setMergeRulesByJob(prev => {
             const current = prev[jobId] || [];
             const exists = current.some(r => r.id === mergeDraft.id);
@@ -9360,15 +9665,91 @@ const mockWorkflows: Workflow[] = [
           });
           setMergeDraft(null);
         };
-        const deleteRule = (ruleId: string) => {
+        const deleteMergeRule = (ruleId: string) => {
           setMergeRulesByJob(prev => ({ ...prev, [jobId]: (prev[jobId] || []).filter(r => r.id !== ruleId) }));
           if (mergeDraft?.id === ruleId) setMergeDraft(null);
         };
-        const labelClass = 'text-[10px] font-black text-slate-400 uppercase tracking-widest';
+
+        // ---- compose (join fields) ----
+        const targetDocOptions = uploadedDocs.filter(name => name !== mainDoc);
+        const textFieldOptions = Array.from(new Set(itemRows.filter(r => (r as any).fieldType !== 'number').map(r => r.fieldName)));
+        const groups = Array.from(new Set(itemRows.map(r => (r as any).group as string)));
+        const canSaveCompose = !!composeDraft && !!composeDraft.targetDoc && !!composeDraft.targetField && composeDraft.parts.length >= 2;
+        const separatorLabel = (value: string) => {
+          const found = COMPOSE_SEPARATORS.find(s => s.value === value);
+          return found ? (language === 'TH' ? found.labelTh : found.labelEn) : value;
+        };
+        const modeOptions: { value: ComposeCompareMode; label: string }[] = [
+          { value: 'loose', label: language === 'TH' ? 'ไม่สนตัวพิมพ์เล็ก-ใหญ่และเครื่องหมาย (แนะนำ)' : 'Ignore letter case and symbols (recommended)' },
+          { value: 'contains', label: language === 'TH' ? 'มีข้อมูลครบทุกส่วนก็ถือว่าตรง (ไม่สนลำดับ)' : 'Match if every part is present (any order)' },
+          { value: 'exact', label: language === 'TH' ? 'ตรงเป๊ะทุกตัวอักษร' : 'Exactly the same' }
+        ];
+        const modeLabel = (mode: ComposeCompareMode) => modeOptions.find(m => m.value === mode)?.label ?? mode;
+        // Live preview of what a compose rule would build, item by item, against the target document.
+        const buildPreview = (rule: ComposeFieldRule) => {
+          if (!mainDoc || !rule.targetDoc || !rule.targetField || rule.parts.length === 0) return [];
+          const valueOf = (group: string, field: string, doc: string) =>
+            String(itemRows.find(r => (r as any).group === group && r.fieldName === field)?.targets.find((t: any) => t.fileName === doc)?.value ?? '');
+          return groups.slice(0, 3).map(group => {
+            const partValues = rule.parts.map(field => valueOf(group, field, mainDoc));
+            const composed = composeFieldValue(partValues, rule.separator);
+            const actual = valueOf(group, rule.targetField, rule.targetDoc);
+            return { group, composed, actual, ok: compareComposedValue(composed, actual, partValues, rule.mode) };
+          });
+        };
+        const PreviewList = ({ rule }: { rule: ComposeFieldRule }) => {
+          const rows = buildPreview(rule);
+          if (rows.length === 0) return null;
+          return (
+            <div className="flex flex-col gap-2">
+              <span className={labelClass}>{language === 'TH' ? 'ตัวอย่างผลลัพธ์' : 'Preview'}</span>
+              <div className="border border-slate-200 rounded-lg overflow-hidden">
+                {rows.map((row, idx) => (
+                  <div key={row.group} className={`p-2.5 flex flex-col gap-1 text-[11px] ${idx > 0 ? 'border-t border-slate-100' : ''} ${row.ok ? 'bg-emerald-50/40' : 'bg-rose-50/40'}`}>
+                    <div className="flex items-center justify-between">
+                      <span className="font-black text-slate-500 uppercase tracking-widest text-[9px]">{row.group}</span>
+                      {row.ok
+                        ? <span className="flex items-center gap-1 text-emerald-600 font-black text-[10px]"><CheckCircle2 size={12} />{language === 'TH' ? 'ตรงกัน' : 'Match'}</span>
+                        : <span className="flex items-center gap-1 text-rose-600 font-black text-[10px]"><XCircle size={12} />{language === 'TH' ? 'ไม่ตรงกัน' : 'Mismatch'}</span>}
+                    </div>
+                    <div className="font-bold text-slate-600 break-all"><span className="text-slate-400">{language === 'TH' ? 'ค่าที่ประกอบ: ' : 'Composed: '}</span>{row.composed || '-'}</div>
+                    <div className="font-bold text-slate-600 break-all"><span className="text-slate-400">{language === 'TH' ? `ใน ${rule.targetDoc}: ` : `In ${rule.targetDoc}: `}</span>{row.actual || '-'}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        };
+        const saveComposeDraft = () => {
+          if (!composeDraft || !canSaveCompose) return;
+          setComposeRulesByJob(prev => {
+            const current = prev[jobId] || [];
+            const exists = current.some(r => r.id === composeDraft.id);
+            return { ...prev, [jobId]: exists ? current.map(r => (r.id === composeDraft.id ? composeDraft : r)) : [...current, composeDraft] };
+          });
+          setComposeDraft(null);
+        };
+        const deleteComposeRule = (ruleId: string) => {
+          setComposeRulesByJob(prev => ({ ...prev, [jobId]: (prev[jobId] || []).filter(r => r.id !== ruleId) }));
+          if (composeDraft?.id === ruleId) setComposeDraft(null);
+        };
+        const addSuggestedRule = () => {
+          if (!composeSuggestion) return;
+          const rule = { ...composeSuggestion.rule, id: `compose-${Date.now()}`, parts: [...composeSuggestion.rule.parts] };
+          setComposeRulesByJob(prev => ({ ...prev, [jobId]: [...(prev[jobId] || []), rule] }));
+        };
+
+        const closeDrawer = () => { setShowRulesDrawer(false); setMergeDraft(null); setComposeDraft(null); };
+        const startMergeDraft = () => { setComposeDraft(null); setMergeDraft({ id: `merge-${Date.now()}`, subDoc: '', keyField: '', fields: [] }); };
+        const startComposeDraft = () => { setMergeDraft(null); setComposeDraft({ id: `compose-${Date.now()}`, targetDoc: '', targetField: '', parts: [], separator: ' ', mode: 'loose' }); };
+        const ruleTypeChip = (text: string) => (
+          <span className="px-1.5 py-0.5 rounded-full bg-blue-50 text-[#1f5df9] border border-blue-100 text-[9px] font-black">{text}</span>
+        );
+        let ruleNumber = 0;
 
         return (
           <Drawer
-            open={showMergeDrawer}
+            open={showRulesDrawer}
             onClose={closeDrawer}
             size={480}
             zIndex={700}
@@ -9384,17 +9765,21 @@ const mockWorkflows: Workflow[] = [
             title={
               <div className="flex items-center gap-2">
                 <Merge size={16} className="text-[#1f5df9]" />
-                <span className="font-black text-[#010136]">{language === 'TH' ? 'รวมค่าของรายการสินค้า' : 'Merge item values'}</span>
+                <span className="font-black text-[#010136]">{language === 'TH' ? 'กฎจับคู่ฟิลด์' : 'Field matching rules'}</span>
               </div>
             }
           >
             <div className="flex flex-col gap-4 font-sans">
               <div className="text-xs font-bold text-blue-600 bg-blue-50 p-3 rounded-lg flex items-start gap-2">
                 <Info size={14} className="shrink-0 mt-0.5" />
-                <span>
-                  {language === 'TH'
-                    ? 'ใช้เมื่อเอกสารหนึ่งแตกรายการสินค้าออกเป็นหลายแถว แต่อีกเอกสารรวมไว้แถวเดียว (เช่น Packing List แยกตามไซส์ แต่ Invoice รวมเป็นรายการเดียว) ระบบจะบวกตัวเลขของแถวที่เป็นสินค้าเดียวกันให้ แล้วนำไปเทียบกับเอกสารหลักอีกครั้ง'
-                    : 'Use this when one document splits an item into several rows but the other keeps it on one row (e.g. a Packing List split by size vs. a single Invoice line). Numbers of rows for the same item are added up, then compared with the main document again.'}
+                <span className="flex flex-col gap-1">
+                  <span>
+                    {language === 'TH'
+                      ? 'ใช้เมื่อแต่ละเอกสารเขียนข้อมูลคนละรูปแบบ จนเทียบกันตรงๆ ไม่ได้ มี 2 แบบ:'
+                      : "Use this when documents write the same data differently, so they can't be compared directly. Two kinds:"}
+                  </span>
+                  <span>• {language === 'TH' ? 'บวกตัวเลข — เอกสารหนึ่งแตกสินค้าเป็นหลายแถว (เช่น Packing List แยกตามไซส์) ส่วนอีกเอกสารรวมไว้แถวเดียว' : 'Add up numbers — one document splits an item into several rows (e.g. a Packing List by size) while the other keeps one row'}</span>
+                  <span>• {language === 'TH' ? 'ต่อข้อความ — เอกสารหนึ่งเขียนหลายฟิลด์รวมในช่องเดียว (เช่น รายละเอียด + สี + ไซส์)' : 'Join text — one document writes several fields into one (e.g. description + color + size)'}</span>
                 </span>
               </div>
 
@@ -9403,18 +9788,41 @@ const mockWorkflows: Workflow[] = [
                   <AlertTriangle size={14} className="shrink-0 mt-0.5" />
                   <span>
                     {language === 'TH'
-                      ? `ตอนนี้ยังมี ${leftoverCount} รายการที่จับคู่กับเอกสารหลักไม่ได้`
-                      : `${leftoverCount} items still can't be matched with the main document`}
+                      ? `ตอนนี้ยังมี ${leftoverCount} รายการที่จับคู่กับเอกสารหลักไม่ได้ — ลองสร้างกฎ "บวกตัวเลข"`
+                      : `${leftoverCount} items still can't be matched with the main document — try an "Add up numbers" rule`}
                   </span>
+                </div>
+              )}
+
+              {composeSuggestion && !composeDraft && !mergeDraft && (
+                <div className="border border-amber-200 bg-amber-50/60 rounded-xl p-4 flex flex-col gap-3">
+                  <div className="flex items-start gap-2 text-xs font-bold text-amber-800">
+                    <AlertTriangle size={14} className="shrink-0 mt-0.5" />
+                    <span>
+                      {language === 'TH'
+                        ? `ระบบเดากฎ "ต่อข้อความ" ให้: ช่อง "${composeSuggestion.rule.targetField}" ใน ${composeSuggestion.rule.targetDoc} = ${composeSuggestion.rule.parts.join(' + ')} (ตัวคั่น: ${separatorLabel(composeSuggestion.rule.separator)}) · พบรูปแบบนี้ ${composeSuggestion.matched}/${composeSuggestion.total} รายการ`
+                        : `Suggested "Join text" rule: "${composeSuggestion.rule.targetField}" in ${composeSuggestion.rule.targetDoc} = ${composeSuggestion.rule.parts.join(' + ')} (separator: ${separatorLabel(composeSuggestion.rule.separator)}) · found in ${composeSuggestion.matched}/${composeSuggestion.total} items`}
+                    </span>
+                  </div>
+                  <PreviewList rule={composeSuggestion.rule} />
+                  <div className="flex gap-2 justify-end">
+                    <Button onClick={() => { setMergeDraft(null); setComposeDraft({ ...composeSuggestion.rule, id: `compose-${Date.now()}`, parts: [...composeSuggestion.rule.parts] }); }}>
+                      {language === 'TH' ? 'ปรับแก้ก่อน' : 'Adjust first'}
+                    </Button>
+                    <Button type="primary" onClick={addSuggestedRule}>
+                      {language === 'TH' ? 'ใช้กฎนี้' : 'Use this'}
+                    </Button>
+                  </div>
                 </div>
               )}
 
               {mergeDraft ? (
                 <div className="border border-slate-200 rounded-xl p-4 flex flex-col gap-4">
-                  <div className="text-sm font-black text-slate-700">
-                    {rules.some(r => r.id === mergeDraft.id)
-                      ? (language === 'TH' ? 'แก้ไขรายการรวมค่า' : 'Edit merge rule')
-                      : (language === 'TH' ? 'สร้างรายการรวมค่า' : 'New merge rule')}
+                  <div className="text-sm font-black text-slate-700 flex items-center gap-2">
+                    {mergeRules.some(r => r.id === mergeDraft.id)
+                      ? (language === 'TH' ? 'แก้ไขกฎ' : 'Edit rule')
+                      : (language === 'TH' ? 'สร้างกฎใหม่' : 'New rule')}
+                    {ruleTypeChip(language === 'TH' ? 'บวกตัวเลข' : 'Add up numbers')}
                   </div>
 
                   <div className="flex flex-col gap-1.5">
@@ -9423,8 +9831,8 @@ const mockWorkflows: Workflow[] = [
                       style={{ width: '100%' }}
                       placeholder={language === 'TH' ? 'เลือกเอกสาร...' : 'Select a document...'}
                       value={mergeDraft.subDoc || undefined}
-                      onChange={(val) => setMergeDraft(prev => prev && ({ ...prev, subDoc: val }))}
-                      options={docOptions.map(name => ({ value: name, label: name }))}
+                      onChange={(val) => setMergeDraft(prev => prev && ({ ...prev, subDoc: val, fields: [] }))}
+                      options={mergeDocOptions.map(name => ({ value: name, label: name }))}
                     />
                   </div>
 
@@ -9457,61 +9865,194 @@ const mockWorkflows: Workflow[] = [
 
                   <div className="flex gap-2 justify-end pt-1">
                     <Button onClick={() => setMergeDraft(null)}>{language === 'TH' ? 'ยกเลิก' : 'Cancel'}</Button>
-                    <Button type="primary" disabled={!canSave} onClick={saveDraft}>{language === 'TH' ? 'รวมค่า' : 'Merge'}</Button>
+                    <Button type="primary" disabled={!canSaveMerge} onClick={saveMergeDraft}>{language === 'TH' ? 'บันทึก' : 'Save'}</Button>
+                  </div>
+                </div>
+              ) : composeDraft ? (
+                <div className="border border-slate-200 rounded-xl p-4 flex flex-col gap-4">
+                  <div className="text-sm font-black text-slate-700 flex items-center gap-2">
+                    {composeRules.some(r => r.id === composeDraft.id)
+                      ? (language === 'TH' ? 'แก้ไขกฎ' : 'Edit rule')
+                      : (language === 'TH' ? 'สร้างกฎใหม่' : 'New rule')}
+                    {ruleTypeChip(language === 'TH' ? 'ต่อข้อความ' : 'Join text')}
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <span className={labelClass}>{language === 'TH' ? '1. เอกสารที่เขียนข้อมูลรวมไว้ในช่องเดียว' : '1. Document that combines them in one field'}</span>
+                    <Select
+                      style={{ width: '100%' }}
+                      placeholder={language === 'TH' ? 'เลือกเอกสาร...' : 'Select a document...'}
+                      value={composeDraft.targetDoc || undefined}
+                      onChange={(val) => setComposeDraft(prev => prev && ({ ...prev, targetDoc: val }))}
+                      options={targetDocOptions.map(name => ({ value: name, label: name }))}
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <span className={labelClass}>{language === 'TH' ? '2. ช่องที่เขียนรวมไว้' : '2. The combined field'}</span>
+                    <Select
+                      showSearch
+                      style={{ width: '100%' }}
+                      placeholder={language === 'TH' ? 'เช่น Product Description' : 'e.g. Product Description'}
+                      value={composeDraft.targetField || undefined}
+                      onChange={(val) => setComposeDraft(prev => prev && ({ ...prev, targetField: val }))}
+                      options={textFieldOptions
+                        .filter(name => !composeRules.some(r => r.id !== composeDraft.id && r.targetDoc === composeDraft.targetDoc && r.targetField === name))
+                        .map(name => ({ value: name, label: name }))}
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <span className={labelClass}>{language === 'TH' ? `3. ฟิลด์จาก ${mainDoc || 'เอกสารหลัก'} ที่ถูกนำมาต่อกัน` : `3. Fields from ${mainDoc || 'the main document'} to join`}</span>
+                    <Select
+                      mode="multiple"
+                      allowClear
+                      style={{ width: '100%' }}
+                      placeholder={language === 'TH' ? 'เลือกอย่างน้อย 2 ฟิลด์ เรียงตามลำดับที่เลือก...' : 'Pick at least 2 fields, in order...'}
+                      value={composeDraft.parts}
+                      onChange={(vals) => setComposeDraft(prev => prev && ({ ...prev, parts: vals as string[] }))}
+                      options={textFieldOptions.map(name => ({ value: name, label: name }))}
+                    />
+                    <span className="text-[10px] font-medium text-slate-400">
+                      {language === 'TH' ? 'ต่อกันตามลำดับที่เลือก ฟิลด์ที่ไม่มีค่าจะถูกข้าม' : 'Joined in the order picked; fields with no value are skipped'}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1.5">
+                      <span className={labelClass}>{language === 'TH' ? '4. ตัวคั่น' : '4. Separator'}</span>
+                      <Select
+                        style={{ width: '100%' }}
+                        value={composeDraft.separator}
+                        onChange={(val) => setComposeDraft(prev => prev && ({ ...prev, separator: val }))}
+                        options={COMPOSE_SEPARATORS.map(s => ({ value: s.value, label: language === 'TH' ? s.labelTh : s.labelEn }))}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <span className={labelClass}>{language === 'TH' ? '5. วิธีเทียบ' : '5. Comparison'}</span>
+                      <Select
+                        style={{ width: '100%' }}
+                        value={composeDraft.mode}
+                        onChange={(val) => setComposeDraft(prev => prev && ({ ...prev, mode: val }))}
+                        options={modeOptions}
+                      />
+                    </div>
+                  </div>
+
+                  <PreviewList rule={composeDraft} />
+
+                  <div className="flex gap-2 justify-end pt-1">
+                    <Button onClick={() => setComposeDraft(null)}>{language === 'TH' ? 'ยกเลิก' : 'Cancel'}</Button>
+                    <Button type="primary" disabled={!canSaveCompose} onClick={saveComposeDraft}>{language === 'TH' ? 'บันทึก' : 'Save'}</Button>
                   </div>
                 </div>
               ) : (
-                <Button
-                  type="primary"
-                  icon={<Plus size={14} />}
-                  disabled={docOptions.length === 0}
-                  onClick={() => setMergeDraft({ id: `merge-${Date.now()}`, subDoc: '', keyField: '', fields: [] })}
-                  className="self-start"
-                >
-                  {language === 'TH' ? 'สร้างรายการรวมค่าใหม่' : 'New merge rule'}
-                </Button>
+                <div className="flex flex-col gap-2">
+                  <span className={labelClass}>{language === 'TH' ? 'สร้างกฎใหม่' : 'New rule'}</span>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      onClick={startMergeDraft}
+                      disabled={mergeDocOptions.length === 0}
+                      className="text-left border border-slate-200 rounded-xl p-3 flex flex-col gap-1 bg-white hover:border-[#1f5df9] hover:bg-blue-50/40 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <span className="flex items-center gap-1.5 text-xs font-black text-slate-700"><Plus size={13} className="text-[#1f5df9]" />{language === 'TH' ? 'บวกตัวเลข' : 'Add up numbers'}</span>
+                      <span className="text-[10px] font-medium text-slate-400 leading-snug">{language === 'TH' ? 'รวมหลายแถวที่เป็นสินค้าเดียวกัน' : 'Fold several rows of the same item'}</span>
+                    </button>
+                    <button
+                      onClick={startComposeDraft}
+                      disabled={targetDocOptions.length === 0}
+                      className="text-left border border-slate-200 rounded-xl p-3 flex flex-col gap-1 bg-white hover:border-[#1f5df9] hover:bg-blue-50/40 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <span className="flex items-center gap-1.5 text-xs font-black text-slate-700"><Plus size={13} className="text-[#1f5df9]" />{language === 'TH' ? 'ต่อข้อความ' : 'Join text'}</span>
+                      <span className="text-[10px] font-medium text-slate-400 leading-snug">{language === 'TH' ? 'ต่อหลายฟิลด์เป็นช่องเดียวเพื่อเทียบ' : 'Join several fields to compare'}</span>
+                    </button>
+                  </div>
+                </div>
               )}
 
               <div className="flex flex-col gap-3">
                 <span className={labelClass}>
-                  {language === 'TH' ? `รายการที่ตั้งไว้ (${rules.length})` : `Saved rules (${rules.length})`}
+                  {language === 'TH' ? `กฎที่ตั้งไว้ (${totalRules})` : `Saved rules (${totalRules})`}
                 </span>
-                {rules.length === 0 && (
+                {totalRules === 0 && (
                   <div className="text-xs font-bold text-slate-400 border border-dashed border-slate-200 rounded-xl p-6 text-center">
-                    {language === 'TH' ? 'ยังไม่มีรายการรวมค่า' : 'No merge rules yet'}
+                    {language === 'TH' ? 'ยังไม่มีกฎ' : 'No rules yet'}
                   </div>
                 )}
-                {rules.map((rule, idx) => (
-                  <div key={rule.id} className={`border rounded-xl p-3 flex flex-col gap-2 ${mergeDraft?.id === rule.id ? 'border-blue-300 bg-blue-50/30' : 'border-slate-200'}`}>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-black text-slate-700">{language === 'TH' ? `รายการที่ ${idx + 1}` : `Rule ${idx + 1}`}</span>
-                      <div className="flex items-center gap-1">
-                        <Tooltip content={language === 'TH' ? 'แก้ไข' : 'Edit'}>
-                          <button onClick={() => setMergeDraft({ ...rule, fields: [...rule.fields] })} className="p-1.5 hover:bg-blue-50 rounded-[4px] text-slate-400 hover:text-blue-500 transition-colors cursor-pointer">
-                            <Edit3 size={14} />
-                          </button>
-                        </Tooltip>
-                        <Tooltip content={language === 'TH' ? 'ลบ (ยกเลิกการรวม)' : 'Delete (undo merge)'}>
-                          <button onClick={() => deleteRule(rule.id)} className="p-1.5 hover:bg-rose-50 rounded-[4px] text-slate-400 hover:text-rose-500 transition-colors cursor-pointer">
-                            <Trash2 size={14} />
-                          </button>
-                        </Tooltip>
+                {mergeRules.map(rule => {
+                  ruleNumber += 1;
+                  return (
+                    <div key={rule.id} className={`border rounded-xl p-3 flex flex-col gap-2 ${mergeDraft?.id === rule.id ? 'border-blue-300 bg-blue-50/30' : 'border-slate-200'}`}>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-black text-slate-700 flex items-center gap-2">
+                          {language === 'TH' ? `กฎที่ ${ruleNumber}` : `Rule ${ruleNumber}`}
+                          {ruleTypeChip(language === 'TH' ? 'บวกตัวเลข' : 'Add up numbers')}
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <Tooltip content={language === 'TH' ? 'แก้ไข' : 'Edit'}>
+                            <button onClick={() => { setComposeDraft(null); setMergeDraft({ ...rule, fields: [...rule.fields] }); }} className="p-1.5 hover:bg-blue-50 rounded-[4px] text-slate-400 hover:text-blue-500 transition-colors cursor-pointer">
+                              <Edit3 size={14} />
+                            </button>
+                          </Tooltip>
+                          <Tooltip content={language === 'TH' ? 'ลบ (ยกเลิกการรวม)' : 'Delete (undo merge)'}>
+                            <button onClick={() => deleteMergeRule(rule.id)} className="p-1.5 hover:bg-rose-50 rounded-[4px] text-slate-400 hover:text-rose-500 transition-colors cursor-pointer">
+                              <Trash2 size={14} />
+                            </button>
+                          </Tooltip>
+                        </div>
+                      </div>
+                      <div className="text-[11px] font-bold text-slate-500">
+                        <span className="text-slate-400">{language === 'TH' ? 'เอกสาร: ' : 'Document: '}</span>
+                        {rule.subDoc}
+                      </div>
+                      <div className="text-[11px] font-bold text-slate-500">
+                        <span className="text-slate-400">{language === 'TH' ? 'รวมค่า: ' : 'Adds up: '}</span>
+                        {rule.fields.join(', ')}
+                      </div>
+                      <div className="text-[11px] font-bold text-slate-500">
+                        <span className="text-slate-400">{language === 'TH' ? 'จับกลุ่มด้วย: ' : 'Grouped by: '}</span>
+                        {rule.keyField}
                       </div>
                     </div>
-                    <div className="text-[11px] font-bold text-slate-500">
-                      <span className="text-slate-400">{language === 'TH' ? 'เอกสาร: ' : 'Document: '}</span>
-                      {rule.subDoc}
+                  );
+                })}
+                {composeRules.map(rule => {
+                  ruleNumber += 1;
+                  return (
+                    <div key={rule.id} className={`border rounded-xl p-3 flex flex-col gap-2 ${composeDraft?.id === rule.id ? 'border-blue-300 bg-blue-50/30' : 'border-slate-200'}`}>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-black text-slate-700 flex items-center gap-2">
+                          {language === 'TH' ? `กฎที่ ${ruleNumber}` : `Rule ${ruleNumber}`}
+                          {ruleTypeChip(language === 'TH' ? 'ต่อข้อความ' : 'Join text')}
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <Tooltip content={language === 'TH' ? 'แก้ไข' : 'Edit'}>
+                            <button onClick={() => { setMergeDraft(null); setComposeDraft({ ...rule, parts: [...rule.parts] }); }} className="p-1.5 hover:bg-blue-50 rounded-[4px] text-slate-400 hover:text-blue-500 transition-colors cursor-pointer">
+                              <Edit3 size={14} />
+                            </button>
+                          </Tooltip>
+                          <Tooltip content={language === 'TH' ? 'ลบ (ยกเลิกกฎ)' : 'Delete (undo rule)'}>
+                            <button onClick={() => deleteComposeRule(rule.id)} className="p-1.5 hover:bg-rose-50 rounded-[4px] text-slate-400 hover:text-rose-500 transition-colors cursor-pointer">
+                              <Trash2 size={14} />
+                            </button>
+                          </Tooltip>
+                        </div>
+                      </div>
+                      <div className="text-[11px] font-bold text-slate-500">
+                        <span className="text-slate-400">{language === 'TH' ? 'ช่องที่เทียบ: ' : 'Compared field: '}</span>
+                        {rule.targetDoc} › {rule.targetField}
+                      </div>
+                      <div className="text-[11px] font-bold text-slate-500">
+                        <span className="text-slate-400">{language === 'TH' ? `ประกอบจาก ${mainDoc || ''}: ` : `Built from ${mainDoc || ''}: `}</span>
+                        {rule.parts.join(` ${rule.separator.trim() || '+'} `)}
+                      </div>
+                      <div className="text-[11px] font-bold text-slate-500">
+                        <span className="text-slate-400">{language === 'TH' ? 'ตัวคั่น / วิธีเทียบ: ' : 'Separator / comparison: '}</span>
+                        {separatorLabel(rule.separator)} · {modeLabel(rule.mode)}
+                      </div>
                     </div>
-                    <div className="text-[11px] font-bold text-slate-500">
-                      <span className="text-slate-400">{language === 'TH' ? 'รวมค่า: ' : 'Adds up: '}</span>
-                      {rule.fields.join(', ')}
-                    </div>
-                    <div className="text-[11px] font-bold text-slate-500">
-                      <span className="text-slate-400">{language === 'TH' ? 'จับกลุ่มด้วย: ' : 'Grouped by: '}</span>
-                      {rule.keyField}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </Drawer>
@@ -10219,27 +10760,35 @@ const mockWorkflows: Workflow[] = [
                     </button>
                   </Tooltip>
 
-                  {/* Merge field values — only offered when this flow has rows that couldn't be
-                      paired with the main document (or a merge is already applied) */}
-                  {(allComparisonResults.some(r => (r as any).part === 'Unmatched') || (mergeRulesByJob[selectedJob.id] || []).length > 0) && (
-                    <Tooltip position={isJobPanelFullscreen ? 'bottom' : 'top'} content={language === 'TH' ? 'รวมค่าของรายการที่จับคู่ไม่ได้' : 'Merge values of unmatched items'}>
-                      <button
-                        onClick={() => { setMergeDraft(null); setShowMergeDrawer(true); }}
-                        className={`relative p-2.5 rounded-[4px] transition-all border flex items-center justify-center cursor-pointer shadow-sm ${
-                          (mergeRulesByJob[selectedJob.id] || []).length > 0
-                            ? 'bg-blue-50 text-[#1f5df9] border-blue-200 hover:bg-blue-100 shadow-[0_2px_8px_rgba(31,93,249,0.15)]'
-                            : 'bg-white text-slate-500 border-slate-200/60 hover:bg-slate-50'
-                        }`}
-                      >
-                        <Merge size={15} strokeWidth={2.5} className={(mergeRulesByJob[selectedJob.id] || []).length > 0 ? 'text-[#1f5df9]' : 'text-slate-400'} />
-                        {(mergeRulesByJob[selectedJob.id] || []).length > 0 && (
-                          <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-[#1f5df9] text-white text-[9px] font-black flex items-center justify-center leading-none shadow-sm">
-                            {(mergeRulesByJob[selectedJob.id] || []).length}
-                          </span>
-                        )}
-                      </button>
-                    </Tooltip>
-                  )}
+                  {/* Field matching rules — one button for both kinds of rule (add up numbers / join text).
+                      Offered when the flow has rows that couldn't be paired with the main document,
+                      when the system can suggest a join-text rule, or when a rule already exists. */}
+                  {(() => {
+                    const ruleCount = (mergeRulesByJob[selectedJob.id] || []).length + (composeRulesByJob[selectedJob.id] || []).length;
+                    const hasUnmatched = allComparisonResults.some(r => (r as any).part === 'Unmatched');
+                    if (ruleCount === 0 && !hasUnmatched && !composeSuggestion) return null;
+                    return (
+                      <Tooltip position={isJobPanelFullscreen ? 'bottom' : 'top'} content={language === 'TH' ? 'กฎจับคู่ฟิลด์ (บวกตัวเลข / ต่อข้อความ)' : 'Field matching rules (add up / join text)'}>
+                        <button
+                          onClick={() => { setMergeDraft(null); setComposeDraft(null); setShowRulesDrawer(true); }}
+                          className={`relative p-2.5 rounded-[4px] transition-all border flex items-center justify-center cursor-pointer shadow-sm ${
+                            ruleCount > 0
+                              ? 'bg-blue-50 text-[#1f5df9] border-blue-200 hover:bg-blue-100 shadow-[0_2px_8px_rgba(31,93,249,0.15)]'
+                              : 'bg-white text-slate-500 border-slate-200/60 hover:bg-slate-50'
+                          }`}
+                        >
+                          <Merge size={15} strokeWidth={2.5} className={ruleCount > 0 ? 'text-[#1f5df9]' : 'text-slate-400'} />
+                          {ruleCount > 0 ? (
+                            <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-[#1f5df9] text-white text-[9px] font-black flex items-center justify-center leading-none shadow-sm">
+                              {ruleCount}
+                            </span>
+                          ) : (
+                            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-400 border-2 border-white" />
+                          )}
+                        </button>
+                      </Tooltip>
+                    );
+                  })()}
 
                   {/* Fullscreen — expands this job header + compare table card to fill the
                       viewport, for reviewing wide tables without the page chrome around it. */}
@@ -10475,6 +11024,34 @@ const mockWorkflows: Workflow[] = [
                         <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{language === 'TH' ? 'แสดงคู่กัน (ไม่ตัดสิน)' : 'Shown side by side (not judged)'}</span>
                      </div>
                   </div>
+                  {/* Suggested "compose field values" rule — the system noticed a document that
+                      writes one field as several of the main document's fields joined together */}
+                  {composeSuggestion && (
+                    <div className="px-4 py-2.5 border-b border-blue-100 bg-blue-50 flex items-center gap-3 shrink-0">
+                      <Layers size={15} className="text-[#1f5df9] shrink-0" />
+                      <div className="flex-1 min-w-0 text-xs font-bold text-slate-700 leading-snug">
+                        {language === 'TH'
+                          ? <>ช่อง <span className="text-[#1f5df9]">{composeSuggestion.rule.targetField}</span> ใน {composeSuggestion.rule.targetDoc} ดูเหมือนเอาหลายฟิลด์จาก Invoice มาต่อกัน ({composeSuggestion.rule.parts.join(' + ')}) — ตรงกับรูปแบบนี้ {composeSuggestion.matched}/{composeSuggestion.total} รายการ</>
+                          : <><span className="text-[#1f5df9]">{composeSuggestion.rule.targetField}</span> in {composeSuggestion.rule.targetDoc} looks like several Invoice fields joined together ({composeSuggestion.rule.parts.join(' + ')}) — matches this pattern in {composeSuggestion.matched}/{composeSuggestion.total} items</>}
+                      </div>
+                      <button
+                        onClick={() => { setMergeDraft(null); setComposeDraft({ ...composeSuggestion.rule, id: `compose-${Date.now()}`, parts: [...composeSuggestion.rule.parts] }); setShowRulesDrawer(true); }}
+                        className="px-3 py-1.5 rounded-[4px] bg-white border border-blue-200 text-[#1f5df9] text-[11px] font-black hover:bg-blue-100 cursor-pointer transition-colors shrink-0"
+                      >
+                        {language === 'TH' ? 'ดูและปรับแก้' : 'Review'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          const jobId = selectedJob.id;
+                          const rule = { ...composeSuggestion.rule, id: `compose-${Date.now()}`, parts: [...composeSuggestion.rule.parts] };
+                          setComposeRulesByJob(prev => ({ ...prev, [jobId]: [...(prev[jobId] || []), rule] }));
+                        }}
+                        className="px-3 py-1.5 rounded-[4px] bg-[#1f5df9] text-white text-[11px] font-black hover:bg-[#1a4fd6] cursor-pointer transition-colors shrink-0"
+                      >
+                        {language === 'TH' ? 'ใช้สูตรนี้' : 'Use this'}
+                      </button>
+                    </div>
+                  )}
                   <div
                     className="flex-1 overflow-auto custom-scrollbar relative"
                     onScroll={(e) => handleTableScroll(e.currentTarget.scrollTop)}
@@ -11028,6 +11605,26 @@ const mockWorkflows: Workflow[] = [
                                         </td>
                                       );
                                     }
+                                    if ((target as any).notInDoc) {
+                                      const composedInto = (target as any).composedInto as string | undefined;
+                                      return (
+                                        <td key={docName} className="p-0 border-r border-r-slate-100 border-t border-t-slate-200 align-top h-px bg-slate-50/60">
+                                          <div className="px-4 py-4 h-full flex flex-col items-center justify-start gap-1.5">
+                                            <span className="text-[11px] font-bold text-slate-400 italic">
+                                              {language === 'TH' ? 'ไม่มีฟิลด์นี้แยกในเอกสาร' : 'No separate field in this document'}
+                                            </span>
+                                            {composedInto && (
+                                              <Tooltip content={language === 'TH' ? `ค่านี้ถูกรวมอยู่ในฟิลด์ "${composedInto}" ของเอกสารนี้ และถูกนำไปเทียบแล้วที่แถวนั้น` : `This value is part of the "${composedInto}" field in this document and is compared on that row`}>
+                                                <div className="px-1.5 py-0.5 bg-blue-50 text-[#1f5df9] border border-blue-200 rounded-[4px] text-[9px] font-black tracking-tight flex items-center gap-1 w-fit cursor-help">
+                                                  <Info size={10} />
+                                                  {language === 'TH' ? `รวมอยู่ใน ${composedInto}` : `Part of ${composedInto}`}
+                                                </div>
+                                              </Tooltip>
+                                            )}
+                                          </div>
+                                        </td>
+                                      );
+                                    }
                                     if (isCellSkipped(selectedJob?.id, docName, (res as any).part, res.fieldName)) {
                                       return (
                                         <td key={docName} className="p-0 border-r border-r-slate-100 border-t border-t-slate-200 align-top h-px bg-slate-100/70">
@@ -11103,8 +11700,8 @@ const mockWorkflows: Workflow[] = [
                                               title={target.status === 'MISMATCH' && selectedJob?.status !== JobStatus.READY ? (language === 'TH' ? 'ดับเบิ้ลคลิกเพื่อแก้ไขค่า OCR' : 'Double-click to edit the OCR value') : undefined}
                                             >
                                                <span className="break-all">
-                                                   {target.status === 'MISMATCH' && target.value && res.sourceValue ? (
-                                                     diffChars(String(target.value), String(res.sourceValue)).map((part, index) => {
+                                                   {target.status === 'MISMATCH' && target.value && ((target as any).compareValue || res.sourceValue) ? (
+                                                     diffChars(String(target.value), String((target as any).compareValue || res.sourceValue)).map((part, index) => {
                                                        if (part.added) {
                                                          return null;
                                                        }
@@ -11162,6 +11759,32 @@ const mockWorkflows: Workflow[] = [
                                                 </span>
                                               </div>
                                             )}
+
+                                            {(target as any).composedInfo && (() => {
+                                              const info = (target as any).composedInfo;
+                                              return (
+                                                <Tooltip content={
+                                                  <div className="p-0.5 text-left text-[11px] font-sans max-w-[260px]">
+                                                    <span className="font-bold text-sky-300 block">
+                                                      {language === 'TH' ? 'ค่าที่ประกอบจากหลายฟิลด์' : 'Value composed from several fields'}
+                                                    </span>
+                                                    <span className="text-slate-200 font-medium block mt-1">
+                                                      {language === 'TH'
+                                                        ? `นำ ${info.parts.map((p: any) => p.field).join(' + ')} ของ ${info.docName} มาต่อกัน เพื่อเทียบกับฟิลด์ "${info.targetField}" ของ ${info.targetDoc}`
+                                                        : `Joins ${info.parts.map((p: any) => p.field).join(' + ')} from ${info.docName} to compare with "${info.targetField}" in ${info.targetDoc}`}
+                                                    </span>
+                                                    <span className="text-slate-300 font-mono block mt-1 break-all">
+                                                      {info.parts.map((p: any) => p.value).join(' + ')}
+                                                    </span>
+                                                  </div>
+                                                }>
+                                                  <div className="px-1.5 py-1 bg-blue-50 text-[#1f5df9] border border-blue-200 rounded-[4px] text-[10px] font-bold leading-tight flex items-start gap-1 max-w-full cursor-help text-left">
+                                                    <Info size={11} className="shrink-0 mt-px" />
+                                                    <span className="break-all">{info.composed}</span>
+                                                  </div>
+                                                </Tooltip>
+                                              );
+                                            })()}
 
                                             {(target as any).isPrimary && res.targets.find((t: any) => t.isPrimary) === target && !isSummary && (
                                               <div className="mt-auto px-1.5 py-0.5 bg-blue-100 text-blue-700 border border-blue-200 rounded-[4px] text-[8px] font-black uppercase tracking-wider shrink-0 shadow-sm flex items-center gap-1.5 w-fit">
