@@ -9683,10 +9683,22 @@ const mockWorkflows: Workflow[] = [
           const found = COMPOSE_SEPARATORS.find(s => s.value === value);
           return found ? (language === 'TH' ? found.labelTh : found.labelEn) : value;
         };
-        const modeOptions: { value: ComposeCompareMode; label: string }[] = [
-          { value: 'loose', label: language === 'TH' ? 'ไม่สนตัวพิมพ์เล็ก-ใหญ่และเครื่องหมาย (แนะนำ)' : 'Ignore letter case and symbols (recommended)' },
-          { value: 'contains', label: language === 'TH' ? 'มีข้อมูลครบทุกส่วนก็ถือว่าตรง (ไม่สนลำดับ)' : 'Match if every part is present (any order)' },
-          { value: 'exact', label: language === 'TH' ? 'ตรงเป๊ะทุกตัวอักษร' : 'Exactly the same' }
+        const modeOptions: { value: ComposeCompareMode; label: string; hint: string }[] = [
+          {
+            value: 'loose',
+            label: language === 'TH' ? 'เทียบแบบยืดหยุ่น (แนะนำ)' : 'Flexible (recommended)',
+            hint: language === 'TH' ? 'ไม่สนตัวพิมพ์เล็ก-ใหญ่และเครื่องหมาย เช่น "Polo-Shirt" ตรงกับ "POLO SHIRT"' : 'Ignores letter case and symbols, e.g. "Polo-Shirt" matches "POLO SHIRT"'
+          },
+          {
+            value: 'contains',
+            label: language === 'TH' ? 'มีครบทุกส่วน' : 'Contains every part',
+            hint: language === 'TH' ? 'ข้อมูลทุกฟิลด์อยู่ในช่องนั้นครบก็ถือว่าตรง ไม่สนลำดับและตัวคั่น' : 'Matches if every field appears in that field, in any order and with any separator'
+          },
+          {
+            value: 'exact',
+            label: language === 'TH' ? 'ตรงเป๊ะ' : 'Exact',
+            hint: language === 'TH' ? 'ต้องเหมือนกันทุกตัวอักษร รวมตัวพิมพ์และตัวคั่น' : 'Must be identical, including letter case and separator'
+          }
         ];
         const modeLabel = (mode: ComposeCompareMode) => modeOptions.find(m => m.value === mode)?.label ?? mode;
         // Live preview of what a compose rule would build, item by item, against the target document.
@@ -9922,24 +9934,38 @@ const mockWorkflows: Workflow[] = [
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="flex flex-col gap-1.5">
-                      <span className={labelClass}>{language === 'TH' ? '4. ตัวคั่น' : '4. Separator'}</span>
-                      <Select
-                        style={{ width: '100%' }}
-                        value={composeDraft.separator}
-                        onChange={(val) => setComposeDraft(prev => prev && ({ ...prev, separator: val }))}
-                        options={COMPOSE_SEPARATORS.map(s => ({ value: s.value, label: language === 'TH' ? s.labelTh : s.labelEn }))}
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      <span className={labelClass}>{language === 'TH' ? '5. วิธีเทียบ' : '5. Comparison'}</span>
-                      <Select
-                        style={{ width: '100%' }}
-                        value={composeDraft.mode}
-                        onChange={(val) => setComposeDraft(prev => prev && ({ ...prev, mode: val }))}
-                        options={modeOptions}
-                      />
+                  <div className="flex flex-col gap-1.5">
+                    <span className={labelClass}>{language === 'TH' ? '4. ตัวคั่นระหว่างฟิลด์' : '4. Separator between fields'}</span>
+                    <Select
+                      style={{ width: '100%' }}
+                      value={composeDraft.separator}
+                      onChange={(val) => setComposeDraft(prev => prev && ({ ...prev, separator: val }))}
+                      options={COMPOSE_SEPARATORS.map(s => ({ value: s.value, label: language === 'TH' ? s.labelTh : s.labelEn }))}
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <span className={labelClass}>{language === 'TH' ? '5. วิธีเทียบ' : '5. How to compare'}</span>
+                    <div className="flex flex-col gap-2">
+                      {modeOptions.map(option => {
+                        const selected = composeDraft.mode === option.value;
+                        return (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => setComposeDraft(prev => prev && ({ ...prev, mode: option.value }))}
+                            className={`text-left rounded-lg border p-2.5 flex items-start gap-2.5 cursor-pointer transition-colors ${selected ? 'border-[#1f5df9] bg-blue-50/50' : 'border-slate-200 bg-white hover:border-slate-300'}`}
+                          >
+                            <span className={`mt-0.5 w-3.5 h-3.5 rounded-full border-2 shrink-0 flex items-center justify-center ${selected ? 'border-[#1f5df9]' : 'border-slate-300'}`}>
+                              {selected && <span className="w-1.5 h-1.5 rounded-full bg-[#1f5df9]" />}
+                            </span>
+                            <span className="flex flex-col gap-0.5">
+                              <span className="text-xs font-black text-slate-700">{option.label}</span>
+                              <span className="text-[10px] font-medium text-slate-400 leading-snug">{option.hint}</span>
+                            </span>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 
