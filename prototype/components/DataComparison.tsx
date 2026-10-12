@@ -682,14 +682,16 @@ export const DataComparison: React.FC<DataComparisonProps> = ({ language, tracki
   // value inline, without opening the full Excel Preview panel. Saving (Enter) asks
   // for confirmation first via pendingInlineEdit, since this writes straight into
   // the comparison result with no separate "save" step to catch a mistake.
-  const [inlineEditCell, setInlineEditCell] = useState<{ docName: string; fieldName: string; oldValue: string } | null>(null);
+  const [inlineEditCell, setInlineEditCell] = useState<{ docName: string; fieldName: string; group?: string; oldValue: string } | null>(null);
   const [inlineEditValue, setInlineEditValue] = useState('');
-  const [pendingInlineEdit, setPendingInlineEdit] = useState<{ docName: string; fieldName: string; oldValue: string; newValue: string } | null>(null);
+  const [pendingInlineEdit, setPendingInlineEdit] = useState<{ docName: string; fieldName: string; group?: string; oldValue: string; newValue: string } | null>(null);
 
-  const handleInlineOcrEdit = (docName: string, fieldName: string, oldValue: string, newValue: string) => {
+  const handleInlineOcrEdit = (docName: string, fieldName: string, oldValue: string, newValue: string, group?: string) => {
     if (!selectedJob) return;
     assignJobToCurrentUser(selectedJob.id);
-    const overrideKey = `${docName}_${fieldName}`;
+    // Item rows repeat the same field name in every item (and in the unmatched section), so an
+    // edit made on one item's cell is stored against that item only.
+    const overrideKey = group ? `${docName}_${fieldName}@${group}` : `${docName}_${fieldName}`;
     setOverriddenValues(prev => ({ ...prev, [overrideKey]: newValue }));
     const emptyLabel = language === 'TH' ? 'ว่าง' : 'empty';
     const newLog = {
@@ -4515,7 +4517,8 @@ const mockWorkflows: Workflow[] = [
     targets: r.targets.map((t: any) => {
       if (t.isPrimary || t.status !== 'MISMATCH') return t;
       let next = t;
-      const edited = overriddenValues[`${t.fileName}_${r.fieldName}`];
+      const editKey = `${t.fileName}_${r.fieldName}`;
+      const edited = (r.group ? overriddenValues[`${editKey}@${r.group}`] : undefined) || overriddenValues[editKey];
       if (edited && !t.mergedInfo) {
         const expected = t.compareValue || r.sourceValue;
         next = { ...next, value: edited, status: edited === expected ? 'MATCH' : 'MISMATCH' };
@@ -4952,8 +4955,9 @@ const mockWorkflows: Workflow[] = [
 
         // Apply manual overrides if any
         const overrideKey = `${docName}_${f.name}`;
-        if (overriddenValues[overrideKey]) {
-          value = overriddenValues[overrideKey];
+        const overriddenValue = (f.group ? overriddenValues[`${overrideKey}@${f.group}`] : undefined) || overriddenValues[overrideKey];
+        if (overriddenValue) {
+          value = overriddenValue;
           // Recalculate status based on manual entry vs master
           if (value === f.source) {
             status = 'MATCH';
@@ -9209,8 +9213,8 @@ const mockWorkflows: Workflow[] = [
                 size="large"
                 className="flex-1 rounded-[4px] h-14 font-black uppercase tracking-widest text-[11px] bg-[#1f5df9] border-none shadow-lg shadow-blue-500/20 hover:bg-blue-600 font-sans"
                 onClick={() => {
-                  const { docName, fieldName, oldValue, newValue } = pendingInlineEdit;
-                  handleInlineOcrEdit(docName, fieldName, oldValue, newValue);
+                  const { docName, fieldName, group, oldValue, newValue } = pendingInlineEdit;
+                  handleInlineOcrEdit(docName, fieldName, oldValue, newValue, group);
                   setPendingInlineEdit(null);
                   setInlineEditCell(null);
                 }}
@@ -11667,7 +11671,7 @@ const mockWorkflows: Workflow[] = [
                                             target.status === 'MISMATCH' ? 'text-rose-600' :
                                             'text-slate-300'
                                          }`}>
-                                            {inlineEditCell?.docName === docName && inlineEditCell?.fieldName === res.fieldName ? (
+                                            {inlineEditCell?.docName === docName && inlineEditCell?.fieldName === res.fieldName && inlineEditCell?.group === (res as any).group ? (
                                               <div className="w-full flex flex-col items-center gap-1">
                                                 <input
                                                   autoFocus
@@ -11677,7 +11681,7 @@ const mockWorkflows: Workflow[] = [
                                                   onClick={(e) => e.stopPropagation()}
                                                   onKeyDown={(e) => {
                                                     if (e.key === 'Enter') {
-                                                      setPendingInlineEdit({ docName, fieldName: res.fieldName, oldValue: inlineEditCell.oldValue, newValue: inlineEditValue });
+                                                      setPendingInlineEdit({ docName, fieldName: res.fieldName, group: (res as any).group, oldValue: inlineEditCell.oldValue, newValue: inlineEditValue });
                                                     } else if (e.key === 'Escape') {
                                                       setInlineEditCell(null);
                                                     }
@@ -11694,7 +11698,7 @@ const mockWorkflows: Workflow[] = [
                                               className="flex items-center gap-2"
                                               onDoubleClick={() => {
                                                 if (target.status !== 'MISMATCH' || selectedJob?.status === JobStatus.READY) return;
-                                                setInlineEditCell({ docName, fieldName: res.fieldName, oldValue: String(target.value ?? '') });
+                                                setInlineEditCell({ docName, fieldName: res.fieldName, group: (res as any).group, oldValue: String(target.value ?? '') });
                                                 setInlineEditValue(String(target.value ?? ''));
                                               }}
                                               title={target.status === 'MISMATCH' && selectedJob?.status !== JobStatus.READY ? (language === 'TH' ? 'ดับเบิ้ลคลิกเพื่อแก้ไขค่า OCR' : 'Double-click to edit the OCR value') : undefined}
