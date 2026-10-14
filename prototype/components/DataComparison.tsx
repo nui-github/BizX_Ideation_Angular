@@ -19,6 +19,7 @@ import 'dayjs/locale/th';
 import { CreateJobModal } from './CreateJobModal';
 import { GenerateReportModal } from './GenerateReportModal';
 import { Tooltip } from './Tooltip';
+import { ensureIncotermValueGroupsSeeded } from './compareRulesSeed';
 import {
   Language, ComparisonFile, FieldMapping, TrackingItem, ReviewStatus,
   UserRole, ComparisonJob, JobStatus, ComparisonDocStatus, TrackingSource, SendStatus,
@@ -113,6 +114,118 @@ const COMPOSE_SEPARATORS: { value: string; labelTh: string; labelEn: string }[] 
 ];
 
 const normalizeLoose = (s: any): string => String(s ?? '').toLowerCase().replace(/[^a-z0-9ก-๙]/g, '');
+
+// "Value groups" compare rule (RuleMatrix type VALUE_GROUPS): what one document says decides
+// which values another document's field may show. This is the Incoterm rule the demo shipment
+// "Incoterm by freight terms" is set up with — the same shape RuleMatrix saves on a cell.
+interface ValueGroupsConfig {
+  vgRefDoc: string;
+  vgRefField: string;
+  vgCases: { id: string; when: string[]; accept: string[] }[];
+  vgMatchMode: 'EXACT' | 'CONTAINS';
+  vgElse: 'NORMAL' | 'REVIEW' | 'SKIP';
+}
+
+const INCOTERM_VALUE_GROUPS_DEMO: ValueGroupsConfig = {
+  vgRefDoc: 'Bill of Lading',
+  vgRefField: 'Incoterm',
+  vgCases: [
+    { id: 'vg-collect', when: ['COLLECT', 'FREIGHT COLLECT'], accept: ['EXW', 'FCA', 'FOB'] },
+    { id: 'vg-prepaid', when: ['PREPAID', 'FREIGHT PREPAID'], accept: ['CIF', 'CIP', 'CFR'] }
+  ],
+  vgMatchMode: 'EXACT',
+  vgElse: 'NORMAL'
+};
+
+// Judges one checked value against a value-groups rule. 'case' = a group applied (ok says
+// whether the value is allowed in it); 'else' = no group applied, so the rule's fallback decides.
+const evaluateValueGroups = (
+  config: ValueGroupsConfig,
+  refValue: string,
+  actual: string
+): { kind: 'case'; ok: boolean; caseIndex: number; accept: string[] } | { kind: 'else' } => {
+  const norm = (v: string) => String(v ?? '').trim().toLowerCase();
+  const caseIndex = config.vgCases.findIndex(c => c.when.some(w => norm(w) === norm(refValue)));
+  if (caseIndex === -1) return { kind: 'else' };
+  const accept = config.vgCases[caseIndex].accept;
+  const ok = config.vgMatchMode === 'EXACT'
+    ? accept.some(a => norm(a) === norm(actual))
+    : accept.some(a => norm(actual).includes(norm(a)));
+  return { kind: 'case', ok, caseIndex, accept };
+};
+
+// Compare-rule columns are labelled with the rule's own document names ("Bill of Lading (BL)",
+// "INVOICE"…); map them to the names the job's documents use.
+const normalizeDemoDocName = (label: string): string => {
+  const l = String(label ?? '').toLowerCase();
+  if (l.includes('freight')) return 'FREIGHT INVOICE';
+  if (l.includes('invoice')) return 'Invoice';
+  if (l.includes('packing')) return 'Packing List';
+  if (l.includes('lading') || /\bb\/?l\b/.test(l)) return 'Bill of Lading';
+  return String(label ?? '');
+};
+
+// Reads the "value groups" cells saved on a Compare rule (Manage rule page) so the demo table
+// follows whatever was set there. null = no saved rules at all (Manage rule never opened).
+const readValueGroupRules = (workflowName: string, blLabel: string): { fieldName: string; docName: string; config: ValueGroupsConfig }[] | null => {
+  try {
+    ensureIncotermValueGroupsSeeded(blLabel);
+    const raw = localStorage.getItem('bizx_compare_rules_v12');
+    if (!raw) return null;
+    const rule = (JSON.parse(raw) as any[]).find(r => r?.name === workflowName);
+    if (!rule) return [];
+    const found: { fieldName: string; docName: string; config: ValueGroupsConfig }[] = [];
+    rule.parts?.forEach((part: any) => part.rows?.forEach((row: any) => row.values?.forEach((val: any, colIdx: number) => {
+      if (val?.type !== 'VALUE_GROUPS') return;
+      found.push({
+        fieldName: row.detail,
+        docName: normalizeDemoDocName(rule.docTypes?.[colIdx] ?? ''),
+        config: {
+          vgRefDoc: val.vgRefDoc || '',
+          vgRefField: val.vgRefField || '',
+          vgCases: val.vgCases || [],
+          vgMatchMode: val.vgMatchMode === 'CONTAINS' ? 'CONTAINS' : 'EXACT',
+          vgElse: val.vgElse || 'NORMAL'
+        }
+      });
+    })));
+    return found;
+  } catch {
+    return null;
+  }
+};
+
+// Turns one value-groups verdict into the cell's status + the wording shown in its tooltip.
+const judgeValueGroupsCell = (
+  config: ValueGroupsConfig,
+  refValue: string,
+  value: string,
+  refDoc: string,
+  checkedDoc: string,
+  language: string
+): { status: 'MATCH' | 'SYNONYM' | 'MISMATCH'; ruleTitle: string; ruleDesc: string } => {
+  const th = language === 'TH';
+  const verdict = evaluateValueGroups(config, refValue, value);
+  if (verdict.kind === 'case') {
+    const verb = config.vgMatchMode === 'EXACT' ? (th ? 'ต้องเป็น' : 'must be') : (th ? 'ต้องมีคำว่า' : 'must contain');
+    return {
+      status: verdict.ok ? 'SYNONYM' : 'MISMATCH',
+      ruleTitle: th ? 'เทียบตามกลุ่มค่า' : 'Value groups',
+      ruleDesc: th
+        ? `${refDoc} ระบุ "${refValue}" → ${checkedDoc} ${verb} ${verdict.accept.join(' / ')} · พบ "${value}"`
+        : `${refDoc} says "${refValue}" → ${checkedDoc} ${verb} ${verdict.accept.join(' / ')} · found "${value}"`
+    };
+  }
+  if (config.vgElse === 'SKIP') return { status: 'MATCH', ruleTitle: '', ruleDesc: '' };
+  if (config.vgElse === 'REVIEW') {
+    return {
+      status: 'MISMATCH',
+      ruleTitle: th ? 'ไม่เข้ากรณีใดในกลุ่มค่า' : 'No value group applies',
+      ruleDesc: th ? `${refDoc} ระบุ "${refValue}" ซึ่งไม่อยู่ในกรณีที่ตั้งไว้ — ให้ผู้ตรวจสอบเช็กเอง` : `${refDoc} says "${refValue}", which is in none of the cases — a reviewer decides`
+    };
+  }
+  return { status: value === refValue ? 'MATCH' : 'MISMATCH', ruleTitle: '', ruleDesc: '' };
+};
 
 const composeFieldValue = (partValues: string[], separator: string): string =>
   partValues.filter(v => v !== undefined && v !== '').join(separator);
@@ -3594,6 +3707,102 @@ const mockWorkflows: Workflow[] = [
       foundDocs: 0,
       matchedCount: 0,
       mismatchedCount: 0
+    },
+
+    // --- Shipment 19: "Incoterm by freight terms" — 4-flow CDS preset. Flow 1 is done. Flow 2
+    // (Shipping Doc Matching) uses a "value groups" compare rule on Incoterm: what the Bill of
+    // Lading says about freight (COLLECT / PREPAID) decides which Incoterms the Invoice is
+    // allowed to show — see INCOTERM_VALUE_GROUPS_DEMO and getValueGroupDemoResults. Flows 3-4
+    // haven't started. ---
+    {
+      id: 'job-vg-a',
+      reference: 'Incoterm by freight terms',
+      expiryDate: '16 OCT 2026 17:00:00',
+      createdAt: '12 OCT 2026',
+      workflowName: 'PO/PI Matching',
+      assignedTeam: 'operation',
+      assignee: 'Somchai T.',
+      isLocked: true,
+      status: JobStatus.READY,
+      totalFieldsCount: 11,
+      accuracyScore: 100.0,
+      docs: {
+        'PO/PI': ComparisonDocStatus.LOCKED,
+        'Invoice': ComparisonDocStatus.LOCKED
+      },
+      progress: 100,
+      totalDocs: 2,
+      foundDocs: 2,
+      matchedCount: 2,
+      mismatchedCount: 0
+    },
+    {
+      id: 'job-vg-b',
+      reference: 'Incoterm by freight terms',
+      expiryDate: '17 OCT 2026 17:00:00',
+      createdAt: '12 OCT 2026',
+      workflowName: 'Shipping Doc Matching',
+      assignedTeam: 'operation',
+      assignee: 'Somchai T.',
+      status: JobStatus.REVIEW,
+      totalFieldsCount: 0,
+      accuracyScore: 0.0,
+      docs: {
+        'Invoice': ComparisonDocStatus.MATCHED,
+        'Packing List': ComparisonDocStatus.MISMATCHED,
+        'Bill of Lading': ComparisonDocStatus.MATCHED,
+        'FREIGHT INVOICE': ComparisonDocStatus.MISSING,
+        'HS Code': ComparisonDocStatus.MISSING,
+        'FTA Draft': ComparisonDocStatus.MISSING
+      },
+      progress: 50,
+      totalDocs: 6,
+      foundDocs: 3,
+      matchedCount: 2,
+      mismatchedCount: 1
+    },
+    {
+      id: 'job-vg-c',
+      reference: 'Incoterm by freight terms',
+      expiryDate: '18 OCT 2026 17:00:00',
+      createdAt: '12 OCT 2026',
+      workflowName: 'Import Declaration Matching#1',
+      assignedTeam: 'customs',
+      status: JobStatus.NEW,
+      totalFieldsCount: 0,
+      accuracyScore: 0.0,
+      docs: {
+        'ใบขนสินค้า': ComparisonDocStatus.MISSING,
+        'Bill of Lading': ComparisonDocStatus.MISSING
+      },
+      progress: 0,
+      totalDocs: 2,
+      foundDocs: 0,
+      matchedCount: 0,
+      mismatchedCount: 0
+    },
+    {
+      id: 'job-vg-d',
+      reference: 'Incoterm by freight terms',
+      expiryDate: '19 OCT 2026 17:00:00',
+      createdAt: '12 OCT 2026',
+      workflowName: 'Import Declaration Matching#2',
+      assignedTeam: 'customs',
+      status: JobStatus.NEW,
+      totalFieldsCount: 0,
+      accuracyScore: 0.0,
+      docs: {
+        'Import Dec.': ComparisonDocStatus.MISSING,
+        'Form FTA': ComparisonDocStatus.MISSING,
+        'License': ComparisonDocStatus.MISSING,
+        'LPI': ComparisonDocStatus.MISSING,
+        'Other': ComparisonDocStatus.MISSING
+      },
+      progress: 0,
+      totalDocs: 5,
+      foundDocs: 0,
+      matchedCount: 0,
+      mismatchedCount: 0
     }
     ];
     // Jobs created via "สร้างรายการใหม่" only ever live in this tab's memory — a doc preview
@@ -4121,7 +4330,7 @@ const mockWorkflows: Workflow[] = [
   const getNoRuleCellsForJob = (jobId: string, docNames: string[]): Set<string> => {
     // The Conditional Rule Demo job needs its specific fields reliably visible every load —
     // skip the random "no rule configured" simulation for it entirely.
-    if (jobId === 'job-conditional-demo' || jobId === 'job-mfv-b' || jobId === 'job-mfv-c') return new Set();
+    if (jobId === 'job-conditional-demo' || jobId === 'job-mfv-b' || jobId === 'job-mfv-c' || jobId === 'job-vg-b') return new Set();
     if (!noRuleFieldsRef.current[jobId]) {
       const count = 2 + Math.floor(Math.random() * 2); // 2-3
       noRuleFieldsRef.current[jobId] = [
@@ -4519,7 +4728,13 @@ const mockWorkflows: Workflow[] = [
       let next = t;
       const editKey = `${t.fileName}_${r.fieldName}`;
       const edited = (r.group ? overriddenValues[`${editKey}@${r.group}`] : undefined) || overriddenValues[editKey];
-      if (edited && !t.mergedInfo) {
+      if (edited && t.valueGroups) {
+        next = {
+          ...next,
+          value: edited,
+          ...judgeValueGroupsCell(t.valueGroups.config, t.valueGroups.refValue, edited, t.valueGroups.refDocName, t.fileName, language)
+        };
+      } else if (edited && !t.mergedInfo) {
         const expected = t.compareValue || r.sourceValue;
         next = { ...next, value: edited, status: edited === expected ? 'MATCH' : 'MISMATCH' };
       }
@@ -4535,7 +4750,92 @@ const mockWorkflows: Workflow[] = [
     })
   }));
 
+  // Hand-built flow-2 data for the "Incoterm by freight terms" demo shipment. Header rows are the
+  // same on every document, except Incoterm: the Bill of Lading is the main document for it and
+  // says how freight is paid, while the Invoice and Packing List each write their own Incoterm.
+  // Which of those are accepted is decided by the "value groups" cells saved on the Shipping Doc
+  // Matching compare rule (Manage rule page) — read live, see readValueGroupRules. Without any
+  // saved rule (Manage rule never opened) the shipped Incoterm demo rule is used instead.
+  const getValueGroupDemoResults = (job: ComparisonJob): any[] => {
+    const docNames = Object.keys(job.docs);
+    const makeTargets = (cells: Record<string, string>, primary: string) => docNames.map((docName, tIdx) => {
+      const missing = job.docs[docName] === ComparisonDocStatus.MISSING;
+      const value = missing ? '-' : (cells[docName] ?? '');
+      const base = {
+        fileId: `target-${tIdx + 1}`, fileName: docName, ruleTitle: '', ruleDesc: '',
+        conditionalSourceValue: undefined, conditionalSourceDoc: undefined, conditionalSourceField: undefined,
+        isPrimary: docName === primary
+      };
+      if (missing) return { ...base, value, status: 'MATCH' };
+      if (cells[docName] === undefined) return { ...base, value: '', status: 'MATCH', notInDoc: true };
+      return { ...base, value, status: 'MATCH' };
+    });
+    const everywhere = (value: string) => ({ 'Invoice': value, 'Packing List': value, 'Bill of Lading': value });
+    const results: any[] = [];
+    const header: [string, string][] = [
+      ['Consignee Name', 'BIZ-TRANS LOGISTICS CO., LTD.'],
+      ['Port of Loading', 'SHANGHAI, CHINA'],
+      ['Port of Discharge', 'BANGKOK, THAILAND']
+    ];
+    header.forEach(([fieldName, value]) => {
+      results.push({ fieldName, sourceValue: value, part: 'Header', group: undefined, targets: makeTargets(everywhere(value), 'Invoice') });
+    });
+
+    // Incoterm: the B/L says how freight is paid; the Invoice's Incoterm fits that (FOB with
+    // COLLECT) while the Packing List's doesn't (CIF belongs to PREPAID).
+    const blTerm = 'COLLECT';
+    results.push({
+      fieldName: 'Incoterm', sourceValue: blTerm, part: 'Header', group: undefined,
+      targets: makeTargets({ 'Invoice': 'FOB', 'Packing List': 'CIF', 'Bill of Lading': blTerm }, 'Bill of Lading')
+    });
+
+    const items = [
+      { desc: 'Mens (Knitted 82% Nylon 18% Spandex) S/S Polo Black', sku: 'MPL-001', qty: '1,200', weight: '120' },
+      { desc: 'Womens (Knitted 82% Nylon 18% Spandex) S/S Polo Navy', sku: 'WPL-003', qty: '3,600', weight: '360' }
+    ];
+    items.forEach((item, idx) => {
+      const rows: [string, string, 'string' | 'number'][] = [
+        ['Product Description', item.desc, 'string'],
+        ['Item No. / Model No. (SKU)', item.sku, 'string'],
+        ["Q'ty by line", item.qty, 'number'],
+        ['Net Weight (KGS)', item.weight, 'number']
+      ];
+      rows.forEach(([fieldName, value, type]) => {
+        results.push({ fieldName, fieldType: type, sourceValue: value, part: 'Description', group: `Item ${idx + 1}`, targets: makeTargets(everywhere(value), 'Invoice') });
+      });
+    });
+
+    const footer: [string, string][] = [['Total Quantity', '4,800'], ['Total Gross Weight (KGS)', '1,250.00'], ['Country of Origin', 'CHINA']];
+    footer.forEach(([fieldName, value]) => {
+      results.push({ fieldName, sourceValue: value, part: 'Footer', group: undefined, targets: makeTargets(everywhere(value), 'Packing List') });
+    });
+
+    // Apply the value-groups cells. Everything else keeps plain "equals the main document".
+    const savedRules = readValueGroupRules(job.workflowName || '', TRANSLATIONS[language].docTypeBL);
+    const groupRules = savedRules ?? [
+      { fieldName: 'Incoterm', docName: 'Invoice', config: INCOTERM_VALUE_GROUPS_DEMO },
+      { fieldName: 'Incoterm', docName: 'Packing List', config: INCOTERM_VALUE_GROUPS_DEMO }
+    ];
+    const valueOf = (fieldName: string, docName: string) =>
+      String(results.find(r => r.fieldName === fieldName)?.targets.find((t: any) => t.fileName === docName)?.value ?? '');
+    return results.map(row => ({
+      ...row,
+      targets: row.targets.map((t: any) => {
+        if (t.isPrimary || t.notInDoc || job.docs[t.fileName] === ComparisonDocStatus.MISSING) return t;
+        const rule = groupRules.find(r => r.fieldName === row.fieldName && r.docName === t.fileName);
+        if (!rule) return { ...t, status: t.value === row.sourceValue ? 'MATCH' : 'MISMATCH' };
+        const refDocName = normalizeDemoDocName(rule.config.vgRefDoc);
+        const refValue = valueOf(rule.config.vgRefField, refDocName);
+        const judged = judgeValueGroupsCell(rule.config, refValue, t.value, refDocName, t.fileName, language);
+        return { ...t, ...judged, valueGroups: { config: rule.config, refValue, refDocName } };
+      })
+    }));
+  };
+
   const getMockComparisonResults = (job: ComparisonJob, datasetKey?: string) => {
+    if (job.id === 'job-vg-b') {
+      return applyUserCellEdits(job, getValueGroupDemoResults(job));
+    }
     if (job.id === 'job-mfv-c') {
       const base = getCompositeFieldDemoResults(job);
       const composeRules = composeRulesByJob[job.id] || [];
@@ -11641,7 +11941,9 @@ const mockWorkflows: Workflow[] = [
                                         <td key={docName} className="p-0 border-r border-r-slate-100 border-t border-t-slate-200 align-top h-px bg-slate-50/60">
                                           <div className="px-4 py-4 h-full flex flex-col items-center justify-start gap-1.5">
                                             <span className="text-[11px] font-bold text-slate-400 italic">
-                                              {language === 'TH' ? 'ไม่มีฟิลด์นี้แยกในเอกสาร' : 'No separate field in this document'}
+                                              {composedInto
+                                                ? (language === 'TH' ? 'ไม่มีฟิลด์นี้แยกในเอกสาร' : 'No separate field in this document')
+                                                : (language === 'TH' ? 'ไม่มีฟิลด์นี้ในเอกสาร' : 'No such field in this document')}
                                             </span>
                                             {composedInto && (
                                               <Tooltip content={language === 'TH' ? `ค่านี้ถูกรวมอยู่ในฟิลด์ "${composedInto}" ของเอกสารนี้ และถูกนำไปเทียบแล้วที่แถวนั้น` : `This value is part of the "${composedInto}" field in this document and is compared on that row`}>
@@ -11730,7 +12032,7 @@ const mockWorkflows: Workflow[] = [
                                               title={target.status === 'MISMATCH' && selectedJob?.status !== JobStatus.READY ? (language === 'TH' ? 'ดับเบิ้ลคลิกเพื่อแก้ไขค่า OCR' : 'Double-click to edit the OCR value') : undefined}
                                             >
                                                <span className="break-all">
-                                                   {target.status === 'MISMATCH' && target.value && ((target as any).compareValue || res.sourceValue) ? (
+                                                   {target.status === 'MISMATCH' && target.value && !(target as any).valueGroups && ((target as any).compareValue || res.sourceValue) ? (
                                                      diffChars(String(target.value), String((target as any).compareValue || res.sourceValue)).map((part, index) => {
                                                        if (part.added) {
                                                          return null;
@@ -11853,6 +12155,9 @@ const mockWorkflows: Workflow[] = [
                                               <Tooltip content={
                                                 <div className="p-0.5 text-left text-[11px] font-sans max-w-[220px]">
                                                   <span className="font-bold text-emerald-400 block">{target.ruleTitle}</span>
+                                                  {!(target as any).conditionalSourceDoc && target.ruleDesc && (
+                                                    <span className="text-slate-200 font-medium block mt-1">{target.ruleDesc}</span>
+                                                  )}
                                                   {(target as any).conditionalSourceDoc && (
                                                     <span className="text-slate-200 font-medium block mt-1">
                                                       {language === 'TH'

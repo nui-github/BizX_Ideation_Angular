@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { RuleList } from './RuleList';
 import { RuleMatrix } from './RuleMatrix';
+import { makeIncotermValueGroups, ensureIncotermValueGroupsSeeded } from './compareRulesSeed';
 import { TRANSLATIONS } from '../translations';
 import { Language } from '../types';
 import { X, Check } from 'lucide-react';
@@ -54,6 +55,7 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
   // Mock Rules Data
   const [rules, setRules] = useState(() => {
     if (typeof window !== 'undefined') {
+      ensureIncotermValueGroupsSeeded(t.docTypeBL);
       const saved = localStorage.getItem('bizx_compare_rules_v12');
       if (saved) {
         try {
@@ -271,9 +273,9 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
                 {type: 'NONE'}
               ] },
               { id: 'ship-f3', detail: 'Incoterm', detailTh: 'เงื่อนไขการส่งมอบสินค้า (Incoterm)', values: [
-                {type: '', schemaId: 'ls-inv', schemaField: 'Incoterm', isMain: true},
-                {type: 'NONE'},
-                {type: 'EXACT', schemaId: 'ls-bl', schemaField: 'Incoterm'},
+                { ...makeIncotermValueGroups(t.docTypeBL), schemaId: 'ls-inv' },
+                { ...makeIncotermValueGroups(t.docTypeBL), schemaId: 'ls-pl' },
+                {type: '', schemaId: 'ls-bl', schemaField: 'Incoterm', isMain: true},
                 {type: 'NONE'},
                 {type: 'NONE'},
                 {type: 'NONE'}

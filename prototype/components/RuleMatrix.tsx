@@ -7,6 +7,50 @@ import { Language } from '../types';
 import { Tooltip } from './Tooltip';
 import { DEFAULT_SCHEMAS } from './LabelSchemaSettings';
 
+// Small "type a value and press Enter" tag box. Commas split pasted text into separate values;
+// Backspace on an empty box removes the last tag.
+const ChipListInput = ({ values, onChange, placeholder, tone }: { values: string[]; onChange: (next: string[]) => void; placeholder: string; tone: 'green' | 'blue' }) => {
+  const [draft, setDraft] = useState('');
+  const chipClass = tone === 'green'
+    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+    : 'bg-blue-50 text-blue-700 border-blue-200';
+  const commit = (raw: string) => {
+    const parts = raw.split(',').map(x => x.trim()).filter(Boolean);
+    if (parts.length === 0) return;
+    const next = [...values];
+    parts.forEach(part => {
+      if (!next.some(v => v.toLowerCase() === part.toLowerCase())) next.push(part);
+    });
+    onChange(next);
+    setDraft('');
+  };
+  return (
+    <div className="w-full bg-white border border-slate-200 focus-within:border-blue-400 rounded p-1.5 flex flex-wrap items-center gap-1 min-h-[34px]" style={{ borderRadius: '4px' }}>
+      {values.map(v => (
+        <span key={v} className={`inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded border ${chipClass}`}>
+          {v}
+          <button type="button" onClick={() => onChange(values.filter(x => x !== v))} className="opacity-60 hover:opacity-100 hover:text-red-500 font-bold cursor-pointer">×</button>
+        </span>
+      ))}
+      <input
+        type="text"
+        value={draft}
+        placeholder={values.length === 0 ? placeholder : ''}
+        onChange={(e) => {
+          if (e.target.value.includes(',')) commit(e.target.value);
+          else setDraft(e.target.value);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') { e.preventDefault(); commit(draft); }
+          else if (e.key === 'Backspace' && draft === '' && values.length > 0) onChange(values.slice(0, -1));
+        }}
+        onBlur={() => commit(draft)}
+        className="flex-1 min-w-[120px] text-[11px] font-bold text-slate-700 outline-none bg-transparent px-1 py-0.5"
+      />
+    </div>
+  );
+};
+
 export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
   const t = TRANSLATIONS[language as Language] || TRANSLATIONS.EN;
   const [activeRule, setActiveRule] = useState(() => {
@@ -229,6 +273,8 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
         return language === 'TH' ? 'Master lookup (ฐานข้อมูล)' : 'Master lookup (MASTER_LOOKUP)';
       case 'CONDITIONAL':
         return language === 'TH' ? 'เปรียบเทียบตามเงื่อนไข (CONDITIONAL)' : 'Conditional (CONDITIONAL)';
+      case 'VALUE_GROUPS':
+        return language === 'TH' ? 'เทียบตามกลุ่มค่า (VALUE GROUPS)' : 'Value groups (VALUE_GROUPS)';
       case 'DATE_NORMALIZATION':
         return language === 'TH' ? 'ปรับรูปแบบวันที่ (DATE)' : 'Date (DATE_NORMALIZATION)';
       case 'CROSS_FLOW_CARRY':
@@ -1081,7 +1127,14 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                                              newValues[vIdx] = {
                                                ...newValues[vIdx],
                                                type: typeVal,
-                                               ...(typeVal === 'FUZZY' && newValues[vIdx].threshold === undefined ? { threshold: 80 } : {})
+                                               ...(typeVal === 'FUZZY' && newValues[vIdx].threshold === undefined ? { threshold: 80 } : {}),
+                                               ...(typeVal === 'VALUE_GROUPS' && !newValues[vIdx].vgCases ? {
+                                                 vgRefDoc: activeRule.docTypes.find((d: string) => /lading|b\/l/i.test(d) && d !== activeRule.docTypes[vIdx]) || '',
+                                                 vgRefField: '',
+                                                 vgCases: [{ id: `vg_${Date.now()}`, when: [], accept: [] }],
+                                                 vgMatchMode: 'EXACT',
+                                                 vgElse: 'NORMAL'
+                                               } : {})
                                              };
                                              setEditFormData({...editFormData, values: newValues});
                                              
@@ -1109,6 +1162,7 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                                           <option value="EXISTENCE">{language === 'TH' ? 'ความมีอยู่ (EXISTENCE)' : 'Existence'}</option>
                                           <option value="MASTER_LOOKUP">{language === 'TH' ? 'Master lookup (ฐานข้อมูล)' : 'Master lookup'}</option>
                                           <option value="CONDITIONAL">{language === 'TH' ? 'เปรียบเทียบตามเงื่อนไข (CONDITIONAL)' : 'Conditional'}</option>
+                                          <option value="VALUE_GROUPS">{language === 'TH' ? 'เทียบตามกลุ่มค่า (VALUE GROUPS)' : 'Value groups'}</option>
                                           <option value="DATE_NORMALIZATION">{language === 'TH' ? 'ปรับรูปแบบวันที่ (DATE)' : 'Date normalization'}</option>
                                         </select>
                                         {currentVal?.type && currentVal?.type !== 'NONE' && (
@@ -1195,6 +1249,7 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                                       val?.type === 'EXISTENCE' ? 'bg-orange-50 text-orange-700 border-orange-200' :
                                       val?.type === 'MASTER_LOOKUP' ? 'bg-rose-50 text-rose-700 border-rose-200' :
                                       val?.type === 'CONDITIONAL' ? 'bg-pink-50 text-pink-700 border-pink-200' :
+                                      val?.type === 'VALUE_GROUPS' ? 'bg-cyan-50 text-cyan-700 border-cyan-200' :
                                       val?.type === 'DATE_NORMALIZATION' ? 'bg-amber-50 text-amber-700 border-amber-200' :
                                       val?.type === 'CROSS_FLOW_CARRY' ? 'bg-teal-50 text-teal-700 border-teal-200' :
                                       val?.type === 'NONE' ? 'bg-slate-100 text-slate-500 border-slate-300' :
@@ -1243,6 +1298,20 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                                               <div className="text-[7px] text-slate-500 font-extrabold border-t border-pink-200/30 pt-0.5 mt-0.5">Use: {val.condSource || 'L/C No.'}</div>
                                             </div>
                                           );
+                                        case 'VALUE_GROUPS': {
+                                          const groups: { when: string[]; accept: string[] }[] = (val.vgCases || []).filter((c: any) => c.when?.length > 0 && c.accept?.length > 0);
+                                          return (
+                                            <div className="flex flex-col gap-0.5 mt-1.5 text-[7.5px] font-black text-cyan-700 bg-cyan-50/60 px-1.5 py-1 rounded border border-cyan-200/50 text-left w-full overflow-hidden">
+                                              <div className="opacity-75 font-bold truncate">{val.vgRefDoc || '—'} · {val.vgRefField || '—'}</div>
+                                              {groups.length === 0 ? (
+                                                <div className="text-slate-400 font-bold">{language === 'TH' ? 'ยังไม่ได้ตั้งกลุ่มค่า' : 'No groups yet'}</div>
+                                              ) : groups.slice(0, 2).map((c, i) => (
+                                                <div key={i} className="font-bold truncate border-t border-cyan-200/30 pt-0.5 mt-0.5">{c.when.join('/')} → {c.accept.join('/')}</div>
+                                              ))}
+                                              {groups.length > 2 && <div className="text-slate-400 font-bold">+{groups.length - 2} {language === 'TH' ? 'กรณี' : 'more'}</div>}
+                                            </div>
+                                          );
+                                        }
                                         case 'DATE_NORMALIZATION':
                                           return (
                                             <div className="flex items-center justify-center gap-1 mt-1.5 text-[8px] font-black text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200/40">
@@ -2064,6 +2133,217 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                         </div>
                       </div>
                     );
+
+                  case 'VALUE_GROUPS': {
+                    const vgDocOptions = activeRule.docTypes.filter((d: string) => d !== t.docTypeRemark && d.trim() !== '' && d !== openDrawerInfo.docType);
+                    const vgRefDoc: string = drawerVal.vgRefDoc || '';
+                    const vgCases: { id: string; when: string[]; accept: string[] }[] = drawerVal.vgCases || [];
+                    const vgMatchMode: 'EXACT' | 'CONTAINS' = drawerVal.vgMatchMode === 'CONTAINS' ? 'CONTAINS' : 'EXACT';
+                    const vgElse: 'NORMAL' | 'REVIEW' | 'SKIP' = drawerVal.vgElse || 'NORMAL';
+                    const vgRefFieldLabels = vgRefDoc ? getLabelsForDocTypeAndSchema(vgRefDoc, '') : [];
+                    const vgRefFieldOptions: string[] = Array.from(new Set([
+                      ...(vgRefFieldLabels.length > 0 ? vgRefFieldLabels : []),
+                      ...allRuleFields,
+                      ...(drawerVal.vgRefField ? [drawerVal.vgRefField] : [])
+                    ]));
+                    const setVg = (patch: any) => {
+                      const newValues = [...editFormData.values];
+                      newValues[openDrawerInfo.colIdx] = { ...newValues[openDrawerInfo.colIdx], ...patch };
+                      setEditFormData({ ...editFormData, values: newValues });
+                    };
+                    const setCase = (caseId: string, patch: any) => setVg({ vgCases: vgCases.map(c => (c.id === caseId ? { ...c, ...patch } : c)) });
+                    const refLabel = `${drawerVal.vgRefField || (language === 'TH' ? 'ฟิลด์' : 'field')} ${language === 'TH' ? 'ใน' : 'in'} ${vgRefDoc || (language === 'TH' ? 'เอกสาร' : 'document')}`;
+                    const thisLabel = `${openDrawerInfo.fieldName} ${language === 'TH' ? 'ใน' : 'in'} ${openDrawerInfo.docType}`;
+                    const sectionTitle = 'text-[10px] font-black text-slate-500 uppercase tracking-widest select-none';
+                    const selectClass = 'w-full h-9 bg-white border border-slate-200 rounded px-2.5 py-1.5 text-xs font-bold text-slate-700 focus:ring-1 focus:ring-blue-500 outline-none cursor-pointer';
+                    const choiceCard = (selected: boolean, onClick: () => void, title: string, hint: string) => (
+                      <button
+                        type="button"
+                        onClick={onClick}
+                        className={`text-left rounded-lg border p-2.5 flex items-start gap-2.5 cursor-pointer transition-colors ${selected ? 'border-[#1f5df9] bg-blue-50/50' : 'border-slate-200 bg-white hover:border-slate-300'}`}
+                      >
+                        <span className={`mt-0.5 w-3.5 h-3.5 rounded-full border-2 shrink-0 flex items-center justify-center ${selected ? 'border-[#1f5df9]' : 'border-slate-300'}`}>
+                          {selected && <span className="w-1.5 h-1.5 rounded-full bg-[#1f5df9]" />}
+                        </span>
+                        <span className="flex flex-col gap-0.5">
+                          <span className="text-xs font-black text-slate-700">{title}</span>
+                          <span className="text-[10px] font-medium text-slate-400 leading-snug">{hint}</span>
+                        </span>
+                      </button>
+                    );
+
+                    return (
+                      <div className="flex flex-col gap-4">
+                        <div className="bg-slate-50 border border-slate-200/80 p-4 flex flex-col gap-1.5" style={{ borderRadius: '12px' }}>
+                          <span className="text-[10px] font-black text-slate-800 uppercase tracking-wider select-none">
+                            💡 {language === 'TH' ? 'ใช้เมื่อไหร่' : 'When to use'}
+                          </span>
+                          <p className="text-xs text-slate-500 leading-relaxed font-medium">
+                            {language === 'TH'
+                              ? <>ใช้เมื่อ <strong>ค่าที่ถูกต้อง</strong> ของฟิลด์นี้ขึ้นอยู่กับค่าในอีกเอกสาร เช่น ถ้า B/L ระบุ <strong>COLLECT</strong> ให้ Incoterm ใน Invoice ต้องเป็น <strong>EXW, FCA</strong> หรือ <strong>FOB</strong> อย่างใดอย่างหนึ่ง แต่ถ้าระบุ <strong>PREPAID</strong> ให้เป็นกลุ่มอื่น</>
+                              : <>Use this when the <strong>correct value</strong> of this field depends on a value in another document — e.g. if the B/L says <strong>COLLECT</strong>, the Invoice's Incoterm must be one of <strong>EXW, FCA, FOB</strong>; if it says <strong>PREPAID</strong>, a different group applies.</>}
+                          </p>
+                        </div>
+
+                        {/* 1. where to look */}
+                        <div className="bg-[#F0FDF4]/80 border border-[#DCFCE7] p-4 flex flex-col gap-3" style={{ borderRadius: '8px' }}>
+                          <span className="text-[10px] font-black text-[#166534] uppercase tracking-wider select-none">
+                            {language === 'TH' ? '1. ดูค่าเงื่อนไขจากที่ไหน' : '1. Where to read the condition from'}
+                          </span>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="flex flex-col gap-1">
+                              <label className={sectionTitle}>{language === 'TH' ? 'เอกสาร' : 'Document'}</label>
+                              <select
+                                className={selectClass}
+                                style={{ borderRadius: '4px' }}
+                                value={vgRefDoc}
+                                onChange={(e) => setVg({ vgRefDoc: e.target.value, vgRefField: '' })}
+                              >
+                                <option value="">{language === 'TH' ? 'เลือกเอกสาร' : 'Select document'}</option>
+                                {vgDocOptions.map((d: string) => <option key={d} value={d}>{d}</option>)}
+                              </select>
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <label className={sectionTitle}>{language === 'TH' ? 'ฟิลด์' : 'Field'}</label>
+                              <select
+                                className={`${selectClass} ${!vgRefDoc ? 'bg-slate-50 text-slate-400 cursor-not-allowed' : ''}`}
+                                style={{ borderRadius: '4px' }}
+                                disabled={!vgRefDoc}
+                                value={drawerVal.vgRefField || ''}
+                                onChange={(e) => setVg({ vgRefField: e.target.value })}
+                              >
+                                <option value="">{language === 'TH' ? 'เลือกฟิลด์' : 'Select field'}</option>
+                                {vgRefFieldOptions.map((f: string) => <option key={f} value={f}>{f}</option>)}
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 2. the groups */}
+                        <div className="flex flex-col gap-3">
+                          <span className="text-[10px] font-black text-[#1E40AF] uppercase tracking-wider select-none">
+                            {language === 'TH' ? '2. กำหนดกลุ่มค่า (ตามลำดับ ใช้กรณีแรกที่ตรง)' : '2. Value groups (first matching case is used)'}
+                          </span>
+                          {vgCases.map((c, idx) => (
+                            <div key={c.id} className="bg-[#EFF6FF]/90 border border-[#DBEAFE] p-4 flex flex-col gap-3" style={{ borderRadius: '8px' }}>
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-black text-[#1E40AF]">{language === 'TH' ? `กรณีที่ ${idx + 1}` : `Case ${idx + 1}`}</span>
+                                {vgCases.length > 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setVg({ vgCases: vgCases.filter(x => x.id !== c.id) })}
+                                    className="p-1 rounded hover:bg-rose-50 text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"
+                                    title={language === 'TH' ? 'ลบกรณีนี้' : 'Remove this case'}
+                                  >
+                                    <Trash2 size={13} />
+                                  </button>
+                                )}
+                              </div>
+                              <div className="flex flex-col gap-1.5">
+                                <span className="text-[11px] font-bold text-slate-600">
+                                  {language === 'TH' ? <>ถ้า <span className="text-[#166534] font-black">{refLabel}</span> เป็น (ใส่ได้หลายค่า)</> : <>If <span className="text-[#166534] font-black">{refLabel}</span> is (one or more values)</>}
+                                </span>
+                                <ChipListInput
+                                  values={c.when}
+                                  tone="green"
+                                  placeholder={language === 'TH' ? 'พิมพ์ค่า เช่น COLLECT แล้วกด Enter' : 'Type a value, e.g. COLLECT, then press Enter'}
+                                  onChange={(next) => setCase(c.id, { when: next })}
+                                />
+                              </div>
+                              <div className="flex flex-col gap-1.5">
+                                <span className="text-[11px] font-bold text-slate-600">
+                                  {language === 'TH' ? <>ให้ <span className="text-[#1E40AF] font-black">{thisLabel}</span> ต้องเป็น (ใส่ได้หลายค่า)</> : <>Then <span className="text-[#1E40AF] font-black">{thisLabel}</span> must be (one or more values)</>}
+                                </span>
+                                <ChipListInput
+                                  values={c.accept}
+                                  tone="blue"
+                                  placeholder={language === 'TH' ? 'พิมพ์ค่า เช่น EXW แล้วกด Enter' : 'Type a value, e.g. EXW, then press Enter'}
+                                  onChange={(next) => setCase(c.id, { accept: next })}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={() => setVg({ vgCases: [...vgCases, { id: `vg_${Date.now()}`, when: [], accept: [] }] })}
+                            className="self-start flex items-center gap-1.5 text-blue-600 hover:text-blue-700 font-bold text-xs cursor-pointer"
+                          >
+                            <span className="w-5 h-5 rounded-md bg-blue-50 flex items-center justify-center"><Plus size={12} /></span>
+                            {language === 'TH' ? 'เพิ่มกรณี' : 'Add a case'}
+                          </button>
+                        </div>
+
+                        {/* 3. how to check */}
+                        <div className="flex flex-col gap-2">
+                          <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider select-none">
+                            {language === 'TH' ? '3. วิธีเช็กค่า' : '3. How to check the value'}
+                          </span>
+                          {choiceCard(
+                            vgMatchMode === 'EXACT',
+                            () => setVg({ vgMatchMode: 'EXACT' }),
+                            language === 'TH' ? 'ต้องตรงกับค่าในรายการ' : 'Must equal a value in the list',
+                            language === 'TH' ? 'ค่าที่อ่านได้ต้องเหมือนกับค่าใดค่าหนึ่งในรายการ เช่น "FOB" ผ่าน แต่ "FOB BANGKOK" ไม่ผ่าน' : 'The read value must be identical to one of the listed values, e.g. "FOB" passes but "FOB BANGKOK" does not'
+                          )}
+                          {choiceCard(
+                            vgMatchMode === 'CONTAINS',
+                            () => setVg({ vgMatchMode: 'CONTAINS' }),
+                            language === 'TH' ? 'มีคำในรายการอยู่ในค่า' : 'Contains a value from the list',
+                            language === 'TH' ? 'ค่าที่อ่านได้มีคำใดคำหนึ่งในรายการอยู่ข้างใน เช่น "FOB BANGKOK" ผ่านเพราะมี FOB' : 'The read value contains one of the listed values, e.g. "FOB BANGKOK" passes because it contains FOB'
+                          )}
+                          <span className="text-[10px] font-medium text-slate-400">
+                            {language === 'TH' ? 'ไม่สนตัวพิมพ์เล็ก-ใหญ่ (fob = FOB)' : 'Letter case is ignored (fob = FOB)'}
+                          </span>
+                        </div>
+
+                        {/* 4. otherwise */}
+                        <div className="bg-[#FFFBEB]/70 border border-[#FEF3C7] p-4 flex flex-col gap-2" style={{ borderRadius: '8px' }}>
+                          <span className="text-[10px] font-black text-[#92400e] uppercase tracking-wider select-none">
+                            {language === 'TH' ? '4. ถ้าไม่ตรงกับกรณีไหนเลย' : '4. If none of the cases apply'}
+                          </span>
+                          {choiceCard(
+                            vgElse === 'NORMAL',
+                            () => setVg({ vgElse: 'NORMAL' }),
+                            language === 'TH' ? 'เทียบค่าตามปกติ' : 'Compare normally',
+                            language === 'TH' ? 'เทียบกับเอกสารหลักแบบตรงกันเหมือนปกติ' : 'Compare with the main document as usual'
+                          )}
+                          {choiceCard(
+                            vgElse === 'REVIEW',
+                            () => setVg({ vgElse: 'REVIEW' }),
+                            language === 'TH' ? 'ให้ผู้ตรวจสอบเช็กเอง' : 'Ask a reviewer to check',
+                            language === 'TH' ? 'ขึ้นเป็น "ไม่ตรงกัน" เพื่อให้คนตัดสิน' : 'Shown as a mismatch so a person decides'
+                          )}
+                          {choiceCard(
+                            vgElse === 'SKIP',
+                            () => setVg({ vgElse: 'SKIP' }),
+                            language === 'TH' ? 'ไม่ต้องเทียบ' : 'Do not compare',
+                            language === 'TH' ? 'ข้ามฟิลด์นี้ไปเลย' : 'Skip this field'
+                          )}
+                        </div>
+
+                        {/* summary in plain words */}
+                        <div className="bg-slate-50 border border-slate-200 p-4 flex flex-col gap-2" style={{ borderRadius: '8px' }}>
+                          <span className="text-[10px] font-black text-slate-800 uppercase tracking-wider select-none">
+                            {language === 'TH' ? 'สรุปการทำงาน' : 'Summary'}
+                          </span>
+                          {vgCases.filter(c => c.when.length > 0 && c.accept.length > 0).length === 0 ? (
+                            <span className="text-xs font-bold text-slate-400">{language === 'TH' ? 'ยังไม่มีกรณีที่ตั้งครบ — ใส่ค่าทั้งสองช่องในแต่ละกรณี' : 'No complete case yet — fill both value boxes in a case'}</span>
+                          ) : (
+                            vgCases.filter(c => c.when.length > 0 && c.accept.length > 0).map((c, idx) => (
+                              <div key={c.id} className="text-xs font-bold text-slate-600 leading-relaxed">
+                                {idx === 0 ? (language === 'TH' ? 'ถ้า' : 'If') : (language === 'TH' ? 'หรือ ถ้า' : 'Or if')}{' '}
+                                <span className="text-[#166534]">{refLabel}</span> {language === 'TH' ? 'เป็น' : 'is'} <span className="text-[#166534]">{c.when.join(' / ')}</span>{' '}
+                                → <span className="text-[#1E40AF]">{thisLabel}</span> {vgMatchMode === 'EXACT' ? (language === 'TH' ? 'ต้องเป็น' : 'must be') : (language === 'TH' ? 'ต้องมีคำว่า' : 'must contain')} <span className="text-[#1E40AF]">{c.accept.join(' / ')}</span>
+                              </div>
+                            ))
+                          )}
+                          <div className="text-xs font-bold text-amber-700 leading-relaxed">
+                            {language === 'TH' ? 'นอกนั้น → ' : 'Otherwise → '}
+                            {vgElse === 'NORMAL' ? (language === 'TH' ? 'เทียบค่าตามปกติ' : 'compare normally') : vgElse === 'REVIEW' ? (language === 'TH' ? 'ให้ผู้ตรวจสอบเช็กเอง' : 'ask a reviewer') : (language === 'TH' ? 'ไม่ต้องเทียบ' : 'do not compare')}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
 
                   case 'CONDITIONAL':
                     const documentTypeOptions = activeRule.docTypes.filter((d: string) => d !== t.docTypeRemark && d.trim() !== '');
