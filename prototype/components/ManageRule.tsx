@@ -206,6 +206,14 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
                 {type: 'NONE'},
                 {type: 'NONE'}
               ] },
+              { id: 'ship-f3', detail: 'Incoterm', detailTh: 'เงื่อนไขการส่งมอบสินค้า (Incoterm)', values: [
+                { ...makeIncotermValueGroups(t.docTypeBL), schemaId: 'ls-inv' },
+                { ...makeIncotermValueGroups(t.docTypeBL), schemaId: 'ls-pl' },
+                {type: '', schemaId: 'ls-bl', schemaField: 'Incoterm', isMain: true},
+                {type: 'NONE'},
+                {type: 'NONE'},
+                {type: 'NONE'}
+              ] },
             ]
           },
           {
@@ -269,14 +277,6 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
                 {type: 'NONE'},
                 {type: 'NONE'},
                 {type: '', schemaId: 'ls-frt', schemaField: 'Freight Amount', isMain: true},
-                {type: 'NONE'},
-                {type: 'NONE'}
-              ] },
-              { id: 'ship-f3', detail: 'Incoterm', detailTh: 'เงื่อนไขการส่งมอบสินค้า (Incoterm)', values: [
-                { ...makeIncotermValueGroups(t.docTypeBL), schemaId: 'ls-inv' },
-                { ...makeIncotermValueGroups(t.docTypeBL), schemaId: 'ls-pl' },
-                {type: '', schemaId: 'ls-bl', schemaField: 'Incoterm', isMain: true},
-                {type: 'NONE'},
                 {type: 'NONE'},
                 {type: 'NONE'}
               ] },
