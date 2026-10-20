@@ -431,7 +431,10 @@ const MFV_HS_LEGACY_CODES: Record<string, { code: string; year: string }[]> = {
 // what the XML says; a few differ on purpose (letter case — fine with a flexible rule; a wrong size
 // or colour — a genuine mismatch). See getCompositeFieldDemoResults.
 // hsMaster / xmlHs: what the HS Code file / the customs XML say when it differs from the invoice's HS code.
-interface ComposeDemoItem { desc: string; color: string; size: string; sku: string; hs: string; qty: number; price: number; xmlDesc: string; hsMaster?: string; xmlHs?: string }
+interface ComposeDemoItem { desc: string; color: string; size: string; sku: string; hs: string; qty: number; price: number; xmlDesc: string; hsMaster?: string; xmlHs?: string; hsFta?: string }
+// What the Form FTA says for "Country of Origin" when it isn't the invoice's — invoice 0103's form
+// names a different country, a footer-level mismatch.
+const COMPOSE_FTA_ORIGIN: Record<string, string> = { 'INV-26-0103': 'VIETNAM' };
 const COMPOSE_DEMO_ITEMS: Record<string, ComposeDemoItem[]> = {
   'INV-26-0101': [
     { desc: 'Mens S/S Polo Shirt', color: 'Black', size: 'M', sku: 'MPL-001', hs: '6105.20', qty: 1200, price: 8.5, xmlDesc: 'Mens S/S Polo Shirt / Black / M' },
@@ -440,7 +443,7 @@ const COMPOSE_DEMO_ITEMS: Record<string, ComposeDemoItem[]> = {
   ],
   'INV-26-0102': [
     // Invoice and XML still use the older-edition code the HS Code file lists as legacy.
-    { desc: 'Mens S/S Polo Shirt', color: 'Grey', size: 'M', sku: 'MPL-004', hs: '6105.90', hsMaster: '6105.20', qty: 1000, price: 9, xmlDesc: 'Mens S/S Polo Shirt / Grey / M' },
+    { desc: 'Mens S/S Polo Shirt', color: 'Grey', size: 'M', sku: 'MPL-004', hs: '6105.90', hsMaster: '6105.20', hsFta: '6105.90', qty: 1000, price: 9, xmlDesc: 'Mens S/S Polo Shirt / Grey / M' },
     { desc: 'Womens S/S Polo Shirt', color: 'Red', size: 'S', sku: 'WPL-005', hs: '6106.20', qty: 1500, price: 8.5, xmlDesc: 'WOMENS S/S POLO SHIRT / RED / S' }
   ],
   'INV-26-0103': [
@@ -3790,7 +3793,7 @@ const mockWorkflows: Workflow[] = [
         'Bill of Lading': ComparisonDocStatus.MISSING,
         'FREIGHT INVOICE': ComparisonDocStatus.MISSING,
         'HS Code Master File': ComparisonDocStatus.MISMATCHED,
-        'Form FTA': ComparisonDocStatus.MISSING,
+        'Form FTA': ComparisonDocStatus.MATCHED,
         'Insurance Sheet': ComparisonDocStatus.MISSING
       },
       // The same three invoices as flow 2 — the customs XML and the Invoice / Packing List each
@@ -3800,10 +3803,10 @@ const mockWorkflows: Workflow[] = [
         { key: 'INV-26-0102', label: 'INV-26-0102' },
         { key: 'INV-26-0103', label: 'INV-26-0103' }
       ],
-      progress: 50,
+      progress: 63,
       totalDocs: 8,
-      foundDocs: 4,
-      matchedCount: 1,
+      foundDocs: 5,
+      matchedCount: 2,
       mismatchedCount: 3
     },
     {
@@ -4694,8 +4697,11 @@ const mockWorkflows: Workflow[] = [
     const results: any[] = [];
 
     const headerRows = dataset.header;
+    // The Form FTA repeats the consignee, each item's description / HS code / quantity, and the
+    // totals + origin; it has nothing for the other fields.
     headerRows.forEach(([fieldName, value]) => {
-      results.push({ fieldName, sourceValue: value, part: 'Header', group: undefined, targets: makeTargets(sameEverywhere(value), 'Invoice') });
+      const cells = { ...sameEverywhere(value), ...(fieldName === 'Consignee Name' ? { 'Form FTA': { value } } : {}) };
+      results.push({ fieldName, sourceValue: value, part: 'Header', group: undefined, targets: makeTargets(cells, 'Invoice') });
     });
 
     const items = COMPOSE_DEMO_ITEMS[dataKey];
@@ -4705,13 +4711,13 @@ const mockWorkflows: Workflow[] = [
       const group = `Item ${idx + 1}`;
       const amount = item.qty * item.price;
       totalAmount += amount;
-      const rows: { fieldName: string; type: 'string' | 'number'; value: string; xml: CellSpec }[] = [
-        { fieldName: 'Product Description', type: 'string', value: item.desc, xml: { value: item.xmlDesc, status: 'MISMATCH' } },
+      const rows: { fieldName: string; type: 'string' | 'number'; value: string; xml: CellSpec; fta?: CellSpec }[] = [
+        { fieldName: 'Product Description', type: 'string', value: item.desc, xml: { value: item.xmlDesc, status: 'MISMATCH' }, fta: { value: item.desc } },
         { fieldName: 'Color', type: 'string', value: item.color, xml: { value: '', notInDoc: true } },
         { fieldName: 'Size', type: 'string', value: item.size, xml: { value: '', notInDoc: true } },
         { fieldName: 'Item No. / Model No. (SKU)', type: 'string', value: item.sku, xml: { value: item.sku } },
-        { fieldName: 'HS Code', type: 'string', value: item.hs, xml: { value: item.xmlHs ?? item.hs, status: (item.xmlHs ?? item.hs) === item.hs ? 'MATCH' : 'MISMATCH' } },
-        { fieldName: "Q'ty by line", type: 'number', value: formatMergedNumber(item.qty), xml: { value: formatMergedNumber(item.qty) } },
+        { fieldName: 'HS Code', type: 'string', value: item.hs, xml: { value: item.xmlHs ?? item.hs, status: (item.xmlHs ?? item.hs) === item.hs ? 'MATCH' : 'MISMATCH' }, fta: { value: item.hsFta ?? item.hs, status: (item.hsFta ?? item.hs) === item.hs ? 'MATCH' : 'MISMATCH' } },
+        { fieldName: "Q'ty by line", type: 'number', value: formatMergedNumber(item.qty), xml: { value: formatMergedNumber(item.qty) }, fta: { value: formatMergedNumber(item.qty) } },
         { fieldName: 'Price / Unit', type: 'number', value: fmt2(item.price), xml: { value: fmt2(item.price) } },
         { fieldName: 'Invoice Amount', type: 'number', value: fmt2(amount), xml: { value: fmt2(amount) } }
       ];
@@ -4722,6 +4728,7 @@ const mockWorkflows: Workflow[] = [
             [XML_DOC]: row.xml,
             'Invoice': { value: row.value },
             'Packing List': { value: row.value },
+            ...(row.fta ? { 'Form FTA': row.fta } : {}),
             // The HS Code file only lists HS codes (and, for some, older-edition codes).
             ...(row.fieldName === 'HS Code' ? (() => {
               const master = item.hsMaster ?? item.hs;
@@ -4740,7 +4747,14 @@ const mockWorkflows: Workflow[] = [
 
     const footerRows = dataset.footer;
     footerRows.forEach(([fieldName, value]) => {
-      results.push({ fieldName, sourceValue: value, part: 'Footer', group: undefined, targets: makeTargets(sameEverywhere(value), 'Packing List') });
+      const ftaValue = fieldName === 'Country of Origin' ? (COMPOSE_FTA_ORIGIN[dataKey] ?? value) : value;
+      const cells = {
+        ...sameEverywhere(value),
+        ...(fieldName === 'Total Quantity' || fieldName === 'Country of Origin'
+          ? { 'Form FTA': { value: ftaValue, status: ftaValue === value ? 'MATCH' as const : 'MISMATCH' as const } }
+          : {})
+      };
+      results.push({ fieldName, sourceValue: value, part: 'Footer', group: undefined, targets: makeTargets(cells, 'Packing List') });
     });
 
     const summaryRows: [string, string][] = [
