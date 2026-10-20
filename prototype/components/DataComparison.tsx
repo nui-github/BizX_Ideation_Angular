@@ -415,6 +415,29 @@ const MERGE_DEMO_DATASETS: Record<string, MergeDemoDataset> = {
   }
 };
 
+// Flow 3 of the "Merge field value" shipment compares the same three invoices against the customs
+// XML ("ใบขนสินค้า"), which writes each item's description + colour + size into one field. xmlDesc is
+// what the XML says; a few differ on purpose (letter case — fine with a flexible rule; a wrong size
+// or colour — a genuine mismatch). See getCompositeFieldDemoResults.
+interface ComposeDemoItem { desc: string; color: string; size: string; sku: string; qty: number; price: number; xmlDesc: string }
+const COMPOSE_DEMO_ITEMS: Record<string, ComposeDemoItem[]> = {
+  'INV-26-0101': [
+    { desc: 'Mens S/S Polo Shirt', color: 'Black', size: 'M', sku: 'MPL-001', qty: 1200, price: 8.5, xmlDesc: 'Mens S/S Polo Shirt / Black / M' },
+    { desc: 'Mens S/S Polo Shirt', color: 'White', size: 'L', sku: 'MPL-002', qty: 2400, price: 8.5, xmlDesc: 'MENS S/S POLO SHIRT / WHITE / L' },
+    { desc: 'Womens S/S Polo Shirt', color: 'Navy', size: 'S', sku: 'WPL-003', qty: 3600, price: 8, xmlDesc: 'Womens S/S Polo Shirt / Navy / M' }
+  ],
+  'INV-26-0102': [
+    { desc: 'Mens S/S Polo Shirt', color: 'Grey', size: 'M', sku: 'MPL-004', qty: 1000, price: 9, xmlDesc: 'Mens S/S Polo Shirt / Grey / M' },
+    { desc: 'Womens S/S Polo Shirt', color: 'Red', size: 'S', sku: 'WPL-005', qty: 1500, price: 8.5, xmlDesc: 'WOMENS S/S POLO SHIRT / RED / S' }
+  ],
+  'INV-26-0103': [
+    { desc: 'Kids S/S Polo Shirt', color: 'Yellow', size: 'S', sku: 'KPL-006', qty: 900, price: 6, xmlDesc: 'Kids S/S Polo Shirt / Yellow / S' },
+    { desc: 'Mens S/S Polo Shirt', color: 'Navy', size: 'L', sku: 'MPL-007', qty: 2000, price: 9, xmlDesc: 'MENS S/S POLO SHIRT / NAVY / L' },
+    { desc: 'Womens S/S Polo Shirt', color: 'White', size: 'M', sku: 'WPL-008', qty: 1200, price: 8.5, xmlDesc: 'Womens S/S Polo Shirt / White / M' },
+    { desc: 'Womens S/S Polo Shirt', color: 'Pink', size: 'S', sku: 'WPL-009', qty: 600, price: 8.5, xmlDesc: 'Womens S/S Polo Shirt / Pink / M' }
+  ]
+};
+
 // Demo-only preview filename overrides so a specific mock job can showcase the Excel/XML
 // preview mockups without changing the real doc-type keys other logic (schema/rule matching,
 // OCR simulation) relies on. Keyed by job id, then by the doc-type column name.
@@ -3743,6 +3766,13 @@ const mockWorkflows: Workflow[] = [
         'Form FTA': ComparisonDocStatus.MISSING,
         'Insurance Sheet': ComparisonDocStatus.MISSING
       },
+      // The same three invoices as flow 2 — the customs XML and the Invoice / Packing List each
+      // bundle all three.
+      datasets: [
+        { key: 'INV-26-0101', label: 'INV-26-0101' },
+        { key: 'INV-26-0102', label: 'INV-26-0102' },
+        { key: 'INV-26-0103', label: 'INV-26-0103' }
+      ],
       progress: 38,
       totalDocs: 8,
       foundDocs: 3,
@@ -4575,7 +4605,9 @@ const mockWorkflows: Workflow[] = [
   // into its Product Description ("<desc> / <color> / <size>"), while the invoice and packing
   // list keep the three apart. Before any compose rule the XML's description can't match the
   // invoice's, which is exactly what the "compose field values" drawer fixes.
-  const getCompositeFieldDemoResults = (job: ComparisonJob): any[] => {
+  const getCompositeFieldDemoResults = (job: ComparisonJob, datasetKey?: string): any[] => {
+    const dataKey = datasetKey && COMPOSE_DEMO_ITEMS[datasetKey] ? datasetKey : 'INV-26-0101';
+    const dataset = MERGE_DEMO_DATASETS[dataKey];
     const docNames = Object.keys(job.docs);
     const XML_DOC = 'ใบขนสินค้า';
     type CellSpec = { value: string; status?: 'MATCH' | 'MISMATCH'; notInDoc?: boolean };
@@ -4602,24 +4634,12 @@ const mockWorkflows: Workflow[] = [
 
     const results: any[] = [];
 
-    const headerRows: [string, string][] = [
-      ['Consignee Name', 'BIZ-TRANS LOGISTICS CO., LTD.'],
-      ['Consignee TAX ID', '0105562000000'],
-      ['Incoterm', 'FOB'],
-      ['Port of Loading', 'SHANGHAI, CHINA'],
-      ['Port of Discharge', 'BANGKOK, THAILAND']
-    ];
+    const headerRows = dataset.header;
     headerRows.forEach(([fieldName, value]) => {
       results.push({ fieldName, sourceValue: value, part: 'Header', group: undefined, targets: makeTargets(sameEverywhere(value), 'Invoice') });
     });
 
-    const items = [
-      { desc: 'Mens S/S Polo Shirt', color: 'Black', size: 'M', sku: 'MPL-001', qty: 1200, price: 8.5, xmlDesc: 'Mens S/S Polo Shirt / Black / M' },
-      { desc: 'Mens S/S Polo Shirt', color: 'White', size: 'L', sku: 'MPL-002', qty: 2400, price: 8.5, xmlDesc: 'MENS S/S POLO SHIRT / WHITE / L' },
-      // The XML has the wrong size here (M instead of S), so this item stays a real mismatch
-      // even after the rule is applied.
-      { desc: 'Womens S/S Polo Shirt', color: 'Navy', size: 'S', sku: 'WPL-003', qty: 3600, price: 8, xmlDesc: 'Womens S/S Polo Shirt / Navy / M' }
-    ];
+    const items = COMPOSE_DEMO_ITEMS[dataKey];
     const fmt2 = (n: number) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     let totalAmount = 0;
     items.forEach((item, idx) => {
@@ -4647,19 +4667,15 @@ const mockWorkflows: Workflow[] = [
       });
     });
 
-    const footerRows: [string, string][] = [
-      ['Total Quantity', '7,200'],
-      ['Total Gross Weight (KGS)', '1,250.00'],
-      ['Country of Origin', 'CHINA']
-    ];
+    const footerRows = dataset.footer;
     footerRows.forEach(([fieldName, value]) => {
       results.push({ fieldName, sourceValue: value, part: 'Footer', group: undefined, targets: makeTargets(sameEverywhere(value), 'Packing List') });
     });
 
     const summaryRows: [string, string][] = [
-      ['Total Quantity', '7,200'],
+      ['Total Quantity', dataset.footer[0][1]],
       ['Total Amount', fmt2(totalAmount)],
-      ['Total GrossWeight', '1,250.00']
+      ['Total GrossWeight', dataset.footer[1][1]]
     ];
     summaryRows.forEach(([fieldName, value]) => {
       results.push({ fieldName, fieldType: 'number', sourceValue: value, part: 'Summary', group: undefined, targets: makeTargets(sameEverywhere(value), '') });
@@ -4888,7 +4904,7 @@ const mockWorkflows: Workflow[] = [
       return applyUserCellEdits(job, getValueGroupDemoResults(job));
     }
     if (job.id === 'job-mfv-c') {
-      const base = getCompositeFieldDemoResults(job);
+      const base = getCompositeFieldDemoResults(job, datasetKey);
       const composeRules = composeRulesByJob[job.id] || [];
       return applyUserCellEdits(job, composeRules.reduce((acc, rule) => applyComposeFieldRule(acc, rule), base));
     }
