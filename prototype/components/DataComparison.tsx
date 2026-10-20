@@ -11757,7 +11757,7 @@ const mockWorkflows: Workflow[] = [
                               }
 
                               return (
-                                <table key={part} className="w-full border-separate border-spacing-0" style={{ tableLayout: 'fixed' }}>
+                                <table key={part} className={`w-full border-separate border-spacing-0 ${part === 'Unmatched' ? 'border-l-4 border-l-amber-400 bg-amber-50/20' : ''}`} style={{ tableLayout: 'fixed' }}>
                                    <colgroup>
                                       <col className="w-[180px]" style={{ minWidth: '180px' }} />
                                       {comparedDocs.map(docName => (
@@ -11769,10 +11769,10 @@ const mockWorkflows: Workflow[] = [
                                        ? (tableScrolledPastTop ? 'top-[84px]' : 'top-[118px]')
                                        : (tableScrolledPastTop ? 'top-[48px]' : 'top-[82px]')
                                    }`}>
-                                     <tr className="group cursor-pointer hover:bg-slate-100 transition-all" onClick={() => togglePart(part)}>
+                                     <tr className={`group cursor-pointer transition-all ${part === 'Unmatched' ? 'hover:bg-amber-100' : 'hover:bg-slate-100'}`} onClick={() => togglePart(part)}>
                                        <th 
                                          colSpan={comparedDocs.length + 1} 
-                                         className="p-0 border-y border-slate-200/80 font-normal text-left"
+                                         className={`p-0 border-y font-normal text-left ${part === 'Unmatched' ? 'border-amber-200 bg-amber-50' : 'border-slate-200/80'}`}
                                        >
                                          <div className="sticky left-0 px-6 py-1.5 flex items-center justify-between w-fit gap-10 whitespace-nowrap z-30">
                                            <div className="flex items-center gap-4">
@@ -11781,13 +11781,23 @@ const mockWorkflows: Workflow[] = [
                                                  {collapsedParts[part] ? <ChevronRight size={10} /> : <ChevronDown size={10} />}
                                                </div>
                                                 {part === 'Unmatched' ? (
-                                                  <div className="flex items-center gap-2">
-                                                    <AlertTriangle size={12} className="text-amber-500" />
-                                                    <span className="text-[11px] font-black text-slate-800 group-hover:text-blue-600 transition-colors">
+                                                  <div className="flex items-center gap-3">
+                                                    <span className="w-6 h-6 rounded-full bg-amber-400 text-white flex items-center justify-center shrink-0 shadow-sm">
+                                                      <AlertTriangle size={13} strokeWidth={2.5} />
+                                                    </span>
+                                                    <span className="text-[13px] font-black text-amber-900">
                                                       {language === 'TH'
                                                         ? `${totalLabel} รายการที่จับคู่กับ Invoice ไม่ได้`
                                                         : `${totalLabel} items that couldn't be matched with the Invoice`}
                                                     </span>
+                                                    <button
+                                                      type="button"
+                                                      onClick={(e) => { e.stopPropagation(); setMergeDraft(null); setComposeDraft(null); setShowRulesDrawer(true); }}
+                                                      className="px-2.5 py-1 rounded-[4px] bg-[#1f5df9] text-white text-[10px] font-black hover:bg-[#1a4fd6] transition-colors cursor-pointer flex items-center gap-1 shrink-0"
+                                                    >
+                                                      <Merge size={11} strokeWidth={2.5} />
+                                                      {language === 'TH' ? 'รวมค่ารายการเหล่านี้' : 'Merge these items'}
+                                                    </button>
                                                   </div>
                                                 ) : (
                                                 <div className="flex items-center gap-2">
@@ -11828,23 +11838,59 @@ const mockWorkflows: Workflow[] = [
                                          
                                          return (
                                            <tbody key={group}>
+                                             {part === 'Unmatched' && groupIdx === 0 && (
+                                               <tr>
+                                                 <td colSpan={comparedDocs.length + 1} className="p-0 bg-amber-50 border-b border-amber-200">
+                                                   <div className="sticky left-0 w-fit px-6 py-3 flex items-start gap-2 text-xs font-bold text-amber-900/80 leading-relaxed">
+                                                     <Info size={14} className="shrink-0 mt-0.5 text-amber-500" />
+                                                     <span className="max-w-[620px]">
+                                                       {language === 'TH'
+                                                         ? 'แถวเหล่านี้อยู่ใน Packing List แต่ไม่มีแถวที่ตรงกันใน Invoice (เอกสารหลัก) จึงยังไม่ได้ถูกเปรียบเทียบกับรายการสินค้าด้านบน ลองรวมค่าเข้ากับสินค้าที่ตรงกัน หรือแก้ข้อมูลเอง'
+                                                         : "These rows are in the Packing List but have no matching row in the Invoice (the main document), so they weren't compared with the items above. Try merging them into the matching item, or fix the data."}
+                                                     </span>
+                                                   </div>
+                                                 </td>
+                                               </tr>
+                                             )}
                                              {group !== 'no-group' && (
-                                                <tr className="bg-slate-100/80 group/itemheader hover:bg-slate-200/50 cursor-pointer transition-colors" onClick={(e) => toggleGroup(e, group as string)}>
-                                                   <td colSpan={comparedDocs.length + 1} className={`sticky z-[24] p-0 border-y-2 border-slate-200/80 bg-slate-100/90 shadow-sm relative transition-[top] duration-300 will-change-[top] ${
+                                                <tr className={`group/itemheader cursor-pointer transition-colors ${part === 'Unmatched' ? 'bg-amber-50/80 hover:bg-amber-100/60' : 'bg-slate-100/80 hover:bg-slate-200/50'}`} onClick={(e) => toggleGroup(e, group as string)}>
+                                                   <td colSpan={comparedDocs.length + 1} className={`sticky z-[24] p-0 border-y-2 shadow-sm relative transition-[top] duration-300 will-change-[top] ${part === 'Unmatched' ? 'border-amber-200/80 bg-amber-50/95' : 'border-slate-200/80 bg-slate-100/90'} ${
                                                      hasDatasetSelector
                                                        ? (tableScrolledPastTop ? 'top-[116px]' : 'top-[150px]')
                                                        : (tableScrolledPastTop ? 'top-[80px]' : 'top-[114px]')
                                                    }`}>
-                                                      <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#1f5df9]"></div>
+                                                      <div className={`absolute left-0 top-0 bottom-0 w-[3px] ${part === 'Unmatched' ? 'bg-amber-400' : 'bg-[#1f5df9]'}`}></div>
                                                       <div className="flex items-center gap-3 sticky left-0 pl-8 pr-6 py-2.5 z-[26] w-fit">
                                                          <div className="w-5 h-5 rounded bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-500 group-hover/itemheader:text-blue-600 group-hover/itemheader:border-blue-200 transition-all">
                                                             {collapsedGroups[group] ? <ChevronRight size={12} strokeWidth={3} /> : <ChevronDown size={12} strokeWidth={3} />}
                                                          </div>
-                                                         <span className="font-black text-[11px] text-slate-800 uppercase tracking-widest">{String(group).replace('UM::', '')}</span>
+                                                         <span className="font-black text-[11px] text-slate-800 uppercase tracking-widest">
+                                                           {part === 'Unmatched'
+                                                             ? `${language === 'TH' ? 'แถวที่' : 'Row'} ${String(group).replace(/^UM::Item\s*/, '')}`
+                                                             : String(group).replace('UM::', '')}
+                                                         </span>
                                                          {part === 'Unmatched' && (
-                                                           <span className="px-2 py-0.5 rounded-full bg-slate-200/70 text-slate-500 text-[9px] font-bold normal-case tracking-normal">
-                                                             {language === 'TH' ? 'จาก Packing List' : 'From Packing List'}
-                                                           </span>
+                                                           <>
+                                                             <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200 text-[9px] font-bold normal-case tracking-normal">
+                                                               {language === 'TH' ? 'จาก Packing List' : 'From Packing List'}
+                                                             </span>
+                                                             {(() => {
+                                                               // What this row is, so it can be told apart without expanding it.
+                                                               const valueIn = (fieldName: string) => {
+                                                                 const row = originalPartResults.find(r => r.group === group && r.fieldName === fieldName);
+                                                                 const hit = row?.targets.find((tg: any) => tg.value && tg.value !== '-');
+                                                                 return hit ? String(hit.value) : '';
+                                                               };
+                                                               const parts = [
+                                                                 valueIn('Item No. / Model No. (SKU)'),
+                                                                 valueIn('Product Description'),
+                                                                 valueIn("Q'ty by line") ? `Q'ty ${valueIn("Q'ty by line")}` : ''
+                                                               ].filter(Boolean);
+                                                               return parts.length > 0 ? (
+                                                                 <span className="text-[10px] font-bold text-amber-900/70 normal-case tracking-normal truncate max-w-[380px]">{parts.join(' · ')}</span>
+                                                               ) : null;
+                                                             })()}
+                                                           </>
                                                          )}
                                                          <div className="flex items-center gap-1.5 ml-2">
                                                             {(() => {
@@ -11875,8 +11921,8 @@ const mockWorkflows: Workflow[] = [
                                              )}
                                              {!collapsedGroups[group] && groupFields.map((res, i) => (
                                               <tr key={res.fieldName} className={`hover:bg-slate-50/80 transition-colors group/row ${i === groupFields.length - 1 ? 'border-b-2 border-slate-200/80' : ''}`}>
-                                                 <td className={`sticky left-0 z-20 bg-slate-50 border-r border-r-slate-100 border-t border-t-slate-200 p-4 font-black text-slate-700 group-hover/row:text-[#1f5df9] shadow-[2px_0_10px_rgba(0,0,0,0.02)] transition-colors relative`}>
-                                                  {group !== 'no-group' && <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-slate-100"></div>}
+                                                 <td className={`sticky left-0 z-20 ${part === 'Unmatched' ? 'bg-amber-50' : 'bg-slate-50'} border-r border-r-slate-100 border-t border-t-slate-200 p-4 font-black text-slate-700 group-hover/row:text-[#1f5df9] shadow-[2px_0_10px_rgba(0,0,0,0.02)] transition-colors relative`}>
+                                                  {group !== 'no-group' && <div className={`absolute left-0 top-0 bottom-0 w-[3px] ${part === 'Unmatched' ? 'bg-amber-200' : 'bg-slate-100'}`}></div>}
                                                   <div className="flex flex-col ml-1">
                                                      <span className="text-[11px] tracking-wide">{res.fieldName}</span>
                                                      {res.part === 'Description' && (
