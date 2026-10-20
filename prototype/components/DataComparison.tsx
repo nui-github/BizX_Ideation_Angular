@@ -360,7 +360,8 @@ const DATASET_FIELD_OVERRIDES: Record<string, Record<string, Record<string, stri
 // The three invoices bundled in the "Merge field value" shipment's flow-2 files — each has its
 // own header, items (the packing list splits every item into one row per size) and totals. See
 // getMergeFieldValueDemoResults.
-interface MergeDemoItem { desc: string; sku: string; hs: string; qty: number; weight: number; sizes: string[] }
+// hsMaster / hsFta: what the HS Code file / the FTA draft say when it differs from the invoice's HS code.
+interface MergeDemoItem { desc: string; sku: string; hs: string; qty: number; weight: number; sizes: string[]; hsMaster?: string; hsFta?: string }
 interface MergeDemoDataset {
   header: [string, string][];
   items: MergeDemoItem[];
@@ -379,7 +380,8 @@ const MERGE_DEMO_DATASETS: Record<string, MergeDemoDataset> = {
     items: [
       { desc: `Mens ${MFV_DESC_SUFFIX} Black`, sku: 'MPL-001', hs: '6105.20', qty: 1200, weight: 120, sizes: ['S', 'M', 'L', 'XL', 'XXL'] },
       { desc: `Mens ${MFV_DESC_SUFFIX} White`, sku: 'MPL-002', hs: '6105.20', qty: 2400, weight: 240, sizes: ['S', 'M', 'L', 'XL', 'XXL'] },
-      { desc: `Womens ${MFV_DESC_SUFFIX} Navy`, sku: 'WPL-003', hs: '6106.20', qty: 3600, weight: 360, sizes: ['S', 'M', 'L', 'XL', 'XXL'] }
+      // The HS Code file lists a different code for this item — a real mismatch.
+      { desc: `Womens ${MFV_DESC_SUFFIX} Navy`, sku: 'WPL-003', hs: '6106.20', hsMaster: '6106.30', qty: 3600, weight: 360, sizes: ['S', 'M', 'L', 'XL', 'XXL'] }
     ],
     footer: [['Total Quantity', '7,200'], ['Total Gross Weight (KGS)', '1,250.00'], ['Country of Origin', 'CHINA']]
   },
@@ -392,7 +394,9 @@ const MERGE_DEMO_DATASETS: Record<string, MergeDemoDataset> = {
       ['Port of Discharge', 'LAEM CHABANG, THAILAND']
     ],
     items: [
-      { desc: `Mens ${MFV_DESC_SUFFIX} Grey`, sku: 'MPL-004', hs: '6105.20', qty: 1000, weight: 100, sizes: ['S', 'M', 'L', 'XL'] },
+      // The invoice (and the FTA draft) still use the code from an older HS edition, which the HS Code
+      // file lists as a legacy code under the current one — a mismatch the legacy line explains.
+      { desc: `Mens ${MFV_DESC_SUFFIX} Grey`, sku: 'MPL-004', hs: '6105.90', hsMaster: '6105.20', hsFta: '6105.90', qty: 1000, weight: 100, sizes: ['S', 'M', 'L', 'XL'] },
       { desc: `Womens ${MFV_DESC_SUFFIX} Red`, sku: 'WPL-005', hs: '6106.20', qty: 1500, weight: 150, sizes: ['S', 'M', 'L'] }
     ],
     footer: [['Total Quantity', '2,500'], ['Total Gross Weight (KGS)', '410.00'], ['Country of Origin', 'CHINA']]
@@ -406,7 +410,7 @@ const MERGE_DEMO_DATASETS: Record<string, MergeDemoDataset> = {
       ['Port of Discharge', 'BANGKOK, THAILAND']
     ],
     items: [
-      { desc: `Kids ${MFV_DESC_SUFFIX} Yellow`, sku: 'KPL-006', hs: '6111.30', qty: 900, weight: 54, sizes: ['S', 'M', 'L'] },
+      { desc: `Kids ${MFV_DESC_SUFFIX} Yellow`, sku: 'KPL-006', hs: '6111.30', hsFta: '6111.20', qty: 900, weight: 54, sizes: ['S', 'M', 'L'] },
       { desc: `Mens ${MFV_DESC_SUFFIX} Navy`, sku: 'MPL-007', hs: '6105.20', qty: 2000, weight: 200, sizes: ['S', 'M', 'L', 'XL'] },
       { desc: `Womens ${MFV_DESC_SUFFIX} White`, sku: 'WPL-008', hs: '6106.20', qty: 1200, weight: 120, sizes: ['S', 'M', 'L'] },
       { desc: `Womens ${MFV_DESC_SUFFIX} Pink`, sku: 'WPL-009', hs: '6106.20', qty: 600, weight: 60, sizes: ['S', 'M'] }
@@ -3747,7 +3751,7 @@ const mockWorkflows: Workflow[] = [
         'Packing List': ComparisonDocStatus.MISMATCHED,
         'Bill of Lading': ComparisonDocStatus.MISSING,
         'FREIGHT INVOICE': ComparisonDocStatus.MISSING,
-        'HS Code': ComparisonDocStatus.MATCHED,
+        'HS Code': ComparisonDocStatus.MISMATCHED,
         'FTA Draft': ComparisonDocStatus.MATCHED
       },
       // The uploaded Invoice / Packing List files each bundle three invoices.
@@ -3759,8 +3763,8 @@ const mockWorkflows: Workflow[] = [
       progress: 67,
       totalDocs: 6,
       foundDocs: 4,
-      matchedCount: 2,
-      mismatchedCount: 2
+      matchedCount: 1,
+      mismatchedCount: 3
     },
     {
       id: 'job-mfv-c',
@@ -4497,15 +4501,15 @@ const mockWorkflows: Workflow[] = [
       // uploaded ones either carry this field (extra) or don't have it at all.
       if (job.docs[docName] === ComparisonDocStatus.MISSING || options.missingInMain) return { ...base, value: '-', status: 'MATCH' };
       const extra = options.extra?.[docName];
-      return extra !== undefined
-        ? { ...base, value: extra, status: 'MATCH' }
-        : { ...base, value: '', status: 'MATCH', notInDoc: true };
+      if (extra === undefined) return { ...base, value: '', status: 'MATCH', notInDoc: true };
+      const reference = options.primary === 'Invoice' ? invoiceValue : packingValue;
+      return { ...base, value: extra, status: extra === reference ? 'MATCH' : 'MISMATCH' };
     });
     // What the uploaded HS Code master and the FTA draft say. The HS Code file only lists HS codes;
     // the FTA draft also repeats the consignee, description, quantities and origin.
-    const extraValues = (fieldName: string, value: string): Record<string, string> => {
+    const extraValues = (fieldName: string, value: string, item?: MergeDemoItem): Record<string, string> => {
       const extra: Record<string, string> = {};
-      if (fieldName === 'HS Code') { extra['HS Code'] = value; extra['FTA Draft'] = value; }
+      if (fieldName === 'HS Code') { extra['HS Code'] = item?.hsMaster ?? value; extra['FTA Draft'] = item?.hsFta ?? value; }
       if (['Consignee Name', 'Product Description', "Q'ty by line", 'Total Quantity', 'Country of Origin'].includes(fieldName)) extra['FTA Draft'] = value;
       return extra;
     };
@@ -4558,7 +4562,7 @@ const mockWorkflows: Workflow[] = [
             const same = invoiceRow[fieldName] === packingRow[fieldName];
             results.push({
               fieldName, fieldType: fieldTypes[fieldName], sourceValue: invoiceRow[fieldName], part: 'Description', group: `Item ${itemIdx + 1}`,
-              targets: makeTargets(invoiceRow[fieldName], packingRow[fieldName], same ? 'MATCH' : 'MISMATCH', { primary: 'Invoice', extra: extraValues(fieldName, invoiceRow[fieldName]) })
+              targets: makeTargets(invoiceRow[fieldName], packingRow[fieldName], same ? 'MATCH' : 'MISMATCH', { primary: 'Invoice', extra: extraValues(fieldName, invoiceRow[fieldName], item) })
             });
           });
         } else {
@@ -4584,9 +4588,13 @@ const mockWorkflows: Workflow[] = [
     // The HS Code file lists older-edition codes for some items.
     return results.map(row => {
       if (row.fieldName !== 'HS Code' || row.part !== 'Description') return row;
-      const legacy = MFV_HS_LEGACY_CODES[row.sourceValue];
-      if (!legacy) return row;
-      return { ...row, targets: row.targets.map((t: any) => t.fileName === 'HS Code' && t.value ? { ...t, legacyCodes: legacy } : t) };
+      return {
+        ...row,
+        targets: row.targets.map((t: any) => {
+          const legacy = t.fileName === 'HS Code' && t.value ? MFV_HS_LEGACY_CODES[t.value] : undefined;
+          return legacy ? { ...t, legacyCodes: legacy } : t;
+        })
+      };
     });
   };
 
@@ -5439,7 +5447,7 @@ const mockWorkflows: Workflow[] = [
   const getEffectiveDocStatus = (job: ComparisonJob, docName: string, originalStatus: ComparisonDocStatus) => {
     if (originalStatus === ComparisonDocStatus.MATCHED || originalStatus === ComparisonDocStatus.MISMATCHED) {
       // Check if there are any actual MISMATCH targets for this docName in this job
-      const baseResults = getMockComparisonResults(job);
+      const baseResults = getMockComparisonResults(job, job.id === selectedJob?.id ? selectedDatasetKey ?? undefined : undefined);
       const hasMismatch = baseResults.some(res => 
         res.targets.some(t => {
           if (t.fileName !== docName) return false;
