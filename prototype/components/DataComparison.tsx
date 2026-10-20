@@ -3740,8 +3740,8 @@ const mockWorkflows: Workflow[] = [
         'Packing List': ComparisonDocStatus.MISMATCHED,
         'Bill of Lading': ComparisonDocStatus.MISSING,
         'FREIGHT INVOICE': ComparisonDocStatus.MISSING,
-        'HS Code': ComparisonDocStatus.MISSING,
-        'FTA Draft': ComparisonDocStatus.MISSING
+        'HS Code': ComparisonDocStatus.MATCHED,
+        'FTA Draft': ComparisonDocStatus.MATCHED
       },
       // The uploaded Invoice / Packing List files each bundle three invoices.
       datasets: [
@@ -3749,10 +3749,10 @@ const mockWorkflows: Workflow[] = [
         { key: 'INV-26-0102', label: 'INV-26-0102' },
         { key: 'INV-26-0103', label: 'INV-26-0103' }
       ],
-      progress: 33,
+      progress: 67,
       totalDocs: 6,
-      foundDocs: 2,
-      matchedCount: 0,
+      foundDocs: 4,
+      matchedCount: 2,
       mismatchedCount: 2
     },
     {
@@ -4464,7 +4464,7 @@ const mockWorkflows: Workflow[] = [
       invoiceValue: string,
       packingValue: string,
       packingStatus: 'MATCH' | 'MISMATCH',
-      options: { primary: 'Invoice' | 'Packing List'; missingInMain?: boolean }
+      options: { primary: 'Invoice' | 'Packing List'; missingInMain?: boolean; extra?: Record<string, string> }
     ) => docNames.map((docName, tIdx) => {
       const base = {
         fileId: `target-${tIdx + 1}`,
@@ -4486,8 +4486,22 @@ const mockWorkflows: Workflow[] = [
           : { ...base, value: invoiceValue, status: 'MATCH' };
       }
       if (docName === 'Packing List') return { ...base, value: packingValue, status: packingStatus };
-      return { ...base, value: '-', status: 'MATCH' };
+      // The other documents: not uploaded yet, or the leftover rows (nothing to show), draw '-';
+      // uploaded ones either carry this field (extra) or don't have it at all.
+      if (job.docs[docName] === ComparisonDocStatus.MISSING || options.missingInMain) return { ...base, value: '-', status: 'MATCH' };
+      const extra = options.extra?.[docName];
+      return extra !== undefined
+        ? { ...base, value: extra, status: 'MATCH' }
+        : { ...base, value: '', status: 'MATCH', notInDoc: true };
     });
+    // What the uploaded HS Code master and the FTA draft say. The HS Code file only lists HS codes;
+    // the FTA draft also repeats the consignee, description, quantities and origin.
+    const extraValues = (fieldName: string, value: string): Record<string, string> => {
+      const extra: Record<string, string> = {};
+      if (fieldName === 'HS Code') { extra['HS Code'] = value; extra['FTA Draft'] = value; }
+      if (['Consignee Name', 'Product Description', "Q'ty by line", 'Total Quantity', 'Country of Origin'].includes(fieldName)) extra['FTA Draft'] = value;
+      return extra;
+    };
 
     const results: any[] = [];
 
@@ -4495,7 +4509,7 @@ const mockWorkflows: Workflow[] = [
     headerRows.forEach(([fieldName, value]) => {
       results.push({
         fieldName, sourceValue: value, part: 'Header', group: undefined,
-        targets: makeTargets(value, value, 'MATCH', { primary: 'Invoice' })
+        targets: makeTargets(value, value, 'MATCH', { primary: 'Invoice', extra: extraValues(fieldName, value) })
       });
     });
 
@@ -4537,7 +4551,7 @@ const mockWorkflows: Workflow[] = [
             const same = invoiceRow[fieldName] === packingRow[fieldName];
             results.push({
               fieldName, fieldType: fieldTypes[fieldName], sourceValue: invoiceRow[fieldName], part: 'Description', group: `Item ${itemIdx + 1}`,
-              targets: makeTargets(invoiceRow[fieldName], packingRow[fieldName], same ? 'MATCH' : 'MISMATCH', { primary: 'Invoice' })
+              targets: makeTargets(invoiceRow[fieldName], packingRow[fieldName], same ? 'MATCH' : 'MISMATCH', { primary: 'Invoice', extra: extraValues(fieldName, invoiceRow[fieldName]) })
             });
           });
         } else {
@@ -4556,7 +4570,7 @@ const mockWorkflows: Workflow[] = [
     footerRows.forEach(([fieldName, value]) => {
       results.push({
         fieldName, sourceValue: value, part: 'Footer', group: undefined,
-        targets: makeTargets(value, value, 'MATCH', { primary: 'Packing List' })
+        targets: makeTargets(value, value, 'MATCH', { primary: 'Packing List', extra: extraValues(fieldName, value) })
       });
     });
 
@@ -11737,7 +11751,7 @@ const mockWorkflows: Workflow[] = [
                         </thead>
                      </table>
                      {hasDatasetSelector && selectedJob?.datasets && (
-                       <div className={`sticky z-[30] bg-slate-50 border-b border-slate-200 transition-[top] duration-300 will-change-[top] ${tableScrolledPastTop ? 'top-[48px]' : 'top-[82px]'}`}>
+                       <div className={`sticky left-0 z-[30] bg-slate-50 border-b border-slate-200 transition-[top] duration-300 will-change-[top] ${tableScrolledPastTop ? 'top-[48px]' : 'top-[82px]'}`}>
                          <style dangerouslySetInnerHTML={{__html: `
                            .dataset-scroll-track { scrollbar-width: none; -ms-overflow-style: none; }
                            .dataset-scroll-track::-webkit-scrollbar { height: 0px; transition: height 0.15s; }
