@@ -45,6 +45,9 @@ export interface ComparisonJob {
   rejectionReason?: string;
   rejectedAt?: string;
   rejectedBy?: string;
+  // Present when the uploaded file(s) bundle more than one dataset (e.g. several invoice numbers
+  // batched into one file) — lets the user pick which one the comparison table shows.
+  datasets?: { key: string; label: string }[];
 }
 ```
 
@@ -90,6 +93,12 @@ export interface ComparisonRow {
 }
 ```
 
+> Prototype-only extras not in `types.ts`: besides `'Header' | 'Description' | 'Footer'`, the compare
+> table also uses `part: 'Summary'` (computed totals) and `part: 'Unmatched'` (rows a document splits
+> that have no counterpart in the main document, grouped as `UM::Item N`), and targets can carry
+> UI flags (`missingInMain`, `notInDoc`, `legacyCodes`, `mergedInfo`, `composedInfo`, …) set by the
+> demo result builders in `DataComparison.tsx`. Treat those as view-model details, not API fields.
+
 ## 4. AI Analysis Metadata
 Data structure for the "AI Analysis" section that provides confidence scores and suggestions.
 
@@ -100,3 +109,23 @@ export interface AIAnalysis {
   analysisSummary: string;      // Text reasoning
 }
 ```
+
+## 5. Compare rule cell — `VALUE_GROUPS` (prototype `RuleMatrix.tsx`)
+Compare rules are stored by the prototype in localStorage (`bizx_compare_rules_v12`) rather than in
+`types.ts`. A rule cell (one field × one document) with `type: 'VALUE_GROUPS'` ("เทียบตามกลุ่มค่า")
+carries:
+
+```typescript
+{
+  type: 'VALUE_GROUPS';
+  vgRefDoc: string;       // document the condition is read from, e.g. the B/L
+  vgRefField: string;     // field in that document, e.g. "Incoterm"
+  vgCases: { id: string; when: string[]; accept: string[] }[];  // if ref value is in `when` → this value must be in `accept`; first matching case wins
+  vgMatchMode: 'EXACT' | 'CONTAINS';          // how the checked value is compared with `accept` (case-insensitive)
+  vgElse: 'NORMAL' | 'REVIEW' | 'SKIP';       // when no case applies: compare normally / mismatch for a reviewer / skip
+}
+```
+
+Example (shipped on the Shipping Doc Matching rule's Incoterm row): B/L Incoterm `COLLECT` or
+`FREIGHT COLLECT` → Invoice / Packing List Incoterm must be `EXW`, `FCA` or `FOB`; `PREPAID` or
+`FREIGHT PREPAID` → `CIF`, `CIP` or `CFR`.

@@ -2,7 +2,8 @@
 
 > ⚠️ **Snapshot notice — read before trusting this doc**
 > This document (mapping table, "Resolved"/"Open items" sections) reflects `/prototype` as of
-> **2026-07-16**. Vibe design on `/prototype` is still ongoing and will keep adding/changing
+> **2026-07-16** (the `DataComparison.tsx` / `RuleMatrix.tsx` / `ManageRule.tsx` entries and the
+> scope note below were refreshed on **2026-10-20**). Vibe design on `/prototype` is still ongoing and will keep adding/changing
 > components after this date, while the Angular app only gets the features listed as "Ported"
 > below (see rationale below). **Before actually handing off to the dev team**, re-scan
 > `/prototype/components/` against the mapping table and refresh anything that's drifted — do not
@@ -64,14 +65,15 @@ follow the `src/app/features/<area>/<name>.component.ts` convention already used
 | `components/ExtractionView.tsx` | `features/exdoc/extraction-view` | ExDoc (detail view) |
 | `components/AgentList.tsx` | `features/agents/agent-list` | (agent.service.ts already exists) |
 | `components/AgentForm.tsx` | `features/agents/agent-form` | (agent.service.ts already exists) |
-| `components/DataComparison.tsx` | `features/data-comparison/job-list` + `features/data-comparison/job-detail` (split recommended — see note) | Data Comparison → รายการงาน (**not started**, missing from this table until now — 10,295 lines, by far the largest single file in `/prototype`; not the same component as `ComparisonWorkflow.tsx` below, which is a separate/unrelated 359-line widget) |
+| `components/DataComparison.tsx` | `features/data-comparison/job-list` + `features/data-comparison/job-detail` (split recommended — see note) | Data Comparison → รายการงาน (**not started**, missing from this table until now — 12,940 lines as of 2026-10-20, by far the largest single file in `/prototype`; not the same component as `ComparisonWorkflow.tsx` below, which is a separate/unrelated 359-line widget) |
 | `components/CreateJobModal.tsx` | `features/data-comparison/create-job-modal` | Data Comparison → รายการงาน (modal) |
 | `components/GenerateReportModal.tsx` | `features/data-comparison/generate-report-modal` | Data Comparison → รายการงาน (สร้างรายงาน drawer) — new since the last scan: row select/delete/bulk-action toolbar, per-file report management |
 | `components/ComparisonWorkflow.tsx` | `features/data-comparison/comparison-workflow` | Data Comparison |
 | `components/DataComparisonWorkflowBuilder.tsx` | `features/data-comparison/workflow-builder` | Data Comparison → จัดการเวิร์กโฟลว์ (**not started** — 4,248 lines, the biggest single port in this list; do not confuse with the already-ported generic builder at `features/exdoc/workflow-builder`) |
-| `components/ManageRule.tsx` | `features/data-comparison/rules/manage-rule` | Data Comparison → Compare rules |
+| `components/ManageRule.tsx` | `features/data-comparison/rules/manage-rule` | Data Comparison → Compare rules — rules persist in localStorage key `bizx_compare_rules_v12` (see the demo-data note in the `DataComparison.tsx` scope note: Data Comparison *reads* this key for the Incoterm demo) |
 | `components/RuleList.tsx` | `features/data-comparison/rules/rule-list` | Data Comparison → Compare rules |
-| `components/RuleMatrix.tsx` | `features/data-comparison/rules/rule-matrix` | Data Comparison → Compare rules |
+| `components/RuleMatrix.tsx` | `features/data-comparison/rules/rule-matrix` | Data Comparison → Compare rules — gained a `VALUE_GROUPS` compare type (2026-10-20): if a field in a reference document is one of a list of values, the checked field must be one of another list (exact or contains), several cases + a fallback (compare normally / ask a reviewer / skip); fields are stored on the cell as `vgRefDoc`, `vgRefField`, `vgCases[{id,when[],accept[]}]`, `vgMatchMode`, `vgElse` |
+| `components/compareRulesSeed.ts` | `features/data-comparison/rules/` (a seed/migration helper — port only if the demo data is kept) | Shared by `ManageRule.tsx` and `DataComparison.tsx`: seeds the Incoterm value-groups cells on the Shipping Doc Matching rule's Header section and runs a one-time localStorage upgrade (flag `bizx_vg_incoterm_seeded_v3`) |
 | `components/DocTypeMaster.tsx` | `features/settings/doc-type-master` | Settings |
 | `components/LabelSchemaSettings.tsx` | `features/settings/label-schema-settings` | Settings — `DEFAULT_SCHEMAS` reworked 2026-08-05 to strict 1 schema : 1 doc type (15 entries matching `App.tsx`'s `docTypes`); each schema also carries a required `assignedTeams: string[]` (multi-select, `'ALL'` sentinel collapses/disables the rest — added 2026-08-14), localStorage key now `bizx_label_schemas_v7`; port must preserve that shape, not the old grouped-schema model. Each per-doc-type `DocTypeSchemaConfig` also got an `extractionMethod?: 'ai' \| 'xml' \| 'excel'` field (default `'ai'`) plus `xmlSampleFileName?`/`excelSampleFileName?` (added 2026-08-24) — a 3-way toggle per doc type block picking how that doc type is read (AI/LLM prompt hint vs. XML path mapping vs. Excel cell mapping); the XML/Excel modes only store the picked sample file's *name* so far, no real path/cell mapping UI or parsing yet — that's still open scope if/when this ports. |
 | `components/MasterDataSettings.tsx` | `features/settings/master-data-settings` | Settings |
@@ -93,6 +95,40 @@ explicit Apply/Clear pair of buttons; and the shipment title got inline rename (
 input sized to the text via the `size` attribute, Enter/blur commits, Escape cancels, blocked from
 colliding with another shipment's name since that would merge the two groups). Given the size, this
 is a strong candidate to split into multiple Angular components rather than porting 1:1.
+
+Additions since then (as of 2026-10-20), all in `DataComparison.tsx`:
+
+- **Replace & Merge upload** — per-file *template* picker (`{Doctype}_Generic` first/default, then a
+  medium- and a low-confidence brand template; badge colours: green ≥ 90, orange 70–89, red < 70),
+  template preview popup (mimics the browser PDF viewer), low-confidence warning, a per-file
+  "let the system learn from this document" checkbox (only for orange/red templates, default on),
+  and an optional per-file **Invoice No.** (tells the system which invoice a document that doesn't
+  print one belongs to, e.g. a packing list in a multi-invoice shipment; suggestions come from
+  `job.datasets`, the value is only written to the activity log so far — nothing matches by it yet).
+  The "Done" (เสร็จสิ้น) button enables once every *uploaded* document matches, uploaded-or-not
+  documents are ignored.
+- **Skip compare drawer** — list of rules (section, field, documents) that exclude cells from
+  comparison; skipped cells are ignored when a document's status is recomputed.
+- **Field matching rules drawer** — one toolbar button / one drawer with two rule kinds, both
+  multi-rule per job and kept in client-side state keyed by job id (not persisted):
+  *add up numbers* (`MergeFieldRule`: fold a document's leftover rows into the main document's items
+  by a user-picked key field and sum chosen numeric fields) and *join text* (`ComposeFieldRule`:
+  build one target-document field, e.g. the customs XML's description, from several main-document
+  fields — order, separator and compare mode `exact|loose|contains` are user-chosen; the system also
+  suggests a rule by spotting the invoice's values inside the XML's text).
+- **Unmatched section** — rows a document splits that have no counterpart in the main document
+  (`part: 'Unmatched'`) render as their own amber block with a "merge these items" button that
+  opens the drawer above.
+- **Dataset selector** — jobs with `datasets` get a "select dataset" row, now pinned to the left
+  while the table scrolls horizontally; document status badges follow the selected dataset.
+- **Demo shipments** ("Merge field value", "Incoterm by freight terms") use **hand-built result
+  sets** (`getMergeFieldValueDemoResults`, `getCompositeFieldDemoResults`,
+  `getValueGroupDemoResults`) instead of the general generator, plus `applyUserCellEdits` so manual
+  OCR edits (stored per item as `<doc>_<field>@<group>`) and "confirm value" still work on them.
+  This is demo scaffolding — in a real port the comparison results come from the backend, so don't
+  port these functions, only the UI they exercise. The Incoterm demo reads the `VALUE_GROUPS` cells
+  from the localStorage rules (`readValueGroupRules`); the HS Code demo cells show the latest
+  older-edition code (`xxxx.xx (HS year)`) under the current 6-digit HS code, informational only.
 
 Follow the same pattern for each: add a `src/mock-data/*.mock.ts` file (if new data is needed), a
 `src/app/core/services/*.service.ts` wrapping it in an `Observable`, then a standalone
