@@ -377,9 +377,9 @@ const MERGE_DEMO_DATASETS: Record<string, MergeDemoDataset> = {
       ['Port of Discharge', 'BANGKOK, THAILAND']
     ],
     items: [
-      { desc: `Mens ${MFV_DESC_SUFFIX} Black`, sku: 'MPL-001', hs: '6105.20.00', qty: 1200, weight: 120, sizes: ['S', 'M', 'L', 'XL', 'XXL'] },
-      { desc: `Mens ${MFV_DESC_SUFFIX} White`, sku: 'MPL-002', hs: '6105.20.00', qty: 2400, weight: 240, sizes: ['S', 'M', 'L', 'XL', 'XXL'] },
-      { desc: `Womens ${MFV_DESC_SUFFIX} Navy`, sku: 'WPL-003', hs: '6106.20.00', qty: 3600, weight: 360, sizes: ['S', 'M', 'L', 'XL', 'XXL'] }
+      { desc: `Mens ${MFV_DESC_SUFFIX} Black`, sku: 'MPL-001', hs: '6105.20', qty: 1200, weight: 120, sizes: ['S', 'M', 'L', 'XL', 'XXL'] },
+      { desc: `Mens ${MFV_DESC_SUFFIX} White`, sku: 'MPL-002', hs: '6105.20', qty: 2400, weight: 240, sizes: ['S', 'M', 'L', 'XL', 'XXL'] },
+      { desc: `Womens ${MFV_DESC_SUFFIX} Navy`, sku: 'WPL-003', hs: '6106.20', qty: 3600, weight: 360, sizes: ['S', 'M', 'L', 'XL', 'XXL'] }
     ],
     footer: [['Total Quantity', '7,200'], ['Total Gross Weight (KGS)', '1,250.00'], ['Country of Origin', 'CHINA']]
   },
@@ -392,8 +392,8 @@ const MERGE_DEMO_DATASETS: Record<string, MergeDemoDataset> = {
       ['Port of Discharge', 'LAEM CHABANG, THAILAND']
     ],
     items: [
-      { desc: `Mens ${MFV_DESC_SUFFIX} Grey`, sku: 'MPL-004', hs: '6105.20.00', qty: 1000, weight: 100, sizes: ['S', 'M', 'L', 'XL'] },
-      { desc: `Womens ${MFV_DESC_SUFFIX} Red`, sku: 'WPL-005', hs: '6106.20.00', qty: 1500, weight: 150, sizes: ['S', 'M', 'L'] }
+      { desc: `Mens ${MFV_DESC_SUFFIX} Grey`, sku: 'MPL-004', hs: '6105.20', qty: 1000, weight: 100, sizes: ['S', 'M', 'L', 'XL'] },
+      { desc: `Womens ${MFV_DESC_SUFFIX} Red`, sku: 'WPL-005', hs: '6106.20', qty: 1500, weight: 150, sizes: ['S', 'M', 'L'] }
     ],
     footer: [['Total Quantity', '2,500'], ['Total Gross Weight (KGS)', '410.00'], ['Country of Origin', 'CHINA']]
   },
@@ -406,13 +406,20 @@ const MERGE_DEMO_DATASETS: Record<string, MergeDemoDataset> = {
       ['Port of Discharge', 'BANGKOK, THAILAND']
     ],
     items: [
-      { desc: `Kids ${MFV_DESC_SUFFIX} Yellow`, sku: 'KPL-006', hs: '6111.30.00', qty: 900, weight: 54, sizes: ['S', 'M', 'L'] },
-      { desc: `Mens ${MFV_DESC_SUFFIX} Navy`, sku: 'MPL-007', hs: '6105.20.00', qty: 2000, weight: 200, sizes: ['S', 'M', 'L', 'XL'] },
-      { desc: `Womens ${MFV_DESC_SUFFIX} White`, sku: 'WPL-008', hs: '6106.20.00', qty: 1200, weight: 120, sizes: ['S', 'M', 'L'] },
-      { desc: `Womens ${MFV_DESC_SUFFIX} Pink`, sku: 'WPL-009', hs: '6106.20.00', qty: 600, weight: 60, sizes: ['S', 'M'] }
+      { desc: `Kids ${MFV_DESC_SUFFIX} Yellow`, sku: 'KPL-006', hs: '6111.30', qty: 900, weight: 54, sizes: ['S', 'M', 'L'] },
+      { desc: `Mens ${MFV_DESC_SUFFIX} Navy`, sku: 'MPL-007', hs: '6105.20', qty: 2000, weight: 200, sizes: ['S', 'M', 'L', 'XL'] },
+      { desc: `Womens ${MFV_DESC_SUFFIX} White`, sku: 'WPL-008', hs: '6106.20', qty: 1200, weight: 120, sizes: ['S', 'M', 'L'] },
+      { desc: `Womens ${MFV_DESC_SUFFIX} Pink`, sku: 'WPL-009', hs: '6106.20', qty: 600, weight: 60, sizes: ['S', 'M'] }
     ],
     footer: [['Total Quantity', '4,700'], ['Total Gross Weight (KGS)', '780.00'], ['Country of Origin', 'CHINA']]
   }
+};
+
+// Some HS Code master files also list what a code was in an older edition of the Harmonized System.
+// Keyed by the current code; shown under the value as "xxxx.xx (HS year)", quieter than the value.
+const MFV_HS_LEGACY_CODES: Record<string, { code: string; year: string }[]> = {
+  '6105.20': [{ code: '6105.90', year: '2012' }],
+  '6111.30': [{ code: '6111.20', year: '2017' }, { code: '6111.90', year: '2012' }]
 };
 
 // Flow 3 of the "Merge field value" shipment compares the same three invoices against the customs
@@ -422,19 +429,19 @@ const MERGE_DEMO_DATASETS: Record<string, MergeDemoDataset> = {
 interface ComposeDemoItem { desc: string; color: string; size: string; sku: string; hs: string; qty: number; price: number; xmlDesc: string }
 const COMPOSE_DEMO_ITEMS: Record<string, ComposeDemoItem[]> = {
   'INV-26-0101': [
-    { desc: 'Mens S/S Polo Shirt', color: 'Black', size: 'M', sku: 'MPL-001', hs: '6105.20.00', qty: 1200, price: 8.5, xmlDesc: 'Mens S/S Polo Shirt / Black / M' },
-    { desc: 'Mens S/S Polo Shirt', color: 'White', size: 'L', sku: 'MPL-002', hs: '6105.20.00', qty: 2400, price: 8.5, xmlDesc: 'MENS S/S POLO SHIRT / WHITE / L' },
-    { desc: 'Womens S/S Polo Shirt', color: 'Navy', size: 'S', sku: 'WPL-003', hs: '6106.20.00', qty: 3600, price: 8, xmlDesc: 'Womens S/S Polo Shirt / Navy / M' }
+    { desc: 'Mens S/S Polo Shirt', color: 'Black', size: 'M', sku: 'MPL-001', hs: '6105.20', qty: 1200, price: 8.5, xmlDesc: 'Mens S/S Polo Shirt / Black / M' },
+    { desc: 'Mens S/S Polo Shirt', color: 'White', size: 'L', sku: 'MPL-002', hs: '6105.20', qty: 2400, price: 8.5, xmlDesc: 'MENS S/S POLO SHIRT / WHITE / L' },
+    { desc: 'Womens S/S Polo Shirt', color: 'Navy', size: 'S', sku: 'WPL-003', hs: '6106.20', qty: 3600, price: 8, xmlDesc: 'Womens S/S Polo Shirt / Navy / M' }
   ],
   'INV-26-0102': [
-    { desc: 'Mens S/S Polo Shirt', color: 'Grey', size: 'M', sku: 'MPL-004', hs: '6105.20.00', qty: 1000, price: 9, xmlDesc: 'Mens S/S Polo Shirt / Grey / M' },
-    { desc: 'Womens S/S Polo Shirt', color: 'Red', size: 'S', sku: 'WPL-005', hs: '6106.20.00', qty: 1500, price: 8.5, xmlDesc: 'WOMENS S/S POLO SHIRT / RED / S' }
+    { desc: 'Mens S/S Polo Shirt', color: 'Grey', size: 'M', sku: 'MPL-004', hs: '6105.20', qty: 1000, price: 9, xmlDesc: 'Mens S/S Polo Shirt / Grey / M' },
+    { desc: 'Womens S/S Polo Shirt', color: 'Red', size: 'S', sku: 'WPL-005', hs: '6106.20', qty: 1500, price: 8.5, xmlDesc: 'WOMENS S/S POLO SHIRT / RED / S' }
   ],
   'INV-26-0103': [
-    { desc: 'Kids S/S Polo Shirt', color: 'Yellow', size: 'S', sku: 'KPL-006', hs: '6111.30.00', qty: 900, price: 6, xmlDesc: 'Kids S/S Polo Shirt / Yellow / S' },
-    { desc: 'Mens S/S Polo Shirt', color: 'Navy', size: 'L', sku: 'MPL-007', hs: '6105.20.00', qty: 2000, price: 9, xmlDesc: 'MENS S/S POLO SHIRT / NAVY / L' },
-    { desc: 'Womens S/S Polo Shirt', color: 'White', size: 'M', sku: 'WPL-008', hs: '6106.20.00', qty: 1200, price: 8.5, xmlDesc: 'Womens S/S Polo Shirt / White / M' },
-    { desc: 'Womens S/S Polo Shirt', color: 'Pink', size: 'S', sku: 'WPL-009', hs: '6106.20.00', qty: 600, price: 8.5, xmlDesc: 'Womens S/S Polo Shirt / Pink / M' }
+    { desc: 'Kids S/S Polo Shirt', color: 'Yellow', size: 'S', sku: 'KPL-006', hs: '6111.30', qty: 900, price: 6, xmlDesc: 'Kids S/S Polo Shirt / Yellow / S' },
+    { desc: 'Mens S/S Polo Shirt', color: 'Navy', size: 'L', sku: 'MPL-007', hs: '6105.20', qty: 2000, price: 9, xmlDesc: 'MENS S/S POLO SHIRT / NAVY / L' },
+    { desc: 'Womens S/S Polo Shirt', color: 'White', size: 'M', sku: 'WPL-008', hs: '6106.20', qty: 1200, price: 8.5, xmlDesc: 'Womens S/S Polo Shirt / White / M' },
+    { desc: 'Womens S/S Polo Shirt', color: 'Pink', size: 'S', sku: 'WPL-009', hs: '6106.20', qty: 600, price: 8.5, xmlDesc: 'Womens S/S Polo Shirt / Pink / M' }
   ]
 };
 
@@ -4574,7 +4581,13 @@ const mockWorkflows: Workflow[] = [
       });
     });
 
-    return results;
+    // The HS Code file lists older-edition codes for some items.
+    return results.map(row => {
+      if (row.fieldName !== 'HS Code' || row.part !== 'Description') return row;
+      const legacy = MFV_HS_LEGACY_CODES[row.sourceValue];
+      if (!legacy) return row;
+      return { ...row, targets: row.targets.map((t: any) => t.fileName === 'HS Code' && t.value ? { ...t, legacyCodes: legacy } : t) };
+    });
   };
 
   // Folds the sub document's leftover rows into the main document's items: for every main item,
@@ -12254,6 +12267,19 @@ const mockWorkflows: Workflow[] = [
                                                   );
                                                 })()}
                                             </div>
+                                            )}
+
+                                            {(target as any).legacyCodes?.length > 0 && (
+                                              <div
+                                                className="flex flex-col items-center gap-0.5"
+                                                title={language === 'TH' ? 'รหัส HS ในฉบับ (ปี) เก่า ที่ระบุไว้ในไฟล์ — ไม่ได้ใช้เทียบ' : 'Code in an older HS edition listed in the file — not used for comparison'}
+                                              >
+                                                {(target as any).legacyCodes.map((lc: { code: string; year: string }) => (
+                                                  <span key={`${lc.code}-${lc.year}`} className="text-[10px] font-semibold text-slate-400 font-mono">
+                                                    {lc.code} (HS {lc.year})
+                                                  </span>
+                                                ))}
+                                              </div>
                                             )}
 
                                             {(target as any).conditionalSourceValue && (
