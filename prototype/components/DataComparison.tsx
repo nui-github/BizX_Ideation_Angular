@@ -430,19 +430,21 @@ const MFV_HS_LEGACY_CODES: Record<string, { code: string; year: string }[]> = {
 // XML ("ใบขนสินค้า"), which writes each item's description + colour + size into one field. xmlDesc is
 // what the XML says; a few differ on purpose (letter case — fine with a flexible rule; a wrong size
 // or colour — a genuine mismatch). See getCompositeFieldDemoResults.
-interface ComposeDemoItem { desc: string; color: string; size: string; sku: string; hs: string; qty: number; price: number; xmlDesc: string }
+// hsMaster / xmlHs: what the HS Code file / the customs XML say when it differs from the invoice's HS code.
+interface ComposeDemoItem { desc: string; color: string; size: string; sku: string; hs: string; qty: number; price: number; xmlDesc: string; hsMaster?: string; xmlHs?: string }
 const COMPOSE_DEMO_ITEMS: Record<string, ComposeDemoItem[]> = {
   'INV-26-0101': [
     { desc: 'Mens S/S Polo Shirt', color: 'Black', size: 'M', sku: 'MPL-001', hs: '6105.20', qty: 1200, price: 8.5, xmlDesc: 'Mens S/S Polo Shirt / Black / M' },
     { desc: 'Mens S/S Polo Shirt', color: 'White', size: 'L', sku: 'MPL-002', hs: '6105.20', qty: 2400, price: 8.5, xmlDesc: 'MENS S/S POLO SHIRT / WHITE / L' },
-    { desc: 'Womens S/S Polo Shirt', color: 'Navy', size: 'S', sku: 'WPL-003', hs: '6106.20', qty: 3600, price: 8, xmlDesc: 'Womens S/S Polo Shirt / Navy / M' }
+    { desc: 'Womens S/S Polo Shirt', color: 'Navy', size: 'S', sku: 'WPL-003', hs: '6106.20', hsMaster: '6106.30', qty: 3600, price: 8, xmlDesc: 'Womens S/S Polo Shirt / Navy / M' }
   ],
   'INV-26-0102': [
-    { desc: 'Mens S/S Polo Shirt', color: 'Grey', size: 'M', sku: 'MPL-004', hs: '6105.20', qty: 1000, price: 9, xmlDesc: 'Mens S/S Polo Shirt / Grey / M' },
+    // Invoice and XML still use the older-edition code the HS Code file lists as legacy.
+    { desc: 'Mens S/S Polo Shirt', color: 'Grey', size: 'M', sku: 'MPL-004', hs: '6105.90', hsMaster: '6105.20', qty: 1000, price: 9, xmlDesc: 'Mens S/S Polo Shirt / Grey / M' },
     { desc: 'Womens S/S Polo Shirt', color: 'Red', size: 'S', sku: 'WPL-005', hs: '6106.20', qty: 1500, price: 8.5, xmlDesc: 'WOMENS S/S POLO SHIRT / RED / S' }
   ],
   'INV-26-0103': [
-    { desc: 'Kids S/S Polo Shirt', color: 'Yellow', size: 'S', sku: 'KPL-006', hs: '6111.30', qty: 900, price: 6, xmlDesc: 'Kids S/S Polo Shirt / Yellow / S' },
+    { desc: 'Kids S/S Polo Shirt', color: 'Yellow', size: 'S', sku: 'KPL-006', hs: '6111.30', xmlHs: '6111.20', qty: 900, price: 6, xmlDesc: 'Kids S/S Polo Shirt / Yellow / S' },
     { desc: 'Mens S/S Polo Shirt', color: 'Navy', size: 'L', sku: 'MPL-007', hs: '6105.20', qty: 2000, price: 9, xmlDesc: 'MENS S/S POLO SHIRT / NAVY / L' },
     { desc: 'Womens S/S Polo Shirt', color: 'White', size: 'M', sku: 'WPL-008', hs: '6106.20', qty: 1200, price: 8.5, xmlDesc: 'Womens S/S Polo Shirt / White / M' },
     { desc: 'Womens S/S Polo Shirt', color: 'Pink', size: 'S', sku: 'WPL-009', hs: '6106.20', qty: 600, price: 8.5, xmlDesc: 'Womens S/S Polo Shirt / Pink / M' }
@@ -3787,7 +3789,7 @@ const mockWorkflows: Workflow[] = [
         'Packing List': ComparisonDocStatus.MATCHED,
         'Bill of Lading': ComparisonDocStatus.MISSING,
         'FREIGHT INVOICE': ComparisonDocStatus.MISSING,
-        'HS Code Master File': ComparisonDocStatus.MISSING,
+        'HS Code Master File': ComparisonDocStatus.MISMATCHED,
         'Form FTA': ComparisonDocStatus.MISSING,
         'Insurance Sheet': ComparisonDocStatus.MISSING
       },
@@ -3798,11 +3800,11 @@ const mockWorkflows: Workflow[] = [
         { key: 'INV-26-0102', label: 'INV-26-0102' },
         { key: 'INV-26-0103', label: 'INV-26-0103' }
       ],
-      progress: 38,
+      progress: 50,
       totalDocs: 8,
-      foundDocs: 3,
+      foundDocs: 4,
       matchedCount: 1,
-      mismatchedCount: 2
+      mismatchedCount: 3
     },
     {
       id: 'job-mfv-d',
@@ -4662,7 +4664,7 @@ const mockWorkflows: Workflow[] = [
     const dataset = MERGE_DEMO_DATASETS[dataKey];
     const docNames = Object.keys(job.docs);
     const XML_DOC = 'ใบขนสินค้า';
-    type CellSpec = { value: string; status?: 'MATCH' | 'MISMATCH'; notInDoc?: boolean };
+    type CellSpec = { value: string; status?: 'MATCH' | 'MISMATCH'; notInDoc?: boolean; legacyCodes?: { code: string; year: string }[] };
     const makeTargets = (cells: Record<string, CellSpec>, primary: string) => docNames.map((docName, tIdx) => {
       const base = {
         fileId: `target-${tIdx + 1}`,
@@ -4677,8 +4679,13 @@ const mockWorkflows: Workflow[] = [
       const cell = cells[docName];
       // Not-yet-uploaded docs are drawn by the table's own "missing" branch; 'MATCH' keeps them
       // from suppressing each group's matched/mismatched counts.
-      if (!cell) return { ...base, value: '-', status: 'MATCH' };
-      return { ...base, value: cell.value, status: cell.status ?? 'MATCH', ...(cell.notInDoc ? { notInDoc: true } : {}) };
+      if (!cell) {
+        return job.docs[docName] === ComparisonDocStatus.MISSING
+          ? { ...base, value: '-', status: 'MATCH' }
+          // an uploaded document that simply doesn't have this field (e.g. the HS Code file)
+          : { ...base, value: '', status: 'MATCH', notInDoc: true };
+      }
+      return { ...base, value: cell.value, status: cell.status ?? 'MATCH', ...(cell.notInDoc ? { notInDoc: true } : {}), ...(cell.legacyCodes ? { legacyCodes: cell.legacyCodes } : {}) };
     });
     const sameEverywhere = (value: string): Record<string, CellSpec> => ({
       [XML_DOC]: { value }, 'Invoice': { value }, 'Packing List': { value }
@@ -4703,7 +4710,7 @@ const mockWorkflows: Workflow[] = [
         { fieldName: 'Color', type: 'string', value: item.color, xml: { value: '', notInDoc: true } },
         { fieldName: 'Size', type: 'string', value: item.size, xml: { value: '', notInDoc: true } },
         { fieldName: 'Item No. / Model No. (SKU)', type: 'string', value: item.sku, xml: { value: item.sku } },
-        { fieldName: 'HS Code', type: 'string', value: item.hs, xml: { value: item.hs } },
+        { fieldName: 'HS Code', type: 'string', value: item.hs, xml: { value: item.xmlHs ?? item.hs, status: (item.xmlHs ?? item.hs) === item.hs ? 'MATCH' : 'MISMATCH' } },
         { fieldName: "Q'ty by line", type: 'number', value: formatMergedNumber(item.qty), xml: { value: formatMergedNumber(item.qty) } },
         { fieldName: 'Price / Unit', type: 'number', value: fmt2(item.price), xml: { value: fmt2(item.price) } },
         { fieldName: 'Invoice Amount', type: 'number', value: fmt2(amount), xml: { value: fmt2(amount) } }
@@ -4714,7 +4721,18 @@ const mockWorkflows: Workflow[] = [
           targets: makeTargets({
             [XML_DOC]: row.xml,
             'Invoice': { value: row.value },
-            'Packing List': { value: row.value }
+            'Packing List': { value: row.value },
+            // The HS Code file only lists HS codes (and, for some, older-edition codes).
+            ...(row.fieldName === 'HS Code' ? (() => {
+              const master = item.hsMaster ?? item.hs;
+              return {
+                'HS Code Master File': {
+                  value: master,
+                  status: master === item.hs ? 'MATCH' as const : 'MISMATCH' as const,
+                  legacyCodes: MFV_HS_LEGACY_CODES[master]
+                }
+              };
+            })() : {})
           }, 'Invoice')
         });
       });
