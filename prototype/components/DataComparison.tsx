@@ -357,6 +357,64 @@ const DATASET_FIELD_OVERRIDES: Record<string, Record<string, Record<string, stri
   },
 };
 
+// The three invoices bundled in the "Merge field value" shipment's flow-2 files — each has its
+// own header, items (the packing list splits every item into one row per size) and totals. See
+// getMergeFieldValueDemoResults.
+interface MergeDemoItem { desc: string; sku: string; qty: number; weight: number; sizes: string[] }
+interface MergeDemoDataset {
+  header: [string, string][];
+  items: MergeDemoItem[];
+  footer: [string, string][];
+}
+const MFV_DESC_SUFFIX = '(Knitted 82% Nylon 18% Spandex) S/S Polo';
+const MERGE_DEMO_DATASETS: Record<string, MergeDemoDataset> = {
+  'INV-26-0101': {
+    header: [
+      ['Consignee Name', 'BIZ-TRANS LOGISTICS CO., LTD.'],
+      ['Consignee TAX ID', '0105562000000'],
+      ['Incoterm', 'FOB'],
+      ['Port of Loading', 'SHANGHAI, CHINA'],
+      ['Port of Discharge', 'BANGKOK, THAILAND']
+    ],
+    items: [
+      { desc: `Mens ${MFV_DESC_SUFFIX} Black`, sku: 'MPL-001', qty: 1200, weight: 120, sizes: ['S', 'M', 'L', 'XL', 'XXL'] },
+      { desc: `Mens ${MFV_DESC_SUFFIX} White`, sku: 'MPL-002', qty: 2400, weight: 240, sizes: ['S', 'M', 'L', 'XL', 'XXL'] },
+      { desc: `Womens ${MFV_DESC_SUFFIX} Navy`, sku: 'WPL-003', qty: 3600, weight: 360, sizes: ['S', 'M', 'L', 'XL', 'XXL'] }
+    ],
+    footer: [['Total Quantity', '7,200'], ['Total Gross Weight (KGS)', '1,250.00'], ['Country of Origin', 'CHINA']]
+  },
+  'INV-26-0102': {
+    header: [
+      ['Consignee Name', 'SIAM GARMENT TRADING CO., LTD.'],
+      ['Consignee TAX ID', '0105561000088'],
+      ['Incoterm', 'CIF'],
+      ['Port of Loading', 'NINGBO, CHINA'],
+      ['Port of Discharge', 'LAEM CHABANG, THAILAND']
+    ],
+    items: [
+      { desc: `Mens ${MFV_DESC_SUFFIX} Grey`, sku: 'MPL-004', qty: 1000, weight: 100, sizes: ['S', 'M', 'L', 'XL'] },
+      { desc: `Womens ${MFV_DESC_SUFFIX} Red`, sku: 'WPL-005', qty: 1500, weight: 150, sizes: ['S', 'M', 'L'] }
+    ],
+    footer: [['Total Quantity', '2,500'], ['Total Gross Weight (KGS)', '410.00'], ['Country of Origin', 'CHINA']]
+  },
+  'INV-26-0103': {
+    header: [
+      ['Consignee Name', 'BIZ-TRANS LOGISTICS CO., LTD.'],
+      ['Consignee TAX ID', '0105562000000'],
+      ['Incoterm', 'FOB'],
+      ['Port of Loading', 'SHENZHEN, CHINA'],
+      ['Port of Discharge', 'BANGKOK, THAILAND']
+    ],
+    items: [
+      { desc: `Kids ${MFV_DESC_SUFFIX} Yellow`, sku: 'KPL-006', qty: 900, weight: 54, sizes: ['S', 'M', 'L'] },
+      { desc: `Mens ${MFV_DESC_SUFFIX} Navy`, sku: 'MPL-007', qty: 2000, weight: 200, sizes: ['S', 'M', 'L', 'XL'] },
+      { desc: `Womens ${MFV_DESC_SUFFIX} White`, sku: 'WPL-008', qty: 1200, weight: 120, sizes: ['S', 'M', 'L'] },
+      { desc: `Womens ${MFV_DESC_SUFFIX} Pink`, sku: 'WPL-009', qty: 600, weight: 60, sizes: ['S', 'M'] }
+    ],
+    footer: [['Total Quantity', '4,700'], ['Total Gross Weight (KGS)', '780.00'], ['Country of Origin', 'CHINA']]
+  }
+};
+
 // Demo-only preview filename overrides so a specific mock job can showcase the Excel/XML
 // preview mockups without changing the real doc-type keys other logic (schema/rule matching,
 // OCR simulation) relies on. Keyed by job id, then by the doc-type column name.
@@ -3648,6 +3706,12 @@ const mockWorkflows: Workflow[] = [
         'HS Code': ComparisonDocStatus.MISSING,
         'FTA Draft': ComparisonDocStatus.MISSING
       },
+      // The uploaded Invoice / Packing List files each bundle three invoices.
+      datasets: [
+        { key: 'INV-26-0101', label: 'INV-26-0101' },
+        { key: 'INV-26-0102', label: 'INV-26-0102' },
+        { key: 'INV-26-0103', label: 'INV-26-0103' }
+      ],
       progress: 33,
       totalDocs: 6,
       foundDocs: 2,
@@ -4349,7 +4413,8 @@ const mockWorkflows: Workflow[] = [
   // an invoice counterpart ("Description"); the 12 leftover sub-rows land in the 'Unmatched'
   // part, which the table renders as its own "items that couldn't be matched with the
   // invoice" section.
-  const getMergeFieldValueDemoResults = (job: ComparisonJob): any[] => {
+  const getMergeFieldValueDemoResults = (job: ComparisonJob, datasetKey?: string): any[] => {
+    const dataset = MERGE_DEMO_DATASETS[datasetKey ?? ''] ?? MERGE_DEMO_DATASETS['INV-26-0101'];
     const docNames = Object.keys(job.docs);
     const makeTargets = (
       invoiceValue: string,
@@ -4382,13 +4447,7 @@ const mockWorkflows: Workflow[] = [
 
     const results: any[] = [];
 
-    const headerRows: [string, string][] = [
-      ['Consignee Name', 'BIZ-TRANS LOGISTICS CO., LTD.'],
-      ['Consignee TAX ID', '0105562000000'],
-      ['Incoterm', 'FOB'],
-      ['Port of Loading', 'SHANGHAI, CHINA'],
-      ['Port of Discharge', 'BANGKOK, THAILAND']
-    ];
+    const headerRows = dataset.header;
     headerRows.forEach(([fieldName, value]) => {
       results.push({
         fieldName, sourceValue: value, part: 'Header', group: undefined,
@@ -4396,12 +4455,7 @@ const mockWorkflows: Workflow[] = [
       });
     });
 
-    const invoiceItems = [
-      { desc: 'Mens (Knitted 82% Nylon 18% Spandex) S/S Polo Black', sku: 'MPL-001', qty: 1200, weight: 120 },
-      { desc: 'Mens (Knitted 82% Nylon 18% Spandex) S/S Polo White', sku: 'MPL-002', qty: 2400, weight: 240 },
-      { desc: 'Womens (Knitted 82% Nylon 18% Spandex) S/S Polo Navy', sku: 'WPL-003', qty: 3600, weight: 360 }
-    ];
-    const sizes = ['S', 'M', 'L', 'XL', 'XXL'];
+    const invoiceItems = dataset.items;
     const fieldTypes: Record<string, 'string' | 'number'> = {
       'Product Description': 'string',
       'Item No. / Model No. (SKU)': 'string',
@@ -4412,6 +4466,7 @@ const mockWorkflows: Workflow[] = [
     let unmatchedCount = 0;
 
     invoiceItems.forEach((item, itemIdx) => {
+      const sizes = item.sizes;
       sizes.forEach((size, sizeIdx) => {
         // The packing list keeps the invoice's item no. on every sub-row (the size lives in the
         // description and the quantities are split per size), so the sub-rows can be grouped
@@ -4450,11 +4505,7 @@ const mockWorkflows: Workflow[] = [
       });
     });
 
-    const footerRows: [string, string][] = [
-      ['Total Quantity', '7,200'],
-      ['Total Gross Weight (KGS)', '1,250.00'],
-      ['Country of Origin', 'CHINA']
-    ];
+    const footerRows = dataset.footer;
     footerRows.forEach(([fieldName, value]) => {
       results.push({
         fieldName, sourceValue: value, part: 'Footer', group: undefined,
@@ -4842,7 +4893,7 @@ const mockWorkflows: Workflow[] = [
       return applyUserCellEdits(job, composeRules.reduce((acc, rule) => applyComposeFieldRule(acc, rule), base));
     }
     if (job.id === 'job-mfv-b') {
-      const base = getMergeFieldValueDemoResults(job);
+      const base = getMergeFieldValueDemoResults(job, datasetKey);
       const mergeRules = mergeRulesByJob[job.id] || [];
       const consumed = new Set<string>();
       return applyUserCellEdits(job, mergeRules
