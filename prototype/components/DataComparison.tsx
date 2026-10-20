@@ -360,7 +360,7 @@ const DATASET_FIELD_OVERRIDES: Record<string, Record<string, Record<string, stri
 // The three invoices bundled in the "Merge field value" shipment's flow-2 files — each has its
 // own header, items (the packing list splits every item into one row per size) and totals. See
 // getMergeFieldValueDemoResults.
-interface MergeDemoItem { desc: string; sku: string; qty: number; weight: number; sizes: string[] }
+interface MergeDemoItem { desc: string; sku: string; hs: string; qty: number; weight: number; sizes: string[] }
 interface MergeDemoDataset {
   header: [string, string][];
   items: MergeDemoItem[];
@@ -377,9 +377,9 @@ const MERGE_DEMO_DATASETS: Record<string, MergeDemoDataset> = {
       ['Port of Discharge', 'BANGKOK, THAILAND']
     ],
     items: [
-      { desc: `Mens ${MFV_DESC_SUFFIX} Black`, sku: 'MPL-001', qty: 1200, weight: 120, sizes: ['S', 'M', 'L', 'XL', 'XXL'] },
-      { desc: `Mens ${MFV_DESC_SUFFIX} White`, sku: 'MPL-002', qty: 2400, weight: 240, sizes: ['S', 'M', 'L', 'XL', 'XXL'] },
-      { desc: `Womens ${MFV_DESC_SUFFIX} Navy`, sku: 'WPL-003', qty: 3600, weight: 360, sizes: ['S', 'M', 'L', 'XL', 'XXL'] }
+      { desc: `Mens ${MFV_DESC_SUFFIX} Black`, sku: 'MPL-001', hs: '6105.20.00', qty: 1200, weight: 120, sizes: ['S', 'M', 'L', 'XL', 'XXL'] },
+      { desc: `Mens ${MFV_DESC_SUFFIX} White`, sku: 'MPL-002', hs: '6105.20.00', qty: 2400, weight: 240, sizes: ['S', 'M', 'L', 'XL', 'XXL'] },
+      { desc: `Womens ${MFV_DESC_SUFFIX} Navy`, sku: 'WPL-003', hs: '6106.20.00', qty: 3600, weight: 360, sizes: ['S', 'M', 'L', 'XL', 'XXL'] }
     ],
     footer: [['Total Quantity', '7,200'], ['Total Gross Weight (KGS)', '1,250.00'], ['Country of Origin', 'CHINA']]
   },
@@ -392,8 +392,8 @@ const MERGE_DEMO_DATASETS: Record<string, MergeDemoDataset> = {
       ['Port of Discharge', 'LAEM CHABANG, THAILAND']
     ],
     items: [
-      { desc: `Mens ${MFV_DESC_SUFFIX} Grey`, sku: 'MPL-004', qty: 1000, weight: 100, sizes: ['S', 'M', 'L', 'XL'] },
-      { desc: `Womens ${MFV_DESC_SUFFIX} Red`, sku: 'WPL-005', qty: 1500, weight: 150, sizes: ['S', 'M', 'L'] }
+      { desc: `Mens ${MFV_DESC_SUFFIX} Grey`, sku: 'MPL-004', hs: '6105.20.00', qty: 1000, weight: 100, sizes: ['S', 'M', 'L', 'XL'] },
+      { desc: `Womens ${MFV_DESC_SUFFIX} Red`, sku: 'WPL-005', hs: '6106.20.00', qty: 1500, weight: 150, sizes: ['S', 'M', 'L'] }
     ],
     footer: [['Total Quantity', '2,500'], ['Total Gross Weight (KGS)', '410.00'], ['Country of Origin', 'CHINA']]
   },
@@ -406,10 +406,10 @@ const MERGE_DEMO_DATASETS: Record<string, MergeDemoDataset> = {
       ['Port of Discharge', 'BANGKOK, THAILAND']
     ],
     items: [
-      { desc: `Kids ${MFV_DESC_SUFFIX} Yellow`, sku: 'KPL-006', qty: 900, weight: 54, sizes: ['S', 'M', 'L'] },
-      { desc: `Mens ${MFV_DESC_SUFFIX} Navy`, sku: 'MPL-007', qty: 2000, weight: 200, sizes: ['S', 'M', 'L', 'XL'] },
-      { desc: `Womens ${MFV_DESC_SUFFIX} White`, sku: 'WPL-008', qty: 1200, weight: 120, sizes: ['S', 'M', 'L'] },
-      { desc: `Womens ${MFV_DESC_SUFFIX} Pink`, sku: 'WPL-009', qty: 600, weight: 60, sizes: ['S', 'M'] }
+      { desc: `Kids ${MFV_DESC_SUFFIX} Yellow`, sku: 'KPL-006', hs: '6111.30.00', qty: 900, weight: 54, sizes: ['S', 'M', 'L'] },
+      { desc: `Mens ${MFV_DESC_SUFFIX} Navy`, sku: 'MPL-007', hs: '6105.20.00', qty: 2000, weight: 200, sizes: ['S', 'M', 'L', 'XL'] },
+      { desc: `Womens ${MFV_DESC_SUFFIX} White`, sku: 'WPL-008', hs: '6106.20.00', qty: 1200, weight: 120, sizes: ['S', 'M', 'L'] },
+      { desc: `Womens ${MFV_DESC_SUFFIX} Pink`, sku: 'WPL-009', hs: '6106.20.00', qty: 600, weight: 60, sizes: ['S', 'M'] }
     ],
     footer: [['Total Quantity', '4,700'], ['Total Gross Weight (KGS)', '780.00'], ['Country of Origin', 'CHINA']]
   }
@@ -419,22 +419,22 @@ const MERGE_DEMO_DATASETS: Record<string, MergeDemoDataset> = {
 // XML ("ใบขนสินค้า"), which writes each item's description + colour + size into one field. xmlDesc is
 // what the XML says; a few differ on purpose (letter case — fine with a flexible rule; a wrong size
 // or colour — a genuine mismatch). See getCompositeFieldDemoResults.
-interface ComposeDemoItem { desc: string; color: string; size: string; sku: string; qty: number; price: number; xmlDesc: string }
+interface ComposeDemoItem { desc: string; color: string; size: string; sku: string; hs: string; qty: number; price: number; xmlDesc: string }
 const COMPOSE_DEMO_ITEMS: Record<string, ComposeDemoItem[]> = {
   'INV-26-0101': [
-    { desc: 'Mens S/S Polo Shirt', color: 'Black', size: 'M', sku: 'MPL-001', qty: 1200, price: 8.5, xmlDesc: 'Mens S/S Polo Shirt / Black / M' },
-    { desc: 'Mens S/S Polo Shirt', color: 'White', size: 'L', sku: 'MPL-002', qty: 2400, price: 8.5, xmlDesc: 'MENS S/S POLO SHIRT / WHITE / L' },
-    { desc: 'Womens S/S Polo Shirt', color: 'Navy', size: 'S', sku: 'WPL-003', qty: 3600, price: 8, xmlDesc: 'Womens S/S Polo Shirt / Navy / M' }
+    { desc: 'Mens S/S Polo Shirt', color: 'Black', size: 'M', sku: 'MPL-001', hs: '6105.20.00', qty: 1200, price: 8.5, xmlDesc: 'Mens S/S Polo Shirt / Black / M' },
+    { desc: 'Mens S/S Polo Shirt', color: 'White', size: 'L', sku: 'MPL-002', hs: '6105.20.00', qty: 2400, price: 8.5, xmlDesc: 'MENS S/S POLO SHIRT / WHITE / L' },
+    { desc: 'Womens S/S Polo Shirt', color: 'Navy', size: 'S', sku: 'WPL-003', hs: '6106.20.00', qty: 3600, price: 8, xmlDesc: 'Womens S/S Polo Shirt / Navy / M' }
   ],
   'INV-26-0102': [
-    { desc: 'Mens S/S Polo Shirt', color: 'Grey', size: 'M', sku: 'MPL-004', qty: 1000, price: 9, xmlDesc: 'Mens S/S Polo Shirt / Grey / M' },
-    { desc: 'Womens S/S Polo Shirt', color: 'Red', size: 'S', sku: 'WPL-005', qty: 1500, price: 8.5, xmlDesc: 'WOMENS S/S POLO SHIRT / RED / S' }
+    { desc: 'Mens S/S Polo Shirt', color: 'Grey', size: 'M', sku: 'MPL-004', hs: '6105.20.00', qty: 1000, price: 9, xmlDesc: 'Mens S/S Polo Shirt / Grey / M' },
+    { desc: 'Womens S/S Polo Shirt', color: 'Red', size: 'S', sku: 'WPL-005', hs: '6106.20.00', qty: 1500, price: 8.5, xmlDesc: 'WOMENS S/S POLO SHIRT / RED / S' }
   ],
   'INV-26-0103': [
-    { desc: 'Kids S/S Polo Shirt', color: 'Yellow', size: 'S', sku: 'KPL-006', qty: 900, price: 6, xmlDesc: 'Kids S/S Polo Shirt / Yellow / S' },
-    { desc: 'Mens S/S Polo Shirt', color: 'Navy', size: 'L', sku: 'MPL-007', qty: 2000, price: 9, xmlDesc: 'MENS S/S POLO SHIRT / NAVY / L' },
-    { desc: 'Womens S/S Polo Shirt', color: 'White', size: 'M', sku: 'WPL-008', qty: 1200, price: 8.5, xmlDesc: 'Womens S/S Polo Shirt / White / M' },
-    { desc: 'Womens S/S Polo Shirt', color: 'Pink', size: 'S', sku: 'WPL-009', qty: 600, price: 8.5, xmlDesc: 'Womens S/S Polo Shirt / Pink / M' }
+    { desc: 'Kids S/S Polo Shirt', color: 'Yellow', size: 'S', sku: 'KPL-006', hs: '6111.30.00', qty: 900, price: 6, xmlDesc: 'Kids S/S Polo Shirt / Yellow / S' },
+    { desc: 'Mens S/S Polo Shirt', color: 'Navy', size: 'L', sku: 'MPL-007', hs: '6105.20.00', qty: 2000, price: 9, xmlDesc: 'MENS S/S POLO SHIRT / NAVY / L' },
+    { desc: 'Womens S/S Polo Shirt', color: 'White', size: 'M', sku: 'WPL-008', hs: '6106.20.00', qty: 1200, price: 8.5, xmlDesc: 'Womens S/S Polo Shirt / White / M' },
+    { desc: 'Womens S/S Polo Shirt', color: 'Pink', size: 'S', sku: 'WPL-009', hs: '6106.20.00', qty: 600, price: 8.5, xmlDesc: 'Womens S/S Polo Shirt / Pink / M' }
   ]
 };
 
@@ -4503,6 +4503,7 @@ const mockWorkflows: Workflow[] = [
     const fieldTypes: Record<string, 'string' | 'number'> = {
       'Product Description': 'string',
       'Item No. / Model No. (SKU)': 'string',
+      'HS Code': 'string',
       "Q'ty by line": 'number',
       'Net Weight (KGS)': 'number',
       'UOM': 'string'
@@ -4518,6 +4519,7 @@ const mockWorkflows: Workflow[] = [
         const packingRow = {
           'Product Description': `${item.desc} - Size ${size}`,
           'Item No. / Model No. (SKU)': item.sku,
+          'HS Code': item.hs,
           "Q'ty by line": formatMergedNumber(item.qty / sizes.length),
           'Net Weight (KGS)': formatMergedNumber(item.weight / sizes.length),
           'UOM': 'PCS'
@@ -4525,6 +4527,7 @@ const mockWorkflows: Workflow[] = [
         const invoiceRow = {
           'Product Description': item.desc,
           'Item No. / Model No. (SKU)': item.sku,
+          'HS Code': item.hs,
           "Q'ty by line": formatMergedNumber(item.qty),
           'Net Weight (KGS)': formatMergedNumber(item.weight),
           'UOM': 'PCS'
@@ -4665,6 +4668,7 @@ const mockWorkflows: Workflow[] = [
         { fieldName: 'Color', type: 'string', value: item.color, xml: { value: '', notInDoc: true } },
         { fieldName: 'Size', type: 'string', value: item.size, xml: { value: '', notInDoc: true } },
         { fieldName: 'Item No. / Model No. (SKU)', type: 'string', value: item.sku, xml: { value: item.sku } },
+        { fieldName: 'HS Code', type: 'string', value: item.hs, xml: { value: item.hs } },
         { fieldName: "Q'ty by line", type: 'number', value: formatMergedNumber(item.qty), xml: { value: formatMergedNumber(item.qty) } },
         { fieldName: 'Price / Unit', type: 'number', value: fmt2(item.price), xml: { value: fmt2(item.price) } },
         { fieldName: 'Invoice Amount', type: 'number', value: fmt2(amount), xml: { value: fmt2(amount) } }
