@@ -12,7 +12,7 @@ import {
   FileBarChart2, Layers, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, GripVertical, MoreVertical, Redo2, Merge
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Tabs, Tag, Badge, Empty, Button, message, DatePicker, Select, Radio, Drawer } from 'antd';
+import { Tabs, Tag, Badge, Empty, Button, message, DatePicker, Select, Radio, Drawer, AutoComplete } from 'antd';
 import thTH from 'antd/locale/th_TH';
 import dayjs from 'dayjs';
 import 'dayjs/locale/th';
@@ -2017,6 +2017,10 @@ const mockWorkflows: Workflow[] = [
     pageRange: string;
     templateName: string;
     useForTraining: boolean;
+    // Optional: the invoice number this document belongs to. For documents that don't print one
+    // (e.g. a packing list) in a shipment with several invoices, so the system knows which
+    // invoice to compare it against.
+    invoiceNo: string;
     file: File;
     // Excel files only (.xlsx/.xls) — every sheet tab name in the workbook, and which one
     // is selected to read from. Empty array while the workbook is still being parsed, or
@@ -2230,6 +2234,7 @@ const mockWorkflows: Workflow[] = [
       pageRange: '',
       templateName: `${replaceTargetColumn || ''}_Generic`,
       useForTraining: true,
+      invoiceNo: '',
       file: f,
       sheetNames: [] as string[],
       sheetName: ''
@@ -2264,6 +2269,9 @@ const mockWorkflows: Workflow[] = [
   };
   const setReplaceFileUseForTraining = (fileId: string, useForTraining: boolean) => {
     setReplaceUploadedFiles(prev => prev.map(f => f.id === fileId ? { ...f, useForTraining } : f));
+  };
+  const setReplaceFileInvoiceNo = (fileId: string, invoiceNo: string) => {
+    setReplaceUploadedFiles(prev => prev.map(f => f.id === fileId ? { ...f, invoiceNo } : f));
   };
   const setReplaceFileTemplateName = (fileId: string, templateName: string) => {
     setReplaceUploadedFiles(prev => prev.map(f => f.id === fileId ? { ...f, templateName } : f));
@@ -2347,11 +2355,17 @@ const mockWorkflows: Workflow[] = [
       docName: replaceTargetColumn,
       timestamp: new Date().toISOString(),
       action: 'UPLOAD_NEW_VERSION',
-      details: replaceIsResubmission
+      details: (replaceIsResubmission
         ? (replaceMode === 'merge'
             ? (language === 'TH' ? `อัปโหลดไฟล์เพิ่มเติมและรวมเข้ากับชุดเดิม (${replaceUploadedFiles.length} ไฟล์)` : `Uploaded additional files and merged with the existing set (${replaceUploadedFiles.length} files)`)
             : (language === 'TH' ? `อัปโหลดไฟล์ชุดใหม่ทับชุดเดิม (${replaceUploadedFiles.length} ไฟล์)` : `Uploaded a new set of files, replacing the old set (${replaceUploadedFiles.length} files)`))
-        : (language === 'TH' ? `อัปโหลดไฟล์เวอร์ชันใหม่ (${replaceUploadedFiles.length} ไฟล์)` : `Uploaded new version (${replaceUploadedFiles.length} files)`),
+        : (language === 'TH' ? `อัปโหลดไฟล์เวอร์ชันใหม่ (${replaceUploadedFiles.length} ไฟล์)` : `Uploaded new version (${replaceUploadedFiles.length} files)`))
+        + (() => {
+          const linked = replaceUploadedFiles.filter(f => f.invoiceNo.trim());
+          if (linked.length === 0) return '';
+          const pairs = linked.map(f => `${f.name} → ${f.invoiceNo.trim()}`).join(', ');
+          return language === 'TH' ? ` · ระบุ Invoice No.: ${pairs}` : ` · Invoice No. given: ${pairs}`;
+        })(),
       version: 2,
       user: 'Kunawut W.'
     };
@@ -7656,7 +7670,7 @@ const mockWorkflows: Workflow[] = [
                           return (
                             <>
                               <div className="flex items-center gap-2">
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0 w-16">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0 w-[88px]">
                                   {language === 'TH' ? 'Template:' : 'Template:'}
                                 </span>
                                 <Select
@@ -7689,7 +7703,7 @@ const mockWorkflows: Workflow[] = [
                                 )}
                               </div>
                               {selectedConfidence !== undefined && selectedConfidence < 70 && (
-                                <div className="ml-[72px] flex items-start gap-2 text-[11px] font-bold text-rose-600 bg-rose-50 border border-rose-100 p-2.5 rounded-lg">
+                                <div className="ml-[96px] flex items-start gap-2 text-[11px] font-bold text-rose-600 bg-rose-50 border border-rose-100 p-2.5 rounded-lg">
                                   <AlertTriangle size={14} className="shrink-0 mt-0.5" />
                                   <span>
                                     {language === 'TH'
@@ -7699,7 +7713,7 @@ const mockWorkflows: Workflow[] = [
                                 </div>
                               )}
                               {selectedConfidence !== undefined && selectedConfidence < 90 && (
-                                <label className="ml-[72px] flex items-start gap-2.5 cursor-pointer select-none w-fit">
+                                <label className="ml-[96px] flex items-start gap-2.5 cursor-pointer select-none w-fit">
                                   <input
                                     type="checkbox"
                                     checked={file.useForTraining}
@@ -7718,6 +7732,33 @@ const mockWorkflows: Workflow[] = [
                                   </span>
                                 </label>
                               )}
+
+                              {/* Optional invoice no. — which invoice this document belongs to */}
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0 w-[88px] flex items-center gap-1">
+                                  Invoice No.
+                                  <Tooltip
+                                    content={
+                                      <div className="p-0.5 text-left text-[11px] font-sans max-w-[260px] leading-relaxed">
+                                        {language === 'TH'
+                                          ? 'ใส่เลข Invoice ที่เอกสารฉบับนี้เกี่ยวข้อง ระบบจะนำไปเทียบคู่กับ Invoice เลขนี้ เหมาะกับเอกสารที่ไม่มีเลข Invoice พิมพ์มาด้วย เช่น Packing List เมื่อมี Invoice หลายใบในชิปเมนต์เดียวกัน'
+                                          : 'Enter the invoice number this document belongs to. The system will compare it with that invoice — useful for documents that do not print an invoice number (e.g. a Packing List) when a shipment has several invoices.'}
+                                      </div>
+                                    }
+                                  >
+                                    <Info size={11} className="text-slate-400 hover:text-blue-500 cursor-help normal-case" />
+                                  </Tooltip>
+                                </span>
+                                <AutoComplete
+                                  value={file.invoiceNo}
+                                  onChange={(value) => setReplaceFileInvoiceNo(file.id, value)}
+                                  placeholder={language === 'TH' ? 'ไม่บังคับ เช่น INV-26-0102' : 'Optional, e.g. INV-26-0102'}
+                                  className="flex-1 min-w-0"
+                                  allowClear
+                                  options={(selectedJob?.datasets || []).map(ds => ({ value: ds.key, label: ds.label }))}
+                                  filterOption={(input, option) => String(option?.value ?? '').toLowerCase().includes(input.toLowerCase())}
+                                />
+                              </div>
                             </>
                           );
                         })()}
