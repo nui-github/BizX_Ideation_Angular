@@ -11854,7 +11854,7 @@ const mockWorkflows: Workflow[] = [
                                              )}
                                              {group !== 'no-group' && (
                                                 <tr className={`group/itemheader cursor-pointer transition-colors ${part === 'Unmatched' ? 'bg-amber-50/80 hover:bg-amber-100/60' : 'bg-slate-100/80 hover:bg-slate-200/50'}`} onClick={(e) => toggleGroup(e, group as string)}>
-                                                   <td colSpan={comparedDocs.length + 1} className={`sticky z-[24] p-0 border-y-2 shadow-sm relative transition-[top] duration-300 will-change-[top] ${part === 'Unmatched' ? 'border-amber-200/80 bg-amber-50/95' : 'border-slate-200/80 bg-slate-100/90'} ${
+                                                   <td colSpan={comparedDocs.length + 1} className={`sticky z-[24] p-0 shadow-sm relative transition-[top] duration-300 will-change-[top] ${part === 'Unmatched' ? 'border-y border-amber-200/80 bg-amber-50/95' : 'border-y-2 border-slate-200/80 bg-slate-100/90'} ${
                                                      hasDatasetSelector
                                                        ? (tableScrolledPastTop ? 'top-[116px]' : 'top-[150px]')
                                                        : (tableScrolledPastTop ? 'top-[80px]' : 'top-[114px]')
@@ -11920,7 +11920,7 @@ const mockWorkflows: Workflow[] = [
                                                 </tr>
                                              )}
                                              {!collapsedGroups[group] && groupFields.map((res, i) => (
-                                              <tr key={res.fieldName} className={`hover:bg-slate-50/80 transition-colors group/row ${i === groupFields.length - 1 ? 'border-b-2 border-slate-200/80' : ''}`}>
+                                              <tr key={res.fieldName} className={`hover:bg-slate-50/80 transition-colors group/row ${i === groupFields.length - 1 ? (part === 'Unmatched' ? 'border-b border-amber-200/80' : 'border-b-2 border-slate-200/80') : ''}`}>
                                                  <td className={`sticky left-0 z-20 ${part === 'Unmatched' ? 'bg-amber-50' : 'bg-slate-50'} border-r border-r-slate-100 border-t border-t-slate-200 p-4 font-black text-slate-700 group-hover/row:text-[#1f5df9] shadow-[2px_0_10px_rgba(0,0,0,0.02)] transition-colors relative`}>
                                                   {group !== 'no-group' && <div className={`absolute left-0 top-0 bottom-0 w-[3px] ${part === 'Unmatched' ? 'bg-amber-200' : 'bg-slate-100'}`}></div>}
                                                   <div className="flex flex-col ml-1">
