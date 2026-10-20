@@ -12282,7 +12282,8 @@ const mockWorkflows: Workflow[] = [
                                                 className="flex flex-col items-center gap-0.5"
                                                 title={language === 'TH' ? 'รหัส HS ในฉบับ (ปี) เก่า ที่ระบุไว้ในไฟล์ — ไม่ได้ใช้เทียบ' : 'Code in an older HS edition listed in the file — not used for comparison'}
                                               >
-                                                {(target as any).legacyCodes.map((lc: { code: string; year: string }) => (
+                                                {/* Only the most recent older edition is shown (the file may list several). */}
+                                                {[...(target as any).legacyCodes].sort((a: { year: string }, b: { year: string }) => Number(b.year) - Number(a.year)).slice(0, 1).map((lc: { code: string; year: string }) => (
                                                   <span key={`${lc.code}-${lc.year}`} className="text-[10px] font-semibold text-slate-400 font-mono">
                                                     {lc.code} (HS {lc.year})
                                                   </span>
