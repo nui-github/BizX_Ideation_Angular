@@ -898,7 +898,7 @@ function App() {
   const [role, setRole] = useState<UserRole>(UserRole.ADMIN);
   // Which team the signed-in user is acting as — switchable from the profile menu (Layout) so
   // QA can preview team-scoped views without a real multi-account login.
-  const [currentTeam, setCurrentTeam] = useState<string>('operation');
+  const [currentTeam, setCurrentTeam] = useState<string>('cds');
   const [logs, setLogs] = useState<AuditLog[]>(MOCK_LOGS);
   const [language, setLanguage] = useState<Language>('TH'); // Default to TH based on screenshot
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);

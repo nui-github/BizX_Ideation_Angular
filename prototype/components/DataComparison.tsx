@@ -646,7 +646,7 @@ const parseDateValue = (dateStr: string | undefined): number => {
   return new Date(dateStr).getTime() || 0;
 };
 
-export const DataComparison: React.FC<DataComparisonProps> = ({ language, trackingItems, role = UserRole.USER, targetJobId, onConsumeTargetJobId, currentTeam = 'operation' }) => {
+export const DataComparison: React.FC<DataComparisonProps> = ({ language, trackingItems, role = UserRole.USER, targetJobId, onConsumeTargetJobId, currentTeam = 'cds' }) => {
   const t = TRANSLATIONS[language];
   
   const getMismatchRule = (fieldName: string, part: string, ruleTitleOverride?: string, ruleDescOverride?: string) => {
@@ -3453,7 +3453,7 @@ const mockWorkflows: Workflow[] = [
       expiryDate: '28 AUG 2026 17:00:00',
       createdAt: '26 AUG 2026',
       workflowName: 'PO/PI Matching',
-      assignedTeam: 'operation',
+      assignedTeam: 'cds',
       assignee: 'Somchai T.',
       isLocked: true,
       status: JobStatus.READY,
@@ -3475,7 +3475,7 @@ const mockWorkflows: Workflow[] = [
       expiryDate: '29 AUG 2026 17:00:00',
       createdAt: '26 AUG 2026',
       workflowName: 'Shipping Doc Matching',
-      assignedTeam: 'operation',
+      assignedTeam: 'cds',
       assignee: 'Somchai T.',
       status: JobStatus.PENDING,
       totalFieldsCount: 0,
@@ -3557,7 +3557,7 @@ const mockWorkflows: Workflow[] = [
       expiryDate: '28 AUG 2026 17:00:00',
       createdAt: '26 AUG 2026',
       workflowName: 'PO/PI Matching',
-      assignedTeam: 'operation',
+      assignedTeam: 'cds',
       assignee: 'Somchai T.',
       isLocked: true,
       status: JobStatus.READY,
@@ -3579,7 +3579,7 @@ const mockWorkflows: Workflow[] = [
       expiryDate: '29 AUG 2026 17:00:00',
       createdAt: '26 AUG 2026',
       workflowName: 'Shipping Doc Matching',
-      assignedTeam: 'operation',
+      assignedTeam: 'cds',
       assignee: 'Somchai T.',
       isLocked: true,
       status: JobStatus.READY,
@@ -3724,7 +3724,7 @@ const mockWorkflows: Workflow[] = [
       expiryDate: '12 OCT 2026 17:00:00',
       createdAt: '09 OCT 2026',
       workflowName: 'PO/PI Matching',
-      assignedTeam: 'operation',
+      assignedTeam: 'cds',
       assignee: 'Somchai T.',
       isLocked: true,
       status: JobStatus.READY,
@@ -3746,7 +3746,7 @@ const mockWorkflows: Workflow[] = [
       expiryDate: '13 OCT 2026 17:00:00',
       createdAt: '09 OCT 2026',
       workflowName: 'Shipping Doc Matching',
-      assignedTeam: 'operation',
+      assignedTeam: 'cds',
       assignee: 'Somchai T.',
       status: JobStatus.REVIEW,
       totalFieldsCount: 0,
@@ -3844,7 +3844,7 @@ const mockWorkflows: Workflow[] = [
       expiryDate: '16 OCT 2026 17:00:00',
       createdAt: '12 OCT 2026',
       workflowName: 'PO/PI Matching',
-      assignedTeam: 'operation',
+      assignedTeam: 'cds',
       assignee: 'Somchai T.',
       isLocked: true,
       status: JobStatus.READY,
@@ -3866,7 +3866,7 @@ const mockWorkflows: Workflow[] = [
       expiryDate: '17 OCT 2026 17:00:00',
       createdAt: '12 OCT 2026',
       workflowName: 'Shipping Doc Matching',
-      assignedTeam: 'operation',
+      assignedTeam: 'cds',
       assignee: 'Somchai T.',
       status: JobStatus.REVIEW,
       totalFieldsCount: 0,

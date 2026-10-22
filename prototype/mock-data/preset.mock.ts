@@ -27,10 +27,10 @@ export const MOCK_PRESETS: JobPreset[] = [
   {
     id: 'preset-3',
     name: 'CDS shipment',
-    assignedTeams: ['operation'],
+    assignedTeams: ['cds'],
     workflows: [
-      { id: 'pwf-4', workflowId: 'wf-op-1', assignedTeams: ['operation'] },
-      { id: 'pwf-8', workflowId: 'wf-op-2', assignedTeams: ['operation'] },
+      { id: 'pwf-4', workflowId: 'wf-op-1', assignedTeams: ['cds'] },
+      { id: 'pwf-8', workflowId: 'wf-op-2', assignedTeams: ['cds'] },
       { id: 'pwf-9', workflowId: 'wf-op-3', assignedTeams: ['customs'] },
       { id: 'pwf-10', workflowId: 'wf-op-4', assignedTeams: ['customs'] }
     ],

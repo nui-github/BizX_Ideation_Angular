@@ -55,7 +55,7 @@ const INITIAL_NOTIFICATIONS: AppNotification[] = [
   }
 ];
 
-export const Layout: React.FC<LayoutProps> = ({ children, currentUserRole, onToggleRole, language, onLanguageChange, onNavigate, onNotificationClick, currentTeam = 'operation', onTeamChange }) => {
+export const Layout: React.FC<LayoutProps> = ({ children, currentUserRole, onToggleRole, language, onLanguageChange, onNavigate, onNotificationClick, currentTeam = 'cds', onTeamChange }) => {
   const currentTeamLabel = MOCK_TEAMS.find(t => t.value === currentTeam)?.label || currentTeam;
   const [collapsed, setCollapsed] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
