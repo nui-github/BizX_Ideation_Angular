@@ -319,6 +319,12 @@ const NO_RULE_CANDIDATE_FIELDS = {
 };
 const noRuleCellKey = (fieldName: string, docName: string) => `${fieldName}::${docName}`;
 
+// The Bill of Lading column also takes air waybills, so it's labelled "BL / AWB" wherever the
+// column's name is shown. The underlying doc key stays 'Bill of Lading' / 'B / L' (rules, data
+// and logs key off it), only the displayed name changes.
+const isBillOfLadingColumn = (name: string): boolean => /^(bill of lading|b ?\/ ?l)$/i.test(String(name ?? '').trim());
+const docLabel = (name: string): string => (isBillOfLadingColumn(name) ? 'BL / AWB' : name);
+
 // Deterministic per-item barcode shown under each Description-part field label — same shape as
 // a real EAN-13 (e.g. "8809894049155"), varies by item so every "Item N" group gets its own.
 const generateItemBarcode = (group: string | undefined): string => {
@@ -2037,6 +2043,8 @@ const mockWorkflows: Workflow[] = [
     // (e.g. a packing list) in a shipment with several invoices, so the system knows which
     // invoice to compare it against.
     invoiceNo: string;
+    // Only used for the BL / AWB column: which kind of document this file is.
+    docKind: 'BL' | 'AWB';
     file: File;
     // Excel files only (.xlsx/.xls) — every sheet tab name in the workbook, and which one
     // is selected to read from. Empty array while the workbook is still being parsed, or
@@ -2251,6 +2259,7 @@ const mockWorkflows: Workflow[] = [
       templateName: `${replaceTargetColumn || ''}_Generic`,
       useForTraining: true,
       invoiceNo: '',
+      docKind: 'BL' as const,
       file: f,
       sheetNames: [] as string[],
       sheetName: ''
@@ -2285,6 +2294,15 @@ const mockWorkflows: Workflow[] = [
   };
   const setReplaceFileUseForTraining = (fileId: string, useForTraining: boolean) => {
     setReplaceUploadedFiles(prev => prev.map(f => f.id === fileId ? { ...f, useForTraining } : f));
+  };
+  // For the BL / AWB column the template list follows the chosen kind, so switching it resets the
+  // file's template to that kind's Generic one.
+  const getReplaceDocTypeName = (docKind: 'BL' | 'AWB'): string =>
+    isBillOfLadingColumn(replaceTargetColumn || '') ? (docKind === 'AWB' ? 'Air Waybill' : 'Bill of Lading') : (replaceTargetColumn || '');
+  const setReplaceFileDocKind = (fileId: string, docKind: 'BL' | 'AWB') => {
+    setReplaceUploadedFiles(prev => prev.map(f => f.id === fileId
+      ? { ...f, docKind, templateName: `${getReplaceDocTypeName(docKind)}_Generic` }
+      : f));
   };
   const setReplaceFileInvoiceNo = (fileId: string, invoiceNo: string) => {
     setReplaceUploadedFiles(prev => prev.map(f => f.id === fileId ? { ...f, invoiceNo } : f));
@@ -2376,6 +2394,11 @@ const mockWorkflows: Workflow[] = [
             ? (language === 'TH' ? `อัปโหลดไฟล์เพิ่มเติมและรวมเข้ากับชุดเดิม (${replaceUploadedFiles.length} ไฟล์)` : `Uploaded additional files and merged with the existing set (${replaceUploadedFiles.length} files)`)
             : (language === 'TH' ? `อัปโหลดไฟล์ชุดใหม่ทับชุดเดิม (${replaceUploadedFiles.length} ไฟล์)` : `Uploaded a new set of files, replacing the old set (${replaceUploadedFiles.length} files)`))
         : (language === 'TH' ? `อัปโหลดไฟล์เวอร์ชันใหม่ (${replaceUploadedFiles.length} ไฟล์)` : `Uploaded new version (${replaceUploadedFiles.length} files)`))
+        + (() => {
+          if (!isBillOfLadingColumn(replaceTargetColumn)) return '';
+          const kinds = replaceUploadedFiles.map(f => `${f.name} → ${f.docKind === 'AWB' ? 'Air Waybill' : 'Bill of Lading'}`).join(', ');
+          return language === 'TH' ? ` · ประเภทเอกสาร: ${kinds}` : ` · Document type: ${kinds}`;
+        })()
         + (() => {
           const linked = replaceUploadedFiles.filter(f => f.invoiceNo.trim());
           if (linked.length === 0) return '';
@@ -7495,7 +7518,7 @@ const mockWorkflows: Workflow[] = [
                     {LOCAL_T[language].replaceModalTitle}
                   </h3>
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">
-                    {LOCAL_T[language].replaceModalSubtitle.replace('%column%', replaceTargetColumn || '')}
+                    {LOCAL_T[language].replaceModalSubtitle.replace('%column%', docLabel(replaceTargetColumn || ''))}
                   </p>
                 </div>
               </div>
@@ -7652,13 +7675,35 @@ const mockWorkflows: Workflow[] = [
                         </div>
                       </div>
 
+                      {/* BL / AWB column: pick what kind of document this file is first (default Bill of Lading) */}
+                      {isBillOfLadingColumn(replaceTargetColumn || '') && (
+                        <div className="flex items-center gap-2 pl-1">
+                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0 w-[88px]">
+                            {language === 'TH' ? 'ประเภทเอกสาร:' : 'Document type:'}
+                          </span>
+                          <div className="flex items-center gap-0.5 bg-white border border-slate-200 rounded-[4px] p-0.5 shrink-0">
+                            {([['BL', 'Bill of Lading'], ['AWB', 'Air Waybill']] as const).map(([kind, label]) => (
+                              <button
+                                key={kind}
+                                onClick={() => setReplaceFileDocKind(file.id, kind)}
+                                className={`px-3 py-1 rounded-[3px] text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
+                                  file.docKind === kind ? 'bg-blue-500 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                                }`}
+                              >
+                                {label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
                       {/* Excel files pick a sheet instead of a page range, images are a single
                           page by nature, and XML has no concept of pages — "pages to read"
                           doesn't apply to any of them. */}
                       {!/\.(xlsx|xls|jpe?g|png|xml)$/i.test(file.name) && (
                         <>
                           <div className="flex items-center gap-2 pl-1">
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0 w-[88px]">
                               {language === 'TH' ? 'หน้าที่จะอ่าน:' : 'Pages to read:'}
                             </span>
                             <div className="flex items-center gap-0.5 bg-white border border-slate-200 rounded-[4px] p-0.5 shrink-0">
@@ -7690,7 +7735,7 @@ const mockWorkflows: Workflow[] = [
                                   ? 'เช่น 1-3, 5, 8-10 (หน้าติดกันใช้ - / ข้ามหน้าใช้ , คั่น)'
                                   : 'e.g. 1-3, 5, 8-10 (use - for consecutive pages, , to skip)'
                               }
-                              className="w-full text-xs px-3 py-2 rounded-[4px] border border-slate-200 text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300"
+                              className="ml-[100px] w-[calc(100%-100px)] text-xs px-3 py-2 rounded-[4px] border border-slate-200 text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300"
                             />
                           )}
                         </>
@@ -7699,7 +7744,7 @@ const mockWorkflows: Workflow[] = [
                       {/* Excel files only — which sheet tab to read from, defaults to the first one */}
                       {/\.(xlsx|xls)$/i.test(file.name) && (
                         <div className="flex items-center gap-2 pl-1">
-                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0 w-16">
+                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0 w-[88px]">
                             {language === 'TH' ? 'Sheet:' : 'Sheet:'}
                           </span>
                           <select
@@ -7723,7 +7768,7 @@ const mockWorkflows: Workflow[] = [
                           to Medium and another to Low so all 3 tiers are represented. */}
                       <div className="flex flex-col gap-2 pl-1">
                         {(() => {
-                          const doctype = replaceTargetColumn || '';
+                          const doctype = getReplaceDocTypeName(file.docKind);
                           const genericTemplateName = `${doctype}_Generic`;
                           const mediumBrandIdx = hashString(`${doctype}:medium`) % REPLACE_FILE_TEMPLATE_BRANDS.length;
                           let lowBrandIdx = hashString(`${doctype}:low`) % REPLACE_FILE_TEMPLATE_BRANDS.length;
@@ -11388,7 +11433,7 @@ const mockWorkflows: Workflow[] = [
                                         }}
                                         className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-3.5 w-3.5 cursor-pointer disabled:cursor-not-allowed"
                                       />
-                                      <span className="truncate uppercase text-slate-700" title={docName}>{docName}</span>
+                                      <span className="truncate uppercase text-slate-700" title={docLabel(docName)}>{docLabel(docName)}</span>
                                     </div>
                                     {disabled && (
                                       <span className="text-[8px] font-black bg-slate-100 text-slate-400 px-1 py-0.5 rounded uppercase tracking-tighter scale-90 origin-right whitespace-nowrap">
@@ -11595,13 +11640,13 @@ const mockWorkflows: Workflow[] = [
                                        {(docStatus === ComparisonDocStatus.RECEIVED || docStatus === ComparisonDocStatus.MISSING) && (
                                          <div className="absolute inset-0 z-50 bg-white/95 backdrop-blur-[1px] flex flex-col items-center justify-between p-1.5 border-x border-slate-100 shadow-inner">
                                             <div className="flex items-center justify-between w-full gap-1 px-1 py-0.5">
-                                              <span className="text-[10px] font-black text-[#010136] uppercase tracking-widest leading-none truncate max-w-[100px]" title={docName}>
-                                                {docName.length > 11 ? (
-                                                  <Tooltip content={docName}>
-                                                    <span className="cursor-help hover:text-[#1f5df9] transition-colors">{docName.slice(0, 11) + '...'}</span>
+                                              <span className="text-[10px] font-black text-[#010136] uppercase tracking-widest leading-none truncate max-w-[100px]" title={docLabel(docName)}>
+                                                {docLabel(docName).length > 11 ? (
+                                                  <Tooltip content={docLabel(docName)}>
+                                                    <span className="cursor-help hover:text-[#1f5df9] transition-colors">{docLabel(docName).slice(0, 11) + '...'}</span>
                                                   </Tooltip>
                                                 ) : (
-                                                  docName
+                                                  docLabel(docName)
                                                 )}
                                               </span>
                                               <div className="flex items-center gap-1 shrink-0 bg-white/40 p-0.5 rounded shadow-sm border border-slate-100/50">
@@ -11642,12 +11687,12 @@ const mockWorkflows: Workflow[] = [
                                        {docStatus === ComparisonDocStatus.EXTRACTING && (
                                          <div className="absolute inset-0 z-50 bg-blue-50/95 backdrop-blur-[1px] flex flex-col items-center justify-center p-2 border-x border-blue-100">
                                             <span className="text-[10px] font-black text-blue-800 uppercase tracking-widest leading-none mb-2.5">
-                                             {docName.length > 15 ? (
-                                               <Tooltip content={docName}>
-                                                 <span className="cursor-help hover:text-indigo-600 transition-colors">{docName.slice(0, 15) + '...'}</span>
+                                             {docLabel(docName).length > 15 ? (
+                                               <Tooltip content={docLabel(docName)}>
+                                                 <span className="cursor-help hover:text-indigo-600 transition-colors">{docLabel(docName).slice(0, 15) + '...'}</span>
                                                </Tooltip>
                                              ) : (
-                                               docName
+                                               docLabel(docName)
                                              )}
                                             </span>
                                             <div className="flex flex-col items-center gap-1.5 translate-y-[-2px]">
@@ -11779,12 +11824,12 @@ const mockWorkflows: Workflow[] = [
 
                                          <div className="flex flex-col items-center gap-0">
                                             <span className={`font-black tracking-tight flex items-center gap-1 uppercase transition-[font-size] duration-300 ${tableScrolledPastTop ? 'text-[10px]' : 'text-[11px]'} ${displayStatus === ComparisonDocStatus.MISMATCHED ? 'text-rose-500' : 'text-slate-800'}`}>
-                                               {docName.length > 14 ? (
-                                                 <Tooltip content={docName}>
-                                                   <span className="cursor-help hover:text-indigo-600 transition-colors">{docName.slice(0, 14) + '...'}</span>
+                                               {docLabel(docName).length > 14 ? (
+                                                 <Tooltip content={docLabel(docName)}>
+                                                   <span className="cursor-help hover:text-indigo-600 transition-colors">{docLabel(docName).slice(0, 14) + '...'}</span>
                                                  </Tooltip>
                                                ) : (
-                                                 docName
+                                                 docLabel(docName)
                                                )}
                                                {isReady && <Eye size={10} className="opacity-0 group-hover:opacity-100 transition-opacity" />}
                                             </span>
