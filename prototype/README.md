@@ -16,4 +16,4 @@ View in AI Studio: https://ai.studio/apps/83a9481d-2220-4906-9841-ab4452eb9515
 
 1. Install dependencies: `npm install`
 2. (optional) Set `GEMINI_API_KEY` in `.env.local` for AI Studio's Gemini integration
-3. Run the app: `npm run dev`
+3. Run the app: `npm run dev` — serves at http://localhost:3417 (fixed port, `strictPort`; if it's taken Vite exits instead of picking another port, so the preview never ends up on a different app)

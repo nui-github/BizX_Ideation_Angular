@@ -6,7 +6,10 @@ export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
     return {
       server: {
-        port: 3000,
+        // Deliberately not 3000/5173 (other local apps use those). strictPort makes Vite fail loudly
+        // if 3417 is taken instead of silently hopping to another port and serving the wrong app.
+        port: 3417,
+        strictPort: true,
         host: '0.0.0.0',
       },
       plugins: [react()],

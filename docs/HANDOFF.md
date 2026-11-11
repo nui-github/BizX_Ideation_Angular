@@ -119,6 +119,14 @@ Additions since then (as of 2026-10-20), all in `DataComparison.tsx`:
 - **Unmatched section** — rows a document splits that have no counterpart in the main document
   (`part: 'Unmatched'`) render as their own amber block with a "merge these items" button that
   opens the drawer above.
+- **BL / AWB column** — the Bill of Lading column is *displayed* as "BL / AWB" (`docLabel()`; the
+  underlying doc key stays `Bill of Lading` / `B / L`), and uploading into it asks per file whether
+  it is a Bill of Lading (default) or an Air Waybill (`docKind: 'BL' | 'AWB'`); the template list
+  follows the choice (`Bill of Lading_Generic` / `Air Waybill_Generic`) and the choice is written to
+  the activity log. Compare rules still call the doc type "Bill of Lading (BL)".
+- **Teams** — the "CDS shipment" preset and the first two flows of the 4-flow CDS demo shipments
+  are assigned to the `cds` team (flows 3–4 stay `customs`); the app's default current team is now
+  `cds` (`App.tsx` `currentTeam`, also the fallback in `Layout.tsx` / `DataComparison.tsx`).
 - **Dataset selector** — jobs with `datasets` get a "select dataset" row, now pinned to the left
   while the table scrolls horizontally; document status badges follow the selected dataset.
 - **Demo shipments** ("Merge field value", "Incoterm by freight terms") use **hand-built result
@@ -173,9 +181,13 @@ These were caught while scaffolding and are already fixed — noted here so the 
 
 ## Running things
 
+The prototype's dev server is pinned to **port 3417** with `strictPort` (`prototype/vite.config.ts`,
+mirrored in `.claude/launch.json` with `autoPort: false`) so it can't land on a port another local
+app is using (3000 / 5173 are commonly taken) and the preview can't end up showing a different app.
+
 ```bash
 npm install && npm start                          # Angular app (root), the real deliverable, http://localhost:4200
-cd prototype && npm install && npm run dev        # React design prototype (reference), http://localhost:3000
+cd prototype && npm install && npm run dev        # React design prototype (reference), http://localhost:3417
 ```
 
 The two projects have independent `package.json`/`node_modules` — installing one does not

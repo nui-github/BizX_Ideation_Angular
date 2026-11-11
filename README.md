@@ -22,7 +22,7 @@ see [`docs/MIGRATION_PLAN.md`](docs/MIGRATION_PLAN.md).
 npm install && npm start                          # http://localhost:4200
 
 # React design prototype (reference / current live demo)
-cd prototype && npm install && npm run dev        # http://localhost:3000
+cd prototype && npm install && npm run dev        # http://localhost:3417
 ```
 
 ## Deployment
