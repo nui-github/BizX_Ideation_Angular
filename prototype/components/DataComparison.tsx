@@ -345,6 +345,7 @@ const pickRandomNoRuleCells = (candidateFields: string[], docNames: string[], co
 // browser tab never sees — persisted here so a document preview opened in a new tab (see
 // openDocPreviewInNewTab) can find jobs the current tab created after the initial page load.
 const DYNAMIC_JOBS_STORAGE_KEY = 'bizx_dynamic_jobs';
+const BL_DOC_KINDS_STORAGE_KEY = 'bizx_bl_doc_kinds';
 
 // Per-dataset field value overrides for jobs whose uploaded file(s) bundle more than one
 // dataset (see ComparisonJob.datasets and the dataset-selector UI). Keyed by job id, then by
@@ -2029,6 +2030,32 @@ const mockWorkflows: Workflow[] = [
   // "Replace" icon on an already-OCR'd column) vs. a first-time upload on a MISSING column —
   // only the former needs to ask whether to replace or merge with the existing dataset.
   const [replaceIsResubmission, setReplaceIsResubmission] = useState(false);
+  // Which kind(s) of document were uploaded into a job's BL / AWB column (picked per file in the
+  // upload modal), keyed by `${jobId}_${docName}` — the document preview's title follows it.
+  // Kept in localStorage because the preview opens in its own browser tab (see
+  // openDocPreviewInNewTab), which starts without this tab's React state.
+  const [blDocKindsByJobDoc, setBlDocKindsByJobDoc] = useState<Record<string, ('BL' | 'AWB')[]>>(() => {
+    try {
+      const raw = localStorage.getItem(BL_DOC_KINDS_STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : {};
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch {
+      return {};
+    }
+  });
+  useEffect(() => {
+    try { localStorage.setItem(BL_DOC_KINDS_STORAGE_KEY, JSON.stringify(blDocKindsByJobDoc)); } catch {}
+  }, [blDocKindsByJobDoc]);
+  // Title of a document in the preview: for the BL / AWB column it's what was actually uploaded
+  // (Bill of Lading, Air Waybill, or "BL / AWB" when both kinds are in there); nothing uploaded
+  // through the modal yet keeps the column's own name.
+  const getDocPreviewTitle = (jobId: string | undefined, docName: string): string => {
+    if (!jobId || !isBillOfLadingColumn(docName)) return docName;
+    const kinds = blDocKindsByJobDoc[`${jobId}_${docName}`];
+    if (!kinds || kinds.length === 0) return docName;
+    if (kinds.length > 1) return 'BL / AWB';
+    return kinds[0] === 'AWB' ? 'Air Waybill' : 'Bill of Lading';
+  };
   const [replaceMode, setReplaceMode] = useState<'replace' | 'merge'>('replace');
   const [replaceUploadedFiles, setReplaceUploadedFiles] = useState<{
     id: string;
@@ -2381,6 +2408,17 @@ const mockWorkflows: Workflow[] = [
       return;
     }
     assignJobToCurrentUser(selectedJob.id);
+
+    // Remember the document kind(s) uploaded into the BL / AWB column (adding to an existing set
+    // keeps what was there; replacing starts over).
+    if (isBillOfLadingColumn(replaceTargetColumn)) {
+      const key = `${selectedJob.id}_${replaceTargetColumn}`;
+      const uploaded = Array.from(new Set(replaceUploadedFiles.map(f => f.docKind)));
+      setBlDocKindsByJobDoc(prev => ({
+        ...prev,
+        [key]: Array.from(new Set([...(replaceIsResubmission && replaceMode === 'merge' ? (prev[key] || []) : []), ...uploaded]))
+      }));
+    }
 
     // Add activity log for new version
     const newLog = {
@@ -8427,7 +8465,7 @@ const mockWorkflows: Workflow[] = [
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 min-w-0">
-                    <h3 className={standaloneDocPreview ? "font-black text-slate-800 tracking-tight text-sm leading-tight truncate" : "font-black text-slate-800 tracking-tight text-lg leading-tight truncate"}>{pdfPreviewUrl}</h3>
+                    <h3 className={standaloneDocPreview ? "font-black text-slate-800 tracking-tight text-sm leading-tight truncate" : "font-black text-slate-800 tracking-tight text-lg leading-tight truncate"}>{getDocPreviewTitle(selectedJob?.id, pdfPreviewUrl)}</h3>
                     {activeBoardTab !== 'pending' && selectedJob?.docs[pdfPreviewUrl] && (() => {
                       const docStatus = selectedJob.docs[pdfPreviewUrl];
                       const isMismatched = mismatchedFileNames.has(pdfPreviewUrl);
