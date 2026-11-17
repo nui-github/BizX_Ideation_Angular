@@ -1,0 +1,107 @@
+<svg viewBox="0 0 960 440" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dev-handoff-title dev-handoff-desc">
+  <title id="dev-handoff-title">เส้นทางส่งต่อจาก prototype ไปทีม dev</title>
+  <desc id="dev-handoff-desc">Swimlane diagram of how a prototype feature reaches the Angular app: the prototype is documented in the handoff docs, the dev team picks a feature, then ports it as mock data, a service and a component, and checks it against the prototype; demo scaffolding is not ported.</desc>
+  <defs>
+    <marker id="dh-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#475569"/></marker>
+    <marker id="dh-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#1f5df9"/></marker>
+  </defs>
+  <rect width="100%" height="100%" fill="#f8fafc"/>
+
+  <!-- Lane dividers -->
+  <line x1="24" y1="56" x2="936" y2="56" stroke="#cbd5e1" stroke-width="1"/>
+  <line x1="24" y1="164" x2="936" y2="164" stroke="rgba(1,1,54,0.12)" stroke-width="1"/>
+  <line x1="24" y1="272" x2="936" y2="272" stroke="rgba(1,1,54,0.12)" stroke-width="1"/>
+  <line x1="24" y1="380" x2="936" y2="380" stroke="#cbd5e1" stroke-width="1"/>
+  <line x1="104" y1="56" x2="104" y2="380" stroke="#cbd5e1" stroke-width="1"/>
+
+  <!-- Lane labels -->
+  <text x="36" y="106" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif">ออกแบบ</text>
+  <text x="36" y="122" fill="#5b6b83" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.18em">DESIGN</text>
+  <text x="36" y="214" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif">เอกสาร</text>
+  <text x="36" y="230" fill="#5b6b83" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.18em">DOCS</text>
+  <text x="36" y="322" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif">ทีม dev</text>
+  <text x="36" y="338" fill="#5b6b83" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.18em">DEV</text>
+
+  <!-- Arrows (drawn first, so boxes sit on top) -->
+  <!-- 1 Prototype → docs (the docs are refreshed from the prototype) -->
+  <line x1="180" y1="152" x2="180" y2="192" stroke="#475569" stroke-width="1.2" marker-end="url(#dh-arrow)"/>
+  <!-- 2 Prototype ⇢ demo scaffold (not ported) -->
+  <line x1="240" y1="124" x2="276" y2="124" stroke="#475569" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#dh-arrow)"/>
+  <!-- 3 Docs → pick a feature (handoff to the dev team) -->
+  <path d="M 240,220 H 328 Q 336,220 336,228 V 300" fill="none" stroke="#475569" stroke-width="1.2" marker-end="url(#dh-arrow)"/>
+  <!-- 4 Pick → mock data -->
+  <line x1="396" y1="328" x2="432" y2="328" stroke="#475569" stroke-width="1.2" marker-end="url(#dh-arrow)"/>
+  <!-- 5 Mock data → service -->
+  <line x1="552" y1="328" x2="588" y2="328" stroke="#475569" stroke-width="1.2" marker-end="url(#dh-arrow)"/>
+  <!-- 6 Service → component (the deliverable) -->
+  <line x1="708" y1="328" x2="744" y2="328" stroke="#1f5df9" stroke-width="1.4" marker-end="url(#dh-arrow-accent)"/>
+  <!-- 7 Component ⇢ prototype (check against the original) -->
+  <path d="M 804,300 V 90 Q 804,82 796,82 H 188 Q 180,82 180,90 V 96" fill="none" stroke="#475569" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#dh-arrow)"/>
+
+  <!-- Arrow labels -->
+  <rect x="372" y="58" width="120" height="16" rx="2" fill="#f8fafc"/>
+  <text x="432" y="70" fill="#5b6b83" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle">เทียบกับต้นฉบับ</text>
+
+  <!-- Steps -->
+  <!-- prototype -->
+  <rect x="120" y="96" width="120" height="56" rx="6" fill="#f8fafc"/>
+  <rect x="120" y="96" width="120" height="56" rx="6" fill="#ffffff" stroke="#010136" stroke-width="1"/>
+  <rect x="128" y="102" width="16" height="12" rx="2" fill="transparent" stroke="#010136" stroke-opacity="0.4" stroke-width="0.8"/>
+  <text x="136" y="111" fill="#010136" fill-opacity="0.8" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">1</text>
+  <text x="180" y="130" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle">Prototype</text>
+  <text x="180" y="144" fill="#475569" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">React + Vite</text>
+  <!-- scaffold -->
+  <rect x="276" y="96" width="120" height="56" rx="6" fill="#f8fafc"/>
+  <rect x="276" y="96" width="120" height="56" rx="6" fill="rgba(1,1,54,0.02)" stroke="rgba(1,1,54,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+  <text x="336" y="130" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle">ไม่พอร์ต</text>
+  <text x="336" y="144" fill="#475569" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">demo scaffold</text>
+  <!-- docs -->
+  <rect x="120" y="192" width="120" height="56" rx="6" fill="#f8fafc"/>
+  <rect x="120" y="192" width="120" height="56" rx="6" fill="#ffffff" stroke="#010136" stroke-width="1"/>
+  <rect x="128" y="198" width="16" height="12" rx="2" fill="transparent" stroke="#010136" stroke-opacity="0.4" stroke-width="0.8"/>
+  <text x="136" y="207" fill="#010136" fill-opacity="0.8" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">2</text>
+  <text x="180" y="226" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle">คู่มือส่งต่อ</text>
+  <text x="180" y="240" fill="#475569" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">docs/*.md</text>
+  <!-- pick -->
+  <rect x="276" y="300" width="120" height="56" rx="6" fill="#f8fafc"/>
+  <rect x="276" y="300" width="120" height="56" rx="6" fill="#ffffff" stroke="#010136" stroke-width="1"/>
+  <rect x="284" y="306" width="16" height="12" rx="2" fill="transparent" stroke="#010136" stroke-opacity="0.4" stroke-width="0.8"/>
+  <text x="292" y="315" fill="#010136" fill-opacity="0.8" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">3</text>
+  <text x="336" y="334" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle">เลือกฟีเจอร์</text>
+  <text x="336" y="348" fill="#475569" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">MIGRATION_PLAN</text>
+  <!-- mock -->
+  <rect x="432" y="300" width="120" height="56" rx="6" fill="#f8fafc"/>
+  <rect x="432" y="300" width="120" height="56" rx="6" fill="#ffffff" stroke="#010136" stroke-width="1"/>
+  <rect x="440" y="306" width="16" height="12" rx="2" fill="transparent" stroke="#010136" stroke-opacity="0.4" stroke-width="0.8"/>
+  <text x="448" y="315" fill="#010136" fill-opacity="0.8" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">4</text>
+  <text x="492" y="334" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle">ข้อมูลจำลอง</text>
+  <text x="492" y="348" fill="#475569" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">*.mock.ts</text>
+  <!-- service -->
+  <rect x="588" y="300" width="120" height="56" rx="6" fill="#f8fafc"/>
+  <rect x="588" y="300" width="120" height="56" rx="6" fill="#ffffff" stroke="#010136" stroke-width="1"/>
+  <rect x="596" y="306" width="16" height="12" rx="2" fill="transparent" stroke="#010136" stroke-opacity="0.4" stroke-width="0.8"/>
+  <text x="604" y="315" fill="#010136" fill-opacity="0.8" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">5</text>
+  <text x="648" y="334" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle">service</text>
+  <text x="648" y="348" fill="#475569" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">Observable</text>
+  <!-- component -->
+  <rect x="744" y="300" width="120" height="56" rx="6" fill="#f8fafc"/>
+  <rect x="744" y="300" width="120" height="56" rx="6" fill="rgba(31,93,249,0.08)" stroke="#1f5df9" stroke-width="1"/>
+  <rect x="752" y="306" width="16" height="12" rx="2" fill="transparent" stroke="#1f5df9" stroke-opacity="0.4" stroke-width="0.8"/>
+  <text x="760" y="315" fill="#1f5df9" fill-opacity="0.8" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">6</text>
+  <text x="804" y="334" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle">component</text>
+  <text x="804" y="348" fill="#475569" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">ng-zorro</text>
+
+  <!-- Legend -->
+  <line x1="24" y1="400" x2="936" y2="400" stroke="rgba(1,1,54,0.12)" stroke-width="0.8"/>
+  <text x="24" y="420" fill="#5b6b83" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.18em">LEGEND</text>
+  <rect x="120" y="411" width="14" height="10" rx="2" fill="#ffffff" stroke="#010136" stroke-width="1"/>
+  <text x="140" y="421" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif">ขั้นตอน (เลขคือลำดับ)</text>
+  <rect x="292" y="411" width="14" height="10" rx="2" fill="rgba(31,93,249,0.08)" stroke="#1f5df9" stroke-width="1"/>
+  <text x="312" y="421" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif">สิ่งที่ส่งมอบจริง</text>
+  <rect x="432" y="411" width="14" height="10" rx="2" fill="rgba(1,1,54,0.02)" stroke="rgba(1,1,54,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+  <text x="452" y="421" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif">ไม่ต้องพอร์ต</text>
+  <line x1="560" y1="416" x2="588" y2="416" stroke="#475569" stroke-width="1.2" marker-end="url(#dh-arrow)"/>
+  <text x="596" y="421" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif">ลำดับ / ส่งต่อ</text>
+  <line x1="708" y1="416" x2="736" y2="416" stroke="#475569" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#dh-arrow)"/>
+  <text x="744" y="421" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif">ตรวจเทียบ / ไม่ใช่ของจริง</text>
+</svg>

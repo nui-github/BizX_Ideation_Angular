@@ -183,9 +183,10 @@ These were caught while scaffolding and are already fixed — noted here so the 
 
 - `/design-process` — a hidden page (no menu entry; type the URL) that describes how the prototype is
   designed with Claude ("vibe design"): `prototype/components/DesignProcessPage.tsx`, routed by
-  pathname in `prototype/index.tsx`. Its loop diagram is drawn with the diagram-design skill; the
-  source is `docs/diagrams/design-loop.html` and the embedded copy is
-  `prototype/components/design-process/design-loop.svg`.
+  pathname in `prototype/index.tsx`. Its two diagrams (the design loop and this handoff route) are
+  drawn with the diagram-design skill; sources are `docs/diagrams/design-loop.html` and
+  `docs/diagrams/dev-handoff.html`, and the embedded copies are the matching `.svg` files in
+  `prototype/components/design-process/`.
 
 ## Running things
 

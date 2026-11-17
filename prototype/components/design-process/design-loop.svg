@@ -2,8 +2,8 @@
   <title id="design-loop-title">วงจรทำงาน Vibe design กับ Claude</title>
   <desc id="design-loop-desc">Swimlane diagram of the six-step design loop between a person and Claude: frame the problem, point at the screen, Claude proposes and the person decides, Claude builds and tests, the person reviews and ships, with a dashed loop back to pointing when the result is not right yet.</desc>
   <defs>
-    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#475569"/></marker>
-    <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#1f5df9"/></marker>
+    <marker id="dl-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#475569"/></marker>
+    <marker id="dl-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#1f5df9"/></marker>
   </defs>
   <rect width="100%" height="100%" fill="#f8fafc"/>
 
@@ -21,21 +21,21 @@
 
   <!-- Arrows (drawn first, so boxes sit on top) -->
   <!-- 1 Frame → Point -->
-  <line x1="216" y1="116" x2="236" y2="116" stroke="#475569" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <line x1="216" y1="116" x2="236" y2="116" stroke="#475569" stroke-width="1.2" marker-end="url(#dl-arrow)"/>
   <!-- 2 Point → Propose (handoff to Claude) -->
-  <path d="M 332,116 H 392 Q 400,116 400,124 V 184" fill="none" stroke="#475569" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <path d="M 332,116 H 392 Q 400,116 400,124 V 184" fill="none" stroke="#475569" stroke-width="1.2" marker-end="url(#dl-arrow)"/>
   <!-- 3 Propose → Decide (handoff back to the person) -->
-  <path d="M 448,212 H 508 Q 516,212 516,204 V 144" fill="none" stroke="#475569" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <path d="M 448,212 H 508 Q 516,212 516,204 V 144" fill="none" stroke="#475569" stroke-width="1.2" marker-end="url(#dl-arrow)"/>
   <!-- 4 Decide → Build (handoff to Claude) -->
-  <path d="M 564,116 H 624 Q 632,116 632,124 V 184" fill="none" stroke="#475569" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <path d="M 564,116 H 624 Q 632,116 632,124 V 184" fill="none" stroke="#475569" stroke-width="1.2" marker-end="url(#dl-arrow)"/>
   <!-- 5 Build → Verify -->
-  <line x1="680" y1="212" x2="700" y2="212" stroke="#475569" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <line x1="680" y1="212" x2="700" y2="212" stroke="#475569" stroke-width="1.2" marker-end="url(#dl-arrow)"/>
   <!-- 6 Verify → Review (handoff back to the person) -->
-  <line x1="748" y1="184" x2="748" y2="144" stroke="#475569" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <line x1="748" y1="184" x2="748" y2="144" stroke="#475569" stroke-width="1.2" marker-end="url(#dl-arrow)"/>
   <!-- 7 Review → Ship (the person closes the work) -->
-  <line x1="796" y1="116" x2="816" y2="116" stroke="#1f5df9" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+  <line x1="796" y1="116" x2="816" y2="116" stroke="#1f5df9" stroke-width="1.4" marker-end="url(#dl-arrow-accent)"/>
   <!-- 8 Review → Point (not right yet: loop back) -->
-  <path d="M 748,88 V 76 Q 748,68 740,68 H 292 Q 284,68 284,76 V 88" fill="none" stroke="#475569" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+  <path d="M 748,88 V 76 Q 748,68 740,68 H 292 Q 284,68 284,76 V 88" fill="none" stroke="#475569" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#dl-arrow)"/>
 
   <!-- Arrow labels -->
   <rect x="472" y="44" width="88" height="16" rx="2" fill="#f8fafc"/>
@@ -106,8 +106,8 @@
   <text x="140" y="313" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif">ขั้นตอน (เลขคือขั้นที่)</text>
   <rect x="292" y="303" width="14" height="10" rx="2" fill="rgba(31,93,249,0.08)" stroke="#1f5df9" stroke-width="1"/>
   <text x="312" y="313" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif">จุดที่คนสั่งปิดงาน</text>
-  <line x1="460" y1="308" x2="488" y2="308" stroke="#475569" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <line x1="460" y1="308" x2="488" y2="308" stroke="#475569" stroke-width="1.2" marker-end="url(#dl-arrow)"/>
   <text x="496" y="313" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif">ลำดับ / ส่งต่อ</text>
-  <line x1="620" y1="308" x2="648" y2="308" stroke="#475569" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+  <line x1="620" y1="308" x2="648" y2="308" stroke="#475569" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#dl-arrow)"/>
   <text x="656" y="313" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif">วนกลับถ้ายังไม่ตรงใจ</text>
 </svg>

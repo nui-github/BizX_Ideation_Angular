@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import designLoopSvg from './design-process/design-loop.svg?raw';
+import devHandoffSvg from './design-process/dev-handoff.svg?raw';
 import {
   Target, MousePointerClick, MessagesSquare, Hammer, ScanEye, GitCommitHorizontal,
   Copy, Check, Users, ListChecks, AlertTriangle, BookOpen, Layers, Sparkles, Lightbulb, ArrowRight
@@ -443,6 +444,19 @@ export const DesignProcessPage: React.FC = () => {
         {/* Handoff */}
         <section>
           <SectionTitle id="handoff" icon={ArrowRight} title="ส่งต่อทีม dev" subtitle="prototype ไม่ได้ส่งมอบ แต่เป็นเอกสารที่มีชีวิตให้ทีม dev ดูภาพและพฤติกรรม" />
+
+          {/* Swimlane of the handoff route — drawn with the diagram-design skill (profile "bizx");
+              source of truth is docs/diagrams/dev-handoff.html. */}
+          <figure className="mb-6 rounded-xl bg-white border border-slate-200 p-4 shadow-sm">
+            <div
+              className="w-full overflow-x-auto [&_svg]:block [&_svg]:w-full [&_svg]:min-w-[960px]"
+              dangerouslySetInnerHTML={{ __html: devHandoffSvg }}
+            />
+            <figcaption className="mt-3 text-[12px] font-medium text-slate-400 leading-relaxed">
+              จาก prototype ถึง Angular ทีละฟีเจอร์ · ฉากเดโมไม่ต้องพอร์ต · ต้นฉบับ <code className="font-mono">docs/diagrams/dev-handoff.html</code>
+            </figcaption>
+          </figure>
+
           <div className="rounded-xl bg-white border border-slate-200 shadow-sm divide-y divide-slate-100">
             {HANDOFF_ITEMS.map(item => (
               <div key={item.f} className="p-5 flex flex-col md:flex-row md:items-baseline gap-1 md:gap-4">
