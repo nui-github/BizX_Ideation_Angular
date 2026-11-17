@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>การทำงานกับ PO และลูกค้า · Swimlane</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #f8fafc;   /* slate-50 */
+      --color-ink:     #010136;   /* deep navy (BizX base text) */
+      --color-muted:   #475569;   /* slate-600 */
+      --color-accent:  #1f5df9;   /* BizX primary */
+      --font-sans:     'IBM Plex Sans Thai', system-ui, sans-serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+    }
+
+    .frame { max-width: 1200px; width: 100%; }
+    /* The SVG holds its readable width (min-width == the viewBox width, so the
+       type ramp is never silently scaled down). This wrapper lets a narrow
+       screen scroll the diagram instead of the whole page. */
+    .diagram-container { width: 100%; overflow-x: auto; }
+
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    h1 {
+      font-family: var(--font-sans);
+      font-size: clamp(1.5rem, 2.4vw + 0.75rem, 1.75rem);
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      line-height: 1.25;
+      color: var(--color-ink);
+      margin-bottom: 1.5rem;
+    }
+
+    svg { width: 100%; min-width: 960px; display: block; }
+    @media print {
+      .diagram-container { overflow-x: visible; }
+      svg { min-width: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Swimlane · BizX Design Process</p>
+    <h1>การทำงานกับ PO และลูกค้า</h1>
+
+    <div class="diagram-container">
+    <svg viewBox="0 0 960 480" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="po-loop-title po-loop-desc">
+      <title id="po-loop-title">การทำงานกับ PO และลูกค้า</title>
+      <desc id="po-loop-desc">Swimlane diagram of how the designer works with the product owner and the customer: the PO sends a requirement, the designer works out the flow and builds a prototype with Claude, the PO and then the customer review it, and any change goes back to the requirement and repeats the same flow, until it passes and is handed to the dev team.</desc>
+      <defs>
+        <marker id="dp-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#475569"/></marker>
+        <marker id="dp-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#1f5df9"/></marker>
+      </defs>
+      <rect width="100%" height="100%" fill="#f8fafc"/>
+
+      <!-- Lane dividers -->
+      <line x1="24" y1="40" x2="936" y2="40" stroke="#cbd5e1" stroke-width="1"/>
+      <line x1="24" y1="172" x2="936" y2="172" stroke="rgba(1,1,54,0.12)" stroke-width="1"/>
+      <line x1="24" y1="284" x2="936" y2="284" stroke="rgba(1,1,54,0.12)" stroke-width="1"/>
+      <line x1="24" y1="416" x2="936" y2="416" stroke="#cbd5e1" stroke-width="1"/>
+      <line x1="104" y1="40" x2="104" y2="416" stroke="#cbd5e1" stroke-width="1"/>
+
+      <!-- Lane labels -->
+      <text x="36" y="126" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif">PO</text>
+      <text x="36" y="142" fill="#5b6b83" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.18em">OWNER</text>
+      <text x="36" y="224" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif">Designer</text>
+      <text x="36" y="240" fill="#5b6b83" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.18em">+ CLAUDE</text>
+      <text x="36" y="342" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif">ลูกค้า</text>
+      <text x="36" y="358" fill="#5b6b83" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.18em">CLIENT</text>
+
+      <!-- Arrows (drawn first, so boxes sit on top) -->
+      <!-- 1 requirement → flow (handoff to the designer) -->
+      <path d="M 232,124 H 300 Q 308,124 308,132 V 200" fill="none" stroke="#475569" stroke-width="1.2" marker-end="url(#dp-arrow)"/>
+      <!-- 2 flow → vibe code -->
+      <line x1="364" y1="228" x2="384" y2="228" stroke="#475569" stroke-width="1.2" marker-end="url(#dp-arrow)"/>
+      <!-- 3 prototype → PO review -->
+      <path d="M 496,228 H 564 Q 572,228 572,220 V 152" fill="none" stroke="#475569" stroke-width="1.2" marker-end="url(#dp-arrow)"/>
+      <!-- 4 PO review → customer review -->
+      <path d="M 628,124 H 696 Q 704,124 704,132 V 312" fill="none" stroke="#475569" stroke-width="1.2" marker-end="url(#dp-arrow)"/>
+      <!-- 5 customer review → handoff to dev (passed) -->
+      <path d="M 760,340 H 828 Q 836,340 836,332 V 256" fill="none" stroke="#1f5df9" stroke-width="1.4" marker-end="url(#dp-arrow-accent)"/>
+      <!-- 6 PO review ⇢ requirement (changes needed) -->
+      <path d="M 572,96 V 84 Q 572,76 564,76 H 184 Q 176,76 176,84 V 96" fill="none" stroke="#475569" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#dp-arrow)"/>
+      <!-- 7 customer review ⇢ requirement (changes needed) -->
+      <path d="M 704,368 V 388 Q 704,396 696,396 H 184 Q 176,396 176,388 V 152" fill="none" stroke="#475569" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#dp-arrow)"/>
+
+      <!-- Arrow labels -->
+      <rect x="344" y="52" width="60" height="16" rx="2" fill="#f8fafc"/>
+      <text x="374" y="64" fill="#5b6b83" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle">มีปรับแก้</text>
+      <rect x="368" y="372" width="144" height="16" rx="2" fill="#f8fafc"/>
+      <text x="440" y="384" fill="#5b6b83" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle">มีปรับแก้ = req ใหม่</text>
+
+      <!-- Steps -->
+      <!-- req -->
+      <rect x="120" y="96" width="112" height="56" rx="6" fill="#f8fafc"/>
+      <rect x="120" y="96" width="112" height="56" rx="6" fill="#ffffff" stroke="#010136" stroke-width="1"/>
+      <rect x="128" y="102" width="16" height="12" rx="2" fill="transparent" stroke="#010136" stroke-opacity="0.4" stroke-width="0.8"/>
+      <text x="136" y="111" fill="#010136" fill-opacity="0.8" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">1</text>
+      <text x="176" y="130" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle">ส่งโจทย์</text>
+      <text x="176" y="144" fill="#475569" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">requirement</text>
+      <!-- flow -->
+      <rect x="252" y="200" width="112" height="56" rx="6" fill="#f8fafc"/>
+      <rect x="252" y="200" width="112" height="56" rx="6" fill="#ffffff" stroke="#010136" stroke-width="1"/>
+      <rect x="260" y="206" width="16" height="12" rx="2" fill="transparent" stroke="#010136" stroke-opacity="0.4" stroke-width="0.8"/>
+      <text x="268" y="215" fill="#010136" fill-opacity="0.8" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">2</text>
+      <text x="308" y="234" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle">คิด flow</text>
+      <text x="308" y="248" fill="#475569" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">req → flow</text>
+      <!-- vibe -->
+      <rect x="384" y="200" width="112" height="56" rx="6" fill="#f8fafc"/>
+      <rect x="384" y="200" width="112" height="56" rx="6" fill="#ffffff" stroke="#010136" stroke-width="1"/>
+      <rect x="392" y="206" width="16" height="12" rx="2" fill="transparent" stroke="#010136" stroke-opacity="0.4" stroke-width="0.8"/>
+      <text x="400" y="215" fill="#010136" fill-opacity="0.8" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">3</text>
+      <text x="440" y="234" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle">Vibe code</text>
+      <text x="440" y="248" fill="#475569" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">prototype</text>
+      <!-- revpo -->
+      <rect x="516" y="96" width="112" height="56" rx="6" fill="#f8fafc"/>
+      <rect x="516" y="96" width="112" height="56" rx="6" fill="#ffffff" stroke="#010136" stroke-width="1"/>
+      <rect x="524" y="102" width="16" height="12" rx="2" fill="transparent" stroke="#010136" stroke-opacity="0.4" stroke-width="0.8"/>
+      <text x="532" y="111" fill="#010136" fill-opacity="0.8" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">4</text>
+      <text x="572" y="130" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle">รีวิวกับ PO</text>
+      <text x="572" y="144" fill="#475569" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">review</text>
+      <!-- revcust -->
+      <rect x="648" y="312" width="112" height="56" rx="6" fill="#f8fafc"/>
+      <rect x="648" y="312" width="112" height="56" rx="6" fill="#ffffff" stroke="#010136" stroke-width="1"/>
+      <rect x="656" y="318" width="16" height="12" rx="2" fill="transparent" stroke="#010136" stroke-opacity="0.4" stroke-width="0.8"/>
+      <text x="664" y="327" fill="#010136" fill-opacity="0.8" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">5</text>
+      <text x="704" y="346" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle">รีวิวกับลูกค้า</text>
+      <text x="704" y="360" fill="#475569" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">review</text>
+      <!-- dev -->
+      <rect x="780" y="200" width="112" height="56" rx="6" fill="#f8fafc"/>
+      <rect x="780" y="200" width="112" height="56" rx="6" fill="rgba(31,93,249,0.08)" stroke="#1f5df9" stroke-width="1"/>
+      <rect x="788" y="206" width="16" height="12" rx="2" fill="transparent" stroke="#1f5df9" stroke-opacity="0.4" stroke-width="0.8"/>
+      <text x="796" y="215" fill="#1f5df9" fill-opacity="0.8" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">6</text>
+      <text x="836" y="234" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle">ส่งต่อทีม dev</text>
+      <text x="836" y="248" fill="#475569" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">handoff</text>
+
+      <!-- Legend -->
+      <line x1="24" y1="436" x2="936" y2="436" stroke="rgba(1,1,54,0.12)" stroke-width="0.8"/>
+      <text x="24" y="456" fill="#5b6b83" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.18em">LEGEND</text>
+      <rect x="120" y="447" width="14" height="10" rx="2" fill="#ffffff" stroke="#010136" stroke-width="1"/>
+      <text x="140" y="457" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif">ขั้นตอน (เลขคือลำดับ)</text>
+      <rect x="292" y="447" width="14" height="10" rx="2" fill="rgba(31,93,249,0.08)" stroke="#1f5df9" stroke-width="1"/>
+      <text x="312" y="457" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif">ผ่านรีวิว ส่งต่อทีม dev</text>
+      <line x1="476" y1="452" x2="504" y2="452" stroke="#475569" stroke-width="1.2" marker-end="url(#dp-arrow)"/>
+      <text x="512" y="457" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif">ลำดับ / ส่งต่อ</text>
+      <line x1="636" y1="452" x2="664" y2="452" stroke="#475569" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#dp-arrow)"/>
+      <text x="672" y="457" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif">ปรับแก้ แล้วทำซ้ำตาม flow เดิม</text>
+    </svg>
+    </div>
+  </div>
+</body>
+</html>

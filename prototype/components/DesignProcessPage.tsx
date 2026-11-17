@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react';
 import designLoopSvg from './design-process/design-loop.svg?raw';
 import devHandoffSvg from './design-process/dev-handoff.svg?raw';
 import toolsSvg from './design-process/tools.svg?raw';
+import poLoopSvg from './design-process/po-loop.svg?raw';
 import {
   Target, MousePointerClick, MessagesSquare, Hammer, ScanEye, GitCommitHorizontal,
-  Copy, Check, Users, ListChecks, AlertTriangle, BookOpen, Layers, Sparkles, Lightbulb, ArrowRight
+  Copy, Check, Users, ListChecks, AlertTriangle, BookOpen, Layers, Sparkles, Lightbulb, ArrowRight, TrendingUp
 } from 'lucide-react';
 
 // Standalone page, served at /design-process (see index.tsx). It is deliberately not linked from
@@ -15,8 +16,10 @@ const PRIMARY = '#1f5df9';
 const NAVY = '#010136';
 
 const SECTIONS = [
+  { id: 'benefits', label: 'Benefit' },
   { id: 'principles', label: 'หลักคิด' },
   { id: 'loop', label: 'วงจรทำงาน' },
+  { id: 'stakeholders', label: 'PO & ลูกค้า' },
   { id: 'prompts', label: 'วิธีสั่งงาน' },
   { id: 'roles', label: 'บทบาท' },
   { id: 'tools', label: 'เครื่องมือ' },
@@ -26,6 +29,65 @@ const SECTIONS = [
   { id: 'case', label: 'ตัวอย่างจริง' },
   { id: 'handoff', label: 'ส่งต่อทีม dev' },
   { id: 'lessons', label: 'ข้อควรระวัง' }
+];
+
+const BENEFITS = [
+  {
+    who: 'Designer',
+    points: [
+      'ไอเดียกลายเป็นหน้าจอที่คลิกใช้ได้ในรอบเดียว ไม่ต้องรอใครสร้างให้',
+      'ลองได้หลายแนวทางเร็ว แล้วเลือกจากของที่เห็นจริง',
+      'ไม่ต้องเขียนโค้ดเอง ใช้เวลาไปกับการคิด flow และภาษาที่ผู้ใช้เข้าใจ',
+      'มี Claude ช่วยทวนกรณีขอบ ภาษา และคำอธิบายก่อนส่งรีวิว'
+    ]
+  },
+  {
+    who: 'PO',
+    points: [
+      'เห็นของจริงที่ลองกดได้ แทนภาพนิ่งหรือเอกสารยาวๆ ตรวจได้ตรงกว่าว่าตรง requirement หรือไม่',
+      'ขอปรับแล้วเห็นผลเร็ว ตกลงกันได้ในไม่กี่รอบ',
+      'ย้อนดูประวัติการตัดสินใจได้จาก commit และเอกสาร'
+    ]
+  },
+  {
+    who: 'ลูกค้า',
+    points: [
+      'ลองใช้กับสถานการณ์จริงของตัวเองก่อนที่ระบบจะถูกสร้างจริง',
+      'ให้ความเห็นจากสิ่งที่เห็นและกดเอง ไม่ต้องจินตนาการจากคำบรรยาย',
+      'ภาษาและขั้นตอนถูกปรับให้เข้าใจง่าย เพราะผ่านการรีวิวมาแล้วหลายรอบ'
+    ]
+  },
+  {
+    who: 'ทีม dev',
+    points: [
+      'ได้ต้นแบบที่ใช้งานได้ + เอกสารส่งต่อที่อัปเดตตามภาพล่าสุด ตีความผิดน้อยลง',
+      'รู้ชัดว่าอะไรต้องพอร์ตและอะไรเป็นแค่ฉากเดโม',
+      'ข้อสงสัยส่วนใหญ่ถูกตอบไปแล้วตั้งแต่ขั้น prototype'
+    ]
+  },
+  {
+    who: 'องค์กร',
+    points: [
+      'จับความเข้าใจผิดได้ตั้งแต่ prototype ซึ่งแก้ถูกกว่าแก้หลังสร้างจริง',
+      'ประวัติ git เล่าเรื่องว่าตัดสินใจอะไรไว้เพราะอะไร',
+      'ความรู้ของทีมถูกเก็บเป็นเอกสารและความจำของโปรเจกต์ ไม่หายไปกับคน'
+    ]
+  }
+];
+
+const BENEFIT_COMPARE = [
+  { k: 'สิ่งที่ใช้รีวิว', before: 'ภาพหน้าจอนิ่งๆ + เอกสารอธิบาย', after: 'prototype ที่กดใช้ได้ พร้อมข้อมูลตัวอย่างหลายกรณี' },
+  { k: 'ตอนที่เจอปัญหา', before: 'มักเจอตอนทีม dev สร้างไปแล้ว', after: 'เจอตั้งแต่รีวิว prototype' },
+  { k: 'การปรับแก้', before: 'แก้ที่ภาพ แล้วรอรีวิวอีกรอบ', after: 'แก้ แล้วเปิดดูผลได้ทันทีและทดสอบเอง' },
+  { k: 'การส่งต่อ dev', before: 'ภาพ + สเปกที่ล้าหลังได้ง่าย', after: 'prototype + เอกสารส่งต่อที่อัปเดตทุกครั้งที่เปลี่ยน' },
+  { k: 'ความเข้าใจร่วมกัน', before: 'ต่างคนต่างจินตนาการจากคำอธิบาย', after: 'ทุกฝ่ายดูของจริงชิ้นเดียวกัน' }
+];
+
+const BENEFIT_METRICS = [
+  'จำนวนรอบรีวิวต่อฟีเจอร์ (ก่อนผ่านทั้ง PO และลูกค้า)',
+  'เวลาจากได้รับ requirement ถึง prototype ที่รีวิวได้',
+  'จำนวนจุดที่ต้องแก้หลังส่งต่อทีม dev',
+  'คำถามจากทีม dev ที่ต้องกลับมาถาม designer'
 ];
 
 const LOOP_STEPS = [
@@ -77,6 +139,52 @@ const LOOP_STEPS = [
     body: 'Claude ไม่ commit เอง จนกว่าคนจะพิมพ์ "commit & push" แยกต่างหากหลังรีวิวแล้ว ทำให้แต่ละ commit คือ 1 การตัดสินใจที่คนอนุมัติ ย้อนกลับง่าย และประวัติ git อ่านเป็นเรื่องราวได้',
     output: '1 commit ต่อ 1 การเปลี่ยนแปลงที่รีวิวแล้ว'
   }
+];
+
+const STAKEHOLDER_STEPS = [
+  {
+    who: 'PO',
+    title: 'ส่งโจทย์ (requirement)',
+    body: 'PO ส่ง requirement มาให้ designer ซึ่งอาจเป็นเอกสาร ข้อความ หรือการคุยกัน designer ทวนความเข้าใจกับ PO จนตรงกันก่อนเริ่มคิดต่อ',
+    out: 'requirement ที่ทั้งสองฝั่งเข้าใจตรงกัน'
+  },
+  {
+    who: 'Designer',
+    title: 'รับ requirement และคิด flow',
+    body: 'designer แปล requirement เป็น flow การใช้งาน ใครทำอะไรก่อนหลัง มีกรณีไหนบ้าง (ผ่าน ไม่ผ่าน กรณีขอบ) และคำถามที่ยังค้าง ช่วงนี้ใช้ Claude ช่วยคิดและเสนอทางเลือกได้ แต่คนเป็นคนตัดสิน',
+    out: 'flow ที่ตกลงแล้ว + รายการกรณีที่ต้องโชว์'
+  },
+  {
+    who: 'Designer + Claude',
+    title: 'Vibe code เป็น prototype',
+    body: 'เริ่มสร้างตามวงจรทำงาน 6 ขั้นด้านบน ทีละก้อนเล็ก ตรวจในเบราว์เซอร์ทุกครั้ง และทำ mock data ให้เห็นทั้งกรณีผ่านและไม่ผ่าน เพื่อให้รีวิวได้ครบ',
+    out: 'prototype ที่คลิกใช้ได้ พร้อมเดโมที่ครอบคลุมกรณีสำคัญ'
+  },
+  {
+    who: 'PO',
+    title: 'รีวิวกับ PO',
+    body: 'เปิด prototype ให้ PO ลองใช้จริง ไม่ใช่ดูภาพนิ่ง ให้ตรวจว่าตรงกับ requirement และ flow ที่ตกลงไว้หรือไม่ จดความเห็นเป็นข้อๆ ว่าอะไรผ่านและอะไรต้องแก้',
+    out: 'ผลรีวิว: ผ่าน หรือรายการที่ต้องปรับ'
+  },
+  {
+    who: 'ลูกค้า',
+    title: 'รีวิวกับลูกค้า',
+    body: 'พาลูกค้าไล่ตามสถานการณ์จริงของเขา (เช่น shipment ที่มีหลายกรณี) ดูว่าภาษาในหน้าจอและขั้นตอนเข้าใจง่ายไหม เก็บสิ่งที่ลูกค้าติดขัดหรือถามซ้ำ',
+    out: 'ความเห็นจากลูกค้า: ผ่าน หรือรายการที่ต้องปรับ'
+  },
+  {
+    who: 'Designer',
+    title: 'ส่งต่อทีม dev เมื่อผ่าน',
+    body: 'เมื่อทั้ง PO และลูกค้ารับได้แล้ว อัปเดตเอกสารส่งต่อ (HANDOFF, DATA_MODELS) แล้วส่งให้ทีม dev พอร์ตทีละฟีเจอร์ตามเส้นทางในหัวข้อ "ส่งต่อทีม dev"',
+    out: 'เอกสารส่งต่อที่ตรงกับ prototype ล่าสุด'
+  }
+];
+
+const STAKEHOLDER_RULES = [
+  { t: 'ความเห็นที่ได้กลับมาคือ requirement ใหม่', d: 'ถ้า PO หรือลูกค้าขอปรับ ให้เขียนกลับเป็น requirement แล้วเริ่มวนใหม่ที่ "คิด flow" ตามลำดับเดิม ไม่ลุยแก้ตามคำพูดทันที เพราะบางครั้งต้องแก้ flow ไม่ใช่แก้หน้าจอ' },
+  { t: 'รีวิว PO ก่อน แล้วค่อยรีวิวลูกค้า', d: 'PO กรองเรื่องที่ไม่ตรง requirement ออกก่อน ลูกค้าจะได้เห็นของที่ผ่านรอบแรกแล้ว ไม่เสียเวลากับข้อผิดพลาดที่แก้ได้เอง' },
+  { t: 'รีวิวด้วยของที่ใช้ได้จริง', d: 'เปิด prototype ให้ลองกดเอง พร้อมข้อมูลตัวอย่างที่ใกล้เคียงงานจริงของลูกค้า จะได้ความเห็นที่ตรงกว่าการเล่าให้ฟัง' },
+  { t: 'จดผลรีวิวทุกรอบ', d: 'สรุปว่ารอบนี้ผ่านอะไร ต้องแก้อะไร และตัดสินใจเรื่องอะไรไว้ (เก็บเป็นประวัติใน commit และเอกสาร) เพื่อกลับมาดูเหตุผลได้เมื่อมีคนถามภายหลัง' }
 ];
 
 const PROMPT_PATTERNS = [
@@ -354,6 +462,58 @@ export const DesignProcessPage: React.FC = () => {
           </div>
         </section>
 
+        {/* Benefits */}
+        <section>
+          <SectionTitle id="benefits" icon={TrendingUp} title="Benefit ที่ได้จากโปรเซสนี้" subtitle="ใครได้อะไรบ้าง และต่างจากวิธีทำงานแบบเดิมอย่างไร" />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {BENEFITS.map(group => (
+              <div key={group.who} className="rounded-xl bg-white border border-slate-200 p-5 shadow-sm">
+                <h3 className="font-black text-base" style={{ color: NAVY }}>{group.who}</h3>
+                <ul className="mt-3 flex flex-col gap-2">
+                  {group.points.map(point => (
+                    <li key={point} className="flex items-start gap-2 text-sm font-medium text-slate-600 leading-relaxed">
+                      <Check size={14} className="text-emerald-500 mt-1 shrink-0" />
+                      <span>{point}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+
+          <h3 className="text-[13px] font-black text-slate-500 tracking-widest uppercase mt-8 mb-3">เทียบกับวิธีทำงานแบบเดิม</h3>
+          <div className="rounded-xl bg-white border border-slate-200 shadow-sm overflow-hidden">
+            <div className="hidden md:grid grid-cols-[180px_1fr_1fr] bg-slate-50 border-b border-slate-200 text-[11px] font-black tracking-widest uppercase text-slate-400">
+              <div className="px-5 py-3">หัวข้อ</div>
+              <div className="px-5 py-3">วิธีเดิม (โดยทั่วไป)</div>
+              <div className="px-5 py-3 text-[#1f5df9]">วิธีนี้</div>
+            </div>
+            {BENEFIT_COMPARE.map(row => (
+              <div key={row.k} className="grid grid-cols-1 md:grid-cols-[180px_1fr_1fr] border-b border-slate-100 last:border-b-0">
+                <div className="px-5 pt-4 md:py-4 font-black text-[13px]" style={{ color: NAVY }}>{row.k}</div>
+                <div className="px-5 py-1 md:py-4 text-sm font-medium text-slate-500 leading-relaxed"><span className="md:hidden text-[10px] font-black tracking-widest uppercase text-slate-400 mr-2">วิธีเดิม</span>{row.before}</div>
+                <div className="px-5 pb-4 pt-1 md:py-4 text-sm font-bold text-slate-700 leading-relaxed"><span className="md:hidden text-[10px] font-black tracking-widest uppercase text-[#1f5df9] mr-2">วิธีนี้</span>{row.after}</div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-6 rounded-xl bg-blue-50/60 border border-blue-100 p-5">
+            <h3 className="font-black text-[15px] text-[#1f5df9]">อยากพิสูจน์ benefit เป็นตัวเลข เก็บอะไรดี</h3>
+            <p className="text-sm text-slate-600 font-medium mt-1 leading-relaxed">
+              ตอนนี้ benefit ด้านบนเป็นผลเชิงคุณภาพที่เห็นจากการทำงานจริง ยังไม่ได้วัดเป็นตัวเลข ถ้าจะนำไปเสนอ แนะนำเริ่มเก็บ 4 ค่านี้ต่อฟีเจอร์:
+            </p>
+            <ul className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2">
+              {BENEFIT_METRICS.map(metric => (
+                <li key={metric} className="flex items-start gap-2 text-sm font-medium text-slate-700 bg-white border border-blue-100 rounded-lg px-3 py-2">
+                  <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#1f5df9] shrink-0" />
+                  <span>{metric}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+
         {/* Principles */}
         <section>
           <SectionTitle id="principles" icon={BookOpen} title="หลักคิด" subtitle="5 ข้อที่ทำให้วิธีนี้ได้ผล" />
@@ -420,6 +580,52 @@ export const DesignProcessPage: React.FC = () => {
               );
             })}
           </ol>
+        </section>
+
+        {/* Working with the PO and the customer */}
+        <section>
+          <SectionTitle id="stakeholders" icon={Users} title="การทำงานกับ PO และลูกค้า" subtitle="วงรอบใหญ่ที่ครอบวงจร vibe code อยู่ จากโจทย์ ถึงรีวิว ถึงปรับแก้ แล้วทำซ้ำตาม flow เดิม" />
+
+          {/* Swimlane of the outer loop — drawn with the diagram-design skill (profile "bizx");
+              source of truth is docs/diagrams/po-loop.html. */}
+          <figure className="mb-6 rounded-xl bg-white border border-slate-200 p-4 shadow-sm">
+            <div
+              className="w-full overflow-x-auto [&_svg]:block [&_svg]:w-full [&_svg]:min-w-[960px]"
+              dangerouslySetInnerHTML={{ __html: poLoopSvg }}
+            />
+            <figcaption className="mt-3 text-[12px] font-medium text-slate-400 leading-relaxed">
+              designer รับ requirement จาก PO คิด flow แล้ว vibe code ก่อนนำไปรีวิวกับ PO และลูกค้า ถ้ามีปรับแก้ก็กลับไปเริ่มใหม่ที่ requirement · ต้นฉบับ <code className="font-mono">docs/diagrams/po-loop.html</code>
+            </figcaption>
+          </figure>
+
+          <ol className="flex flex-col gap-3 mb-8">
+            {STAKEHOLDER_STEPS.map((step, i) => (
+              <li key={step.title} className="flex gap-4 rounded-xl bg-white border border-slate-200 p-5 shadow-sm">
+                <span className="w-8 h-8 rounded-full bg-[#1f5df9] text-white text-sm font-black flex items-center justify-center shrink-0">{i + 1}</span>
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="font-black text-[15px]" style={{ color: NAVY }}>{step.title}</h3>
+                    <span className="px-2 py-0.5 rounded-full bg-blue-50 text-[#1f5df9] border border-blue-100 text-[10px] font-black">{step.who}</span>
+                  </div>
+                  <p className="text-sm text-slate-600 font-medium mt-1 leading-relaxed">{step.body}</p>
+                  <div className="mt-2 flex items-start gap-2 text-[12px] font-bold text-slate-500">
+                    <ArrowRight size={13} className="mt-0.5 text-[#1f5df9] shrink-0" />
+                    <span>ได้ผลลัพธ์: {step.out}</span>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ol>
+
+          <h3 className="text-[13px] font-black text-slate-500 tracking-widest uppercase mb-3">แนวปฏิบัติตอนรีวิวและปรับแก้</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {STAKEHOLDER_RULES.map(rule => (
+              <div key={rule.t} className="rounded-xl bg-white border border-slate-200 p-5 shadow-sm">
+                <h4 className="font-black text-[15px]" style={{ color: NAVY }}>{rule.t}</h4>
+                <p className="text-sm text-slate-600 font-medium mt-1 leading-relaxed">{rule.d}</p>
+              </div>
+            ))}
+          </div>
         </section>
 
         {/* Prompts */}

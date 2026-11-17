@@ -182,13 +182,17 @@ These were caught while scaffolding and are already fixed — noted here so the 
 ## Prototype extras (not for porting)
 
 - `/design-process` — a hidden page (no menu entry; type the URL) that describes how the prototype is
-  designed with Claude ("vibe design"): `prototype/components/DesignProcessPage.tsx`, routed by
+  designed with Claude ("vibe design") — benefits, principles, the 6-step build loop, the outer loop
+  with the PO and the customer (requirement → flow → prototype → PO / customer review → changes go
+  back as a new requirement), prompt patterns, tools, mock-data and copy rules, checklist, a case
+  study, the dev handoff and lessons learned: `prototype/components/DesignProcessPage.tsx`, routed by
   pathname in `prototype/index.tsx`; on desktop (lg+) the section menu is a fixed left column that
   highlights the section in view, on narrow screens it is a top bar; menu links smooth-scroll to
-  anchors (skipped under `prefers-reduced-motion`, scoped to this page). Its three diagrams (the design loop, the toolchain and this handoff route) are
-  drawn with the diagram-design skill; sources are `docs/diagrams/design-loop.html`,
-  `docs/diagrams/tools.html` and `docs/diagrams/dev-handoff.html`, and the embedded copies are the
-  matching `.svg` files in `prototype/components/design-process/`.
+  anchors (skipped under `prefers-reduced-motion`, scoped to this page). Its four diagrams (the design loop, the PO / customer review loop, the toolchain and this
+  handoff route) are drawn with the diagram-design skill; sources are
+  `docs/diagrams/design-loop.html`, `docs/diagrams/po-loop.html`, `docs/diagrams/tools.html` and
+  `docs/diagrams/dev-handoff.html`, and the embedded copies are the matching `.svg` files in
+  `prototype/components/design-process/`.
 
 ## Running things
 
