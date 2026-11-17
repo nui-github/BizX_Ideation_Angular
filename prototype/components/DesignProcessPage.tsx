@@ -3,6 +3,7 @@ import designLoopSvg from './design-process/design-loop.svg?raw';
 import devHandoffSvg from './design-process/dev-handoff.svg?raw';
 import toolsSvg from './design-process/tools.svg?raw';
 import poLoopSvg from './design-process/po-loop.svg?raw';
+import { DiagramFigure } from './design-process/DiagramFigure';
 import {
   Target, MousePointerClick, MessagesSquare, Hammer, ScanEye, GitCommitHorizontal,
   Copy, Check, Users, ListChecks, AlertTriangle, BookOpen, Layers, Sparkles, Lightbulb, ArrowRight, TrendingUp
@@ -542,15 +543,9 @@ export const DesignProcessPage: React.FC = () => {
 
           {/* Swimlane of the loop — drawn with the diagram-design skill (profile "bizx"); source of
               truth is docs/diagrams/design-loop.html, the SVG here is extracted from it. */}
-          <figure className="mb-8 rounded-xl bg-white border border-slate-200 p-4 shadow-sm">
-            <div
-              className="w-full overflow-x-auto [&_svg]:block [&_svg]:w-full [&_svg]:min-w-[960px]"
-              dangerouslySetInnerHTML={{ __html: designLoopSvg }}
-            />
-            <figcaption className="mt-3 text-[12px] font-medium text-slate-400 leading-relaxed">
+          <DiagramFigure svg={designLoopSvg} className="mb-8">
               ใครทำอะไรในแต่ละขั้น เลขในกล่องคือขั้นที่ตรงกับการ์ดด้านล่าง · ต้นฉบับ <code className="font-mono">docs/diagrams/design-loop.html</code>
-            </figcaption>
-          </figure>
+            </DiagramFigure>
 
           <ol className="relative flex flex-col gap-4">
             {LOOP_STEPS.map((step, i) => {
@@ -588,15 +583,9 @@ export const DesignProcessPage: React.FC = () => {
 
           {/* Swimlane of the outer loop — drawn with the diagram-design skill (profile "bizx");
               source of truth is docs/diagrams/po-loop.html. */}
-          <figure className="mb-6 rounded-xl bg-white border border-slate-200 p-4 shadow-sm">
-            <div
-              className="w-full overflow-x-auto [&_svg]:block [&_svg]:w-full [&_svg]:min-w-[960px]"
-              dangerouslySetInnerHTML={{ __html: poLoopSvg }}
-            />
-            <figcaption className="mt-3 text-[12px] font-medium text-slate-400 leading-relaxed">
+          <DiagramFigure svg={poLoopSvg} className="mb-6">
               designer รับ requirement จาก PO คิด flow แล้ว vibe code ก่อนนำไปรีวิวกับ PO และลูกค้า ถ้ามีปรับแก้ก็กลับไปเริ่มใหม่ที่ requirement · ต้นฉบับ <code className="font-mono">docs/diagrams/po-loop.html</code>
-            </figcaption>
-          </figure>
+            </DiagramFigure>
 
           <ol className="flex flex-col gap-3 mb-8">
             {STAKEHOLDER_STEPS.map((step, i) => (
@@ -681,15 +670,9 @@ export const DesignProcessPage: React.FC = () => {
 
           {/* Architecture of the toolchain — drawn with the diagram-design skill (profile "bizx");
               source of truth is docs/diagrams/tools.html. */}
-          <figure className="mb-6 rounded-xl bg-white border border-slate-200 p-4 shadow-sm">
-            <div
-              className="w-full overflow-x-auto [&_svg]:block [&_svg]:w-full [&_svg]:min-w-[960px]"
-              dangerouslySetInnerHTML={{ __html: toolsSvg }}
-            />
-            <figcaption className="mt-3 text-[12px] font-medium text-slate-400 leading-relaxed">
+          <DiagramFigure svg={toolsSvg} className="mb-6">
               คุณสั่งงานด้วยภาพ + element, Claude แก้โค้ดแล้วเห็นผลในพรีวิว ทดสอบเอง และ commit เมื่อคุณสั่งเท่านั้น · ต้นฉบับ <code className="font-mono">docs/diagrams/tools.html</code>
-            </figcaption>
-          </figure>
+            </DiagramFigure>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {TOOLS.map(tool => (
@@ -776,15 +759,9 @@ export const DesignProcessPage: React.FC = () => {
 
           {/* Swimlane of the handoff route — drawn with the diagram-design skill (profile "bizx");
               source of truth is docs/diagrams/dev-handoff.html. */}
-          <figure className="mb-6 rounded-xl bg-white border border-slate-200 p-4 shadow-sm">
-            <div
-              className="w-full overflow-x-auto [&_svg]:block [&_svg]:w-full [&_svg]:min-w-[960px]"
-              dangerouslySetInnerHTML={{ __html: devHandoffSvg }}
-            />
-            <figcaption className="mt-3 text-[12px] font-medium text-slate-400 leading-relaxed">
+          <DiagramFigure svg={devHandoffSvg} className="mb-6">
               จาก prototype ถึง Angular ทีละฟีเจอร์ · ฉากเดโมไม่ต้องพอร์ต · ต้นฉบับ <code className="font-mono">docs/diagrams/dev-handoff.html</code>
-            </figcaption>
-          </figure>
+            </DiagramFigure>
 
           <div className="rounded-xl bg-white border border-slate-200 shadow-sm divide-y divide-slate-100">
             {HANDOFF_ITEMS.map(item => (

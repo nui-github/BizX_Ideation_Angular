@@ -192,7 +192,10 @@ These were caught while scaffolding and are already fixed — noted here so the 
   handoff route) are drawn with the diagram-design skill; sources are
   `docs/diagrams/design-loop.html`, `docs/diagrams/po-loop.html`, `docs/diagrams/tools.html` and
   `docs/diagrams/dev-handoff.html`, and the embedded copies are the matching `.svg` files in
-  `prototype/components/design-process/`.
+  `prototype/components/design-process/`. Each diagram card has an expand button that opens a
+  full-screen modal (`design-process/DiagramFigure.tsx`): drag to pan, mouse wheel zooms around the
+  cursor, −/+/fit buttons (25–250%, opens at fit width), and the SVG viewBox is cropped to its
+  content plus 32px on every side.
 
 ## Running things
 
