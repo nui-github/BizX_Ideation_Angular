@@ -179,6 +179,14 @@ These were caught while scaffolding and are already fixed — noted here so the 
   `NzI18nInterface` locale (see ng-zorro-antd i18n docs) rather than relying on the app's own
   `Language` toggle, which only affects app-authored copy, not ng-zorro's internal component text.
 
+## Prototype extras (not for porting)
+
+- `/design-process` — a hidden page (no menu entry; type the URL) that describes how the prototype is
+  designed with Claude ("vibe design"): `prototype/components/DesignProcessPage.tsx`, routed by
+  pathname in `prototype/index.tsx`. Its loop diagram is drawn with the diagram-design skill; the
+  source is `docs/diagrams/design-loop.html` and the embedded copy is
+  `prototype/components/design-process/design-loop.svg`.
+
 ## Running things
 
 The prototype's dev server is pinned to **port 3417** with `strictPort` (`prototype/vite.config.ts`,
