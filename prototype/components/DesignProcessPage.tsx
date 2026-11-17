@@ -210,6 +210,16 @@ export const DesignProcessPage: React.FC = () => {
     return () => { document.title = previous; };
   }, []);
 
+  // Menu links are plain #anchors; smooth-scroll to them (unless the visitor prefers reduced
+  // motion). Scoped to this page so it doesn't leak into the app.
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const root = document.documentElement;
+    const previous = root.style.scrollBehavior;
+    root.style.scrollBehavior = 'smooth';
+    return () => { root.style.scrollBehavior = previous; };
+  }, []);
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-700 font-sans">
       <header className="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-slate-200">
