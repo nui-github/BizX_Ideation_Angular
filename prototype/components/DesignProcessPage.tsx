@@ -220,7 +220,7 @@ const useCopy = () => {
 };
 
 const SectionTitle: React.FC<{ id: string; icon: React.ElementType; title: string; subtitle?: string }> = ({ id, icon: Icon, title, subtitle }) => (
-  <div id={id} className="scroll-mt-24 flex items-start gap-3 mb-6">
+  <div id={id} className="scroll-mt-24 lg:scroll-mt-8 flex items-start gap-3 mb-6">
     <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#1f5df9] flex items-center justify-center shrink-0 border border-blue-100">
       <Icon size={18} />
     </div>
@@ -233,6 +233,31 @@ const SectionTitle: React.FC<{ id: string; icon: React.ElementType; title: strin
 
 export const DesignProcessPage: React.FC = () => {
   const { copied, copy } = useCopy();
+  // Which section is currently in view — highlighted in the side menu (desktop).
+  const [activeId, setActiveId] = useState<string>(SECTIONS[0].id);
+
+  useEffect(() => {
+    // The current section is the last one whose title has reached the upper part of the viewport.
+    // Cheap enough (about a dozen rect reads) to run on every scroll event without throttling.
+    const update = () => {
+      const line = window.innerHeight * 0.25;
+      let current = SECTIONS[0].id;
+      for (const section of SECTIONS) {
+        const el = document.getElementById(section.id);
+        if (el && el.getBoundingClientRect().top <= line) current = section.id;
+      }
+      // Bottom of the page: the last section may never reach the line, so pin it.
+      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4) current = SECTIONS[SECTIONS.length - 1].id;
+      setActiveId(current);
+    };
+    update();
+    window.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    return () => {
+      window.removeEventListener('scroll', update);
+      window.removeEventListener('resize', update);
+    };
+  }, []);
 
   useEffect(() => {
     const previous = document.title;
@@ -252,7 +277,8 @@ export const DesignProcessPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-700 font-sans">
-      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-slate-200">
+      {/* Top bar on narrow screens; on desktop (lg+) the menu is the fixed left column below. */}
+      <header className="lg:hidden sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-slate-200">
         <div className="max-w-5xl mx-auto px-5 py-3 flex items-center gap-4">
           <div className="flex items-center gap-2 shrink-0">
             <img src="/logo-bizx-mark.svg" alt="BizX" className="w-6 h-6" />
@@ -272,7 +298,35 @@ export const DesignProcessPage: React.FC = () => {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-5 py-10 flex flex-col gap-14">
+      <div className="max-w-[1360px] mx-auto px-5 lg:flex lg:gap-10">
+        {/* Desktop side menu — stays in place while the page scrolls */}
+        <aside className="hidden lg:block w-52 shrink-0">
+          <nav className="sticky top-0 h-screen overflow-y-auto py-10 flex flex-col gap-1" aria-label="เมนูหน้านี้">
+            <div className="flex items-center gap-2 px-2 mb-5">
+              <img src="/logo-bizx-mark.svg" alt="BizX" className="w-6 h-6" />
+              <span className="font-black text-sm" style={{ color: NAVY }}>Design Process</span>
+            </div>
+            {SECTIONS.map(section => {
+              const active = activeId === section.id;
+              return (
+                <a
+                  key={section.id}
+                  href={`#${section.id}`}
+                  aria-current={active ? 'true' : undefined}
+                  className={`px-3 py-1.5 rounded-[4px] text-[13px] font-bold border-l-2 transition-colors ${
+                    active
+                      ? 'bg-blue-50 text-[#1f5df9] border-[#1f5df9]'
+                      : 'text-slate-500 border-transparent hover:bg-blue-50/60 hover:text-[#1f5df9]'
+                  }`}
+                >
+                  {section.label}
+                </a>
+              );
+            })}
+          </nav>
+        </aside>
+
+      <main className="flex-1 min-w-0 py-10 flex flex-col gap-14">
         {/* Hero */}
         <section className="rounded-2xl bg-white border border-slate-200 p-8 shadow-sm">
           <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 text-[#1f5df9] text-[11px] font-black border border-blue-100">
@@ -553,6 +607,7 @@ export const DesignProcessPage: React.FC = () => {
           BizX Design Process · หน้านี้ไม่มีเมนูในแอป เข้าได้ที่ <code className="font-mono">/design-process</code> เท่านั้น
         </footer>
       </main>
+      </div>
     </div>
   );
 };
