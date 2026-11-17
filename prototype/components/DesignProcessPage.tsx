@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import designLoopSvg from './design-process/design-loop.svg?raw';
 import devHandoffSvg from './design-process/dev-handoff.svg?raw';
+import toolsSvg from './design-process/tools.svg?raw';
 import {
   Target, MousePointerClick, MessagesSquare, Hammer, ScanEye, GitCommitHorizontal,
   Copy, Check, Users, ListChecks, AlertTriangle, BookOpen, Layers, Sparkles, Lightbulb, ArrowRight
@@ -18,6 +19,7 @@ const SECTIONS = [
   { id: 'loop', label: 'วงจรทำงาน' },
   { id: 'prompts', label: 'วิธีสั่งงาน' },
   { id: 'roles', label: 'บทบาท' },
+  { id: 'tools', label: 'เครื่องมือ' },
   { id: 'mock', label: 'Mock data' },
   { id: 'copy', label: 'ภาษาในหน้าจอ' },
   { id: 'gates', label: 'เช็กลิสต์' },
@@ -120,6 +122,34 @@ const ROLES = [
     who: 'Claude',
     does: ['วิเคราะห์ปัญหาและเสนอแนวทางพร้อมแนะนำ', 'แก้โค้ดและสร้าง mock data', 'ทดสอบในเบราว์เซอร์ก่อนรายงาน', 'เขียน commit message และอัปเดตเอกสาร'],
     not: 'ไม่ตัดสินแทนคนในเรื่อง UX ที่คลุมเครือ และไม่ commit เองถ้าไม่ได้รับคำสั่ง'
+  }
+];
+
+const TOOLS = [
+  {
+    name: 'Claude Code (แอปเดสก์ท็อป)',
+    role: 'ตัวกลางที่ลงมือ',
+    body: 'คุยกับ Claude เป็นภาษาไทยปกติ Claude อ่านและแก้ไฟล์ รันคำสั่ง และใช้ git ในโปรเจกต์ได้เอง เมื่อมีทางเลือกที่ต้องตัดสิน จะถามเป็นกล่องตัวเลือกให้กดเลือก ไม่เดาเอง'
+  },
+  {
+    name: 'พรีวิวในแอป (browser pane)',
+    role: 'ดูผลและทดสอบ',
+    body: 'เปิดหน้า prototype ทันทีที่แก้โค้ด Claude เปิดหน้า คลิกทดสอบ อ่าน console และถ่ายภาพหน้าจอเอง ส่วนคุณเลือก element บนหน้าแล้วส่งพร้อมภาพให้ Claude รู้ตำแหน่งแน่ชัด เซิร์ฟเวอร์ล็อกพอร์ต 3417 ไม่ชนแอปอื่น'
+  },
+  {
+    name: 'สกิลเฉพาะทาง',
+    role: 'ทำงานเฉพาะเรื่องให้ได้มาตรฐาน',
+    body: 'เช่น diagram-design สำหรับวาดไดอะแกรมตามสไตล์ BizX (โปรไฟล์ bizx ผูกกับโปรเจกต์ด้วยไฟล์ .diagram-design) ไดอะแกรมในหน้านี้ทั้งหมดวาดด้วยสกิลนี้ แล้วตรวจความถูกต้องของเส้นและตัวอักษรด้วยสคริปต์ก่อนส่งงาน'
+  },
+  {
+    name: 'ความจำของโปรเจกต์ + เอกสาร',
+    role: 'ไม่ต้องบอกซ้ำทุกครั้ง',
+    body: 'กติกาที่ตกลงกันถูกจำข้ามบทสนทนา เช่น "commit เมื่อสั่งเท่านั้น" หรือ "ไดอะแกรมต้องใช้สกิล" และมีเอกสารอ้างอิงใน docs/ (PROJECT_RULES, DESIGN_SYSTEM, HANDOFF) ให้ Claude และทีม dev อ่านตรงกัน'
+  },
+  {
+    name: 'Git + GitHub',
+    role: 'เก็บงานที่รีวิวแล้ว',
+    body: 'ทุกการเปลี่ยนแปลงที่รีวิวแล้วเป็น 1 commit และขึ้น GitHub เมื่อคุณพิมพ์ "commit & push" เท่านั้น ย้อนกลับและไล่ดูประวัติได้เหมือนบันทึกการตัดสินใจ'
   }
 ];
 
@@ -380,6 +410,35 @@ export const DesignProcessPage: React.FC = () => {
                   ))}
                 </ul>
                 <p className="mt-4 text-[12px] font-bold text-slate-500 bg-slate-50 border border-slate-200 rounded-lg p-3 leading-relaxed">{role.not}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Tools */}
+        <section>
+          <SectionTitle id="tools" icon={Hammer} title="เครื่องมือที่ใช้" subtitle="ทั้งหมดต่อกันอย่างไร และแต่ละอันทำหน้าที่อะไร" />
+
+          {/* Architecture of the toolchain — drawn with the diagram-design skill (profile "bizx");
+              source of truth is docs/diagrams/tools.html. */}
+          <figure className="mb-6 rounded-xl bg-white border border-slate-200 p-4 shadow-sm">
+            <div
+              className="w-full overflow-x-auto [&_svg]:block [&_svg]:w-full [&_svg]:min-w-[960px]"
+              dangerouslySetInnerHTML={{ __html: toolsSvg }}
+            />
+            <figcaption className="mt-3 text-[12px] font-medium text-slate-400 leading-relaxed">
+              คุณสั่งงานด้วยภาพ + element, Claude แก้โค้ดแล้วเห็นผลในพรีวิว ทดสอบเอง และ commit เมื่อคุณสั่งเท่านั้น · ต้นฉบับ <code className="font-mono">docs/diagrams/tools.html</code>
+            </figcaption>
+          </figure>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {TOOLS.map(tool => (
+              <div key={tool.name} className="rounded-xl bg-white border border-slate-200 p-5 shadow-sm">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="font-black text-[15px]" style={{ color: NAVY }}>{tool.name}</h3>
+                  <span className="px-2 py-0.5 rounded-full bg-blue-50 text-[#1f5df9] border border-blue-100 text-[10px] font-black">{tool.role}</span>
+                </div>
+                <p className="text-sm text-slate-600 font-medium mt-2 leading-relaxed">{tool.body}</p>
               </div>
             ))}
           </div>

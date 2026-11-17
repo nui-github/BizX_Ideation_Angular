@@ -1,0 +1,93 @@
+<svg viewBox="0 0 960 408" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="tools-title tools-desc">
+  <title id="tools-title">เครื่องมือที่ใช้ทำงานร่วมกับ Claude</title>
+  <desc id="tools-desc">Architecture diagram of the tools used for vibe design: the person gives Claude Code a screenshot and a picked element, Claude Code edits the prototype code, the dev server shows it in the preview pane where Claude tests it and reports back, project knowledge informs Claude, and a commit and push to GitHub happens only on the person's command.</desc>
+  <defs>
+    <marker id="dt-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#475569"/></marker>
+  </defs>
+  <rect width="100%" height="100%" fill="#f8fafc"/>
+
+  <!-- Arrows (drawn first, so boxes sit on top) -->
+  <!-- you → Claude Code -->
+  <line x1="200" y1="172" x2="248" y2="172" stroke="#475569" stroke-width="1.2" marker-end="url(#dt-arrow)"/>
+  <!-- Claude Code → code -->
+  <line x1="376" y1="172" x2="424" y2="172" stroke="#475569" stroke-width="1.2" marker-end="url(#dt-arrow)"/>
+  <!-- code → dev server -->
+  <line x1="552" y1="172" x2="600" y2="172" stroke="#475569" stroke-width="1.2" marker-end="url(#dt-arrow)"/>
+  <!-- dev server → preview -->
+  <line x1="728" y1="172" x2="776" y2="172" stroke="#475569" stroke-width="1.2" marker-end="url(#dt-arrow)"/>
+  <!-- project knowledge ⇢ Claude Code (reference) -->
+  <line x1="312" y1="96" x2="312" y2="144" stroke="#475569" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#dt-arrow)"/>
+  <!-- Claude Code → GitHub (only on command) -->
+  <line x1="292" y1="200" x2="292" y2="288" stroke="#475569" stroke-width="1.2" marker-end="url(#dt-arrow)"/>
+  <!-- preview ⇢ Claude Code (test results, back to Claude) -->
+  <path d="M 840,200 V 232 Q 840,240 832,240 H 340 Q 332,240 332,232 V 200" fill="none" stroke="#475569" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#dt-arrow)"/>
+
+  <!-- Arrow labels -->
+  <rect x="202" y="148" width="44" height="16" rx="2" fill="#f8fafc"/>
+  <text x="224" y="160" fill="#5b6b83" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle">สั่งงาน</text>
+  <rect x="378" y="148" width="44" height="16" rx="2" fill="#f8fafc"/>
+  <text x="400" y="160" fill="#5b6b83" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle">แก้โค้ด</text>
+  <rect x="562" y="148" width="28" height="16" rx="2" fill="#f8fafc"/>
+  <text x="576" y="159" fill="#5b6b83" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">HMR</text>
+  <rect x="730" y="148" width="44" height="16" rx="2" fill="#f8fafc"/>
+  <text x="752" y="160" fill="#5b6b83" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle">แสดงผล</text>
+  <rect x="324" y="114" width="44" height="16" rx="2" fill="#f8fafc"/>
+  <text x="346" y="126" fill="#5b6b83" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle">จำกฎ</text>
+  <rect x="552" y="216" width="68" height="16" rx="2" fill="#f8fafc"/>
+  <text x="586" y="228" fill="#5b6b83" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle">ผลทดสอบ</text>
+  <rect x="212" y="238" width="72" height="12" rx="2" fill="#f8fafc"/>
+  <text x="248" y="247" fill="#5b6b83" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">COMMIT &amp; PUSH</text>
+
+  <!-- Nodes -->
+  <!-- you -->
+  <rect x="72" y="144" width="128" height="56" rx="6" fill="#f8fafc"/>
+  <rect x="72" y="144" width="128" height="56" rx="6" fill="rgba(71,85,105,0.10)" stroke="#5b6b83" stroke-width="1"/>
+  <text x="136" y="170" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle">คุณ</text>
+  <text x="136" y="186" fill="#475569" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">screen + pick</text>
+  <!-- context -->
+  <rect x="248" y="40" width="128" height="56" rx="6" fill="#f8fafc"/>
+  <rect x="248" y="40" width="128" height="56" rx="6" fill="rgba(1,1,54,0.05)" stroke="#475569" stroke-width="1"/>
+  <text x="312" y="66" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle">ความรู้โปรเจกต์</text>
+  <text x="312" y="82" fill="#475569" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">skills + memory</text>
+  <!-- claude -->
+  <rect x="248" y="144" width="128" height="56" rx="6" fill="#f8fafc"/>
+  <rect x="248" y="144" width="128" height="56" rx="6" fill="rgba(31,93,249,0.08)" stroke="#1f5df9" stroke-width="1"/>
+  <text x="312" y="170" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle">Claude Code</text>
+  <text x="312" y="186" fill="#475569" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">desktop app</text>
+  <!-- code -->
+  <rect x="424" y="144" width="128" height="56" rx="6" fill="#f8fafc"/>
+  <rect x="424" y="144" width="128" height="56" rx="6" fill="rgba(1,1,54,0.05)" stroke="#475569" stroke-width="1"/>
+  <text x="488" y="170" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle">โค้ด prototype</text>
+  <text x="488" y="186" fill="#475569" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">React + Vite</text>
+  <!-- dev -->
+  <rect x="600" y="144" width="128" height="56" rx="6" fill="#f8fafc"/>
+  <rect x="600" y="144" width="128" height="56" rx="6" fill="#ffffff" stroke="#010136" stroke-width="1"/>
+  <text x="664" y="170" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle">Dev server</text>
+  <text x="664" y="186" fill="#475569" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">:3417</text>
+  <!-- browser -->
+  <rect x="776" y="144" width="128" height="56" rx="6" fill="#f8fafc"/>
+  <rect x="776" y="144" width="128" height="56" rx="6" fill="#ffffff" stroke="#010136" stroke-width="1"/>
+  <text x="840" y="170" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle">พรีวิว</text>
+  <text x="840" y="186" fill="#475569" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">browser pane</text>
+  <!-- github -->
+  <rect x="248" y="288" width="128" height="56" rx="6" fill="#f8fafc"/>
+  <rect x="248" y="288" width="128" height="56" rx="6" fill="rgba(1,1,54,0.05)" stroke="#475569" stroke-width="1"/>
+  <text x="312" y="314" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle">GitHub</text>
+  <text x="312" y="330" fill="#475569" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">main</text>
+
+  <!-- Legend -->
+  <line x1="24" y1="368" x2="936" y2="368" stroke="rgba(1,1,54,0.12)" stroke-width="0.8"/>
+  <text x="24" y="388" fill="#5b6b83" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.18em">LEGEND</text>
+  <rect x="120" y="379" width="14" height="10" rx="2" fill="rgba(71,85,105,0.10)" stroke="#5b6b83" stroke-width="1"/>
+  <text x="140" y="389" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif">คน</text>
+  <rect x="188" y="379" width="14" height="10" rx="2" fill="rgba(31,93,249,0.08)" stroke="#1f5df9" stroke-width="1"/>
+  <text x="208" y="389" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif">ตัวกลางที่ลงมือ</text>
+  <rect x="332" y="379" width="14" height="10" rx="2" fill="rgba(1,1,54,0.05)" stroke="#475569" stroke-width="1"/>
+  <text x="352" y="389" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif">ที่เก็บ</text>
+  <rect x="412" y="379" width="14" height="10" rx="2" fill="#ffffff" stroke="#010136" stroke-width="1"/>
+  <text x="432" y="389" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif">ตัวช่วย</text>
+  <line x1="500" y1="384" x2="528" y2="384" stroke="#475569" stroke-width="1.2" marker-end="url(#dt-arrow)"/>
+  <text x="536" y="389" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif">ส่งต่อ</text>
+  <line x1="600" y1="384" x2="628" y2="384" stroke="#475569" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#dt-arrow)"/>
+  <text x="636" y="389" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif">อ้างอิง / ย้อนกลับ</text>
+</svg>
