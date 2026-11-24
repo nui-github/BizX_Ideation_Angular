@@ -229,10 +229,10 @@ const judgeValueGroupsCell = (
   return { status: value === refValue ? 'MATCH' : 'MISMATCH', ruleTitle: '', ruleDesc: '' };
 };
 
-// "Match items by description" compare rule (RuleMatrix type ITEM_MATCH). A document such as the
-// Form FTA can group items, so it has fewer lines than the customs declaration. The rule pairs each
-// declaration item with the line of that document whose name matches, so the table keeps one row per
-// declaration item and the line's other values (HS Code…) are compared item by item.
+// "Match items by name" compare rule (RuleMatrix type ITEM_MATCH), industry-neutral. A document can
+// group items, so it has fewer lines than the reference document (here the Form FTA vs the customs
+// declaration). The rule pairs each reference item with the line of that document whose name matches,
+// so the table keeps one row per reference item and the line's other values are compared item by item.
 interface ItemMatchConfig {
   imRefDoc: string;
   imRefField: string;
@@ -4871,15 +4871,15 @@ const mockWorkflows: Workflow[] = [
       });
       return best;
     });
-    const ftaMatchTitle = th ? 'จับคู่รายการตามชื่อสินค้า' : 'Match items by description';
+    const ftaMatchTitle = th ? 'จับคู่รายการตามชื่อ' : 'Match items by name';
     const ftaCell = (idx: number, field: 'desc' | 'hs' | 'qty', item: ComposeDemoItem): CellSpec => {
       const li = lineOfItem[idx];
       if (field === 'qty') return li === -1 ? { value: '', notInDoc: true } : { value: '', notInDoc: true, groupedQty: formatMergedNumber(ftaLines[li].qty) };
       if (li === -1) {
         if (itemMatchRule && itemMatchRule.config.imUnmatched === 'SKIP') return { value: '', notInDoc: true };
         const reason = itemMatchRule
-          ? (th ? 'ไม่พบแถวใน Form FTA ที่ชื่อสินค้าตรงกับรายการนี้' : 'No Form FTA line has a name that matches this item')
-          : (th ? 'ยังไม่ได้ตั้งกฎจับคู่รายการ จึงเทียบแถว Form FTA กับรายการนี้ไม่ได้' : 'No item-matching rule is set, so Form FTA lines cannot be paired with this item');
+          ? (th ? `ไม่พบแถวใน ${itemMatchRule.docName} ที่ชื่อตรงกับรายการนี้` : `No ${itemMatchRule.docName} line has a name that matches this item`)
+          : (th ? 'ยังไม่ได้ตั้งกฎจับคู่รายการ จึงเทียบแถวของเอกสารนี้กับรายการนี้ไม่ได้' : 'No item-matching rule is set, so lines of this document cannot be paired with this item');
         return { value: '—', status: 'MISMATCH', ruleTitle: ftaMatchTitle, ruleDesc: reason, itemMatch: { unmatched: true, reason } };
       }
       const line = ftaLines[li];
@@ -4891,7 +4891,7 @@ const mockWorkflows: Workflow[] = [
       if (field === 'desc') {
         return {
           value: line.desc, itemMatch, ruleTitle: ftaMatchTitle,
-          ruleDesc: th ? `แถว FTA "${line.desc}" ใช้กับ ${covered.length} รายการในใบขน` : `FTA line "${line.desc}" covers ${covered.length} declaration item(s)`
+          ruleDesc: th ? `แถว "${line.desc}" ใช้กับ ${covered.length} รายการของเอกสารอ้างอิง` : `Line "${line.desc}" covers ${covered.length} reference item(s)`
         };
       }
       return { value: line.hs, status: line.hs === item.hs ? 'MATCH' : 'MISMATCH' };
@@ -12387,10 +12387,10 @@ const mockWorkflows: Workflow[] = [
                                                 : (language === 'TH' ? 'ไม่มีฟิลด์นี้ในเอกสาร' : 'No such field in this document')}
                                             </span>
                                             {(target as any).groupedQty && (
-                                              <Tooltip content={language === 'TH' ? 'Form FTA รวมจำนวนของหลายรายการไว้ในแถวเดียว จึงไม่เทียบกับจำนวนของแต่ละรายการ — ยอดรวมทั้งหมดเทียบที่แถว Total Quantity' : 'The Form FTA adds up several items on one line, so it is not compared with each item — the overall total is compared on the Total Quantity row'}>
+                                              <Tooltip content={language === 'TH' ? 'เอกสารนี้รวมจำนวนของหลายรายการไว้ในแถวเดียว จึงไม่เทียบกับจำนวนของแต่ละรายการ — ยอดรวมทั้งหมดเทียบที่แถว Total Quantity' : 'This document adds up several items on one line, so it is not compared with each item — the overall total is compared on the Total Quantity row'}>
                                                 <div className="px-1.5 py-0.5 bg-lime-50 text-lime-800 border border-lime-200 rounded-[4px] text-[9px] font-black tracking-tight flex items-center gap-1 w-fit cursor-help">
                                                   <Info size={10} />
-                                                  {language === 'TH' ? `ทั้งแถว FTA ${(target as any).groupedQty}` : `FTA line total ${(target as any).groupedQty}`}
+                                                  {language === 'TH' ? `ทั้งแถว ${(target as any).groupedQty}` : `Line total ${(target as any).groupedQty}`}
                                                 </div>
                                               </Tooltip>
                                             )}
@@ -12597,12 +12597,12 @@ const mockWorkflows: Workflow[] = [
                                                 <Tooltip content={
                                                   <div className="p-0.5 text-left text-[11px] font-sans max-w-[280px]">
                                                     <span className="font-bold text-sky-300 block">
-                                                      {language === 'TH' ? 'จับคู่รายการตามชื่อสินค้า' : 'Matched by item name'}
+                                                      {language === 'TH' ? 'จับคู่รายการตามชื่อ' : 'Matched by item name'}
                                                     </span>
                                                     <span className="text-slate-200 font-medium block mt-1">
                                                       {language === 'TH'
-                                                        ? `แถวนี้ใน FTA ใช้กับ ${im.itemCount} รายการในใบขน ค่าอื่นของแถว (เช่น HS Code) จึงนำไปเทียบกับแต่ละรายการ`
-                                                        : `This FTA line covers ${im.itemCount} declaration item(s); its other values (e.g. HS Code) are compared with each of them`}
+                                                        ? `แถวนี้ใช้กับ ${im.itemCount} รายการของเอกสารอ้างอิง ค่าอื่นของแถว (เช่น HS Code) จึงนำไปเทียบกับแต่ละรายการ`
+                                                        : `This line covers ${im.itemCount} reference item(s); its other values (e.g. HS Code) are compared with each of them`}
                                                     </span>
                                                     <span className="text-slate-300 font-mono block mt-1 break-all">
                                                       HS {im.lineHs} · Qty {im.lineQty}
