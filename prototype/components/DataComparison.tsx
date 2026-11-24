@@ -1152,6 +1152,7 @@ export const DataComparison: React.FC<DataComparisonProps> = ({ language, tracki
 
       const isUnfinished = shipmentJobs.some(j => j.status !== JobStatus.READY);
       const isMyPending = shipmentJobs.some(j => j.assignee === 'Kunawut W.' && j.status !== JobStatus.READY);
+      const isRejected = shipmentJobs.some(j => j.status === JobStatus.REJECTED);
 
       return {
         reference,
@@ -1163,7 +1164,8 @@ export const DataComparison: React.FC<DataComparisonProps> = ({ language, tracki
         createdAt,
         latestUpdate,
         isUnfinished,
-        isMyPending
+        isMyPending,
+        isRejected
       };
     }).sort((a, b) => {
       return parseDateValue(b.createdAt) - parseDateValue(a.createdAt);
@@ -6224,6 +6226,7 @@ const mockWorkflows: Workflow[] = [
     const unfinishedShipments = shipments.filter(sh => sh.isUnfinished).length;
     const myPendingShipments = shipments.filter(sh => sh.isMyPending).length;
     const completedShipments = totalShipments - unfinishedShipments;
+    const rejectedShipments = shipments.filter(sh => sh.isRejected).length;
 
     const shipmentStats = [
       { 
@@ -6254,6 +6257,13 @@ const mockWorkflows: Workflow[] = [
         color: 'bg-emerald-50 text-emerald-500',
         dotColor: 'bg-emerald-500 shadow-[0_0_8px_rgba(16,234,158,0.4)]'
       },
+      { 
+        label: language === 'TH' ? 'Shipment ที่ถูกตีกลับ' : 'Rejected Shipments', 
+        count: rejectedShipments, 
+        icon: <Undo2 size={18} />, 
+        color: 'bg-rose-50 text-rose-500',
+        dotColor: 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]'
+      },
     ];
 
     const filteredShipments = shipments
@@ -6281,7 +6291,7 @@ const mockWorkflows: Workflow[] = [
     return (
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
         {/* Shipment Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
           {shipmentStats.map((stat, i) => (
             <div key={i} className="bg-white border border-slate-100 rounded-lg p-5 flex items-center justify-between shadow-sm hover:shadow-md transition-all group cursor-pointer font-sans">
               <div className="flex flex-col">
