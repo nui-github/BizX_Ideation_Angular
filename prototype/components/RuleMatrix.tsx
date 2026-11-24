@@ -565,6 +565,7 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
           { color: 'bg-orange-500', label: language === 'TH' ? 'ความมีอยู่' : 'Existence' },
           { color: 'bg-rose-500', label: 'Master Lookup' },
           { color: 'bg-pink-500', label: language === 'TH' ? 'ตามเงื่อนไข' : 'Conditional' },
+          { color: 'bg-lime-500', label: language === 'TH' ? 'จับคู่รายการตามชื่อ' : 'Item Match' },
           { color: 'bg-amber-500', label: language === 'TH' ? 'วันที่' : 'Date' },
           { color: 'bg-slate-400', label: language === 'TH' ? 'ไม่ต้องเปรียบเทียบ' : 'No Comparison' },
         ].map((item, idx) => (
