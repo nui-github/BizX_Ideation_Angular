@@ -905,6 +905,8 @@ export const DataComparison: React.FC<DataComparisonProps> = ({ language, tracki
   const [searchTerm, setSearchTerm] = useState('');
   const [hoveredField, setHoveredField] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState('ALL');
+  // Shipment board filter (also driven by the stat cards): ALL | PENDING | MINE | DONE | REJECTED
+  const [shipmentStatusFilter, setShipmentStatusFilter] = useState('ALL');
   const [shipmentDateFrom, setShipmentDateFrom] = useState('');
   const [shipmentDateTo, setShipmentDateTo] = useState('');
   const [shipmentPage, setShipmentPage] = useState(1);
@@ -6230,6 +6232,7 @@ const mockWorkflows: Workflow[] = [
 
     const shipmentStats = [
       { 
+        filter: 'ALL',
         label: language === 'TH' ? 'งานทั้งหมด' : 'Total Shipments', 
         count: totalShipments, 
         icon: <ClipboardList size={18} />, 
@@ -6237,6 +6240,7 @@ const mockWorkflows: Workflow[] = [
         dotColor: 'bg-slate-400'
       },
       { 
+        filter: 'PENDING',
         label: language === 'TH' ? 'รอดำเนินการ' : 'Unfinished Shipments', 
         count: unfinishedShipments, 
         icon: <Hourglass size={18} />, 
@@ -6244,6 +6248,7 @@ const mockWorkflows: Workflow[] = [
         dotColor: 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.4)]'
       },
       { 
+        filter: 'MINE',
         label: language === 'TH' ? 'กำลังทำ' : 'My Pending Shipments', 
         count: myPendingShipments, 
         icon: <PlayCircle size={18} />, 
@@ -6251,6 +6256,7 @@ const mockWorkflows: Workflow[] = [
         dotColor: 'bg-blue-500 shadow-[0_0_8px_rgba(4,99,239,0.4)]'
       },
       { 
+        filter: 'DONE',
         label: language === 'TH' ? 'เสร็จสิ้น' : 'Completed Shipments', 
         count: completedShipments, 
         icon: <CheckCircle2 size={18} />, 
@@ -6258,6 +6264,7 @@ const mockWorkflows: Workflow[] = [
         dotColor: 'bg-emerald-500 shadow-[0_0_8px_rgba(16,234,158,0.4)]'
       },
       { 
+        filter: 'REJECTED',
         label: language === 'TH' ? 'ถูกตีกลับ' : 'Rejected Shipments', 
         count: rejectedShipments, 
         icon: <Undo2 size={18} />, 
@@ -6272,9 +6279,10 @@ const mockWorkflows: Workflow[] = [
         return sh.reference.toLowerCase().includes(searchTerm.toLowerCase());
       })
       .filter(sh => {
-        if (statusFilter === 'ALL') return true;
-        if (statusFilter === 'PENDING') return sh.isUnfinished;
-        if (statusFilter === 'DONE') return !sh.isUnfinished;
+        if (shipmentStatusFilter === 'PENDING') return sh.isUnfinished;
+        if (shipmentStatusFilter === 'MINE') return sh.isMyPending;
+        if (shipmentStatusFilter === 'DONE') return !sh.isUnfinished;
+        if (shipmentStatusFilter === 'REJECTED') return sh.isRejected;
         return true;
       })
       .filter(sh => {
@@ -6292,8 +6300,20 @@ const mockWorkflows: Workflow[] = [
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
         {/* Shipment Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-          {shipmentStats.map((stat, i) => (
-            <div key={i} className="bg-white border border-slate-100 rounded-lg p-5 flex items-center justify-between shadow-sm hover:shadow-md transition-all group cursor-pointer font-sans">
+          {shipmentStats.map((stat, i) => {
+            const isActive = shipmentStatusFilter === stat.filter;
+            return (
+            <button
+              type="button"
+              key={i}
+              aria-pressed={isActive}
+              onClick={() => {
+                // clicking the active card (or the total) clears the filter
+                setShipmentStatusFilter(isActive ? 'ALL' : stat.filter);
+                setShipmentPage(1);
+              }}
+              className={`bg-white border rounded-lg p-5 flex items-center justify-between shadow-sm hover:shadow-md transition-all group cursor-pointer font-sans text-left w-full outline-none focus-visible:ring-4 focus-visible:ring-blue-500/20 ${isActive && stat.filter !== 'ALL' ? 'border-[#1f5df9] ring-2 ring-blue-500/20' : 'border-slate-100'}`}
+            >
               <div className="flex flex-col">
                 <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">{stat.label}</p>
                 <div className="flex items-baseline gap-2">
@@ -6304,8 +6324,9 @@ const mockWorkflows: Workflow[] = [
               <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all group-hover:scale-110 shadow-sm ${stat.color}`}>
                 {stat.icon}
               </div>
-            </div>
-          ))}
+            </button>
+            );
+          })}
         </div>
 
         {/* Search bar & simple filters */}
@@ -6348,16 +6369,18 @@ const mockWorkflows: Workflow[] = [
               <span>สถานะ Shipment:</span>
               <div className="relative">
                 <select
-                  value={statusFilter}
+                  value={shipmentStatusFilter}
                   onChange={(e) => {
-                    setStatusFilter(e.target.value);
+                    setShipmentStatusFilter(e.target.value);
                     setShipmentPage(1);
                   }}
                   className="bg-white border border-slate-200 rounded-xl py-2 px-4 pr-10 focus:ring-4 focus:ring-blue-500/10 focus:border-[#1f5df9] text-[12px] font-black uppercase tracking-tight appearance-none cursor-pointer outline-none shadow-sm font-sans transition-all"
                 >
                   <option value="ALL">{language === 'TH' ? 'ทั้งหมด' : 'ALL'}</option>
-                  <option value="PENDING">{language === 'TH' ? 'ยังไม่เสร็จ' : 'UNFINISHED'}</option>
-                  <option value="DONE">{language === 'TH' ? 'เสร็จสิ้นแล้ว' : 'COMPLETED'}</option>
+                  <option value="PENDING">{language === 'TH' ? 'รอดำเนินการ' : 'UNFINISHED'}</option>
+                  <option value="MINE">{language === 'TH' ? 'กำลังทำ' : 'MY PENDING'}</option>
+                  <option value="DONE">{language === 'TH' ? 'เสร็จสิ้น' : 'COMPLETED'}</option>
+                  <option value="REJECTED">{language === 'TH' ? 'ถูกตีกลับ' : 'REJECTED'}</option>
                 </select>
                 <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
               </div>
