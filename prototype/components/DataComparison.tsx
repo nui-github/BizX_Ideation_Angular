@@ -6230,35 +6230,35 @@ const mockWorkflows: Workflow[] = [
 
     const shipmentStats = [
       { 
-        label: language === 'TH' ? 'Shipment' : 'Total Shipments', 
+        label: language === 'TH' ? 'งานทั้งหมด' : 'Total Shipments', 
         count: totalShipments, 
         icon: <FileText size={18} />, 
         color: 'bg-slate-50 text-slate-400',
         dotColor: 'bg-slate-400'
       },
       { 
-        label: language === 'TH' ? 'Shipment ที่ยังไม่เสร็จ' : 'Unfinished Shipments', 
+        label: language === 'TH' ? 'รอดำเนินการ' : 'Unfinished Shipments', 
         count: unfinishedShipments, 
         icon: <Plus size={18} />, 
         color: 'bg-amber-50 text-amber-500',
         dotColor: 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.4)]'
       },
       { 
-        label: language === 'TH' ? 'งานของฉันที่ทำค้างอยู่' : 'My Pending Shipments', 
+        label: language === 'TH' ? 'กำลังทำ' : 'My Pending Shipments', 
         count: myPendingShipments, 
         icon: <ArrowLeftRight size={18} />, 
         color: 'bg-blue-50 text-[#1f5df9]',
         dotColor: 'bg-blue-500 shadow-[0_0_8px_rgba(4,99,239,0.4)]'
       },
       { 
-        label: language === 'TH' ? 'Shipment ที่เสร็จสิ้น' : 'Completed Shipments', 
+        label: language === 'TH' ? 'เสร็จสิ้น' : 'Completed Shipments', 
         count: completedShipments, 
         icon: <CheckCircle2 size={18} />, 
         color: 'bg-emerald-50 text-emerald-500',
         dotColor: 'bg-emerald-500 shadow-[0_0_8px_rgba(16,234,158,0.4)]'
       },
       { 
-        label: language === 'TH' ? 'Shipment ที่ถูกตีกลับ' : 'Rejected Shipments', 
+        label: language === 'TH' ? 'ถูกตีกลับ' : 'Rejected Shipments', 
         count: rejectedShipments, 
         icon: <Undo2 size={18} />, 
         color: 'bg-rose-50 text-rose-500',
