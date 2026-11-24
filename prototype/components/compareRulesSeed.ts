@@ -77,3 +77,54 @@ export const ensureIncotermValueGroupsSeeded = (blLabel: string): void => {
     // storage unavailable — nothing to upgrade
   }
 };
+
+// "Match items by description" (ITEM_MATCH) demo rule: on Import Declaration Matching#1 the Form FTA
+// groups items, so it has fewer lines than the declaration. Its Item Description cell pairs each FTA
+// line with the declaration items whose name starts with / contains the FTA name; the FTA's other
+// values (HS Code…) then compare item by item.
+const ITEM_MATCH_FLAG_KEY = 'bizx_im_seeded_v1';
+
+export const makeItemMatch = (declarationLabel: string) => ({
+  type: 'ITEM_MATCH',
+  schemaId: 'ls-ftad',
+  schemaField: 'Item Description',
+  imRefDoc: declarationLabel,
+  imRefField: 'Product Description',
+  imMatchMode: 'CONTAINS',
+  imUnmatched: 'REVIEW'
+});
+
+// Rules saved before the demo existed: put the cell on the Form FTA column of the Product
+// Description row. Runs once per browser, so later edits made in the UI are never overwritten.
+export const ensureItemMatchSeeded = (): void => {
+  try {
+    if (localStorage.getItem(ITEM_MATCH_FLAG_KEY) === '1') return;
+    const raw = localStorage.getItem(COMPARE_RULES_STORAGE_KEY);
+    if (!raw) {
+      localStorage.setItem(ITEM_MATCH_FLAG_KEY, '1');
+      return;
+    }
+    const migrated = (JSON.parse(raw) as any[]).map(rule => {
+      if (rule?.name !== 'Import Declaration Matching#1') return rule;
+      const docTypes: string[] = rule.docTypes || [];
+      const ftaIdx = docTypes.findIndex(d => /fta/i.test(d));
+      if (ftaIdx === -1) return rule;
+      return {
+        ...rule,
+        parts: rule.parts.map((part: any) => ({
+          ...part,
+          rows: part.rows.map((row: any) => {
+            if (row.id !== 'imp1-d3' || row.values?.[ftaIdx]?.type === 'ITEM_MATCH') return row;
+            const values = [...row.values];
+            values[ftaIdx] = makeItemMatch(docTypes[0] || '');
+            return { ...row, values };
+          })
+        }))
+      };
+    });
+    localStorage.setItem(COMPARE_RULES_STORAGE_KEY, JSON.stringify(migrated));
+    localStorage.setItem(ITEM_MATCH_FLAG_KEY, '1');
+  } catch {
+    // storage unavailable — nothing to upgrade
+  }
+};

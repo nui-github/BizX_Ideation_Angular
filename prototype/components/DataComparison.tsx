@@ -19,7 +19,7 @@ import 'dayjs/locale/th';
 import { CreateJobModal } from './CreateJobModal';
 import { GenerateReportModal } from './GenerateReportModal';
 import { Tooltip } from './Tooltip';
-import { ensureIncotermValueGroupsSeeded } from './compareRulesSeed';
+import { ensureIncotermValueGroupsSeeded, ensureItemMatchSeeded } from './compareRulesSeed';
 import {
   Language, ComparisonFile, FieldMapping, TrackingItem, ReviewStatus,
   UserRole, ComparisonJob, JobStatus, ComparisonDocStatus, TrackingSource, SendStatus,
@@ -162,6 +162,8 @@ const normalizeDemoDocName = (label: string): string => {
   if (l.includes('invoice')) return 'Invoice';
   if (l.includes('packing')) return 'Packing List';
   if (l.includes('lading') || /\bb\/?l\b/.test(l)) return 'Bill of Lading';
+  if (l.includes('fta')) return 'Form FTA';
+  if (l.includes('import dec') || l.includes('declaration') || l.includes('ใบขน')) return 'ใบขนสินค้า';
   return String(label ?? '');
 };
 
@@ -225,6 +227,70 @@ const judgeValueGroupsCell = (
     };
   }
   return { status: value === refValue ? 'MATCH' : 'MISMATCH', ruleTitle: '', ruleDesc: '' };
+};
+
+// "Match items by description" compare rule (RuleMatrix type ITEM_MATCH). A document such as the
+// Form FTA can group items, so it has fewer lines than the customs declaration. The rule pairs each
+// declaration item with the line of that document whose name matches, so the table keeps one row per
+// declaration item and the line's other values (HS Code…) are compared item by item.
+interface ItemMatchConfig {
+  imRefDoc: string;
+  imRefField: string;
+  imMatchMode: 'CONTAINS' | 'STARTS' | 'EXACT';
+  imUnmatched: 'REVIEW' | 'SKIP';
+}
+
+const DEFAULT_ITEM_MATCH: ItemMatchConfig = {
+  imRefDoc: 'ใบขนสินค้า',
+  imRefField: 'Product Description',
+  imMatchMode: 'CONTAINS',
+  imUnmatched: 'REVIEW'
+};
+
+// Names are compared as whole words, case and spacing ignored — so "Mens S/S Polo Shirt" is found
+// in "MENS S/S POLO SHIRT / WHITE / L" but is not found in "Womens S/S Polo Shirt / Navy / M".
+const matchItemName = (mode: ItemMatchConfig['imMatchMode'], refName: string, lineName: string): boolean => {
+  const clean = (v: string) => String(v ?? '').toLowerCase().replace(/\s+/g, ' ').trim();
+  const ref = clean(refName);
+  const line = clean(lineName);
+  if (!ref || !line) return false;
+  if (mode === 'EXACT') return ref === line;
+  const escaped = line.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const edge = '[^a-z0-9ก-๙]';
+  const re = mode === 'STARTS'
+    ? new RegExp(`^${escaped}(?=$|${edge})`)
+    : new RegExp(`(^|${edge})${escaped}(?=$|${edge})`);
+  return re.test(ref);
+};
+
+// Reads the ITEM_MATCH cell saved on the Import Declaration Matching#1 compare rule (Manage rule page).
+// undefined = never saved (Manage rule never opened) → the shipped default; null = rules are saved
+// but no cell is set, so lines cannot be paired.
+const readItemMatchRule = (workflowName: string): { docName: string; config: ItemMatchConfig } | null => {
+  const fallback = { docName: 'Form FTA', config: DEFAULT_ITEM_MATCH };
+  try {
+    ensureItemMatchSeeded();
+    const raw = localStorage.getItem('bizx_compare_rules_v12');
+    if (!raw) return fallback;
+    const rule = (JSON.parse(raw) as any[]).find(r => r?.name === workflowName);
+    if (!rule) return null;
+    let found: { docName: string; config: ItemMatchConfig } | null = null;
+    rule.parts?.forEach((part: any) => part.rows?.forEach((row: any) => row.values?.forEach((val: any, colIdx: number) => {
+      if (found || val?.type !== 'ITEM_MATCH') return;
+      found = {
+        docName: normalizeDemoDocName(rule.docTypes?.[colIdx] ?? ''),
+        config: {
+          imRefDoc: val.imRefDoc || DEFAULT_ITEM_MATCH.imRefDoc,
+          imRefField: val.imRefField || DEFAULT_ITEM_MATCH.imRefField,
+          imMatchMode: val.imMatchMode === 'EXACT' ? 'EXACT' : val.imMatchMode === 'STARTS' ? 'STARTS' : 'CONTAINS',
+          imUnmatched: val.imUnmatched === 'SKIP' ? 'SKIP' : 'REVIEW'
+        }
+      };
+    })));
+    return found;
+  } catch {
+    return fallback;
+  }
 };
 
 const composeFieldValue = (partValues: string[], separator: string): string =>
@@ -458,6 +524,27 @@ const COMPOSE_DEMO_ITEMS: Record<string, ComposeDemoItem[]> = {
     { desc: 'Mens S/S Polo Shirt', color: 'Navy', size: 'L', sku: 'MPL-007', hs: '6105.20', qty: 2000, price: 9, xmlDesc: 'MENS S/S POLO SHIRT / NAVY / L' },
     { desc: 'Womens S/S Polo Shirt', color: 'White', size: 'M', sku: 'WPL-008', hs: '6106.20', qty: 1200, price: 8.5, xmlDesc: 'Womens S/S Polo Shirt / White / M' },
     { desc: 'Womens S/S Polo Shirt', color: 'Pink', size: 'S', sku: 'WPL-009', hs: '6106.20', qty: 600, price: 8.5, xmlDesc: 'Womens S/S Polo Shirt / Pink / M' }
+  ]
+};
+
+// What the Form FTA lists in flow 3. It groups items, so it has fewer lines than the customs
+// declaration: one line per product name, quantity summed over the colours / sizes it covers. Each
+// declaration item is paired with its line by the "Match items by description" rule (ITEM_MATCH).
+// Invoice 0103's Kids line carries a different HS code than the invoice — a real mismatch.
+interface ComposeFtaLine { desc: string; hs: string; qty: number }
+const COMPOSE_FTA_LINES: Record<string, ComposeFtaLine[]> = {
+  'INV-26-0101': [
+    { desc: 'Mens S/S Polo Shirt', hs: '6105.20', qty: 3600 },
+    { desc: 'Womens S/S Polo Shirt', hs: '6106.20', qty: 3600 }
+  ],
+  'INV-26-0102': [
+    { desc: 'Mens S/S Polo Shirt', hs: '6105.90', qty: 1000 },
+    { desc: 'Womens S/S Polo Shirt', hs: '6106.20', qty: 1500 }
+  ],
+  'INV-26-0103': [
+    { desc: 'Kids S/S Polo Shirt', hs: '6111.20', qty: 900 },
+    { desc: 'Mens S/S Polo Shirt', hs: '6105.20', qty: 2000 },
+    { desc: 'Womens S/S Polo Shirt', hs: '6106.20', qty: 1800 }
   ]
 };
 
@@ -4728,7 +4815,7 @@ const mockWorkflows: Workflow[] = [
     const dataset = MERGE_DEMO_DATASETS[dataKey];
     const docNames = Object.keys(job.docs);
     const XML_DOC = 'ใบขนสินค้า';
-    type CellSpec = { value: string; status?: 'MATCH' | 'MISMATCH'; notInDoc?: boolean; legacyCodes?: { code: string; year: string }[] };
+    type CellSpec = { value: string; status?: 'MATCH' | 'MISMATCH'; notInDoc?: boolean; legacyCodes?: { code: string; year: string }[]; ruleTitle?: string; ruleDesc?: string; itemMatch?: any; groupedQty?: string };
     const makeTargets = (cells: Record<string, CellSpec>, primary: string) => docNames.map((docName, tIdx) => {
       const base = {
         fileId: `target-${tIdx + 1}`,
@@ -4749,7 +4836,7 @@ const mockWorkflows: Workflow[] = [
           // an uploaded document that simply doesn't have this field (e.g. the HS Code file)
           : { ...base, value: '', status: 'MATCH', notInDoc: true };
       }
-      return { ...base, value: cell.value, status: cell.status ?? 'MATCH', ...(cell.notInDoc ? { notInDoc: true } : {}), ...(cell.legacyCodes ? { legacyCodes: cell.legacyCodes } : {}) };
+      return { ...base, value: cell.value, status: cell.status ?? 'MATCH', ...(cell.notInDoc ? { notInDoc: true } : {}), ...(cell.legacyCodes ? { legacyCodes: cell.legacyCodes } : {}), ...(cell.ruleTitle ? { ruleTitle: cell.ruleTitle, ruleDesc: cell.ruleDesc ?? '' } : {}), ...(cell.itemMatch ? { itemMatch: cell.itemMatch } : {}), ...(cell.groupedQty ? { groupedQty: cell.groupedQty } : {}) };
     });
     const sameEverywhere = (value: string): Record<string, CellSpec> => ({
       [XML_DOC]: { value }, 'Invoice': { value }, 'Packing List': { value }
@@ -4768,17 +4855,61 @@ const mockWorkflows: Workflow[] = [
     const items = COMPOSE_DEMO_ITEMS[dataKey];
     const fmt2 = (n: number) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     let totalAmount = 0;
+
+    // Pair every declaration item with the Form FTA line it belongs to (rule ITEM_MATCH, set on the
+    // Import Declaration Matching#1 compare rule). Without the rule no line can be paired.
+    const th = language === 'TH';
+    const itemMatchRule = readItemMatchRule(job.workflowName || '');
+    const ftaLines = COMPOSE_FTA_LINES[dataKey] ?? [];
+    const refIsDeclaration = !itemMatchRule || normalizeDemoDocName(itemMatchRule.config.imRefDoc) === XML_DOC;
+    const lineOfItem: (number | -1)[] = items.map(item => {
+      if (!itemMatchRule) return -1;
+      const refName = refIsDeclaration ? item.xmlDesc : item.desc;
+      let best = -1;
+      ftaLines.forEach((line, li) => {
+        if (matchItemName(itemMatchRule.config.imMatchMode, refName, line.desc) && (best === -1 || line.desc.length > ftaLines[best].desc.length)) best = li;
+      });
+      return best;
+    });
+    const ftaMatchTitle = th ? 'จับคู่รายการตามชื่อสินค้า' : 'Match items by description';
+    const ftaCell = (idx: number, field: 'desc' | 'hs' | 'qty', item: ComposeDemoItem): CellSpec => {
+      const li = lineOfItem[idx];
+      if (field === 'qty') return li === -1 ? { value: '', notInDoc: true } : { value: '', notInDoc: true, groupedQty: formatMergedNumber(ftaLines[li].qty) };
+      if (li === -1) {
+        if (itemMatchRule && itemMatchRule.config.imUnmatched === 'SKIP') return { value: '', notInDoc: true };
+        const reason = itemMatchRule
+          ? (th ? 'ไม่พบแถวใน Form FTA ที่ชื่อสินค้าตรงกับรายการนี้' : 'No Form FTA line has a name that matches this item')
+          : (th ? 'ยังไม่ได้ตั้งกฎจับคู่รายการ จึงเทียบแถว Form FTA กับรายการนี้ไม่ได้' : 'No item-matching rule is set, so Form FTA lines cannot be paired with this item');
+        return { value: '—', status: 'MISMATCH', ruleTitle: ftaMatchTitle, ruleDesc: reason, itemMatch: { unmatched: true, reason } };
+      }
+      const line = ftaLines[li];
+      const covered = items.filter((_, i) => lineOfItem[i] === li);
+      const itemMatch = {
+        lineDesc: line.desc, lineHs: line.hs, lineQty: formatMergedNumber(line.qty),
+        itemCount: covered.length, items: covered.map(c => c.xmlDesc)
+      };
+      if (field === 'desc') {
+        return {
+          value: line.desc, itemMatch, ruleTitle: ftaMatchTitle,
+          ruleDesc: th ? `แถว FTA "${line.desc}" ใช้กับ ${covered.length} รายการในใบขน` : `FTA line "${line.desc}" covers ${covered.length} declaration item(s)`
+        };
+      }
+      return { value: line.hs, status: line.hs === item.hs ? 'MATCH' : 'MISMATCH' };
+    };
+
     items.forEach((item, idx) => {
       const group = `Item ${idx + 1}`;
       const amount = item.qty * item.price;
       totalAmount += amount;
       const rows: { fieldName: string; type: 'string' | 'number'; value: string; xml: CellSpec; fta?: CellSpec }[] = [
-        { fieldName: 'Product Description', type: 'string', value: item.desc, xml: { value: item.xmlDesc, status: 'MISMATCH' }, fta: { value: item.desc } },
+        { fieldName: 'Product Description', type: 'string', value: item.desc, xml: { value: item.xmlDesc, status: 'MISMATCH' }, fta: ftaCell(idx, 'desc', item) },
         { fieldName: 'Color', type: 'string', value: item.color, xml: { value: '', notInDoc: true } },
         { fieldName: 'Size', type: 'string', value: item.size, xml: { value: '', notInDoc: true } },
         { fieldName: 'Item No. / Model No. (SKU)', type: 'string', value: item.sku, xml: { value: item.sku } },
-        { fieldName: 'HS Code', type: 'string', value: item.hs, xml: { value: item.xmlHs ?? item.hs, status: (item.xmlHs ?? item.hs) === item.hs ? 'MATCH' : 'MISMATCH' }, fta: { value: item.hsFta ?? item.hs, status: (item.hsFta ?? item.hs) === item.hs ? 'MATCH' : 'MISMATCH' } },
-        { fieldName: "Q'ty by line", type: 'number', value: formatMergedNumber(item.qty), xml: { value: formatMergedNumber(item.qty) }, fta: { value: formatMergedNumber(item.qty) } },
+        { fieldName: 'HS Code', type: 'string', value: item.hs, xml: { value: item.xmlHs ?? item.hs, status: (item.xmlHs ?? item.hs) === item.hs ? 'MATCH' : 'MISMATCH' }, fta: ftaCell(idx, 'hs', item) },
+        // the Form FTA's quantity is summed over the items it groups, so it isn't compared per item
+        // (the footer's Total Quantity is) — its figure is shown on the paired-line chip instead
+        { fieldName: "Q'ty by line", type: 'number', value: formatMergedNumber(item.qty), xml: { value: formatMergedNumber(item.qty) }, fta: ftaCell(idx, 'qty', item) },
         { fieldName: 'Price / Unit', type: 'number', value: fmt2(item.price), xml: { value: fmt2(item.price) } },
         { fieldName: 'Invoice Amount', type: 'number', value: fmt2(amount), xml: { value: fmt2(amount) } }
       ];
@@ -12249,10 +12380,20 @@ const mockWorkflows: Workflow[] = [
                                         <td key={docName} className="p-0 border-r border-r-slate-100 border-t border-t-slate-200 align-top h-px bg-slate-50/60">
                                           <div className="px-4 py-4 h-full flex flex-col items-center justify-start gap-1.5">
                                             <span className="text-[11px] font-bold text-slate-400 italic">
-                                              {composedInto
+                                              {(target as any).groupedQty
+                                                ? (language === 'TH' ? 'ไม่เทียบรายรายการ' : 'Not compared per item')
+                                                : composedInto
                                                 ? (language === 'TH' ? 'ไม่มีฟิลด์นี้แยกในเอกสาร' : 'No separate field in this document')
                                                 : (language === 'TH' ? 'ไม่มีฟิลด์นี้ในเอกสาร' : 'No such field in this document')}
                                             </span>
+                                            {(target as any).groupedQty && (
+                                              <Tooltip content={language === 'TH' ? 'Form FTA รวมจำนวนของหลายรายการไว้ในแถวเดียว จึงไม่เทียบกับจำนวนของแต่ละรายการ — ยอดรวมทั้งหมดเทียบที่แถว Total Quantity' : 'The Form FTA adds up several items on one line, so it is not compared with each item — the overall total is compared on the Total Quantity row'}>
+                                                <div className="px-1.5 py-0.5 bg-lime-50 text-lime-800 border border-lime-200 rounded-[4px] text-[9px] font-black tracking-tight flex items-center gap-1 w-fit cursor-help">
+                                                  <Info size={10} />
+                                                  {language === 'TH' ? `ทั้งแถว FTA ${(target as any).groupedQty}` : `FTA line total ${(target as any).groupedQty}`}
+                                                </div>
+                                              </Tooltip>
+                                            )}
                                             {composedInto && (
                                               <Tooltip content={language === 'TH' ? `ค่านี้ถูกรวมอยู่ในฟิลด์ "${composedInto}" ของเอกสารนี้ และถูกนำไปเทียบแล้วที่แถวนั้น` : `This value is part of the "${composedInto}" field in this document and is compared on that row`}>
                                                 <div className="px-1.5 py-0.5 bg-blue-50 text-[#1f5df9] border border-blue-200 rounded-[4px] text-[9px] font-black tracking-tight flex items-center gap-1 w-fit cursor-help">
@@ -12435,6 +12576,47 @@ const mockWorkflows: Workflow[] = [
                                                   <div className="px-1.5 py-1 bg-blue-50 text-[#1f5df9] border border-blue-200 rounded-[4px] text-[10px] font-bold leading-tight flex items-start gap-1 max-w-full cursor-help text-left">
                                                     <Info size={11} className="shrink-0 mt-px" />
                                                     <span className="break-all">{info.composed}</span>
+                                                  </div>
+                                                </Tooltip>
+                                              );
+                                            })()}
+
+                                            {(target as any).itemMatch && (() => {
+                                              const im = (target as any).itemMatch;
+                                              if (im.unmatched) {
+                                                return (
+                                                  <Tooltip content={<div className="p-0.5 text-left text-[11px] font-sans max-w-[260px]">{im.reason}</div>}>
+                                                    <div className="px-1.5 py-0.5 bg-rose-50 text-rose-600 border border-rose-200 rounded-[4px] text-[9px] font-black tracking-tight flex items-center gap-1 w-fit cursor-help">
+                                                      <Info size={10} />
+                                                      {language === 'TH' ? 'จับคู่แถวไม่ได้' : 'No line paired'}
+                                                    </div>
+                                                  </Tooltip>
+                                                );
+                                              }
+                                              return (
+                                                <Tooltip content={
+                                                  <div className="p-0.5 text-left text-[11px] font-sans max-w-[280px]">
+                                                    <span className="font-bold text-sky-300 block">
+                                                      {language === 'TH' ? 'จับคู่รายการตามชื่อสินค้า' : 'Matched by item name'}
+                                                    </span>
+                                                    <span className="text-slate-200 font-medium block mt-1">
+                                                      {language === 'TH'
+                                                        ? `แถวนี้ใน FTA ใช้กับ ${im.itemCount} รายการในใบขน ค่าอื่นของแถว (เช่น HS Code) จึงนำไปเทียบกับแต่ละรายการ`
+                                                        : `This FTA line covers ${im.itemCount} declaration item(s); its other values (e.g. HS Code) are compared with each of them`}
+                                                    </span>
+                                                    <span className="text-slate-300 font-mono block mt-1 break-all">
+                                                      HS {im.lineHs} · Qty {im.lineQty}
+                                                    </span>
+                                                    {im.items.map((name: string) => (
+                                                      <span key={name} className="text-slate-300 block mt-0.5 break-all">• {name}</span>
+                                                    ))}
+                                                  </div>
+                                                }>
+                                                  <div className="px-1.5 py-1 bg-lime-50 text-lime-800 border border-lime-200 rounded-[4px] text-[10px] font-bold leading-tight flex items-start gap-1 max-w-full cursor-help text-left">
+                                                    <Info size={11} className="shrink-0 mt-px" />
+                                                    <span>
+                                                      {language === 'TH' ? `ใช้กับ ${im.itemCount} รายการ` : `Covers ${im.itemCount} item${im.itemCount > 1 ? 's' : ''}`}
+                                                    </span>
                                                   </div>
                                                 </Tooltip>
                                               );

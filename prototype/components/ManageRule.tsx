@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { RuleList } from './RuleList';
 import { RuleMatrix } from './RuleMatrix';
-import { makeIncotermValueGroups, ensureIncotermValueGroupsSeeded } from './compareRulesSeed';
+import { makeIncotermValueGroups, ensureIncotermValueGroupsSeeded, makeItemMatch, ensureItemMatchSeeded } from './compareRulesSeed';
 import { TRANSLATIONS } from '../translations';
 import { Language } from '../types';
 import { X, Check } from 'lucide-react';
@@ -56,6 +56,7 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
   const [rules, setRules] = useState(() => {
     if (typeof window !== 'undefined') {
       ensureIncotermValueGroupsSeeded(t.docTypeBL);
+      ensureItemMatchSeeded();
       const saved = localStorage.getItem('bizx_compare_rules_v12');
       if (saved) {
         try {
@@ -415,7 +416,7 @@ export const ManageRule: React.FC<ManageRuleProps> = ({ language, comparisonWork
                 {type: 'NONE'},
                 {type: 'NONE'},
                 {type: '', schemaId: 'ls-hs', schemaField: 'Product Description', isMain: true},
-                {type: 'NONE'},
+                makeItemMatch(t.docTypeShort),
                 {type: 'NONE'}
               ] },
               { id: 'imp1-d4', detail: 'Insured Value vs Declared Value', detailTh: 'มูลค่าเอาประกันเทียบมูลค่าที่แจ้ง (Insured Value ≥ CIF Value)', values: [

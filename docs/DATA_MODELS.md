@@ -129,3 +129,24 @@ carries:
 Example (shipped on the Shipping Doc Matching rule's Incoterm row): B/L Incoterm `COLLECT` or
 `FREIGHT COLLECT` → Invoice / Packing List Incoterm must be `EXW`, `FCA` or `FOB`; `PREPAID` or
 `FREIGHT PREPAID` → `CIF`, `CIP` or `CFR`.
+
+## 6. Compare rule cell — `ITEM_MATCH` (prototype `RuleMatrix.tsx`)
+A rule cell with `type: 'ITEM_MATCH'` ("จับคู่รายการตามชื่อสินค้า") is for a document that groups
+items (the Form FTA) so it has fewer lines than the customs declaration. It pairs each declaration
+item with the line of this document whose name matches; the comparison table keeps one row per
+declaration item and the line's other values (HS Code…) are compared item by item. One line can
+serve several items.
+
+```typescript
+{
+  type: 'ITEM_MATCH';
+  imRefDoc: string;       // document whose items set the table rows, e.g. the customs declaration
+  imRefField: string;     // item-name field in that document, e.g. "Product Description"
+  imMatchMode: 'CONTAINS' | 'STARTS' | 'EXACT'; // this document's name is found in / at the start of / identical to the reference name — whole words, case and spacing ignored
+  imUnmatched: 'REVIEW' | 'SKIP';               // no line pairs: mismatch for a reviewer / leave blank
+}
+```
+
+Shipped on Import Declaration Matching#1 (Product Description row, Form FTA column). A paired
+line's quantity is summed over the items it covers, so quantity is not compared per item (the
+footer's Total Quantity is).

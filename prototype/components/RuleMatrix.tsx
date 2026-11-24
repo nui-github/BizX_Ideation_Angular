@@ -275,6 +275,8 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
         return language === 'TH' ? 'เปรียบเทียบตามเงื่อนไข (CONDITIONAL)' : 'Conditional (CONDITIONAL)';
       case 'VALUE_GROUPS':
         return language === 'TH' ? 'เทียบตามกลุ่มค่า (VALUE GROUPS)' : 'Value groups (VALUE_GROUPS)';
+      case 'ITEM_MATCH':
+        return language === 'TH' ? 'จับคู่รายการตามชื่อสินค้า (ITEM MATCH)' : 'Match items by description (ITEM_MATCH)';
       case 'DATE_NORMALIZATION':
         return language === 'TH' ? 'ปรับรูปแบบวันที่ (DATE)' : 'Date (DATE_NORMALIZATION)';
       case 'CROSS_FLOW_CARRY':
@@ -578,7 +580,7 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
           <table className="w-full text-left border-collapse" style={{ minWidth: `${180 + activeRule.docTypes.length * colWidth}px`}}>
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="px-6 py-3 text-[10px] font-black text-slate-500 uppercase tracking-widest sticky top-0 left-0 bg-slate-50 z-[50] shadow-[2px_2px_5px_rgba(0,0,0,0.02)] min-w-[180px] w-[180px] outline outline-1 outline-slate-200 h-[40px]">Field Name</th>
+                <th className="px-6 py-3 text-[10px] font-black text-slate-500 uppercase tracking-widest sticky top-0 left-0 bg-slate-50 z-[50] shadow-[2px_2px_5px_rgba(0,0,0,0.02)] min-w-[280px] w-[280px] max-w-[280px] outline outline-1 outline-slate-200 h-[40px]">Field Name</th>
                 {activeRule.docTypes.map((col: string, idx: number) => {
                   const isRemark = col === t.docTypeRemark;
                   const canMoveLeft = !isRemark && idx > 0;
@@ -665,7 +667,7 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                           setDragOverRowIdx(null);
                         }}
                       >
-                        <td className="px-6 py-4 text-xs font-bold text-slate-700 sticky left-0 bg-white z-[20] shadow-[2px_0_5px_rgba(0,0,0,0.02)] border-r border-slate-100 align-top">
+                        <td className="px-6 py-4 text-xs font-bold text-slate-700 sticky left-0 bg-white z-[20] shadow-[2px_0_5px_rgba(0,0,0,0.02)] border-r border-slate-100 align-top min-w-[280px] w-[280px] max-w-[280px]">
                           {isEditing ? (
                              <div className="flex flex-col gap-2 relative">
                                <input type="text" className="w-full bg-white border border-blue-300 rounded-md px-2 py-1 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-100" 
@@ -691,8 +693,8 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                                </div>
                              </div>
                           ) : (
-                             <div className="flex items-center justify-between min-h-[24px] gap-1">
-                               <div className="flex items-center gap-1.5 min-w-0">
+                             <div className="flex items-start justify-between min-h-[24px] gap-1">
+                               <div className="flex items-start gap-1.5 min-w-0">
                                  <span
                                    draggable
                                    onDragStart={(e) => {
@@ -708,7 +710,7 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                                  >
                                    <GripVertical size={14} />
                                  </span>
-                                 <span className="truncate">{language === 'TH' && row.detailTh ? row.detailTh : row.detail}</span>
+                                 <span className="break-words whitespace-normal leading-snug">{language === 'TH' && row.detailTh ? row.detailTh : row.detail}</span>
                                </div>
                                <div className="flex items-center gap-1 opacity-100 transition-opacity">
                                  <Tooltip content="แก้ไข">
@@ -1134,6 +1136,12 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                                                  vgCases: [{ id: `vg_${Date.now()}`, when: [], accept: [] }],
                                                  vgMatchMode: 'EXACT',
                                                  vgElse: 'NORMAL'
+                                               } : {}),
+                                               ...(typeVal === 'ITEM_MATCH' && !newValues[vIdx].imMatchMode ? {
+                                                 imRefDoc: activeRule.docTypes.find((d: string) => /import dec|declaration|ใบขน/i.test(d) && d !== activeRule.docTypes[vIdx]) || '',
+                                                 imRefField: newValues[vIdx].schemaField && /desc/i.test(newValues[vIdx].schemaField) ? 'Product Description' : '',
+                                                 imMatchMode: 'CONTAINS',
+                                                 imUnmatched: 'REVIEW'
                                                } : {})
                                              };
                                              setEditFormData({...editFormData, values: newValues});
@@ -1163,6 +1171,7 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                                           <option value="MASTER_LOOKUP">{language === 'TH' ? 'Master lookup (ฐานข้อมูล)' : 'Master lookup'}</option>
                                           <option value="CONDITIONAL">{language === 'TH' ? 'เปรียบเทียบตามเงื่อนไข (CONDITIONAL)' : 'Conditional'}</option>
                                           <option value="VALUE_GROUPS">{language === 'TH' ? 'เทียบตามกลุ่มค่า (VALUE GROUPS)' : 'Value groups'}</option>
+                                          <option value="ITEM_MATCH">{language === 'TH' ? 'จับคู่รายการตามชื่อสินค้า (ITEM MATCH)' : 'Match items by description'}</option>
                                           <option value="DATE_NORMALIZATION">{language === 'TH' ? 'ปรับรูปแบบวันที่ (DATE)' : 'Date normalization'}</option>
                                         </select>
                                         {currentVal?.type && currentVal?.type !== 'NONE' && (
@@ -1250,6 +1259,7 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                                       val?.type === 'MASTER_LOOKUP' ? 'bg-rose-50 text-rose-700 border-rose-200' :
                                       val?.type === 'CONDITIONAL' ? 'bg-pink-50 text-pink-700 border-pink-200' :
                                       val?.type === 'VALUE_GROUPS' ? 'bg-cyan-50 text-cyan-700 border-cyan-200' :
+                                      val?.type === 'ITEM_MATCH' ? 'bg-lime-50 text-lime-700 border-lime-200' :
                                       val?.type === 'DATE_NORMALIZATION' ? 'bg-amber-50 text-amber-700 border-amber-200' :
                                       val?.type === 'CROSS_FLOW_CARRY' ? 'bg-teal-50 text-teal-700 border-teal-200' :
                                       val?.type === 'NONE' ? 'bg-slate-100 text-slate-500 border-slate-300' :
@@ -1312,6 +1322,15 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                                             </div>
                                           );
                                         }
+                                        case 'ITEM_MATCH':
+                                          return (
+                                            <div className="flex flex-col gap-0.5 mt-1.5 text-[7.5px] font-black text-lime-700 bg-lime-50/70 px-1.5 py-1 rounded border border-lime-200/60 text-left w-full overflow-hidden">
+                                              <div className="opacity-75 font-bold truncate">{language === 'TH' ? 'แถวตั้งต้น' : 'Rows from'}: {val.imRefDoc || '—'}</div>
+                                              <div className="font-bold truncate border-t border-lime-200/40 pt-0.5 mt-0.5">
+                                                {val.imMatchMode === 'EXACT' ? (language === 'TH' ? 'ชื่อเหมือนกันทุกตัว' : 'Same name') : val.imMatchMode === 'STARTS' ? (language === 'TH' ? 'ชื่อใบขนขึ้นต้นด้วยชื่อนี้' : 'Name starts with this') : (language === 'TH' ? 'ชื่อนี้อยู่ในชื่อใบขน' : 'Name found inside')}
+                                              </div>
+                                            </div>
+                                          );
                                         case 'DATE_NORMALIZATION':
                                           return (
                                             <div className="flex items-center justify-center gap-1 mt-1.5 text-[8px] font-black text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200/40">
@@ -2340,6 +2359,183 @@ export const RuleMatrix = ({ rule, onBack, onUpdate, language }: any) => {
                             {language === 'TH' ? 'นอกนั้น → ' : 'Otherwise → '}
                             {vgElse === 'NORMAL' ? (language === 'TH' ? 'เทียบค่าตามปกติ' : 'compare normally') : vgElse === 'REVIEW' ? (language === 'TH' ? 'ให้ผู้ตรวจสอบเช็กเอง' : 'ask a reviewer') : (language === 'TH' ? 'ไม่ต้องเทียบ' : 'do not compare')}
                           </div>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  case 'ITEM_MATCH': {
+                    const th = language === 'TH';
+                    const imRefDoc: string = drawerVal.imRefDoc || '';
+                    const imMode: 'CONTAINS' | 'STARTS' | 'EXACT' = drawerVal.imMatchMode === 'EXACT' ? 'EXACT' : drawerVal.imMatchMode === 'STARTS' ? 'STARTS' : 'CONTAINS';
+                    const imUnmatched: 'REVIEW' | 'SKIP' = drawerVal.imUnmatched === 'SKIP' ? 'SKIP' : 'REVIEW';
+                    const imDocOptions = activeRule.docTypes.filter((d: string) => d !== t.docTypeRemark && d.trim() !== '' && d !== openDrawerInfo.docType);
+                    const imFieldLabels = imRefDoc ? getLabelsForDocTypeAndSchema(imRefDoc, '') : [];
+                    const imFieldOptions: string[] = Array.from(new Set([
+                      ...imFieldLabels,
+                      ...allRuleFields,
+                      ...(drawerVal.imRefField ? [drawerVal.imRefField] : [])
+                    ]));
+                    const setIm = (patch: any) => {
+                      const newValues = [...editFormData.values];
+                      newValues[openDrawerInfo.colIdx] = { ...newValues[openDrawerInfo.colIdx], ...patch };
+                      setEditFormData({ ...editFormData, values: newValues });
+                    };
+                    const sectionTitle = 'text-[10px] font-black text-slate-500 uppercase tracking-widest select-none';
+                    const selectClass = 'w-full h-9 bg-white border border-slate-200 rounded px-2.5 py-1.5 text-xs font-bold text-slate-700 focus:ring-1 focus:ring-blue-500 outline-none cursor-pointer';
+                    const choiceCard = (selected: boolean, onClick: () => void, title: string, hint: string) => (
+                      <button
+                        type="button"
+                        onClick={onClick}
+                        className={`text-left rounded-lg border p-2.5 flex items-start gap-2.5 cursor-pointer transition-colors ${selected ? 'border-[#1f5df9] bg-blue-50/50' : 'border-slate-200 bg-white hover:border-slate-300'}`}
+                      >
+                        <span className={`mt-0.5 w-3.5 h-3.5 rounded-full border-2 shrink-0 flex items-center justify-center ${selected ? 'border-[#1f5df9]' : 'border-slate-300'}`}>
+                          {selected && <span className="w-1.5 h-1.5 rounded-full bg-[#1f5df9]" />}
+                        </span>
+                        <span className="flex flex-col gap-0.5">
+                          <span className="text-xs font-black text-slate-700">{title}</span>
+                          <span className="text-[10px] font-medium text-slate-400 leading-snug">{hint}</span>
+                        </span>
+                      </button>
+                    );
+                    const refName = imRefDoc || (th ? 'เอกสารหลัก' : 'the main document');
+                    const thisDoc = openDrawerInfo.docType;
+                    const modeText = imMode === 'EXACT'
+                      ? (th ? 'เหมือนกันทุกตัวอักษร' : 'identical')
+                      : imMode === 'STARTS'
+                        ? (th ? 'เป็นคำขึ้นต้นของชื่อสินค้าในใบขน' : 'is the beginning of the item name')
+                        : (th ? 'อยู่ในชื่อสินค้าของใบขน' : 'appears inside the item name');
+
+                    return (
+                      <div className="flex flex-col gap-4">
+                        <div className="bg-slate-50 border border-slate-200/80 p-4 flex flex-col gap-1.5" style={{ borderRadius: '12px' }}>
+                          <span className="text-[10px] font-black text-slate-800 uppercase tracking-wider select-none">
+                            💡 {th ? 'ใช้เมื่อไหร่' : 'When to use'}
+                          </span>
+                          <p className="text-xs text-slate-500 leading-relaxed font-medium">
+                            {th
+                              ? <>ใช้เมื่อเอกสารนี้ (เช่น <strong>FTA</strong>) <strong>รวมรายการสินค้า</strong>ไว้ ทำให้มีแถวน้อยกว่าใบขน แต่ <strong>ชื่อสินค้าเหมือนหรือคล้ายกัน</strong> — ใบขนอาจต่อท้ายด้วยสีหรือไซส์ ระบบจะจับคู่แถวให้ แล้วตารางเทียบจะมีแถวเท่ากับรายการในใบขนพอดี</>
+                              : <>Use this when this document (e.g. the <strong>FTA</strong>) <strong>groups items together</strong> and so has fewer lines than the declaration, but the <strong>item names are the same or similar</strong> — the declaration may add a colour or size. Lines are paired up so the comparison table has exactly one row per declaration item.</>}
+                          </p>
+                        </div>
+
+                        {/* example */}
+                        <div className="bg-white border border-slate-200 p-3.5 flex flex-col gap-2" style={{ borderRadius: '8px' }}>
+                          <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider select-none">{th ? 'ตัวอย่าง' : 'Example'}</span>
+                          <div className="grid grid-cols-[1fr_auto_1fr] gap-x-2 gap-y-1 items-stretch text-[11px] font-bold">
+                            <div className="text-[9px] font-black text-slate-400 uppercase tracking-wider">{refName}</div>
+                            <div />
+                            <div className="text-[9px] font-black text-slate-400 uppercase tracking-wider">{thisDoc}</div>
+                            <div className="rounded border border-slate-200 bg-slate-50 px-2 py-1 text-slate-700 leading-snug">Mens S/S Polo Shirt / Black / M</div>
+                            <div className="row-span-2 flex items-center text-[#1f5df9] font-black text-base select-none">⇒</div>
+                            <div className="row-span-2 rounded border border-lime-200 bg-lime-50 px-2 py-1 text-lime-800 flex flex-col justify-center leading-snug">
+                              <span>Mens S/S Polo Shirt</span>
+                              <span className="font-mono text-[10px] text-lime-700/80">HS 6105.20 · Qty 3,600</span>
+                            </div>
+                            <div className="rounded border border-slate-200 bg-slate-50 px-2 py-1 text-slate-700 leading-snug">Mens S/S Polo Shirt / White / L</div>
+                            <div className="rounded border border-slate-200 bg-slate-50 px-2 py-1 text-slate-700 leading-snug">Womens S/S Polo Shirt / Navy / M</div>
+                            <div className="flex items-center text-[#1f5df9] font-black text-base select-none">⇒</div>
+                            <div className="rounded border border-lime-200 bg-lime-50 px-2 py-1 text-lime-800 flex flex-col justify-center leading-snug">
+                              <span>Womens S/S Polo Shirt</span>
+                              <span className="font-mono text-[10px] text-lime-700/80">HS 6106.20 · Qty 3,600</span>
+                            </div>
+                          </div>
+                          <span className="text-[10px] font-medium text-slate-400 leading-snug">
+                            {th ? 'แถว FTA เดียวใช้ได้กับหลายรายการ แล้ว HS Code ของแถวนั้นจะถูกนำไปเทียบกับแต่ละรายการในใบขน' : 'One FTA line can serve several items, and its HS Code is compared with each of those declaration items.'}
+                          </span>
+                        </div>
+
+                        {/* 1. rows come from */}
+                        <div className="bg-[#F0FDF4]/80 border border-[#DCFCE7] p-4 flex flex-col gap-3" style={{ borderRadius: '8px' }}>
+                          <span className="text-[10px] font-black text-[#166534] uppercase tracking-wider select-none">
+                            {th ? '1. แถวในตารางเทียบยึดจากเอกสารไหน' : '1. Which document sets the rows of the table'}
+                          </span>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="flex flex-col gap-1">
+                              <label className={sectionTitle}>{th ? 'เอกสาร' : 'Document'}</label>
+                              <select
+                                className={selectClass}
+                                style={{ borderRadius: '4px' }}
+                                value={imRefDoc}
+                                onChange={(e) => setIm({ imRefDoc: e.target.value })}
+                              >
+                                <option value="" disabled>{th ? 'เลือกเอกสาร' : 'Choose a document'}</option>
+                                {imDocOptions.map((d: string) => <option key={d} value={d}>{d}</option>)}
+                              </select>
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <label className={sectionTitle}>{th ? 'ฟิลด์ชื่อสินค้า' : 'Item-name field'}</label>
+                              <select
+                                className={selectClass}
+                                style={{ borderRadius: '4px' }}
+                                value={drawerVal.imRefField || ''}
+                                onChange={(e) => setIm({ imRefField: e.target.value })}
+                              >
+                                <option value="" disabled>{th ? 'เลือกฟิลด์' : 'Choose a field'}</option>
+                                {imFieldOptions.map((f: string) => <option key={f} value={f}>{f}</option>)}
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 2. how to pair names */}
+                        <div className="flex flex-col gap-2">
+                          <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider select-none">
+                            {th ? '2. จับคู่ชื่อสินค้าอย่างไร' : '2. How to pair the names'}
+                          </span>
+                          {choiceCard(
+                            imMode === 'CONTAINS',
+                            () => setIm({ imMatchMode: 'CONTAINS' }),
+                            th ? 'ชื่อใน FTA อยู่ในชื่อสินค้าของใบขน (แนะนำ)' : 'FTA name appears inside the declaration name (recommended)',
+                            th ? '"Mens S/S Polo Shirt" จับคู่กับ "Mens S/S Polo Shirt / Black / M" ได้ แต่ไม่จับกับ "Womens …" เพราะเทียบเป็นคำเต็ม' : '"Mens S/S Polo Shirt" pairs with "Mens S/S Polo Shirt / Black / M" but not with "Womens …" — whole words only'
+                          )}
+                          {choiceCard(
+                            imMode === 'STARTS',
+                            () => setIm({ imMatchMode: 'STARTS' }),
+                            th ? 'ชื่อสินค้าของใบขนขึ้นต้นด้วยชื่อใน FTA' : 'Declaration name starts with the FTA name',
+                            th ? 'เข้มกว่าข้อบน — ชื่อ FTA ต้องอยู่ต้นชื่อ ไม่ใช่กลางประโยค' : 'Stricter — the FTA name must be at the start, not somewhere in the middle'
+                          )}
+                          {choiceCard(
+                            imMode === 'EXACT',
+                            () => setIm({ imMatchMode: 'EXACT' }),
+                            th ? 'ชื่อเหมือนกันทุกตัวอักษร' : 'Names are identical',
+                            th ? 'ใช้เมื่อสองเอกสารเขียนชื่อสินค้าเหมือนกันทุกตัวอักษร ถ้าใบขนมีสีหรือไซส์ต่อท้ายจะจับคู่ไม่ได้' : 'Only when both documents write the name the same; a colour/size suffix will not pair'
+                          )}
+                          <span className="text-[10px] font-medium text-slate-400">
+                            {th ? 'ไม่สนตัวพิมพ์เล็ก-ใหญ่ และช่องว่างซ้ำ' : 'Letter case and extra spaces are ignored'}
+                          </span>
+                        </div>
+
+                        {/* 3. nothing found */}
+                        <div className="bg-[#FFFBEB]/70 border border-[#FEF3C7] p-4 flex flex-col gap-2" style={{ borderRadius: '8px' }}>
+                          <span className="text-[10px] font-black text-[#92400e] uppercase tracking-wider select-none">
+                            {th ? '3. ถ้าหาแถวที่จับคู่ไม่เจอ' : '3. If no line can be paired'}
+                          </span>
+                          {choiceCard(
+                            imUnmatched === 'REVIEW',
+                            () => setIm({ imUnmatched: 'REVIEW' }),
+                            th ? 'ให้ผู้ตรวจสอบเช็กเอง' : 'Ask a reviewer to check',
+                            th ? 'รายการนั้นขึ้นเป็น "ไม่ตรงกัน" พร้อมข้อความว่าไม่พบใน ' + thisDoc : 'The item is shown as a mismatch, saying it was not found in ' + thisDoc
+                          )}
+                          {choiceCard(
+                            imUnmatched === 'SKIP',
+                            () => setIm({ imUnmatched: 'SKIP' }),
+                            th ? 'ข้ามรายการนั้น' : 'Skip that item',
+                            th ? 'เว้นว่างไว้ ไม่นับเป็นไม่ตรงกัน' : 'Leave it blank, not counted as a mismatch'
+                          )}
+                        </div>
+
+                        {/* summary in plain words */}
+                        <div className="bg-slate-50 border border-slate-200 p-4 flex flex-col gap-1.5" style={{ borderRadius: '8px' }}>
+                          <span className="text-[10px] font-black text-slate-800 uppercase tracking-wider select-none">
+                            {th ? 'สรุปการทำงาน' : 'Summary'}
+                          </span>
+                          <ol className="text-xs font-bold text-slate-600 leading-relaxed list-decimal pl-4 flex flex-col gap-1">
+                            <li>{th ? 'ตารางเทียบมีแถวเท่ากับรายการสินค้าใน' : 'The table has one row per item in'} <span className="text-[#166534]">{refName}</span></li>
+                            <li>{th ? 'แต่ละรายการ หาแถวใน' : 'For each item, find the line in'} <span className="text-[#1E40AF]">{thisDoc}</span> {th ? 'ที่ชื่อสินค้า' : 'whose name'} <span className="text-[#1E40AF]">{modeText}</span></li>
+                            <li>{th ? 'ถ้าเจอ นำค่าอื่นของแถวนั้น (เช่น HS Code) มาเทียบกับรายการนั้น — แถวเดียวใช้ได้หลายรายการ' : 'If found, its other values (e.g. HS Code) are compared with that item — one line can serve several items'}</li>
+                            <li className="text-amber-700">{th ? 'ถ้าไม่เจอ → ' : 'If not found → '}{imUnmatched === 'REVIEW' ? (th ? 'ให้ผู้ตรวจสอบเช็กเอง' : 'ask a reviewer') : (th ? 'ข้ามรายการนั้น' : 'skip the item')}</li>
+                          </ol>
                         </div>
                       </div>
                     );
