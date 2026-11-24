@@ -9,7 +9,7 @@ import {
   CheckCircle2, XCircle, Info, Eye, Send, Filter, ArrowLeft, Save, RotateCcw,
   LayoutGrid, List, ScanEye, Bot, ChevronDown, Lock, Unlock, HelpCircle, X, Loader2, ShieldCheck, ArrowUpRight, ScanSearch, History, Edit3, UploadCloud, AlertTriangle,
   Printer, RotateCw, ZoomIn, ZoomOut, Menu, Copy, Star, CheckCheck, StickyNote, SkipForward, Undo2,
-  FileBarChart2, Layers, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, GripVertical, MoreVertical, Redo2, Merge
+  FileBarChart2, Layers, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, GripVertical, MoreVertical, Redo2, Merge, ClipboardList, Hourglass, PlayCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Tabs, Tag, Badge, Empty, Button, message, DatePicker, Select, Radio, Drawer, AutoComplete } from 'antd';
@@ -6232,21 +6232,21 @@ const mockWorkflows: Workflow[] = [
       { 
         label: language === 'TH' ? 'งานทั้งหมด' : 'Total Shipments', 
         count: totalShipments, 
-        icon: <FileText size={18} />, 
+        icon: <ClipboardList size={18} />, 
         color: 'bg-slate-50 text-slate-400',
         dotColor: 'bg-slate-400'
       },
       { 
         label: language === 'TH' ? 'รอดำเนินการ' : 'Unfinished Shipments', 
         count: unfinishedShipments, 
-        icon: <Plus size={18} />, 
+        icon: <Hourglass size={18} />, 
         color: 'bg-amber-50 text-amber-500',
         dotColor: 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.4)]'
       },
       { 
         label: language === 'TH' ? 'กำลังทำ' : 'My Pending Shipments', 
         count: myPendingShipments, 
-        icon: <ArrowLeftRight size={18} />, 
+        icon: <PlayCircle size={18} />, 
         color: 'bg-blue-50 text-[#1f5df9]',
         dotColor: 'bg-blue-500 shadow-[0_0_8px_rgba(4,99,239,0.4)]'
       },
