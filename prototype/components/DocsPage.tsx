@@ -4,7 +4,7 @@ import jobStatusSvg from './docs/job-status.svg?raw';
 import docStatusSvg from './docs/doc-status.svg?raw';
 import userFlowSvg from './docs/user-flow.svg?raw';
 import { DiagramFigure } from './design-process/DiagramFigure';
-import { Workflow, MousePointerClick, ArrowLeftRight, ChevronRight, Info } from 'lucide-react';
+import { Workflow, MousePointerClick, ArrowLeftRight, ChevronRight, Info, ExternalLink } from 'lucide-react';
 
 // Standalone page, served at /docs (see index.tsx). Like /design-process it is not linked from the
 // app's menu — open the URL directly. It holds the system documentation for Data Comparison as sub-pages
@@ -288,6 +288,9 @@ export const DocsPage: React.FC = () => {
                 {p.label}
               </a>
             ))}
+            <a href="/design-process" className="ml-2 px-2.5 py-1 rounded-[4px] text-[#1f5df9] hover:bg-blue-50 whitespace-nowrap transition-colors inline-flex items-center gap-1">
+              Design Process <ExternalLink size={12} />
+            </a>
           </nav>
         </div>
       </header>
@@ -319,6 +322,15 @@ export const DocsPage: React.FC = () => {
                 </a>
               );
             })}
+            <div className="mt-4 pt-4 border-t border-slate-200">
+              <a
+                href="/design-process"
+                className="px-3 py-1.5 rounded-[4px] text-[13px] font-bold text-[#1f5df9] hover:bg-blue-50 transition-colors flex items-center gap-1.5"
+              >
+                Design Process <ExternalLink size={12} />
+              </a>
+              <p className="px-3 mt-1 text-[11px] font-medium text-slate-400 leading-snug">วิธีออกแบบ BizX ด้วย vibe design กับ Claude</p>
+            </div>
           </nav>
         </aside>
 

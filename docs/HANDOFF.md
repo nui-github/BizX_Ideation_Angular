@@ -212,6 +212,7 @@ These were caught while scaffolding and are already fixed — noted here so the 
   open from disk); after editing one run `python3 docs/diagrams/extract-svgs.py`, which writes the SVGs in
   `prototype/components/docs/` and rewrites the screenshot path to `/docs/shots`. These replace the two
   old standalone pages that were served from `prototype/public/diagrams/`.
+  `/docs` links back to `/design-process` (side menu and the narrow-screen bar).
 
 ## Running things
 
