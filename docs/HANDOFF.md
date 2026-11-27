@@ -196,6 +196,7 @@ These were caught while scaffolding and are already fixed — noted here so the 
   full-screen modal (`design-process/DiagramFigure.tsx`): drag to pan, mouse wheel zooms around the
   cursor, −/+/fit buttons (25–250%, opens at fit width), and the SVG viewBox is cropped to its
   content plus 32px on every side.
+  The page links to `/docs` (hero, side menu and the narrow-screen bar).
 - `/docs` — a hidden page (no menu entry; type the URL) with the system documentation of Data Comparison
   as sub-pages, chosen from a menu group in the left column (hash routes, so it works without server
   rewrites): `#system-flow` ("Flow ของระบบ", for dev / QA) and `#user-flow` ("User flow": Shipment → close

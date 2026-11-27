@@ -6,7 +6,7 @@ import poLoopSvg from './design-process/po-loop.svg?raw';
 import { DiagramFigure } from './design-process/DiagramFigure';
 import {
   Target, MousePointerClick, MessagesSquare, Hammer, ScanEye, GitCommitHorizontal,
-  Copy, Check, Users, ListChecks, AlertTriangle, BookOpen, Layers, Sparkles, Lightbulb, ArrowRight, TrendingUp
+  Copy, Check, Users, ListChecks, AlertTriangle, BookOpen, Layers, Sparkles, Lightbulb, ArrowRight, TrendingUp, ExternalLink
 } from 'lucide-react';
 
 // Standalone page, served at /design-process (see index.tsx). It is deliberately not linked from
@@ -403,6 +403,9 @@ export const DesignProcessPage: React.FC = () => {
                 {section.label}
               </a>
             ))}
+            <a href="/docs" className="ml-2 px-2.5 py-1 rounded-[4px] text-[#1f5df9] hover:bg-blue-50 whitespace-nowrap transition-colors inline-flex items-center gap-1">
+              เอกสารระบบ <ExternalLink size={12} />
+            </a>
           </nav>
         </div>
       </header>
@@ -432,14 +435,28 @@ export const DesignProcessPage: React.FC = () => {
                 </a>
               );
             })}
+            <div className="mt-4 pt-4 border-t border-slate-200">
+              <a
+                href="/docs"
+                className="px-3 py-1.5 rounded-[4px] text-[13px] font-bold border-l-2 border-transparent text-[#1f5df9] hover:bg-blue-50 transition-colors flex items-center gap-1.5"
+              >
+                เอกสารระบบ <ExternalLink size={12} />
+              </a>
+              <p className="px-3 mt-1 text-[11px] font-medium text-slate-400 leading-snug">Flow ของระบบและ user flow ของ Data Comparison</p>
+            </div>
           </nav>
         </aside>
 
       <main className="flex-1 min-w-0 py-10 flex flex-col gap-14">
         {/* Hero */}
         <section className="rounded-2xl bg-white border border-slate-200 p-8 shadow-sm">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 text-[#1f5df9] text-[11px] font-black border border-blue-100">
-            <Sparkles size={12} /> Vibe design with Claude
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 text-[#1f5df9] text-[11px] font-black border border-blue-100">
+              <Sparkles size={12} /> Vibe design with Claude
+            </div>
+            <a href="/docs" className="inline-flex items-center gap-1.5 text-[12px] font-bold text-slate-500 hover:text-[#1f5df9] transition-colors">
+              เอกสารระบบ Data Comparison (Flow ของระบบ / User flow) <ExternalLink size={12} />
+            </a>
           </div>
           <h1 className="text-3xl font-black tracking-tight mt-4 leading-tight" style={{ color: NAVY }}>
             ออกแบบ BizX ด้วยการ "vibe code" ร่วมกับ Claude
