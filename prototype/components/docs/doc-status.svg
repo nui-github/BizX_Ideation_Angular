@@ -1,0 +1,52 @@
+<svg viewBox="0 0 1008 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ds-title ds-desc">
+<title id="ds-title">สถานะของเอกสารแต่ละคอลัมน์ (Document status)</title>
+<desc id="ds-desc">State machine of one document column in a job: missing, received after upload, extracting while OCR reads it, OCR done, then matched or mismatched after comparison; a mismatch becomes matched once its fields are fixed, confirmed or skipped.</desc>
+<defs>
+<marker id="ds-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#475569"/></marker>
+<marker id="ds-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#1f5df9"/></marker>
+<marker id="ds-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0369a1"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#f8fafc"/>
+<path d="M 184,128 H 296" fill="none" stroke="#475569" stroke-width="1.2"  marker-end="url(#ds-arrow)"/>
+<path d="M 448,128 H 560" fill="none" stroke="#475569" stroke-width="1.2"  marker-end="url(#ds-arrow)"/>
+<path d="M 712,128 H 824" fill="none" stroke="#475569" stroke-width="1.2"  marker-end="url(#ds-arrow)"/>
+<path d="M 938,160 V 288" fill="none" stroke="#475569" stroke-width="1.2"  marker-end="url(#ds-arrow)"/>
+<path d="M 862,160 V 216 Q 862,224 854,224 H 604 Q 596,224 596,232 V 288" fill="none" stroke="#1f5df9" stroke-width="1.4"  marker-end="url(#ds-arrow-accent)"/>
+<path d="M 824,320 H 672" fill="none" stroke="#475569" stroke-width="1.2"  marker-end="url(#ds-arrow)"/>
+<rect x="198.0" y="104" width="84" height="16" rx="2" fill="#f8fafc"/>
+<text x="240" y="116" fill="#5b6b83" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >อัปโหลดไฟล์</text>
+<rect x="474.0" y="104" width="60" height="16" rx="2" fill="#f8fafc"/>
+<text x="504" y="116" fill="#5b6b83" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >อ่านไฟล์</text>
+<rect x="734.0" y="104" width="68" height="16" rx="2" fill="#f8fafc"/>
+<text x="768" y="116" fill="#5b6b83" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >OCR เสร็จ</text>
+<rect x="822" y="240" width="108" height="16" rx="2" fill="#f8fafc"/>
+<text x="924" y="252" fill="#5b6b83" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="end" >เทียบแล้วไม่ตรง</text>
+<rect x="686.0" y="200" width="88" height="16" rx="2" fill="#f8fafc"/>
+<text x="730" y="212" fill="#1f5df9" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >เทียบแล้วตรง</text>
+<rect x="694.0" y="296" width="108" height="16" rx="2" fill="#f8fafc"/>
+<text x="748" y="308" fill="#5b6b83" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >แก้/ยืนยัน/ข้าม</text>
+<rect x="32" y="96" width="152" height="64" rx="8" fill="#f8fafc"/><rect x="32" y="96" width="152" height="64" rx="8" fill="#ffffff" stroke="#010136" stroke-width="1"/><text x="108.0" y="124" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >ยังไม่มีไฟล์</text><text x="108.0" y="142" fill="#475569" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" >MISSING</text>
+<rect x="296" y="96" width="152" height="64" rx="8" fill="#f8fafc"/><rect x="296" y="96" width="152" height="64" rx="8" fill="#ffffff" stroke="#010136" stroke-width="1"/><text x="372.0" y="124" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >อัปโหลดแล้ว</text><text x="372.0" y="142" fill="#475569" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" >RECEIVED</text>
+<rect x="560" y="96" width="152" height="64" rx="8" fill="#f8fafc"/><rect x="560" y="96" width="152" height="64" rx="8" fill="#ffffff" stroke="#010136" stroke-width="1"/><text x="636.0" y="124" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >กำลังสกัดข้อมูล</text><text x="636.0" y="142" fill="#475569" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" >EXTRACTING</text>
+<rect x="824" y="96" width="152" height="64" rx="8" fill="#f8fafc"/><rect x="824" y="96" width="152" height="64" rx="8" fill="#ffffff" stroke="#010136" stroke-width="1"/><text x="900.0" y="124" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >สกัดข้อมูลเสร็จ</text><text x="900.0" y="142" fill="#475569" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" >OCR_DONE</text>
+<rect x="520" y="288" width="152" height="64" rx="8" fill="#f8fafc"/><rect x="520" y="288" width="152" height="64" rx="8" fill="rgba(31,93,249,0.08)" stroke="#1f5df9" stroke-width="1"/><text x="596.0" y="316" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >ตรงกัน</text><text x="596.0" y="334" fill="#475569" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" >MATCHED</text>
+<rect x="824" y="288" width="152" height="64" rx="8" fill="#f8fafc"/><rect x="824" y="288" width="152" height="64" rx="8" fill="#ffffff" stroke="#010136" stroke-width="1"/><text x="900.0" y="316" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >ไม่ตรงกัน</text><text x="900.0" y="334" fill="#475569" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" >MISMATCHED</text>
+<text x="296" y="200" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="start" >* ทุกสถานะ กลับไปเป็น RECEIVED</text>
+<text x="296" y="218" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="start" >เมื่ออัปโหลดไฟล์ใหม่ทับหรือเพิ่ม</text>
+<path d="M 340,186 Q 346,170 352,160" fill="none" stroke="rgba(1,1,54,0.40)" stroke-width="1" stroke-dasharray="4,3"/><circle cx="352" cy="160" r="2" fill="#010136"/>
+<rect x="32" y="272" width="432" height="140" rx="8" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="48" y="296" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="start" >นอก flow ปกติ: มีเฉพาะในข้อมูลตัวอย่าง หรือยังไม่มีตัวทริกเกอร์</text>
+<rect x="48" y="312" width="128" height="84" rx="6" fill="#ffffff" stroke="#010136" stroke-opacity="0.45" stroke-width="1" stroke-dasharray="4,3"/><text x="112" y="332" fill="#010136" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" font-weight="500">LOCKED</text><text x="112" y="356" fill="#475569" font-size="12" font-weight="400" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >ข้อมูลตัวอย่างของ</text><text x="112" y="374" fill="#475569" font-size="12" font-weight="400" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >งานที่เสร็จแล้ว</text>
+<rect x="192" y="312" width="128" height="84" rx="6" fill="#ffffff" stroke="#010136" stroke-opacity="0.45" stroke-width="1" stroke-dasharray="4,3"/><text x="256" y="332" fill="#010136" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" font-weight="500">ERROR</text><text x="256" y="356" fill="#475569" font-size="12" font-weight="400" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >OCR ล้มเหลว</text><text x="256" y="374" fill="#475569" font-size="12" font-weight="400" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >(ยังไม่มีตัวทริกเกอร์)</text>
+<rect x="336" y="312" width="128" height="84" rx="6" fill="#ffffff" stroke="#010136" stroke-opacity="0.45" stroke-width="1" stroke-dasharray="4,3"/><text x="400" y="332" fill="#010136" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" font-weight="500">SKIPPED</text><text x="400" y="356" fill="#475569" font-size="12" font-weight="400" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >ข้ามทั้งงานก่อนเทียบ</text><text x="400" y="374" fill="#475569" font-size="12" font-weight="400" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >(ยังไม่มีตัวทริกเกอร์)</text>
+<line x1="24" y1="456" x2="984" y2="456" stroke="rgba(1,1,54,0.12)" stroke-width="0.8"/>
+<text x="24" y="484" fill="#5b6b83" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.18em">LEGEND</text>
+<rect x="120" y="475" width="14" height="10" rx="3" fill="#fff" stroke="#010136"/>
+<text x="140" y="484" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="start" >สถานะ</text>
+<rect x="212" y="475" width="14" height="10" rx="3" fill="rgba(31,93,249,0.08)" stroke="#1f5df9"/>
+<text x="232" y="484" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="start" >ผลที่ต้องการ</text>
+<rect x="340" y="475" width="14" height="10" rx="3" fill="#fff" stroke="#010136" stroke-opacity="0.45" stroke-dasharray="3,2"/>
+<text x="360" y="484" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="start" >ไม่เกิดใน flow ปกติ</text>
+<line x1="520" y1="480" x2="548" y2="480" stroke="#475569" stroke-width="1.2" marker-end="url(#ds-arrow)"/>
+<text x="556" y="484" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="start" >เปลี่ยนสถานะ</text>
+</svg>

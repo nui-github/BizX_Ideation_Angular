@@ -196,6 +196,21 @@ These were caught while scaffolding and are already fixed — noted here so the 
   full-screen modal (`design-process/DiagramFigure.tsx`): drag to pan, mouse wheel zooms around the
   cursor, −/+/fit buttons (25–250%, opens at fit width), and the SVG viewBox is cropped to its
   content plus 32px on every side.
+- `/docs` — a hidden page (no menu entry; type the URL) with the system documentation of Data Comparison
+  as sub-pages, chosen from a menu group in the left column (hash routes, so it works without server
+  rewrites): `#system-flow` ("Flow ของระบบ", for dev / QA) and `#user-flow` ("User flow": Shipment → close
+  the job). `prototype/components/DocsPage.tsx`, routed by pathname in `prototype/index.tsx`. The system
+  flow page has a vertical swimlane of one shipment (user / OCR + compare engine / shipment sequence), two
+  state machines (job status and document status), the compare-method list and the rules a tester needs;
+  every enum and rule is read from the code (`JobStatus`, `ComparisonDocStatus`, `getJobStatus()`,
+  `handleStartComparison()`, `handleConfirmExport()`, `handleRejectFlow()`, `CreateJobModal`), so when that
+  behaviour changes update the page and the diagram together. The user flow page is a four-row screen
+  flow built from real screenshots of the app (`prototype/public/docs/shots/*.jpg`, 1440×900). Diagrams use
+  the same expand-to-modal viewer. Sources are `docs/diagrams/data-comparison-flow.html`, `job-status.html`,
+  `doc-status.html` and `user-flow-shipment-export.html` (screenshots referenced by relative path so they
+  open from disk); after editing one run `python3 docs/diagrams/extract-svgs.py`, which writes the SVGs in
+  `prototype/components/docs/` and rewrites the screenshot path to `/docs/shots`. These replace the two
+  old standalone pages that were served from `prototype/public/diagrams/`.
 
 ## Running things
 

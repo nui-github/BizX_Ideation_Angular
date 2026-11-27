@@ -1,855 +1,171 @@
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Data Comparison Flow</title>
-<style>
-  :root {
-    --bg: #f4f6fb;
-    --surface: #ffffff;
-    --surface-2: #eef1f8;
-    --ink: #111629;
-    --muted: #5b6478;
-    --line: #e1e5f0;
-    --accent: #1f5df9;
-
-    --lane1: #7c5cff;   --lane1-tint: #efeaff;
-    --lane2: #1f5df9;   --lane2-tint: #e8f0ff;
-    --lane3: #0891b2;   --lane3-tint: #e3f6fa;
-    --lane4: #d97706;   --lane4-tint: #fdf1e0;
-    --lane5: #059669;   --lane5-tint: #e3f8ee;
-
-    --solid-violet: #6d4fe0;
-    --solid-blue: #1f5df9;
-    --solid-teal: #0891b2;
-    --solid-amber: #c2790a;
-    --solid-emerald: #059669;
-    --solid-rose: #e11d48;
-    --warn-fg: #241900;
-
-    --ok: #059669;
-    --warn: #d97706;
-    --bad: #e11d48;
-    --info: #1f5df9;
-
-    --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-    --font-mono: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Consolas, monospace;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg: #0a0f1c;
-      --surface: #111a2d;
-      --surface-2: #16223a;
-      --ink: #e7ebf6;
-      --muted: #94a0bf;
-      --line: #233252;
-      --accent: #5b8bff;
-
-      --lane1: #a78bfa;   --lane1-tint: #1e1a3d;
-      --lane2: #5b8bff;   --lane2-tint: #141f38;
-      --lane3: #22b8cf;   --lane3-tint: #0e2530;
-      --lane4: #f0a838;   --lane4-tint: #2c210f;
-      --lane5: #34d399;   --lane5-tint: #0f2a20;
-
-      --ok: #34d399;
-      --warn: #f0a838;
-      --bad: #fb7185;
-      --info: #5b8bff;
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>เส้นทางของ Shipment ในระบบ Data Comparison</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #f8fafc;
+      --color-ink:     #010136;
+      --color-muted:   #475569;
+      --color-accent:  #1f5df9;
+      --font-sans:     'IBM Plex Sans Thai', system-ui, sans-serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
     }
-  }
-
-  :root[data-theme="dark"] {
-    --bg: #0a0f1c;
-    --surface: #111a2d;
-    --surface-2: #16223a;
-    --ink: #e7ebf6;
-    --muted: #94a0bf;
-    --line: #233252;
-    --accent: #5b8bff;
-
-    --lane1: #a78bfa;   --lane1-tint: #1e1a3d;
-    --lane2: #5b8bff;   --lane2-tint: #141f38;
-    --lane3: #22b8cf;   --lane3-tint: #0e2530;
-    --lane4: #f0a838;   --lane4-tint: #2c210f;
-    --lane5: #34d399;   --lane5-tint: #0f2a20;
-
-    --ok: #34d399;
-    --warn: #f0a838;
-    --bad: #fb7185;
-    --info: #5b8bff;
-  }
-
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; }
-  body {
-    background: var(--bg);
-    color: var(--ink);
-    font-family: var(--font-ui);
-    line-height: 1.5;
-    -webkit-font-smoothing: antialiased;
-  }
-
-  .page {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 28px 24px 64px;
-    display: flex;
-    flex-direction: column;
-    gap: 28px;
-  }
-
-  header.hero {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    padding-bottom: 18px;
-    border-bottom: 1px solid var(--line);
-    position: relative;
-  }
-  .theme-toggle {
-    position: absolute;
-    top: 0;
-    right: 0;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-family: var(--font-ui);
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--muted);
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    padding: 6px 12px 6px 10px;
-    cursor: pointer;
-  }
-  .theme-toggle:hover { color: var(--ink); border-color: var(--accent); }
-  .theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .theme-toggle .icon { font-size: 13px; line-height: 1; }
-  @media (max-width: 640px) {
-    .theme-toggle { position: static; align-self: flex-start; margin-top: 4px; }
-  }
-  .eyebrow {
-    font-family: var(--font-mono);
-    font-size: 11.5px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    color: var(--accent);
-    text-transform: uppercase;
-  }
-  h1 {
-    margin: 2px 0 2px;
-    font-size: 28px;
-    font-weight: 800;
-    letter-spacing: -0.01em;
-    text-wrap: balance;
-  }
-  .subtitle {
-    color: var(--muted);
-    font-size: 14.5px;
-    max-width: 62ch;
-  }
-  .sources {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 10px;
-  }
-  .source-chip {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    color: var(--muted);
-    background: var(--surface-2);
-    border: 1px solid var(--line);
-    border-radius: 6px;
-    padding: 3px 8px;
-  }
-
-  /* ---- legend ---- */
-  .legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 22px;
-    align-items: center;
-    padding: 12px 16px;
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    font-size: 12.5px;
-    color: var(--muted);
-  }
-  .legend-group {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-  .legend-title {
-    font-weight: 700;
-    color: var(--ink);
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    margin-right: 2px;
-  }
-  .legend-item { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
-  .swatch { width: 11px; height: 11px; border-radius: 3px; flex: none; }
-  .legend-divider { width: 1px; height: 18px; background: var(--line); }
-
-  /* ---- diagram ---- */
-  .diagram-wrap {
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 16px;
-    padding: 8px;
-    overflow-x: auto;
-  }
-  .flow-canvas { position: relative; }
-  .flow-canvas > svg { display: block; position: absolute; left: 0; top: 0; }
-  .scroll-hint {
-    text-align: center;
-    font-size: 11.5px;
-    color: var(--muted);
-    margin: 2px 0 0;
-  }
-
-  /* ---- high-fidelity mini screen mockups (shared with user-flow-shipment-export.html) ---- */
-  .screen { position: absolute; border-radius: 10px; overflow: hidden; background: var(--surface); border: 1px solid var(--line); box-shadow: 0 3px 10px rgba(15,23,64,0.10); }
-  .screen-chrome { height: 13px; background: var(--surface-2); display: flex; align-items: center; gap: 3px; padding: 0 6px; border-bottom: 1px solid var(--line); }
-  .chrome-dot { width: 4.5px; height: 4.5px; border-radius: 50%; background: var(--line); }
-  .screen-body { display: flex; height: calc(100% - 13px); font-family: var(--font-ui); }
-  .mt { font-size: 6.6px; font-weight: 800; line-height: 1.3; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .mt2 { font-size: 5.4px; font-weight: 600; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .mono-mini { font-family: var(--font-mono); font-size: 5.6px; font-weight: 700; color: var(--ink); white-space: nowrap; }
-  .mbtn { font-size: 5.4px; font-weight: 800; color: #fff; border-radius: 3px; padding: 2px 5px; display: inline-flex; align-items: center; white-space: nowrap; }
-  .mbtn-outline { font-size: 5.4px; font-weight: 800; border-radius: 3px; padding: 2px 5px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
-  .mpill { font-size: 4.6px; font-weight: 800; border-radius: 7px; padding: 1.5px 5px; white-space: nowrap; display: inline-block; }
-  .mcolhead { font-size: 5px; font-weight: 800; color: #fff; text-align: center; border-radius: 3px; padding: 2.5px 0; }
-  .mfield { display: flex; align-items: center; gap: 4px; padding: 2.5px 4px; background: var(--surface-2); border-radius: 3px; }
-  .mfield .fname { font-size: 5px; font-weight: 700; color: var(--ink); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .micon { width: 9px; height: 9px; border-radius: 3px; background: var(--surface-2); display: inline-flex; align-items: center; justify-content: center; font-size: 5px; flex: none; }
-
-  text { font-family: var(--font-ui); fill: var(--ink); }
-  .node-label { font-size: 12.5px; font-weight: 700; }
-  .node-caption { font-size: 10.3px; font-weight: 500; fill: var(--muted); }
-  .branch-label { font-size: 10.5px; font-weight: 700; fill: var(--muted); }
-  .pill-label { font-size: 11px; font-weight: 800; fill: #ffffff; }
-  .pill-label-dark { font-size: 11px; font-weight: 800; fill: var(--warn-fg); }
-  .lane-title { font-size: 13px; font-weight: 800; fill: #ffffff; }
-  .terminal-label { font-size: 11.5px; font-weight: 800; fill: #ffffff; }
-  .diamond-label { font-size: 11px; font-weight: 700; }
-
-  .lane-band { }
-  .box { fill: var(--surface); stroke-width: 1.6; }
-  .diamond { fill: var(--surface); stroke-width: 1.8; }
-  .flow-line { stroke: var(--ink); stroke-opacity: 0.42; stroke-width: 1.6; fill: none; }
-  .loop-line { stroke: var(--bad); stroke-opacity: 0.7; stroke-width: 1.6; stroke-dasharray: 5 4; fill: none; }
-
-  /* ---- glossary tables ---- */
-  .glossary-heading {
-    font-size: 18px;
-    font-weight: 800;
-    margin: 4px 0 2px;
-    letter-spacing: -0.01em;
-  }
-  .glossary-sub {
-    color: var(--muted);
-    font-size: 13px;
-    margin-bottom: 4px;
-  }
-  .glossary-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 16px;
-  }
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    padding: 16px 16px 6px;
-    display: flex;
-    flex-direction: column;
-  }
-  .card h3 {
-    margin: 0 0 2px;
-    font-size: 14px;
-    font-weight: 800;
-  }
-  .card .card-sub {
-    font-size: 11.5px;
-    color: var(--muted);
-    margin-bottom: 10px;
-  }
-  .row {
-    display: grid;
-    grid-template-columns: 20px 108px 1fr;
-    gap: 10px;
-    align-items: start;
-    padding: 9px 0;
-    border-top: 1px solid var(--line);
-    font-size: 12.5px;
-  }
-  .row:first-of-type { border-top: none; }
-  .dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 3px; flex: none; }
-  .code { font-family: var(--font-mono); font-size: 11.5px; font-weight: 700; white-space: nowrap; }
-  .meaning { color: var(--muted); }
-
-  footer {
-    display: flex;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 8px;
-    color: var(--muted);
-    font-size: 11.5px;
-    padding-top: 14px;
-    border-top: 1px solid var(--line);
-  }
-  footer .code { color: var(--muted); white-space: normal; }
-
-  @media (max-width: 640px) {
-    h1 { font-size: 23px; }
-    .page { padding: 20px 14px 48px; }
-  }
-</style>
-
-<div class="page">
-
-  <header class="hero">
-    <button class="theme-toggle" id="themeToggle" type="button" aria-label="สลับโหมดมืด/สว่าง">
-      <span class="icon" id="themeIcon">🌙</span>
-      <span id="themeText">Dark mode</span>
-    </button>
-    <span class="eyebrow">BizX · Data Comparison</span>
-    <h1>Data Comparison Flow</h1>
-    <p class="subtitle">
-      เส้นทางการทำงานตั้งแต่สร้าง Shipment จนถึงส่งออกรายงาน — สำหรับทีม Dev และ QA
-      ใช้อ้างอิงสถานะ, จุดตัดสินใจ และวิธีเปรียบเทียบข้อมูลที่ระบบใช้จริง
-      (ดู <a href="./user-flow-shipment-export.html" style="color:var(--accent)">เวอร์ชันภาพหน้าจอ (User Flow)</a> ด้วย)
-    </p>
-    <div class="sources">
-      <span class="source-chip">components/DataComparison.tsx</span>
-      <span class="source-chip">components/RuleMatrix.tsx</span>
-      <span class="source-chip">components/CreateJobModal.tsx</span>
-      <span class="source-chip">types.ts</span>
-    </div>
-  </header>
-
-  <div class="legend">
-    <div class="legend-group">
-      <span class="legend-title">Lane</span>
-      <span class="legend-item"><span class="swatch" style="background:var(--lane1)"></span>ผู้ใช้งาน</span>
-      <span class="legend-item"><span class="swatch" style="background:var(--lane2)"></span>OCR &amp; Extraction</span>
-      <span class="legend-item"><span class="swatch" style="background:var(--lane3)"></span>Compare Engine</span>
-      <span class="legend-item"><span class="swatch" style="background:var(--lane4)"></span>ตรวจสอบ &amp; ลำดับงาน</span>
-      <span class="legend-item"><span class="swatch" style="background:var(--lane5)"></span>ส่งออก</span>
-    </div>
-    <div class="legend-divider"></div>
-    <div class="legend-group">
-      <span class="legend-title">รูปทรง</span>
-      <span class="legend-item">▭ ขั้นตอน (Action)</span>
-      <span class="legend-item">◇ จุดตัดสินใจ (Decision)</span>
-      <span class="legend-item">⬤ สถานะ (Status)</span>
-      <span class="legend-item">◯ เริ่ม / จบ</span>
-    </div>
-    <div class="legend-divider"></div>
-    <div class="legend-group">
-      <span class="legend-item" style="color:var(--bad)">┄┄▶ ย้อนกลับ / ตีกลับ (Reject)</span>
+    body { font-family: var(--font-sans); background: var(--color-paper); color: var(--color-ink); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 3rem 2rem; }
+    .frame { max-width: 1040px; width: 100%; }
+    /* The SVG holds its readable width (min-width == the viewBox width) and this wrapper scrolls on narrow screens. */
+    .diagram-container { width: 100%; overflow-x: auto; }
+    .eyebrow { font-family: var(--font-mono); font-size: 0.66rem; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--color-muted); margin-bottom: 0.5rem; }
+    h1 { font-size: clamp(1.5rem, 2.4vw + 0.75rem, 1.75rem); font-weight: 600; letter-spacing: -0.01em; line-height: 1.25; margin-bottom: 0.75rem; }
+    .sub { color: var(--color-muted); font-size: 0.9rem; max-width: 70ch; margin-bottom: 1.5rem; }
+    svg { width: 100%; min-width: 960px; display: block; }
+    @media print { .diagram-container { overflow-x: visible; } svg { min-width: 0; } }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Swimlane · Data Comparison</p>
+    <h1>เส้นทางของ Shipment ในระบบ Data Comparison</h1>
+    <p class="sub">ตั้งแต่สร้าง Shipment จนปิดงาน ใครทำอะไร และสถานะของงาน (job) เปลี่ยนตอนไหน อ้างอิงจากโค้ดจริงใน DataComparison.tsx และ CreateJobModal.tsx</p>
+    <div class="diagram-container">
+<svg viewBox="0 0 960 1072" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dcf-title dcf-desc">
+<title id="dcf-title">เส้นทางของ Shipment ในระบบ Data Comparison</title>
+<desc id="dcf-desc">Swimlane diagram of one shipment through Data Comparison across three lanes (user, OCR and compare engine, shipment sequence): create the shipment, upload files, OCR read, compare by rule, review mismatches, press Done, then unlock the next job or finish; dashed loops return to upload.</desc>
+<defs>
+<marker id="dcf-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#475569"/></marker>
+<marker id="dcf-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#1f5df9"/></marker>
+<marker id="dcf-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0369a1"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#f8fafc"/>
+<rect x="376" y="24" width="240" height="976" fill="#f1f5f9"/>
+<line x1="24" y1="24" x2="936" y2="24" stroke="#cbd5e1"/><line x1="24" y1="64" x2="936" y2="64" stroke="#cbd5e1"/><line x1="24" y1="1000" x2="936" y2="1000" stroke="#cbd5e1"/>
+<line x1="136" y1="24" x2="136" y2="1000" stroke="#cbd5e1"/>
+<line x1="376" y1="24" x2="376" y2="1000" stroke="#cbd5e1"/>
+<line x1="616" y1="24" x2="616" y2="1000" stroke="#cbd5e1"/>
+<text x="256" y="42" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >ผู้ใช้งาน</text>
+<text x="256" y="57" fill="#5b6b83" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.18em">OPERATION · CUSTOMS</text>
+<text x="496" y="42" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >ระบบ</text>
+<text x="496" y="57" fill="#5b6b83" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.18em">OCR · COMPARE ENGINE</text>
+<text x="776" y="42" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >ลำดับงานใน Shipment</text>
+<text x="776" y="57" fill="#5b6b83" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.18em">SEQUENCE</text>
+<path d="M 352,120 H 680" fill="none" stroke="#475569" stroke-width="1.2"  marker-end="url(#dcf-arrow)"/>
+<path d="M 256,148.0 V 196.0" fill="none" stroke="#475569" stroke-width="1.2"  marker-end="url(#dcf-arrow)"/>
+<path d="M 352,224 H 488 Q 496,224 496,232 V 300.0" fill="none" stroke="#475569" stroke-width="1.2"  marker-end="url(#dcf-arrow)"/>
+<path d="M 496,356.0 V 404.0" fill="none" stroke="#475569" stroke-width="1.2"  marker-end="url(#dcf-arrow)"/>
+<path d="M 496,460.0 V 500" fill="none" stroke="#475569" stroke-width="1.2"  marker-end="url(#dcf-arrow)"/>
+<path d="M 400,536 H 264 Q 256,536 256,544 V 612.0" fill="none" stroke="#475569" stroke-width="1.2"  marker-end="url(#dcf-arrow)"/>
+<path d="M 496,572 V 732 Q 496,732 488,732 H 352" fill="none" stroke="#475569" stroke-width="1.2"  marker-end="url(#dcf-arrow)"/>
+<path d="M 256,668.0 V 716.0" fill="none" stroke="#475569" stroke-width="1.2"  marker-end="url(#dcf-arrow)"/>
+<path d="M 352,756 H 768 Q 776,756 776,764 V 812" fill="none" stroke="#1f5df9" stroke-width="1.4"  marker-end="url(#dcf-arrow-accent)"/>
+<path d="M 680,848 H 592" fill="none" stroke="#475569" stroke-width="1.2"  marker-end="url(#dcf-arrow)"/>
+<path d="M 776,884 V 924.0" fill="none" stroke="#475569" stroke-width="1.2"  marker-end="url(#dcf-arrow)"/>
+<path d="M 160,640 H 120 Q 112,640 112,632 V 244 Q 112,236 120,236 H 160" fill="none" stroke="#475569" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#dcf-arrow)"/>
+<path d="M 680,952 H 38 Q 30,952 30,944 V 220 Q 30,212 38,212 H 160" fill="none" stroke="#475569" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#dcf-arrow)"/>
+<rect x="436.0" y="96" width="160" height="16" rx="2" fill="#f1f5f9"/>
+<text x="516" y="108" fill="#5b6b83" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >สร้างงานย่อยตาม Preset</text>
+<rect x="264" y="164" width="84" height="16" rx="2" fill="#f8fafc"/>
+<text x="270" y="176" fill="#5b6b83" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="start" >เปิดงานแรก</text>
+<rect x="390.0" y="200" width="60" height="16" rx="2" fill="#f1f5f9"/>
+<text x="420" y="212" fill="#5b6b83" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >อ่านไฟล์</text>
+<rect x="504" y="372" width="96" height="16" rx="2" fill="#f1f5f9"/>
+<text x="510" y="384" fill="#5b6b83" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="start" >ครบ ≥ 2 ไฟล์</text>
+<rect x="504" y="472" width="56" height="16" rx="2" fill="#f1f5f9"/>
+<text x="510" y="484" fill="#5b6b83" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="start" >ตรวจผล</text>
+<rect x="306.0" y="512" width="48" height="16" rx="2" fill="#f8fafc"/>
+<text x="330" y="524" fill="#5b6b83" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >ไม่ตรง</text>
+<rect x="504" y="628" width="56" height="16" rx="2" fill="#f1f5f9"/>
+<text x="510" y="640" fill="#5b6b83" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="start" >ตรงครบ</text>
+<rect x="264" y="684" width="100" height="16" rx="2" fill="#f8fafc"/>
+<text x="270" y="696" fill="#5b6b83" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="start" >แก้/ยืนยันครบ</text>
+<rect x="518.0" y="732" width="84" height="16" rx="2" fill="#f1f5f9"/>
+<text x="560" y="744" fill="#1f5df9" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >กด เสร็จสิ้น</text>
+<rect x="616.0" y="824" width="40" height="16" rx="2" fill="#f8fafc"/>
+<text x="636" y="836" fill="#5b6b83" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >ไม่มี</text>
+<rect x="784" y="896" width="28" height="16" rx="2" fill="#f8fafc"/>
+<text x="790" y="908" fill="#5b6b83" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="start" >มี</text>
+<rect x="48.0" y="424" width="56" height="16" rx="2" fill="#f8fafc"/>
+<text x="76" y="436" fill="#5b6b83" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >ไฟล์ผิด</text>
+<rect x="352.0" y="928" width="96" height="16" rx="2" fill="#f1f5f9"/>
+<text x="400" y="940" fill="#5b6b83" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >เริ่มงานถัดไป</text>
+<rect x="160.0" y="92.0" width="192" height="56" rx="6" fill="#f8fafc"/>
+<rect x="160.0" y="92.0" width="192" height="56" rx="6" fill="#ffffff" stroke="#010136" stroke-width="1"/>
+<rect x="168.0" y="98.0" width="16" height="12" rx="2" fill="transparent" stroke="#010136" stroke-opacity="0.4" stroke-width="0.8"/>
+<text x="176.0" y="107.0" fill="#010136" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" fill-opacity="0.8">1</text>
+<text x="256.0" y="124.0" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >สร้าง Shipment</text>
+<text x="256.0" y="140.0" fill="#475569" font-size="12" font-weight="400" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >เลือก Preset ตั้งชื่อ</text>
+<rect x="680.0" y="92.0" width="192" height="56" rx="6" fill="#f8fafc"/>
+<rect x="680.0" y="92.0" width="192" height="56" rx="6" fill="#ffffff" stroke="#010136" stroke-width="1"/>
+<rect x="688.0" y="98.0" width="16" height="12" rx="2" fill="transparent" stroke="#010136" stroke-opacity="0.4" stroke-width="0.8"/>
+<text x="696.0" y="107.0" fill="#010136" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" fill-opacity="0.8">2</text>
+<text x="776.0" y="124.0" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >สร้างงานย่อยตามลำดับ</text>
+<text x="776.0" y="140.0" fill="#475569" font-size="12" font-weight="400" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >งานที่ 2 ขึ้นไปถูกล็อกไว้ก่อน</text>
+<rect x="160.0" y="196.0" width="192" height="56" rx="6" fill="#f8fafc"/>
+<rect x="160.0" y="196.0" width="192" height="56" rx="6" fill="#ffffff" stroke="#010136" stroke-width="1"/>
+<rect x="168.0" y="202.0" width="16" height="12" rx="2" fill="transparent" stroke="#010136" stroke-opacity="0.4" stroke-width="0.8"/>
+<text x="176.0" y="211.0" fill="#010136" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" fill-opacity="0.8">3</text>
+<text x="256.0" y="228.0" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >อัปโหลดไฟล์ต่อเอกสาร</text>
+<text x="256.0" y="243.0" fill="#475569" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" >doc → RECEIVED</text>
+<rect x="400.0" y="300.0" width="192" height="56" rx="6" fill="#f8fafc"/>
+<rect x="400.0" y="300.0" width="192" height="56" rx="6" fill="#ffffff" stroke="#010136" stroke-width="1"/>
+<rect x="408.0" y="306.0" width="16" height="12" rx="2" fill="transparent" stroke="#010136" stroke-opacity="0.4" stroke-width="0.8"/>
+<text x="416.0" y="315.0" fill="#010136" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" fill-opacity="0.8">4</text>
+<text x="496.0" y="332.0" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >อ่านไฟล์ (OCR)</text>
+<text x="496.0" y="347.0" fill="#475569" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" >EXTRACTING → OCR_DONE</text>
+<rect x="400.0" y="404.0" width="192" height="56" rx="6" fill="#f8fafc"/>
+<rect x="400.0" y="404.0" width="192" height="56" rx="6" fill="#ffffff" stroke="#010136" stroke-width="1"/>
+<rect x="408.0" y="410.0" width="16" height="12" rx="2" fill="transparent" stroke="#010136" stroke-opacity="0.4" stroke-width="0.8"/>
+<text x="416.0" y="419.0" fill="#010136" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" fill-opacity="0.8">5</text>
+<text x="496.0" y="436.0" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >เปรียบเทียบตามกฎ</text>
+<text x="496.0" y="451.0" fill="#475569" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" >job → PROCESSING</text>
+<polygon points="496,500.0 592.0,536 496,572.0 400.0,536" fill="#f8fafc"/><polygon points="496,500.0 592.0,536 496,572.0 400.0,536" fill="#ffffff" stroke="#010136" stroke-width="1"/><text x="496" y="540" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >ตรงกันทุกฟิลด์?</text>
+<rect x="160.0" y="612.0" width="192" height="56" rx="6" fill="#f8fafc"/>
+<rect x="160.0" y="612.0" width="192" height="56" rx="6" fill="#ffffff" stroke="#010136" stroke-width="1"/>
+<rect x="168.0" y="618.0" width="16" height="12" rx="2" fill="transparent" stroke="#010136" stroke-opacity="0.4" stroke-width="0.8"/>
+<text x="176.0" y="627.0" fill="#010136" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" fill-opacity="0.8">6</text>
+<text x="256.0" y="644.0" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >ตรวจสอบและแก้ไข</text>
+<text x="256.0" y="659.0" fill="#475569" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" >job → REVIEW</text>
+<rect x="160.0" y="716.0" width="192" height="56" rx="6" fill="#f8fafc"/>
+<rect x="160.0" y="716.0" width="192" height="56" rx="6" fill="rgba(31,93,249,0.08)" stroke="#1f5df9" stroke-width="1"/>
+<rect x="168.0" y="722.0" width="16" height="12" rx="2" fill="transparent" stroke="#1f5df9" stroke-opacity="0.4" stroke-width="0.8"/>
+<text x="176.0" y="731.0" fill="#1f5df9" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" fill-opacity="0.8">7</text>
+<text x="256.0" y="748.0" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >กด 'เสร็จสิ้น'</text>
+<text x="256.0" y="763.0" fill="#475569" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" >job → READY</text>
+<polygon points="776,812.0 872.0,848 776,884.0 680.0,848" fill="#f8fafc"/><polygon points="776,812.0 872.0,848 776,884.0 680.0,848" fill="#ffffff" stroke="#010136" stroke-width="1"/><text x="776" y="852" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >มีงานถัดไป?</text>
+<rect x="400.0" y="824" width="192" height="48" rx="24.0" fill="#f8fafc"/><rect x="400.0" y="824" width="192" height="48" rx="24.0" fill="#ffffff" stroke="#010136" stroke-width="1"/><text x="496.0" y="852.0" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >Shipment เสร็จสมบูรณ์</text>
+<rect x="680.0" y="924.0" width="192" height="56" rx="6" fill="#f8fafc"/>
+<rect x="680.0" y="924.0" width="192" height="56" rx="6" fill="#ffffff" stroke="#010136" stroke-width="1"/>
+<rect x="688.0" y="930.0" width="16" height="12" rx="2" fill="transparent" stroke="#010136" stroke-opacity="0.4" stroke-width="0.8"/>
+<text x="696.0" y="939.0" fill="#010136" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" fill-opacity="0.8">8</text>
+<text x="776.0" y="956.0" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >ปลดล็อกงานถัดไป</text>
+<text x="776.0" y="972.0" fill="#475569" font-size="12" font-weight="400" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >พกไฟล์และคอมเมนต์ไปด้วย</text>
+<text x="648" y="322" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="start" >เทียบอัตโนมัติเมื่ออ่านครบ ≥ 2 ไฟล์</text>
+<text x="648" y="340" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="start" >และไม่มีไฟล์ค้างอ่าน (หรือกดเทียบเอง)</text>
+<path d="M 642,318 Q 620.0,317.0 592,336" fill="none" stroke="rgba(1,1,54,0.40)" stroke-width="1" stroke-dasharray="4,3"/>
+<circle cx="592" cy="336" r="2" fill="#010136"/>
+<text x="652" y="638" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="start" >ตีกลับ (งานที่ 2 ขึ้นไป)</text>
+<text x="652" y="656" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="start" >ส่งงานก่อนหน้ากลับมาแก้ พร้อมเหตุผล</text>
+<text x="652" y="674" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="start" >งานนั้นเป็น REJECTED และ</text>
+<text x="652" y="692" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="start" >งานหลังจากนั้นถูกล็อกอีกครั้ง</text>
+<path d="M 890,698 Q 906,834 872,848" fill="none" stroke="rgba(1,1,54,0.40)" stroke-width="1" stroke-dasharray="4,3"/>
+<circle cx="872" cy="848" r="2" fill="#010136"/>
+<line x1="24" y1="1016" x2="936" y2="1016" stroke="rgba(1,1,54,0.12)" stroke-width="0.8"/>
+<text x="24" y="1044" fill="#5b6b83" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.18em">LEGEND</text>
+<rect x="120" y="1035" width="14" height="10" rx="2" fill="#ffffff" stroke="#010136" stroke-width="1"/>
+<text x="140" y="1044" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="start" >ขั้นตอน (เลขคือลำดับ)</text>
+<rect x="300" y="1035" width="14" height="10" rx="2" fill="rgba(31,93,249,0.08)" stroke="#1f5df9" stroke-width="1"/>
+<text x="320" y="1044" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="start" >จุดที่ทำให้งานเสร็จ</text>
+<polygon points="470,1033 479,1040 470,1047 461,1040" fill="#ffffff" stroke="#010136" stroke-width="1"/>
+<text x="488" y="1044" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="start" >จุดตัดสินใจ</text>
+<line x1="590" y1="1040" x2="618" y2="1040" stroke="#475569" stroke-width="1.2" marker-end="url(#dcf-arrow)"/>
+<text x="626" y="1044" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="start" >ลำดับ</text>
+<line x1="700" y1="1040" x2="728" y2="1040" stroke="#475569" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#dcf-arrow)"/>
+<text x="736" y="1044" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="start" >วนกลับไปอัปโหลด</text>
+</svg>
     </div>
   </div>
-
-  <div class="diagram-wrap">
-    <div class="flow-canvas" style="width:1860px;height:1732px">
-    <svg width="1860" height="1732" viewBox="0 0 1860 1732" role="img" aria-label="Swimlane flowchart of the BizX Data Comparison job pipeline, from shipment creation through OCR extraction, rule-based comparison, review and sequencing, to export, with real-screen mockups at every user-facing step.">
-      <defs>
-        <pattern id="dots" width="18" height="18" patternUnits="userSpaceOnUse">
-          <circle cx="1.4" cy="1.4" r="1.4" fill="var(--line)" />
-        </pattern>
-        <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-          <path d="M0,0 L10,5 L0,10 z" fill="var(--ink)" fill-opacity="0.55" />
-        </marker>
-        <marker id="arrowLoop" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-          <path d="M0,0 L10,5 L0,10 z" fill="var(--bad)" fill-opacity="0.85" />
-        </marker>
-      </defs>
-
-      <rect x="0" y="0" width="1860" height="1732" fill="url(#dots)" />
-
-      <!-- ===== Lane bands ===== -->
-      <g>
-        <rect x="0" y="14"   width="1860" height="270" fill="var(--lane1-tint)" />
-        <rect x="0" y="292"  width="1860" height="260" fill="var(--lane2-tint)" />
-        <rect x="0" y="560"  width="1860" height="400" fill="var(--lane3-tint)" />
-        <rect x="0" y="968"  width="1860" height="460" fill="var(--lane4-tint)" />
-        <rect x="0" y="1436" width="1860" height="270" fill="var(--lane5-tint)" />
-      </g>
-
-      <!-- ===== Lane label chips ===== -->
-      <g>
-        <rect x="14" y="34"  width="160" height="110" rx="10" fill="var(--lane1)" />
-        <text class="lane-title" x="94" y="82" text-anchor="middle">ผู้ใช้งาน</text>
-        <text class="lane-title" x="94" y="100" text-anchor="middle" font-size="11">(Operation / Customs)</text>
-
-        <rect x="14" y="316" width="160" height="104" rx="10" fill="var(--lane2)" />
-        <text class="lane-title" x="94" y="360" text-anchor="middle">ระบบ</text>
-        <text class="lane-title" x="94" y="378" text-anchor="middle" font-size="11">OCR &amp; Extraction</text>
-
-        <rect x="14" y="580" width="160" height="110" rx="10" fill="var(--lane3)" />
-        <text class="lane-title" x="94" y="626" text-anchor="middle">Compare</text>
-        <text class="lane-title" x="94" y="644" text-anchor="middle" font-size="11">Engine (Rule Matrix)</text>
-
-        <rect x="14" y="988" width="160" height="110" rx="10" fill="var(--lane4)" />
-        <text class="lane-title" x="94" y="1034" text-anchor="middle">ตรวจสอบ &amp;</text>
-        <text class="lane-title" x="94" y="1052" text-anchor="middle" font-size="11">ลำดับงาน</text>
-
-        <rect x="14" y="1456" width="160" height="110" rx="10" fill="var(--lane5)" />
-        <text class="lane-title" x="94" y="1502" text-anchor="middle">ส่งออก</text>
-        <text class="lane-title" x="94" y="1520" text-anchor="middle" font-size="11">(Export)</text>
-      </g>
-
-      <!-- ===== LANE 1 : User ===== -->
-      <g>
-        <circle cx="250" cy="156" r="30" fill="var(--solid-violet)" />
-        <text class="terminal-label" x="250" y="160" text-anchor="middle">เริ่ม</text>
-        <line class="flow-line" x1="280" y1="156" x2="366" y2="156" marker-end="url(#arrow)" />
-        <line class="flow-line" x1="690" y1="156" x2="756" y2="156" marker-end="url(#arrow)" />
-      </g>
-
-      <!-- ===== LANE 2 : OCR (mockups show the transient file-status badge) ===== -->
-      <g>
-        <line class="flow-line" x1="918" y1="269" x2="918" y2="314" marker-end="url(#arrow)" />
-        <line class="flow-line" x1="1078" y1="428" x2="1146" y2="428" marker-end="url(#arrow)" />
-      </g>
-
-      <!-- ===== LANE 3 : Compare Engine ===== -->
-      <g>
-        <line class="flow-line" x1="1308" y1="541" x2="1308" y2="582" marker-end="url(#arrow)" />
-        <text class="node-caption" x="1308" y="825" text-anchor="middle" font-style="italic">→ ดู 8 วิธีเปรียบเทียบในตารางด้านล่าง</text>
-
-        <line class="flow-line" x1="1308" y1="809" x2="1308" y2="845" marker-end="url(#arrow)" />
-
-        <polygon class="diamond" points="1308,845 1362,899 1308,953 1254,899" stroke="var(--lane3)" />
-        <text class="diamond-label" x="1308" y="895" text-anchor="middle">ผ่านเกณฑ์ /</text>
-        <text class="diamond-label" x="1308" y="909" text-anchor="middle">threshold?</text>
-
-        <line class="flow-line" x1="1362" y1="899" x2="1430" y2="899" marker-end="url(#arrow)" />
-        <text class="branch-label" x="1396" y="889" text-anchor="middle">ใช่</text>
-        <rect x="1430" y="882" width="118" height="34" rx="17" fill="var(--solid-emerald)" />
-        <text class="pill-label" x="1489" y="903" text-anchor="middle">MATCHED</text>
-
-        <line class="flow-line" x1="1254" y1="899" x2="1182" y2="899" marker-end="url(#arrow)" />
-        <text class="branch-label" x="1218" y="889" text-anchor="middle">ไม่</text>
-        <rect x="1064" y="882" width="118" height="34" rx="17" fill="var(--solid-rose)" />
-        <text class="pill-label" x="1123" y="897" text-anchor="middle">MISMATCHED /</text>
-        <text class="pill-label" x="1123" y="909" text-anchor="middle">PENDING</text>
-      </g>
-
-      <!-- ===== LANE 4 : Review & Sequencing ===== -->
-      <g>
-        <line class="flow-line" x1="1489" y1="916" x2="1489" y2="968" fill="none" />
-        <line class="flow-line" x1="1489" y1="968" x2="1308" y2="990" marker-end="url(#arrow)" />
-        <line class="flow-line" x1="1123" y1="916" x2="1123" y2="968" fill="none" />
-        <line class="flow-line" x1="1123" y1="968" x2="1308" y2="990" marker-end="url(#arrow)" />
-
-        <line class="flow-line" x1="1308" y1="1217" x2="1308" y2="1253" marker-end="url(#arrow)" />
-
-        <polygon class="diamond" points="1308,1253 1366,1307 1308,1361 1250,1307" stroke="var(--lane4)" />
-        <text class="diamond-label" x="1308" y="1303" text-anchor="middle">ทุกเอกสารตรงกัน</text>
-        <text class="diamond-label" x="1308" y="1317" text-anchor="middle">หมดหรือไม่?</text>
-
-        <!-- No -> straight to return-bus -->
-        <text class="branch-label" x="1230" y="1297" text-anchor="middle">ไม่</text>
-
-        <!-- Yes -> ready pill -->
-        <line class="flow-line" x1="1366" y1="1307" x2="1450" y2="1307" marker-end="url(#arrow)" />
-        <text class="branch-label" x="1408" y="1297" text-anchor="middle">ใช่</text>
-        <rect x="1450" y="1290" width="180" height="34" rx="17" fill="var(--solid-emerald)" />
-        <text class="pill-label" x="1540" y="1311" text-anchor="middle">Job Status: READY</text>
-
-        <!-- reject note -->
-        <rect x="1450" y="1237" width="200" height="40" rx="10" fill="none" stroke="var(--bad)" stroke-dasharray="4 3" stroke-width="1.3" />
-        <text class="node-caption" x="1550" y="1252" text-anchor="middle" fill="var(--bad)">⤺ Job ถัดไปตีกลับได้ →</text>
-        <text class="node-caption" x="1550" y="1265" text-anchor="middle" fill="var(--bad)">Status: REJECTED</text>
-
-        <!-- ready -> next-job diamond -->
-        <line class="flow-line" x1="1540" y1="1324" x2="1540" y2="1353" marker-end="url(#arrow)" />
-        <polygon class="diamond" points="1660,1317 1710,1367 1660,1417 1610,1367" stroke="var(--lane4)" />
-        <line class="flow-line" x1="1540" y1="1353" x2="1610" y2="1367" marker-end="url(#arrow)" />
-        <text class="diamond-label" x="1660" y="1363" text-anchor="middle">มี Job ถัดไป</text>
-        <text class="diamond-label" x="1660" y="1377" text-anchor="middle">ในลำดับ?</text>
-
-        <!-- next-job yes -> unblock pill -->
-        <text class="branch-label" x="1660" y="1305" text-anchor="middle">ใช่</text>
-        <line class="flow-line" x1="1660" y1="1317" x2="1660" y2="1285" marker-end="url(#arrow)" />
-        <rect x="1560" y="1253" width="200" height="32" rx="16" fill="var(--solid-amber)" />
-        <text class="pill-label-dark" x="1660" y="1274" text-anchor="middle">ปลดล็อก Job ถัดไป</text>
-        <text class="node-caption" x="1660" y="1241" text-anchor="middle">เริ่ม Job นี้ใหม่จาก Lane 1 (อัปโหลดเอกสาร)</text>
-      </g>
-
-      <!-- ===== return bus (far left, above lane bands) ===== -->
-      <g>
-        <path class="loop-line" d="M 1250 1307 L 196 1307 L 196 24 L 918 24 L 918 44" fill="none" marker-end="url(#arrowLoop)" />
-        <text class="branch-label" x="196" y="665" text-anchor="middle" fill="var(--bad)" transform="rotate(-90 196 665)">↺ แก้ไข field ที่ Mismatch แล้วกลับไปอัปโหลดใหม่ (Lane 1)</text>
-      </g>
-
-      <!-- ===== LANE 5 : Export ===== -->
-      <g>
-        <text class="branch-label" x="1660" y="1421" text-anchor="middle">ไม่ (ครบทุก Job)</text>
-        <line class="flow-line" x1="1660" y1="1417" x2="1660" y2="1464" marker-end="url(#arrow)" />
-
-        <line class="flow-line" x1="1500" y1="1578" x2="1334" y2="1578" marker-end="url(#arrow)" />
-        <circle cx="1300" cy="1578" r="34" fill="var(--solid-emerald)" />
-        <circle cx="1300" cy="1578" r="27" fill="none" stroke="#ffffff" stroke-opacity="0.55" stroke-width="1.3" />
-        <text class="terminal-label" x="1300" y="1575" text-anchor="middle">DONE</text>
-        <text class="terminal-label" x="1300" y="1588" text-anchor="middle" font-size="9">EXPORTED</text>
-      </g>
-
-    </svg>
-
-    <!-- ===== Screen mockups (real UI proportions/copy, same technique as user-flow-shipment-export.html) ===== -->
-
-    <!-- Lane 1: Create Shipment Modal (merges the old "เลือก Preset" + "ตั้งชื่อ Shipment" steps) -->
-    <div class="screen" style="left:368px;top:44px;width:320px;height:225px">
-      <div class="screen-chrome"><span class="chrome-dot"></span><span class="chrome-dot"></span><span class="chrome-dot"></span></div>
-      <div class="screen-body" style="background:rgba(0,0,0,0.05);align-items:center;justify-content:center;padding:9px">
-        <div style="width:100%;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:8px;display:flex;flex-direction:column;gap:4px">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <span class="mt">🧳 สร้างรายการใหม่ (Shipment)</span>
-            <span class="mt2" style="font-size:7px">×</span>
-          </div>
-          <span class="mt2">ชื่อรายการ SHIPMENT *</span>
-          <div style="height:12px;background:var(--surface-2);border:1px solid var(--line);border-radius:3px;display:flex;align-items:center;padding:0 3px"><span class="mt2" style="opacity:.6">เช่น CN-TH-2026-80942</span></div>
-          <span class="mt2">เลือกชุด SHIPMENT เริ่มต้น</span>
-          <div style="height:12px;background:var(--surface-2);border:1px solid var(--line);border-radius:3px;display:flex;align-items:center;padding:0 3px"><span class="mono-mini" style="font-size:5px">CDS shipment ▾</span></div>
-          <div style="background:#e8f0ff;border-radius:4px;padding:3px 5px;margin-top:1px;display:flex;flex-direction:column;gap:1px">
-            <span class="mt2" style="color:var(--accent);font-weight:800">✨ ใช้ Preset ที่เลือก: CDS SHIPMENT</span>
-            <span class="mt2" style="font-size:4.6px;white-space:normal">รายการย่อยด้านล่างถูกกำหนดไว้ล่วงหน้าและแก้ไขไม่ได้ ระบุเพียงชื่อ Shipment แล้วกดสร้างรายการ</span>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:0px;margin-top:1px">
-            <div style="display:flex;align-items:center;gap:4px">
-              <div style="display:flex;flex-direction:column;align-items:center;width:9px">
-                <span style="width:9px;height:9px;border-radius:50%;background:var(--accent);color:#fff;font-size:4.6px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none">1</span>
-                <span style="width:1.4px;flex:1;background:var(--line);min-height:6px"></span>
-              </div>
-              <div class="mfield" style="flex:1;margin:1px 0"><span class="fname">PO/PI Matching</span><span class="mt2">JOB-0001</span><span class="mpill" style="background:var(--surface);color:var(--muted);margin-left:3px">Operation</span></div>
-            </div>
-            <div style="display:flex;align-items:center;gap:4px">
-              <div style="display:flex;flex-direction:column;align-items:center;width:9px">
-                <span style="width:9px;height:9px;border-radius:50%;background:var(--accent);color:#fff;font-size:4.6px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none">2</span>
-                <span style="width:1.4px;flex:1;background:var(--line);min-height:6px"></span>
-              </div>
-              <div class="mfield" style="flex:1;margin:1px 0"><span class="fname">Shipping Doc Matching</span><span class="mt2">JOB-0002</span><span class="mpill" style="background:var(--surface);color:var(--muted);margin-left:3px">Operation</span></div>
-            </div>
-            <div style="display:flex;align-items:center;gap:4px">
-              <div style="display:flex;flex-direction:column;align-items:center;width:9px">
-                <span style="width:9px;height:9px;border-radius:50%;background:var(--accent);color:#fff;font-size:4.6px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none">3</span>
-              </div>
-              <div class="mfield" style="flex:1;margin:1px 0"><span class="fname">Import Declaration#1</span><span class="mt2">JOB-0003</span><span class="mpill" style="background:var(--surface);color:var(--muted);margin-left:3px">Customs</span></div>
-            </div>
-          </div>
-          <div style="flex:1"></div>
-          <div style="display:flex;justify-content:flex-end;gap:3px;margin-top:2px">
-            <span class="mbtn-outline">ยกเลิก</span>
-            <span class="mbtn" style="background:var(--accent)">สร้าง Shipment และรายการย่อย</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Lane 1: Compare Workspace, empty (this is where "อัปโหลดเอกสาร" happens) -->
-    <div class="screen" style="left:758px;top:44px;width:320px;height:225px">
-      <div class="screen-chrome"><span class="chrome-dot"></span><span class="chrome-dot"></span><span class="chrome-dot"></span></div>
-      <div class="screen-body" style="flex-direction:column;padding:7px;gap:5px">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <span class="mt2" style="color:var(--ink);font-weight:800">CDS-TH-2026-00901 · PO/PI Matching</span>
-          <div style="display:flex;gap:2px"><span class="micon">⧉</span><span class="micon">⟳</span><span class="micon">⤢</span></div>
-        </div>
-        <div style="display:flex;gap:4px">
-          <div style="flex:1;display:flex;flex-direction:column;gap:2px">
-            <div class="mcolhead" style="background:var(--solid-emerald)">INVOICE</div>
-            <div class="mbtn-outline" style="text-align:center;color:var(--solid-emerald);border-color:var(--solid-emerald)">📄 อ่านไฟล์</div>
-          </div>
-          <div style="flex:1;display:flex;flex-direction:column;gap:2px">
-            <div class="mcolhead" style="background:var(--accent)">HEALTH CERT</div>
-            <div class="mbtn" style="background:var(--accent);justify-content:center">⬆ อัปโหลดไฟล์</div>
-          </div>
-          <div style="flex:1;display:flex;flex-direction:column;gap:2px">
-            <div class="mcolhead" style="background:var(--solid-emerald)">IMPORT PERM.</div>
-            <div class="mbtn-outline" style="text-align:center;color:var(--solid-emerald);border-color:var(--solid-emerald)">📄 อ่านไฟล์</div>
-          </div>
-        </div>
-        <div style="flex:1;border:1.3px dashed var(--line);border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px">
-          <div style="width:18px;height:18px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:9px">☁</div>
-          <span class="mt2" style="text-align:center;font-weight:800;color:var(--ink)">คลิกอ่านไฟล์เพื่อแสดงข้อมูลเปรียบเทียบ</span>
-          <span class="mt2" style="text-align:center;max-width:85%">รองรับ Replace &amp; Merge + เลือก Template ([Brand]_[Doctype])</span>
-        </div>
-        <div style="display:flex;gap:4px;align-items:center">
-          <span class="mt2" style="display:flex;align-items:center;gap:1px"><span style="width:4px;height:4px;border-radius:50%;background:var(--ok);display:inline-block"></span>ตรงกัน</span>
-          <span class="mt2" style="display:flex;align-items:center;gap:1px"><span style="width:4px;height:4px;border-radius:50%;background:var(--warn);display:inline-block"></span>บางส่วน</span>
-          <span class="mt2" style="display:flex;align-items:center;gap:1px"><span style="width:4px;height:4px;border-radius:50%;background:var(--bad);display:inline-block"></span>ไม่ตรงกัน</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;background:var(--surface-2);border-radius:4px;padding:3px 6px">
-          <span class="mt2" style="font-weight:800;color:var(--ink)">AUDIT SUMMARY</span>
-          <span class="mt2">ปลดล็อกเมื่อ Job ก่อนหน้า = DONE</span>
-          <span class="mpill" style="background:var(--ink);color:var(--surface)">Accuracy 0.0%</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Lane 2: Compare Workspace — file just uploaded, status RECEIVED -->
-    <div class="screen" style="left:758px;top:316px;width:320px;height:225px">
-      <div class="screen-chrome"><span class="chrome-dot"></span><span class="chrome-dot"></span><span class="chrome-dot"></span></div>
-      <div class="screen-body" style="flex-direction:column;padding:7px;gap:5px">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <span class="mt2" style="color:var(--ink);font-weight:800">CDS-TH-2026-00901 · PO/PI Matching</span>
-          <div style="display:flex;gap:2px"><span class="micon">⧉</span><span class="micon">⟳</span><span class="micon">⤢</span></div>
-        </div>
-        <div style="display:flex;gap:4px">
-          <div style="flex:1;display:flex;flex-direction:column;gap:2px">
-            <div class="mcolhead" style="background:var(--solid-emerald)">INVOICE</div>
-            <div class="mbtn-outline" style="text-align:center;color:var(--solid-emerald);border-color:var(--solid-emerald)">📄 อ่านไฟล์</div>
-          </div>
-          <div style="flex:1;display:flex;flex-direction:column;gap:2px">
-            <div class="mcolhead" style="background:var(--info)">HEALTH CERT</div>
-            <div class="mpill" style="background:#e8f0ff;color:var(--accent);text-align:center;width:100%;padding:2.5px 0">🔵 RECEIVED</div>
-          </div>
-          <div style="flex:1;display:flex;flex-direction:column;gap:2px">
-            <div class="mcolhead" style="background:var(--solid-emerald)">IMPORT PERM.</div>
-            <div class="mbtn-outline" style="text-align:center;color:var(--solid-emerald);border-color:var(--solid-emerald)">📄 อ่านไฟล์</div>
-          </div>
-        </div>
-        <div class="mfield" style="background:#e8f0ff">
-          <span class="micon">📄</span>
-          <span class="fname">HealthCert.pdf</span>
-          <span class="mt2">184.5 KB</span>
-        </div>
-        <div style="flex:1;border:1.3px dashed var(--line);border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px">
-          <div style="width:18px;height:18px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:9px">⏳</div>
-          <span class="mt2" style="text-align:center;font-weight:800;color:var(--ink)">อัปโหลดสำเร็จ รอเริ่ม OCR</span>
-          <span class="mt2" style="text-align:center;max-width:85%">คอลัมน์นี้จะเปลี่ยนเป็น "กำลังสกัดข้อมูล" เอง</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;background:var(--surface-2);border-radius:4px;padding:3px 6px">
-          <span class="mt2" style="font-weight:800;color:var(--ink)">DOCUMENT STATUS</span>
-          <span class="mpill" style="background:var(--info);color:#fff">RECEIVED</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Lane 2: Compare Workspace — OCR running, status EXTRACTING -->
-    <div class="screen" style="left:1148px;top:316px;width:320px;height:225px">
-      <div class="screen-chrome"><span class="chrome-dot"></span><span class="chrome-dot"></span><span class="chrome-dot"></span></div>
-      <div class="screen-body" style="flex-direction:column;padding:7px;gap:5px">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <span class="mt2" style="color:var(--ink);font-weight:800">CDS-TH-2026-00901 · PO/PI Matching</span>
-          <div style="display:flex;gap:2px"><span class="micon">⧉</span><span class="micon">⟳</span><span class="micon">⤢</span></div>
-        </div>
-        <div style="display:flex;gap:4px">
-          <div style="flex:1;display:flex;flex-direction:column;gap:2px">
-            <div class="mcolhead" style="background:var(--solid-emerald)">INVOICE</div>
-            <div class="mbtn-outline" style="text-align:center;color:var(--solid-emerald);border-color:var(--solid-emerald)">📄 อ่านไฟล์</div>
-          </div>
-          <div style="flex:1;display:flex;flex-direction:column;gap:2px">
-            <div class="mcolhead" style="background:var(--info)">HEALTH CERT</div>
-            <div class="mpill" style="background:#e8f0ff;color:var(--accent);text-align:center;width:100%;padding:2.5px 0">🔄 EXTRACTING</div>
-          </div>
-          <div style="flex:1;display:flex;flex-direction:column;gap:2px">
-            <div class="mcolhead" style="background:var(--solid-emerald)">IMPORT PERM.</div>
-            <div class="mbtn-outline" style="text-align:center;color:var(--solid-emerald);border-color:var(--solid-emerald)">📄 อ่านไฟล์</div>
-          </div>
-        </div>
-        <div style="flex:1;border:1.3px dashed var(--accent);border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:#e8f0ff">
-          <div style="width:18px;height:18px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:9px">🔄</div>
-          <span class="mt2" style="text-align:center;font-weight:800;color:var(--accent)">กำลังสกัดข้อมูล (OCR)...</span>
-          <span class="mt2" style="text-align:center;max-width:85%">ดึงข้อมูลตาม Label Schema (SchemaLabel)</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;background:var(--surface-2);border-radius:4px;padding:3px 6px">
-          <span class="mt2" style="font-weight:800;color:var(--ink)">DOCUMENT STATUS</span>
-          <span class="mpill" style="background:var(--info);color:#fff">EXTRACTING</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Lane 3: Compare Workspace — engine running the field-level rules -->
-    <div class="screen" style="left:1148px;top:584px;width:320px;height:225px">
-      <div class="screen-chrome"><span class="chrome-dot"></span><span class="chrome-dot"></span><span class="chrome-dot"></span></div>
-      <div class="screen-body" style="flex-direction:column;padding:7px;gap:5px">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <span class="mt2" style="color:var(--ink);font-weight:800">CDS-TH-2026-00901 · PO/PI Matching</span>
-          <div style="display:flex;gap:2px"><span class="micon">⧉</span><span class="micon">⟳</span><span class="micon">⤢</span></div>
-        </div>
-        <div style="display:flex;gap:4px">
-          <div style="flex:1;display:flex;flex-direction:column;gap:2px">
-            <div class="mcolhead" style="background:var(--solid-emerald)">INVOICE</div>
-          </div>
-          <div style="flex:1;display:flex;flex-direction:column;gap:2px">
-            <div class="mcolhead" style="background:#7c5cff">HEALTH CERT</div>
-          </div>
-          <div style="flex:1;display:flex;flex-direction:column;gap:2px">
-            <div class="mcolhead" style="background:var(--solid-emerald)">IMPORT PERM.</div>
-          </div>
-        </div>
-        <div style="flex:1;border:1.3px dashed #7c5cff;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:#f2effc">
-          <div style="width:18px;height:18px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:9px">⚖️</div>
-          <span class="mt2" style="text-align:center;font-weight:800;color:#7c5cff">กำลังเปรียบเทียบข้อมูล...</span>
-          <span class="mt2" style="text-align:center;max-width:88%">รันกฎ EXACT / FUZZY / BILINGUAL ฯลฯ ต่อฟิลด์ตาม Rule Matrix</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;background:var(--surface-2);border-radius:4px;padding:3px 6px">
-          <span class="mt2" style="font-weight:800;color:var(--ink)">JOB STATUS</span>
-          <span class="mpill" style="background:#7c5cff;color:#fff">PROCESSING</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Lane 4: Compare Result — what the user sees to decide "ทุกเอกสารตรงกันหมดหรือไม่?" -->
-    <div class="screen" style="left:1148px;top:992px;width:320px;height:225px">
-      <div class="screen-chrome"><span class="chrome-dot"></span><span class="chrome-dot"></span><span class="chrome-dot"></span></div>
-      <div class="screen-body" style="flex-direction:column;padding:7px;gap:4px">
-        <span class="mt2" style="color:var(--ink);font-weight:800">CDS-TH-2026-00901 · PO/PI Matching</span>
-        <div style="display:flex;gap:4px">
-          <div class="mcolhead" style="background:var(--solid-emerald);flex:1">INVOICE</div>
-          <div class="mcolhead" style="background:var(--bad);flex:1">HEALTH CERT</div>
-          <div class="mcolhead" style="background:var(--solid-emerald);flex:1">IMPORT PERM.</div>
-        </div>
-        <div class="mfield"><span class="mcheck" style="background:var(--ok)"></span><span class="fname">Invoice Number</span><span class="mt2">INV-2026-045-01</span><span style="color:var(--ok);font-size:6px">✓</span></div>
-        <div class="mfield"><span class="mcheck" style="background:var(--ok)"></span><span class="fname">Invoice Date</span><span class="mt2">20 APR 2026</span><span style="color:var(--ok);font-size:6px">✓</span></div>
-        <div class="mfield" style="background:#fdeaec"><span class="mcheck" style="background:var(--bad)"></span><span class="fname">B/L Number</span><span class="mt2">MAEU-88213X</span><span style="color:var(--bad);font-size:6px">✕</span></div>
-        <div class="mfield"><span class="mcheck" style="background:var(--ok)"></span><span class="fname">Shipper Name</span><span class="mt2">Global Trading Inc.</span><span style="color:var(--ok);font-size:6px">✓</span></div>
-        <div style="flex:1"></div>
-        <div style="display:flex;gap:4px;align-items:center">
-          <span class="mt2" style="display:flex;align-items:center;gap:1px"><span style="width:4px;height:4px;border-radius:50%;background:var(--ok);display:inline-block"></span>ตรงกัน 3</span>
-          <span class="mt2" style="display:flex;align-items:center;gap:1px"><span style="width:4px;height:4px;border-radius:50%;background:var(--bad);display:inline-block"></span>ไม่ตรงกัน 1</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;background:var(--surface-2);border-radius:4px;padding:3px 6px">
-          <span class="mt2" style="font-weight:800;color:var(--ink)">AUDIT SUMMARY</span>
-          <span class="mt2">พบ 1 จุดที่ไม่ตรง</span>
-          <span class="mpill" style="background:var(--bad);color:#fff">Accuracy 87.5%</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Lane 5: Export modal -->
-    <div class="screen" style="left:1500px;top:1466px;width:320px;height:225px">
-      <div class="screen-chrome"><span class="chrome-dot"></span><span class="chrome-dot"></span><span class="chrome-dot"></span></div>
-      <div class="screen-body" style="background:rgba(0,0,0,0.05);align-items:center;justify-content:center;padding:9px">
-        <div style="width:100%;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:8px;display:flex;flex-direction:column;gap:4px">
-          <span class="mt" style="color:var(--solid-emerald)">📤 ส่งออกรายงาน (Export)</span>
-          <span class="mt2">ในรายการงาน: CDS-TH-2026-00901-01</span>
-          <span class="mt2">เลือก Workflow</span>
-          <div style="height:12px;background:var(--surface-2);border:1px solid var(--line);border-radius:3px;display:flex;align-items:center;padding:0 3px"><span class="mono-mini" style="font-size:5px">PO/PI Matching ▾</span></div>
-          <span class="mt2">เลือกแพลตฟอร์มปลายทาง</span>
-          <div style="display:flex;gap:3px">
-            <span class="mpill" style="background:var(--solid-emerald);color:#fff;padding:3px 7px">✓ FTA</span>
-            <span class="mpill" style="background:var(--surface-2);color:var(--muted);border:1px solid var(--line);padding:3px 7px">OSS</span>
-            <span class="mpill" style="background:var(--surface-2);color:var(--muted);border:1px solid var(--line);padding:3px 7px">AS-15</span>
-          </div>
-          <span class="mt2" style="white-space:normal;font-size:4.6px">ระบบจะสร้างไฟล์รายงานตามรูปแบบที่แพลตฟอร์มปลายทางกำหนด</span>
-          <div style="flex:1"></div>
-          <div style="display:flex;justify-content:flex-end;gap:3px;margin-top:2px">
-            <span class="mbtn-outline">ยกเลิก</span>
-            <span class="mbtn" style="background:var(--solid-emerald)">ยืนยันส่งออก</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    </div>
-    <p class="scroll-hint">เลื่อนซ้าย–ขวาเพื่อดู flow เต็ม</p>
-  </div>
-
-  <!-- ===== Glossaries ===== -->
-  <section>
-    <h2 class="glossary-heading">Glossary สำหรับ Dev &amp; QA</h2>
-    <p class="glossary-sub">ชื่อ enum และวิธีเปรียบเทียบตรงตามโค้ดจริง — ใช้เทียบตอนเขียนเทสต์หรือ debug สถานะ</p>
-
-    <div class="glossary-grid">
-
-      <div class="card">
-        <h3>Job Status</h3>
-        <p class="card-sub"><span class="code">JobStatus</span> — สถานะภาพรวมของงาน 1 job</p>
-
-        <div class="row"><span class="dot" style="background:#94a3b8"></span><span class="code">NEW</span><span class="meaning">รอไฟล์ครบ (Pending Files)</span></div>
-        <div class="row"><span class="dot" style="background:var(--info)"></span><span class="code">PENDING</span><span class="meaning">รอดำเนินการ</span></div>
-        <div class="row"><span class="dot" style="background:var(--info)"></span><span class="code">PROCESSING</span><span class="meaning">กำลังเปรียบเทียบข้อมูล</span></div>
-        <div class="row"><span class="dot" style="background:var(--warn)"></span><span class="code">REVIEW</span><span class="meaning">รอตรวจสอบ</span></div>
-        <div class="row"><span class="dot" style="background:var(--ok)"></span><span class="code">READY</span><span class="meaning">เสร็จสมบูรณ์ พร้อมส่งออก</span></div>
-        <div class="row"><span class="dot" style="background:var(--lane5)"></span><span class="code">DONE</span><span class="meaning">ส่งออกแล้ว (Exported)</span></div>
-        <div class="row"><span class="dot" style="background:var(--bad)"></span><span class="code">REJECTED</span><span class="meaning">ถูกตีกลับจาก Job ถัดไป</span></div>
-      </div>
-
-      <div class="card">
-        <h3>Document Status</h3>
-        <p class="card-sub"><span class="code">ComparisonDocStatus</span> — สถานะของไฟล์แต่ละ column</p>
-
-        <div class="row"><span class="dot" style="background:#94a3b8"></span><span class="code">MISSING</span><span class="meaning">ยังไม่มีไฟล์อัปโหลด</span></div>
-        <div class="row"><span class="dot" style="background:var(--info)"></span><span class="code">RECEIVED</span><span class="meaning">อัปโหลดแล้ว รอ OCR</span></div>
-        <div class="row"><span class="dot" style="background:var(--info)"></span><span class="code">EXTRACTING</span><span class="meaning">OCR กำลังสกัดข้อมูล</span></div>
-        <div class="row"><span class="dot" style="background:var(--ok)"></span><span class="code">MATCHED</span><span class="meaning">ข้อมูลตรงกันตามกฎเปรียบเทียบ</span></div>
-        <div class="row"><span class="dot" style="background:var(--bad)"></span><span class="code">MISMATCHED</span><span class="meaning">ข้อมูลไม่ตรงกัน ต้องตรวจสอบ</span></div>
-        <div class="row"><span class="dot" style="background:#475569"></span><span class="code">LOCKED</span><span class="meaning">ล็อกแล้ว แก้ไขไม่ได้ (เช่นหลัง Export)</span></div>
-      </div>
-
-      <div class="card">
-        <h3>Compare Methods</h3>
-        <p class="card-sub">วิธีเปรียบเทียบใน Rule Matrix ต่อ field</p>
-
-        <div class="row"><span class="dot" style="background:var(--ok)"></span><span class="code">EXACT</span><span class="meaning">ตรงกันทุกตัวอักษร (normalize + trim + case-insensitive)</span></div>
-        <div class="row"><span class="dot" style="background:#a855f7"></span><span class="code">FUZZY</span><span class="meaning">เทียบความคล้ายเป็น % — threshold ปรับได้ 0–100</span></div>
-        <div class="row"><span class="dot" style="background:#6366f1"></span><span class="code">BILINGUAL</span><span class="meaning">แปลความหมายด้วย AI ก่อนเทียบ ข้ามภาษาได้</span></div>
-        <div class="row"><span class="dot" style="background:#0ea5e9"></span><span class="code">NUMBER_WORD</span><span class="meaning">แปลงเป็นตัวเลขก่อนเทียบ รองรับเลขไทย/comma</span></div>
-        <div class="row"><span class="dot" style="background:#f97316"></span><span class="code">EXISTENCE</span><span class="meaning">เช็คว่ามีข้อมูลอยู่หรือไม่ ไม่เทียบค่า</span></div>
-        <div class="row"><span class="dot" style="background:var(--bad)"></span><span class="code">MASTER_LOOKUP</span><span class="meaning">ค้นหาความถูกต้องจาก Master Data / Doc Type อื่น</span></div>
-        <div class="row"><span class="dot" style="background:#ec4899"></span><span class="code">CONDITIONAL</span><span class="meaning">เทียบแบบมีเงื่อนไข ขึ้นกับค่า field อื่นก่อน</span></div>
-        <div class="row"><span class="dot" style="background:var(--warn)"></span><span class="code">DATE_NORMALIZATION</span><span class="meaning">ปรับรูปแบบวันที่ให้ตรงกัน (พ.ศ. / ค.ศ.)</span></div>
-      </div>
-
-    </div>
-  </section>
-
-  <footer>
-    <span>BizX Design Ideation — Data Comparison module</span>
-    <span class="code">อ้างอิงจาก prototype/components/DataComparison.tsx, RuleMatrix.tsx, CreateJobModal.tsx</span>
-  </footer>
-
-</div>
-
-<script>
-  (function () {
-    var STORAGE_KEY = 'bizx-diagram-theme';
-    var root = document.documentElement;
-    var btn = document.getElementById('themeToggle');
-    var icon = document.getElementById('themeIcon');
-    var label = document.getElementById('themeText');
-
-    function systemPrefersDark() {
-      return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    }
-
-    function isDark() {
-      var stamped = root.getAttribute('data-theme');
-      if (stamped === 'dark') return true;
-      if (stamped === 'light') return false;
-      return systemPrefersDark();
-    }
-
-    function render() {
-      if (isDark()) {
-        icon.textContent = '☀️';
-        label.textContent = 'Light mode';
-      } else {
-        icon.textContent = '🌙';
-        label.textContent = 'Dark mode';
-      }
-    }
-
-    var saved = localStorage.getItem(STORAGE_KEY);
-    if (saved === 'dark' || saved === 'light') {
-      root.setAttribute('data-theme', saved);
-    }
-    render();
-
-    btn.addEventListener('click', function () {
-      var next = isDark() ? 'light' : 'dark';
-      root.setAttribute('data-theme', next);
-      localStorage.setItem(STORAGE_KEY, next);
-      render();
-    });
-  })();
-</script>
+</body>
+</html>

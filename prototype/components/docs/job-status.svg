@@ -1,0 +1,64 @@
+<svg viewBox="0 0 1072 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="js-title js-desc">
+<title id="js-title">สถานะของงาน (Job status)</title>
+<desc id="js-desc">State machine of a comparison job: blocked until the previous job is ready, pending, processing, review, and ready; a ready job can be rejected by the next job and returns to processing when its files are read and compared again.</desc>
+<defs>
+<marker id="js-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#475569"/></marker>
+<marker id="js-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#1f5df9"/></marker>
+<marker id="js-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0369a1"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#f8fafc"/>
+<circle cx="112" cy="44" r="6" fill="#010136"/>
+<circle cx="420" cy="44" r="6" fill="#010136"/>
+<path d="M 112,50 V 96" fill="none" stroke="#475569" stroke-width="1.2"  marker-end="url(#js-arrow)"/>
+<path d="M 420,50 V 96" fill="none" stroke="#475569" stroke-width="1.2"  marker-end="url(#js-arrow)"/>
+<path d="M 192,128 H 336" fill="none" stroke="#475569" stroke-width="1.2"  marker-end="url(#js-arrow)"/>
+<path d="M 504,128 H 864" fill="none" stroke="#1f5df9" stroke-width="1.4"  marker-end="url(#js-arrow-accent)"/>
+<path d="M 372,160 V 288" fill="none" stroke="#475569" stroke-width="1.2"  marker-end="url(#js-arrow)"/>
+<path d="M 420,288 V 160" fill="none" stroke="#475569" stroke-width="1.2"  marker-end="url(#js-arrow)"/>
+<path d="M 504,312 H 648" fill="none" stroke="#475569" stroke-width="1.2"  marker-end="url(#js-arrow)"/>
+<path d="M 648,336 H 504" fill="none" stroke="#475569" stroke-width="1.2"  marker-end="url(#js-arrow)"/>
+<path d="M 732,288 V 248 Q 732,240 724,240 H 476 Q 468,240 468,232 V 160" fill="none" stroke="#475569" stroke-width="1.2"  marker-end="url(#js-arrow)"/>
+<path d="M 948,160 V 288" fill="none" stroke="#475569" stroke-width="1.2"  marker-end="url(#js-arrow)"/>
+<path d="M 948,352 V 408 Q 948,416 940,416 H 428 Q 420,416 420,408 V 352" fill="none" stroke="#475569" stroke-width="1.2"  marker-end="url(#js-arrow)"/>
+<rect x="120" y="60" width="176" height="16" rx="2" fill="#f8fafc"/>
+<text x="126" y="72" fill="#5b6b83" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="start" >สร้าง Shipment (งานที่ 2+)</text>
+<rect x="428" y="60" width="140" height="16" rx="2" fill="#f8fafc"/>
+<text x="434" y="72" fill="#5b6b83" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="start" >งานแรกของ Shipment</text>
+<rect x="202.0" y="104" width="124" height="16" rx="2" fill="#f8fafc"/>
+<text x="264" y="116" fill="#5b6b83" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >งานก่อนหน้าเสร็จ</text>
+<rect x="568.0" y="104" width="232" height="16" rx="2" fill="#f8fafc"/>
+<text x="684" y="116" fill="#1f5df9" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >กด 'เสร็จสิ้น' [ไฟล์ที่มีตรงครบ]</text>
+<rect x="260" y="216" width="104" height="16" rx="2" fill="#f8fafc"/>
+<text x="358" y="228" fill="#5b6b83" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="end" >อ่านไฟล์ (OCR)</text>
+<rect x="428" y="196" width="56" height="16" rx="2" fill="#f8fafc"/>
+<text x="434" y="208" fill="#5b6b83" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="start" >ตรงครบ</text>
+<rect x="526.0" y="264" width="100" height="16" rx="2" fill="#f8fafc"/>
+<text x="576" y="276" fill="#5b6b83" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >พบฟิลด์ไม่ตรง</text>
+<rect x="534.0" y="344" width="84" height="16" rx="2" fill="#f8fafc"/>
+<text x="576" y="356" fill="#5b6b83" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >อ่านไฟล์ใหม่</text>
+<rect x="535.0" y="224" width="130" height="16" rx="2" fill="#f8fafc"/>
+<text x="600" y="236" fill="#5b6b83" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >แก้/ยืนยัน/ข้ามครบ</text>
+<rect x="956" y="216" width="116" height="16" rx="2" fill="#f8fafc"/>
+<text x="962" y="228" fill="#5b6b83" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="start" >งานถัดไปกดตีกลับ</text>
+<rect x="599.0" y="392" width="170" height="16" rx="2" fill="#f8fafc"/>
+<text x="684" y="404" fill="#5b6b83" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >อ่านไฟล์ใหม่แล้วเทียบซ้ำ</text>
+<rect x="32" y="96" width="168" height="64" rx="8" fill="#f8fafc"/><rect x="32" y="96" width="168" height="64" rx="8" fill="#ffffff" stroke="#010136" stroke-width="1"/><text x="116.0" y="124" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >ยังเริ่มไม่ได้</text><text x="116.0" y="142" fill="#475569" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" >derived</text>
+<rect x="336" y="96" width="168" height="64" rx="8" fill="#f8fafc"/><rect x="336" y="96" width="168" height="64" rx="8" fill="#ffffff" stroke="#010136" stroke-width="1"/><text x="420.0" y="124" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >รอดำเนินการ</text><text x="420.0" y="142" fill="#475569" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" >PENDING</text>
+<rect x="864" y="96" width="168" height="64" rx="8" fill="#f8fafc"/><rect x="864" y="96" width="168" height="64" rx="8" fill="rgba(31,93,249,0.08)" stroke="#1f5df9" stroke-width="1"/><text x="948.0" y="124" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >เสร็จสมบูรณ์</text><text x="948.0" y="142" fill="#475569" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" >READY</text>
+<rect x="336" y="288" width="168" height="64" rx="8" fill="#f8fafc"/><rect x="336" y="288" width="168" height="64" rx="8" fill="#ffffff" stroke="#010136" stroke-width="1"/><text x="420.0" y="316" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >กำลังเปรียบเทียบข้อมูล</text><text x="420.0" y="334" fill="#475569" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" >PROCESSING</text>
+<rect x="648" y="288" width="168" height="64" rx="8" fill="#f8fafc"/><rect x="648" y="288" width="168" height="64" rx="8" fill="#ffffff" stroke="#010136" stroke-width="1"/><text x="732.0" y="316" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >รอตรวจสอบ</text><text x="732.0" y="334" fill="#475569" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" >REVIEW</text>
+<rect x="864" y="288" width="168" height="64" rx="8" fill="#f8fafc"/><rect x="864" y="288" width="168" height="64" rx="8" fill="#ffffff" stroke="#010136" stroke-width="1"/><text x="948.0" y="316" fill="#010136" font-size="12" font-weight="600" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="middle" >ถูกตีกลับ</text><text x="948.0" y="334" fill="#475569" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" >REJECTED</text>
+<text x="32" y="252" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="start" >* ทุกงานหลังงานที่ถูกตีกลับ</text>
+<text x="32" y="270" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="start" >กลับไปเป็น "ยังเริ่มไม่ได้" ทันที</text>
+<path d="M 100,236 Q 100,200 112,160" fill="none" stroke="rgba(1,1,54,0.40)" stroke-width="1" stroke-dasharray="4,3"/><circle cx="112" cy="160" r="2" fill="#010136"/>
+<line x1="24" y1="456" x2="1048" y2="456" stroke="rgba(1,1,54,0.12)" stroke-width="0.8"/>
+<text x="24" y="484" fill="#5b6b83" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.18em">LEGEND</text>
+<rect x="120" y="475" width="14" height="10" rx="3" fill="#fff" stroke="#010136"/>
+<text x="140" y="484" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="start" >สถานะ</text>
+<rect x="212" y="475" width="14" height="10" rx="3" fill="rgba(31,93,249,0.08)" stroke="#1f5df9"/>
+<text x="232" y="484" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="start" >สถานะปลายทางที่ต้องการ</text>
+<circle cx="420" cy="480" r="5" fill="#010136"/>
+<text x="432" y="484" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="start" >จุดเริ่ม</text>
+<line x1="520" y1="480" x2="548" y2="480" stroke="#475569" stroke-width="1.2" marker-end="url(#js-arrow)"/>
+<text x="556" y="484" fill="#475569" font-size="12" font-weight="500" font-family="'IBM Plex Sans Thai', system-ui, sans-serif" text-anchor="start" >เปลี่ยนสถานะ</text>
+</svg>
