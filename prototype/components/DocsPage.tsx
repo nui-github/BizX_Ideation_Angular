@@ -226,14 +226,14 @@ const UserFlowPage: React.FC = () => (
     </section>
 
     <section>
-      <SectionTitle title="ทำอะไร ระบบทำอะไร" subtitle="เลขตรงกับภาพด้านบน" />
+      <SectionTitle title="รายละเอียดทีละขั้น" subtitle="เลขตรงกับภาพด้านบน บอกว่าผู้ใช้ทำอะไร และระบบตอบสนองอย่างไร" />
       <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
         <table className="w-full text-left text-[13px]">
           <thead>
             <tr className="bg-slate-50 text-[11px] font-black uppercase tracking-wider text-slate-400">
               <th className="px-4 py-2.5 w-14">#</th>
-              <th className="px-4 py-2.5">คุณทำ</th>
-              <th className="px-4 py-2.5">ระบบทำ</th>
+              <th className="px-4 py-2.5">ผู้ใช้ทำ</th>
+              <th className="px-4 py-2.5">ระบบตอบสนอง</th>
             </tr>
           </thead>
           <tbody>
